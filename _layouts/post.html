@@ -1,0 +1,25 @@
+---
+layout: default
+---
+
+<main class="min-h-screen bg-paper">
+  <article class="section-shell py-16 sm:py-20">
+    <div class="max-w-3xl">
+      <p class="eyebrow">{{ page.category | default: "Open source" }}</p>
+      <h1 class="mt-4 font-display text-5xl leading-tight text-ink sm:text-6xl">{{ page.title }}</h1>
+      <p class="mt-6 text-xl leading-8 text-moss">{{ page.description }}</p>
+      <div class="mt-8 flex flex-wrap gap-3 text-sm font-bold">
+        {% if page.stack %}
+          <span class="rounded-md bg-white px-3 py-2 text-moss">{{ page.stack }}</span>
+        {% endif %}
+        {% if page.lib_url %}
+          <a class="focus-ring rounded-md bg-ink px-3 py-2 text-white hover:bg-moss" href="{{ page.lib_url }}">View library</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="prose prose-lg mt-12 max-w-3xl prose-headings:font-display prose-headings:text-ink prose-p:text-moss prose-a:font-bold prose-a:text-clay prose-strong:text-ink">
+      {{ content }}
+    </div>
+  </article>
+</main>

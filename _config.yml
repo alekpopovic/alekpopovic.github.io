@@ -1,0 +1,24 @@
+title: Aleksandar Popovic
+description: Ruby engineer building practical tools, Rails patterns, and small systems that are easier to understand.
+url: "https://alekpopovic.github.io"
+baseurl: ""
+permalink: /posts/:title/
+
+author:
+  name: Aleksandar Popovic
+  username: alekpopovic
+  location: Serbia
+  company: SpotHopperLLC
+  github: https://github.com/alekpopovic
+  linkedin: https://www.linkedin.com/in/alekpopovic
+  x: https://x.com/alek_popovic
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - package.json
+  - package-lock.json
+  - tailwind.config.js
+  - src
+  - README.md

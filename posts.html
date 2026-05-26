@@ -1,0 +1,31 @@
+---
+layout: default
+title: Open Source Posts
+description: Notes about Aleksandar Popovic's open source libraries and experiments.
+permalink: /posts/
+---
+
+<main class="min-h-screen bg-paper">
+  <section class="section-shell py-16 sm:py-20">
+    <div class="max-w-3xl">
+      <p class="eyebrow">Open source</p>
+      <h1 class="mt-4 font-display text-5xl leading-tight sm:text-6xl">Notes on the libraries.</h1>
+      <p class="mt-6 text-xl leading-8 text-moss">
+        Short writeups on the small tools, Rails helpers, and experiments that grew out of repeated problems.
+      </p>
+    </div>
+
+    <div class="mt-12 grid gap-5 md:grid-cols-2">
+      {% for post in site.posts %}
+        <a class="focus-ring rounded-lg border border-ink/10 bg-white p-6 transition hover:-translate-y-1 hover:border-fern/50 hover:shadow-soft" href="{{ post.url | relative_url }}">
+          <p class="text-sm font-bold uppercase tracking-[0.16em] text-clay">{{ post.category | default: "Open source" }}</p>
+          <h2 class="mt-3 text-2xl font-extrabold text-ink">{{ post.title }}</h2>
+          <p class="mt-3 leading-7 text-moss">{{ post.description }}</p>
+          {% if post.stack %}
+            <p class="mt-5 text-sm font-bold text-moss">{{ post.stack }}</p>
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+</main>

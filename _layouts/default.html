@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page.title | default: site.title }}</title>
+    <meta name="description" content="{{ page.description | default: site.description }}">
+    <meta name="theme-color" content="#faf7f0">
+    <meta property="og:title" content="{{ page.title | default: site.title }}">
+    <meta property="og:description" content="{{ page.description | default: site.description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ site.url }}{{ page.url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+  </head>
+  <body>
+    <header class="border-b border-ink/10 bg-white">
+      <div class="section-shell flex flex-col gap-5 py-6 sm:flex-row sm:items-center sm:justify-between">
+        <a class="focus-ring rounded-sm text-sm font-extrabold text-ink hover:text-clay" href="{{ '/' | relative_url }}">Aleksandar Popovic</a>
+        <nav class="flex flex-wrap gap-4 text-sm font-bold text-moss">
+          <a class="focus-ring rounded-sm hover:text-ink" href="{{ '/' | relative_url }}">Home</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="{{ '/about/' | relative_url }}">About</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="{{ '/posts/' | relative_url }}">Posts</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="{{ '/contact/' | relative_url }}">Contact</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="https://www.codepop.tech/">CodePop</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="https://www.bugsonar.com/">BugSonar</a>
+          <a class="focus-ring rounded-sm hover:text-ink" href="https://github.com/alekpopovic">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    {{ content }}
+
+    <footer class="bg-ink py-10 text-white">
+      <div class="section-shell flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="font-bold">Aleksandar Popovic</p>
+          <p class="mt-2 max-w-xl text-sm leading-6 text-white/65">Ruby, Rails, Elixir, Go, cloud architecture, and product infrastructure.</p>
+        </div>
+        <nav class="flex flex-wrap gap-4 text-sm font-semibold text-white/75">
+          <a class="focus-ring rounded-sm hover:text-white" href="{{ '/' | relative_url }}">Home</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="{{ '/about/' | relative_url }}">About</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="{{ '/posts/' | relative_url }}">Posts</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="{{ '/contact/' | relative_url }}">Contact</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="https://www.codepop.tech/">CodePop</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="https://www.bugsonar.com/">BugSonar</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="https://github.com/alekpopovic">GitHub</a>
+          <a class="focus-ring rounded-sm hover:text-white" href="https://www.linkedin.com/in/alekpopovic">LinkedIn</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
