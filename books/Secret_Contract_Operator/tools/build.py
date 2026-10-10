@@ -132,18 +132,20 @@ def epub():
 
 
 def pdf():
-    from weasyprint import HTML, default_url_fetcher
+    from weasyprint import HTML
+    from weasyprint.urls import URLFetcher
     m, paths = meta(), selection()
     toc = '<section class="toc"><h1>Contents</h1><ol>' + ''.join(
         f'<li><a href="#{p.stem}">{html.escape(title(p))}</a></li>' for p in paths) + '</ol></section>'
     chapters = ''.join('<section class="chapter">' + render(p, 'print') + '</section>' for p in paths)
     document = f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title>{html.escape(m['title'] + ': ' + m['subtitle'])}</title><meta name="author" content="{m['author']}" /><meta name="description" content="{html.escape(m['description'])}" /><style>{(ROOT / 'styles/print.css').read_text()}</style></head><body><section class="cover"><img src="{(ROOT / 'assets/cover.svg').as_uri()}" alt="Secret Contract Operator — English edition" /></section>{toc}{chapters}</body></html>'''
     (DIST / (NAME + '.html')).write_text(document, encoding='utf-8')
-    def local_fetcher(url, *args, **kwargs):
-        if urlsplit(url).scheme not in {'file', 'data'}:
-            raise ValueError('Book builds cannot fetch external assets')
-        return default_url_fetcher(url, *args, **kwargs)
-    HTML(string=document, base_url=str(ROOT), url_fetcher=local_fetcher).write_pdf(str(DIST / (NAME + '.pdf')))
+    class LocalURLFetcher(URLFetcher):
+        def fetch(self, url, **kwargs):
+            if urlsplit(url).scheme not in {'file', 'data'}:
+                raise ValueError('Book builds cannot fetch external assets')
+            return super().fetch(url, **kwargs)
+    HTML(string=document, base_url=str(ROOT), url_fetcher=LocalURLFetcher()).write_pdf(str(DIST / (NAME + '.pdf')))
 
 
 def build():

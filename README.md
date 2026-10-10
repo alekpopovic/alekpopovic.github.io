@@ -74,6 +74,10 @@ After manuscript changes, follow `books/agentplane-book/BUILDING.md` to rebuild
 the original exports. Its text/diagrams are CC BY-SA 4.0; code is MIT.
 Reading URLs use `/books/agentplane/`.
 
+Keep its `reports/VALIDATION.md` and `reports/BUILD_RESULTS.json` in Git:
+the publication links to these supplied edition records. Only the root
+`/reports/` directory contains ignored browser and performance output.
+
 `books/Secret_Contract_Operator/chapters/` contains the **Secret Contract
 Operator** English manuscript, ordered by numeric filename: a preface,
 22 chapters and four appendices (27 reading sections). Its publisher at

@@ -16,4 +16,5 @@ assets/social/
 assets/brand/*.png
 test-results/
 playwright-report/
-reports/
+# Root-only browser reports; book publication reports are source material.
+/reports/
