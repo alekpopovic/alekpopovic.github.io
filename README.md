@@ -36,6 +36,28 @@ For active styling work, run Tailwind in a second terminal:
 npm run watch
 ```
 
+## Publishing to GitHub Pages
+
+In the repository's **Settings → Pages → Build and deployment**, select
+**GitHub Actions** as the source. `.github/workflows/pages.yml` builds the book
+editions, generated reading pages, and assets, runs the publication and browser
+checks, and deploys `_site/` after they pass.
+
+The branch-based Pages builder cannot run the Python book publisher or the
+custom Jekyll plugin. It can replace the complete site with a build that has
+an empty book library and missing downloads. Use the Actions workflow as the
+only publishing source.
+
+For browser checks matching CI, install the Playwright-managed Chromium:
+
+```sh
+npx playwright install chromium
+npm run test:ui
+```
+
+`CHROME_PATH` is an optional local browser override. CI uses Playwright's pinned
+browser, so a pass with a different local Chrome version is not a CI reproduction.
+
 ## Books
 
 `books/modern-ci-book/manuscript/` contains the canonical Modern CI text;

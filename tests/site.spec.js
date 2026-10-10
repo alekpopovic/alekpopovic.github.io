@@ -179,8 +179,17 @@ test('document reader controls stay usable on a small screen and print only the 
   await expect(page.locator('.reader-sidebar')).toBeVisible();
   await contents.click();
   await page.locator('#reader-size').selectOption('extra');
+  const scrollPort = page.locator('[data-reader-scroll]');
+  // PageDown belongs to the document, not the previously focused toolbar control.
+  await scrollPort.focus();
   await page.keyboard.press('PageDown');
+  await expect.poll(() => scrollPort.evaluate(element => element.scrollTop)).toBeGreaterThan(8);
   await page.locator('.book-article h2').last().scrollIntoViewIfNeeded();
+  // Browser scrolling dispatches its event asynchronously; wait for the reader
+  // to finish hiding navigation before measuring the toolbar's final position.
+  await expect(page.locator('.site-header')).toBeHidden();
+  await expect(page.locator('[data-reader-navigation]')).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(async () => (await page.locator('.reader-deskbar').boundingBox()).y).toBe(0);
   const toolbar = await page.locator('.reader-deskbar').boundingBox();
   expect(toolbar.y).toBe(0);
   expect(toolbar.y + toolbar.height).toBeLessThan(450);
