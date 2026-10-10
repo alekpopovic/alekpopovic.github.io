@@ -5,8 +5,6 @@
   const toc = document.querySelector('[data-article-toc]');
   const links = document.querySelector('[data-article-toc-links]');
   const progress = document.querySelector('[data-reading-progress]');
-  const copy = document.querySelector('[data-copy-link]');
-  const status = document.querySelector('[data-share-status]');
   headings.forEach(heading => {
     const link = document.createElement('a');
     link.href = `#${heading.id}`;
@@ -33,17 +31,4 @@
   window.addEventListener('resize', schedule);
   progress.hidden = false;
   updateReading();
-  if (navigator.clipboard && window.isSecureContext) {
-    copy.hidden = false;
-    copy.addEventListener('click', async () => {
-      try {
-        const url = new URL(window.location.href);
-        url.hash = '';
-        await navigator.clipboard.writeText(url.href);
-        status.textContent = 'Link copied to clipboard.';
-        copy.textContent = 'Link copied ✓';
-        window.setTimeout(() => { copy.textContent = 'Copy link ↗'; }, 2200);
-      } catch { status.textContent = 'Copy the link from your browser’s address bar.'; }
-    });
-  }
 })();

@@ -109,7 +109,6 @@
 .ai-article-byline { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
 .ai-article-byline strong { font-size: 12px; font-weight: 500; }
 .ai-article-byline div > span { display: block; font-size: 10px; color: #b2b5c8; margin-top: 5px; }
-.ai-article-byline .article-share { color: #e4d9ff; border-color: #6f6088; font-size: 11px; background: transparent; }
 .ai-detail .article-progress { background: #18141f; }
 .ai-detail .article-progress span { background: #c4b5fd; }
 .ai-article-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 75px; padding-block: 45px 70px; }
@@ -202,7 +201,6 @@
   .ai-article-hero { padding-top: 125px; }
   .ai-article-hero h1 { font-size: clamp(34px, 9vw, 48px); }
   .ai-article-meta { gap: 10px; font-size: 10px; }
-  .ai-article-byline .article-share { margin-left: 0; }
   .ai-prose { font-size: 15px; }
   .ai-prose :is(th, td) { padding: 12px 6px; font-size: 11px; }
   .ai-prose table code { font-size: 10px; padding: 1px 3px; }
@@ -214,7 +212,7 @@
   .ai-site, .ai-page { background: white; color: #20201e; }
   .ai-article-hero { padding-top: 20px; }
   .ai-article-layout { display: block; }
-  .ai-article-sidebar, .ai-related, .ai-article-end, .ai-article-byline .article-share { display: none; }
+  .ai-article-sidebar, .ai-related, .ai-article-end { display: none; }
   .ai-article-hero :is(h1, p, span, strong), .ai-prose, .ai-prose :is(h2, h3, strong, th, code, a, pre) { color: #20201e; background: white; }
   .ai-prose table { break-inside: auto; }
   .ai-prose tr { break-inside: avoid; }

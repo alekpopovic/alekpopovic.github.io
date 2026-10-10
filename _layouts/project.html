@@ -11,6 +11,7 @@ layout: default
     <figure class="project-preview"><img src="{{ '/assets/projects/' | append: project.id | append: '-docs.webp' | relative_url }}" alt="{{ project.name | escape }} documentation homepage" width="1280" height="800" loading="lazy" decoding="async"><figcaption>Documentation preview. <a href="{{ project.documentation }}">Explore the current documentation ↗</a></figcaption></figure>
     {% if project.id == 'container-desk' %}<figure class="project-preview"><img src="{{ '/assets/projects/container-desk-native.webp' | relative_url }}" alt="ContainerDesk native Linux welcome screen" width="1074" height="807" loading="lazy" decoding="async"><figcaption>Native Linux verification capture from the <a href="https://github.com/alekpopovic/container-desk/blob/main/docs/verification/002-native-linux.png">project's verification record</a>.</figcaption></figure>{% endif %}
     <p class="project-source-note">{{ project.source_note }} <a href="{{ project.repository }}#readme">Source and current status ↗</a></p>
+    {% include share-links.html label='Share this project' %}
   </article></div>
   <section class="section-space project-related"><div class="section-shell"><div class="section-top"><h2 class="display">Explore another idea.</h2></div><div class="project-list">{% for other in site.data.projects %}{% unless other.id == project.id %}{% include project-card.html project=other %}{% endunless %}{% endfor %}</div></div></section>
 </main>

@@ -16,6 +16,7 @@
     {% if page.url == '/' or page.url == '/ai/' or page.section == 'ai' or page.url == '/posts/' %}<link rel="stylesheet" href="{{ '/assets/css/ai.css' | relative_url }}">{% endif %}
     <script>document.documentElement.classList.add('js');{% if page.layout == 'book' %}try { if (sessionStorage.getItem('codepop:reader-navigation:' + {{ page.book_id | jsonify }}) === 'hidden') document.documentElement.classList.add('reader-navigation-hidden'); } catch {}{% endif %}</script>
     <script src="{{ '/assets/js/site.js' | relative_url }}" defer></script>
+    <script src="{{ '/assets/js/share.js' | relative_url }}" defer></script>
     {% unless page.layout == 'book' %}<script src="{{ '/assets/js/effects.js' | relative_url }}" defer></script>{% endunless %}
     {% if page.url == '/videos/' %}<script src="{{ '/assets/js/videos.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/posts/' %}<script src="{{ '/assets/js/posts.js' | relative_url }}" defer></script>{% endif %}

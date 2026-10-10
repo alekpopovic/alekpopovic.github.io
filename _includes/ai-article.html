@@ -7,7 +7,8 @@
       <nav class="ai-breadcrumbs" aria-label="Breadcrumb"><a href="{{ '/ai/' | relative_url }}">AI Lab</a><span aria-hidden="true">/</span><a href="{{ '/ai/' | relative_url }}?category={{ page.category | url_encode }}">{{ page.category }}</a></nav>
       <div class="ai-article-meta"><span class="ai-pill">{{ page.format }}</span><span>{{ page.surface }}</span><span>{{ reading_minutes }} min read</span></div>
       <h1>{{ page.title }}</h1><p class="ai-lead">{{ page.description }}</p>
-      <div class="ai-article-byline"><span class="ai-tool-mark" data-tool="{{ page.tool }}">{{ ai_tool.mark | default: '✳' }}</span><div><strong>{{ site.author.name }}</strong><span>Checked {{ page.verified_at | date: '%b %-d, %Y' }} · {{ ai_tool.name | default: 'Across tools' }}</span></div><button type="button" class="article-share" data-copy-link hidden>Copy link ↗</button><span class="sr-only" data-share-status role="status"></span></div>
+      <div class="ai-article-byline"><span class="ai-tool-mark" data-tool="{{ page.tool }}">{{ ai_tool.mark | default: '✳' }}</span><div><strong>{{ site.author.name }}</strong><span>Checked {{ page.verified_at | date: '%b %-d, %Y' }} · {{ ai_tool.name | default: 'Across tools' }}</span></div></div>
+      {% include share-links.html label='Share this guide' %}
     </header>
     <div class="ai-article-layout section-shell">
       <aside class="ai-article-sidebar" aria-label="Guide companion"><div><details class="article-toc" data-article-toc hidden open><summary>In this guide <span aria-hidden="true">⌄</span></summary><nav aria-label="In this guide" data-article-toc-links></nav></details><div class="ai-source-list"><p class="ai-section-label">Official references</p><ul>{% for source in page.sources %}<li><a href="{{ source.url | escape }}">{{ source.title }} ↗</a></li>{% endfor %}</ul><p>Scope: {{ page.surface }}.<br>Availability depends on your version, account, and installed extensions.</p></div></div></aside>

@@ -19,7 +19,8 @@ layout: default
             <div class="article-meta"><span class="article-category">{{ page.category }}</span><span>{{ reading_minutes }} min read</span><time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%b %-d, %Y' }}</time></div>
             <h1 class="display">{{ page.title }}</h1>
             <p class="page-intro">{{ page.description }}</p>
-            <div class="article-byline"><span class="article-author-mark" aria-hidden="true">AP</span><div><strong>{{ site.author.name }}</strong><span>Notes from {{ book.brand | default: book.title }}</span></div><button type="button" class="article-share" data-copy-link hidden>Copy link <span aria-hidden="true">↗</span></button><span class="sr-only" data-share-status role="status"></span></div>
+            <div class="article-byline"><span class="article-author-mark" aria-hidden="true">AP</span><div><strong>{{ site.author.name }}</strong><span>Notes from {{ book.brand | default: book.title }}</span></div></div>
+            {% include share-links.html label='Share this note' %}
           </div>
           <div class="article-visual" aria-hidden="true">{% include post-art.html kind=page.illustration %}<span class="article-visual-caption">One idea, put to work.</span></div>
         </div>

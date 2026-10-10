@@ -208,6 +208,17 @@ Generated images are published atomically so live Jekyll rebuilds cannot copy
 partially encoded covers or social cards. `npm run check:site` also decodes
 linked raster images in the publication build to reject empty or corrupt files.
 
+`_includes/share-links.html` provides LinkedIn, X, Facebook, WhatsApp, Reddit, and email
+sharing for posts, AI guides, books, chapters, projects, the CV, CodePop, and
+playlists. Reuse this include on new content pages. Links always use the public
+canonical URL from `_config.yml`, without visit-specific queries or fragments.
+The links work without JavaScript; `assets/js/share.js` adds clipboard copying
+with a selectable-link fallback and native sharing on supported devices. Share
+controls are hidden when printing and load no third-party widgets.
+Compact icons use each network's colors, keep one row on small screens, and
+provide accessible names and hover labels. Profile photos keep their local
+originals, with a matching color treatment and geometric frames in CSS.
+
 The site includes a sitemap, canonical URLs, JSON-LD, social previews, favicon,
 RSS/Atom at `/feed.xml`, custom 404 and compatibility downloads. See
 [measurement setup](docs/measurement.md) for Search Console, Google Analytics,

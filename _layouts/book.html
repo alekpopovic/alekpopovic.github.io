@@ -42,6 +42,7 @@ layout: default
         <div class="reader-page-header"><span>{{ book.brand }} <span aria-hidden="true">/</span> {{ chapter.label }}</span><span>{{ next_index | prepend: '0' | slice: -2, 2 }}</span></div>
         <div class="reader-meta"><p class="eyebrow">{{ chapter.label }}</p><p>{{ chapter.reading_minutes }} min read <span aria-hidden="true">·</span> Section {{ next_index }} of {{ book.chapters.size }}</p></div>
         <article class="book-article" lang="{{ book.language | escape }}">{{ content }}</article>
+        {% include share-links.html label='Share this chapter' %}
         <div class="reader-page-footer"><span>{{ book.author }}</span><span>{{ next_index }} / {{ book.chapters.size }}</span></div>
         </div>
         <nav class="reader-pager" aria-label="Chapter navigation">
