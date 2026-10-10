@@ -1,0 +1,38 @@
+{
+  "edition": "0.1",
+  "verification_date": "2026-10-10",
+  "python": "3.13.5",
+  "go": "go version go1.23.2 linux/amd64",
+  "renderer": "WeasyPrint 68.0",
+  "markdown_parser": "markdown-it-py 4.2.0",
+  "environment": "Linux x86_64",
+  "go_test_cases_passed": 31,
+  "publication_tests_passed": 17,
+  "go_race_exit_code": 0,
+  "go_vet_exit_code": 0,
+  "full_check_exit_code": 0,
+  "pdf_pages": 98,
+  "sample_pdf_pages": 24,
+  "out_of_page_text_spans": 0,
+  "manuscript": {
+    "manuscript_files": 30,
+    "chapters": 24,
+    "appendices": 5,
+    "manuscript_words": 21017,
+    "source_references": 24,
+    "implementation_items": 80,
+    "local_markdown_links": 46
+  },
+  "not_executed": [
+    "PostgreSQL integration",
+    "Docker and BuildKit",
+    "Angular compilation",
+    "multi-host runner protocol",
+    "cloud deployment",
+    "GitHub hosted workflows",
+    "GitHub Pages publication",
+    "external publishing platform upload",
+    "EPUBCheck"
+  ],
+  "method_note": "Selected PDF page renders reviewed; all pages checked for out-of-page text bounds. EPUB XML, resources and links checked by the included publication tests."
+}

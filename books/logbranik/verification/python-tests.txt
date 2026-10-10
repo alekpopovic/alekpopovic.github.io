@@ -1,0 +1,49 @@
+test_allowlist_wins (test_guard.CoreTests.test_allowlist_wins) ... ok
+test_atomic_persistence_failure_keeps_old_view (test_guard.CoreTests.test_atomic_persistence_failure_keeps_old_view) ... ok
+test_backward_clock_unavailable (test_guard.CoreTests.test_backward_clock_unavailable) ... ok
+test_bad_record_does_not_poison_neighbors (test_guard.CoreTests.test_bad_record_does_not_poison_neighbors) ... ok
+test_bad_ttl_and_zone_id_rejected (test_guard.CoreTests.test_bad_ttl_and_zone_id_rejected) ... ok
+test_batch_rejection_is_atomic (test_guard.CoreTests.test_batch_rejection_is_atomic) ... ok
+test_boolean_revision_rejected (test_guard.CoreTests.test_boolean_revision_rejected) ... ok
+test_central_restart_preserves_revision (test_guard.CoreTests.test_central_restart_preserves_revision) ... ok
+test_concurrent_checks_during_update (test_guard.CoreTests.test_concurrent_checks_during_update) ... ok
+test_conflicting_duplicate_quarantined (test_guard.CoreTests.test_conflicting_duplicate_quarantined) ... ok
+test_duplicate_json_keys_rejected (test_guard.CoreTests.test_duplicate_json_keys_rejected) ... ok
+test_duplicates_do_not_trigger (test_guard.CoreTests.test_duplicates_do_not_trigger) ... ok
+test_exact_duplicate_after_delivery_expiry (test_guard.CoreTests.test_exact_duplicate_after_delivery_expiry) ... ok
+test_expiry_without_central (test_guard.CoreTests.test_expiry_without_central) ... ok
+test_first_boot_not_ready (test_guard.CoreTests.test_first_boot_not_ready) ... ok
+test_future_events_never_trigger (test_guard.CoreTests.test_future_events_never_trigger) ... ok
+test_guard_responses_never_trigger (test_guard.CoreTests.test_guard_responses_never_trigger) ... ok
+test_ipv4_mapped_ipv6_matches (test_guard.CoreTests.test_ipv4_mapped_ipv6_matches) ... ok
+test_ipv6_exact_address (test_guard.CoreTests.test_ipv6_exact_address) ... ok
+test_local_emergency_bypass (test_guard.CoreTests.test_local_emergency_bypass) ... ok
+test_malformed_nested_types_quarantined (test_guard.CoreTests.test_malformed_nested_types_quarantined) ... ok
+test_monitor_then_enforce_then_revoke (test_guard.CoreTests.test_monitor_then_enforce_then_revoke) ... ok
+test_new_expired_envelope_rejected (test_guard.CoreTests.test_new_expired_envelope_rejected) ... ok
+test_old_snapshot_cannot_resurrect_revoke (test_guard.CoreTests.test_old_snapshot_cannot_resurrect_revoke) ... ok
+test_refresh_does_not_extend_ttl (test_guard.CoreTests.test_refresh_does_not_extend_ttl) ... ok
+test_restart_accepts_saved_envelope_after_delivery_expiry (test_guard.CoreTests.test_restart_accepts_saved_envelope_after_delivery_expiry) ... ok
+test_same_revision_different_bytes_rejected (test_guard.CoreTests.test_same_revision_different_bytes_rejected) ... ok
+test_scope_rejected (test_guard.CoreTests.test_scope_rejected) ... ok
+test_signed_empty_snapshot_readies (test_guard.CoreTests.test_signed_empty_snapshot_readies) ... ok
+test_single_path_does_not_trigger (test_guard.CoreTests.test_single_path_does_not_trigger) ... ok
+test_stale_events_never_trigger (test_guard.CoreTests.test_stale_events_never_trigger) ... ok
+test_tampered_signature_rejected (test_guard.CoreTests.test_tampered_signature_rejected) ... ok
+test_unknown_field_and_oversize_rejected (test_guard.CoreTests.test_unknown_field_and_oversize_rejected) ... ok
+test_wrong_key_and_epoch_rejected (test_guard.CoreTests.test_wrong_key_and_epoch_rejected) ... ok
+test_ca_valid_wrong_role_denied (test_guard.TransportTests.test_ca_valid_wrong_role_denied) ... ok
+test_ingest_identity_from_certificate (test_guard.TransportTests.test_ingest_identity_from_certificate) ... ok
+test_loopback_auth_has_no_control_route (test_guard.TransportTests.test_loopback_auth_has_no_control_route) ... ok
+test_missing_client_certificate_fails (test_guard.TransportTests.test_missing_client_certificate_fails) ... ok
+test_mtls_push_and_ack (test_guard.TransportTests.test_mtls_push_and_ack) ... ok
+test_unix_auth_has_no_control_route (test_guard.TransportTests.test_unix_auth_has_no_control_route) ... skipped 'execution host disallows AF_UNIX; run this gate on Linux deployment host'
+test_missing_timezone_rejected (test_log_normalization.NormalizationTests.test_missing_timezone_rejected) ... ok
+test_numeric_units_and_escaped_path (test_log_normalization.NormalizationTests.test_numeric_units_and_escaped_path) ... ok
+test_query_rejected (test_log_normalization.NormalizationTests.test_query_rejected) ... ok
+test_render_paths_and_listener_match (test_log_normalization.NormalizationTests.test_render_paths_and_listener_match) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 2.444s
+
+OK (skipped=1)

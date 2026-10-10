@@ -1,0 +1,29 @@
+<svg class="post-art" viewBox="0 0 400 220" fill="none" aria-hidden="true">
+  <circle cx="330" cy="38" r="70" fill="currentColor" opacity=".08"/><circle cx="54" cy="204" r="88" fill="currentColor" opacity=".06"/>
+  <g stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  {% case include.kind %}
+  {% when 'clock' %}
+    <path d="M61 111h51m176 0h51" stroke-dasharray="5 9"/><circle cx="200" cy="110" r="70" fill="var(--post-paper)"/>
+    <path d="M200 57v13m53 40h-13m-40 53v-13m-53-40h13m40-31v35l24 14"/><circle cx="200" cy="110" r="5" fill="currentColor"/>
+    <rect x="290" y="85" width="42" height="50" rx="12" fill="var(--post-pop)"/><path d="m303 110 7 7 12-15"/>
+  {% when 'queue' %}
+    <path d="M86 109h230m-13-10 13 10-13 10"/>
+    <rect x="45" y="62" width="89" height="96" rx="18" fill="var(--post-paper)" transform="rotate(-7 90 110)"/><path d="M67 89h45M67 105h33m-33 17h40"/>
+    <rect x="158" y="62" width="89" height="96" rx="18" fill="var(--post-pop)"/><path d="M180 88h45m-45 17h33m-33 17h40"/>
+    <rect x="276" y="62" width="78" height="96" rx="18" fill="var(--post-paper)" transform="rotate(7 315 110)"/><path d="m297 110 12 12 23-26"/>
+  {% when 'shield' %}
+    <path d="m200 36 70 25v54c0 38-36 60-70 78-34-18-70-40-70-78V61l70-25Z" fill="var(--post-paper)"/><path d="m172 111 20 20 37-42" stroke-width="7"/>
+    <circle cx="91" cy="84" r="18" fill="var(--post-pop)"/><circle cx="311" cy="153" r="25" fill="var(--post-pop)"/><path d="M92 115v33m-16-16h32m203-54V45m-16 17h32"/>
+  {% when 'network' %}
+    <path d="m90 67 112 44 111-44m-223 88 112-44 111 44" stroke-dasharray="6 8"/><rect x="165" y="73" width="74" height="74" rx="22" fill="var(--post-pop)"/><circle cx="202" cy="110" r="13"/>
+    <circle cx="80" cy="61" r="25" fill="var(--post-paper)"/><circle cx="80" cy="161" r="25" fill="var(--post-paper)"/><circle cx="323" cy="61" r="25" fill="var(--post-paper)"/><circle cx="323" cy="161" r="25" fill="var(--post-paper)"/><path d="m314 160 6 7 13-15M71 61h18m-9-9v18"/>
+  {% when 'package' %}
+    <path d="m200 35 80 43v89l-80 40-80-40V78l80-43Z" fill="var(--post-paper)"/><path d="m120 78 80 42 80-42m-80 42v87m-39-151 78 43v36l-25-12V86"/>
+    <circle cx="307" cy="157" r="29" fill="var(--post-pop)"/><path d="m295 157 8 8 17-18M61 78h32m-16-16v32"/>
+  {% else %}
+    <rect x="78" y="40" width="244" height="143" rx="22" fill="var(--post-paper)"/><path d="M78 73h244"/>
+    <circle cx="97" cy="57" r="3" fill="currentColor"/><circle cx="110" cy="57" r="3" fill="currentColor"/><circle cx="123" cy="57" r="3" fill="currentColor"/><path d="M102 98h61m-61 23h100m-100 23h78"/>
+    <path d="m216 139 17-25 17 12 20-37 24 47" stroke-width="5"/><circle cx="306" cy="177" r="29" fill="var(--post-pop)"/><path d="m294 177 8 8 17-18"/>
+  {% endcase %}
+  </g>
+</svg>

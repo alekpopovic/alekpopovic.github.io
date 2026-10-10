@@ -1,0 +1,25 @@
+{% assign canonical = page.url | absolute_url %}
+{% assign image_url = page.social_image | default: '/assets/social/site.png' | absolute_url %}
+<link rel="canonical" href="{{ canonical | escape }}">
+<meta property="og:site_name" content="{{ site.title | escape }}">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="{{ image_url | escape }}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{{ page.title | default: site.title | escape }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@alek_popovic">
+<meta name="twitter:title" content="{{ page.title | default: site.title | escape }}">
+<meta name="twitter:description" content="{{ page.description | default: site.description | escape }}">
+<meta name="twitter:image" content="{{ image_url | escape }}">
+{% if page.layout == 'post' %}<meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}"><meta property="article:author" content="{{ '/about/' | absolute_url }}">{% endif %}
+{% if page.noindex %}<meta name="robots" content="noindex, follow">{% endif %}
+{% if site.google_site_verification != '' and site.google_site_verification %}<meta name="google-site-verification" content="{{ site.google_site_verification | escape }}">{% endif %}
+{% if page.structured_data %}<script type="application/ld+json">{{ page.structured_data }}</script>{% endif %}
+<link rel="alternate" type="application/atom+xml" title="Aleksandar Popovic — Field notes" href="{{ '/feed.xml' | relative_url }}">
+<link rel="icon" type="image/svg+xml" href="{{ '/assets/brand/favicon.svg' | relative_url }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ '/assets/brand/favicon-32.png' | relative_url }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ '/assets/brand/apple-touch-icon.png' | relative_url }}">
+<link rel="manifest" href="{{ '/site.webmanifest' | relative_url }}">
+<link rel="preload" href="{{ '/assets/fonts/dm-sans.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ '/assets/fonts/passion-one-bold.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>

@@ -1,0 +1,38 @@
+<svg class="{{ include.class | default: 'project-art' }}" viewBox="0 0 200 160" fill="none" aria-hidden="true">
+{% case include.kind %}
+{% when 'orchestration' %}
+  <path d="M100 54v31M35 113V85h130v28" stroke="#fff3b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="72" y="13" width="56" height="48" rx="13" fill="#5941d9"/><path d="m87 37 9 9 17-19" stroke="#ffd33d" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="10" y="108" width="50" height="40" rx="10" fill="#ffc2d1"/><rect x="75" y="108" width="50" height="40" rx="10" fill="#ffd33d"/><rect x="140" y="108" width="50" height="40" rx="10" fill="#00c6c8"/>
+  <path d="M26 121v14m18-14v14m47-14v14m18-14v14m47-14v14m18-14v14" stroke="#5941d9" stroke-width="4" stroke-linecap="round"/>
+{% when 'pipeline' %}
+  <path d="M48 65C19 63 22 29 46 27 54 3 88 5 98 25c28-2 36 35 7 40H48Z" fill="#fff3b8"/>
+  <path d="M43 86h113v45H76" stroke="#ffd33d" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="16" y="69" width="40" height="34" rx="9" fill="#ffc2d1"/><rect x="80" y="69" width="40" height="34" rx="9" fill="#ffd33d"/><rect x="136" y="114" width="48" height="34" rx="9" fill="#00c6c8"/>
+  <path d="m148 130 8 8 15-16" stroke="#5941d9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="m81 122-10 9 10 9" stroke="#ffd33d" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+{% when 'platform' %}
+  <path d="m100 63 78 39-78 39-78-39 78-39Z" fill="#2864ff"/><path d="M22 102v19l78 39 78-39v-19l-78 39-78-39Z" fill="#5941d9"/>
+  <path d="m100 29 65 32-65 33-65-33 65-32Z" fill="#fff3b8"/><path d="M35 61v20l65 33 65-33V61l-65 33-65-33Z" fill="#fd4401"/>
+  <path d="m100 3 46 23-46 23-46-23 46-23Z" fill="#ffd33d"/><path d="M54 26v20l46 23 46-23V26l-46 23-46-23Z" fill="#5941d9"/>
+{% when 'desktop' %}
+  <rect x="17" y="20" width="166" height="111" rx="16" fill="#fff3b8"/><rect x="28" y="32" width="144" height="87" rx="8" fill="#2864ff"/>
+  <path d="M10 137h180l-13 15H23l-13-15Z" fill="#ffc2d1"/>
+  <rect x="42" y="49" width="52" height="50" rx="9" fill="#ffd33d"/><path d="M54 60v27m14-27v27m14-27v27" stroke="#5941d9" stroke-width="4" stroke-linecap="round"/>
+  <path d="m112 58 12 12-12 12m21 5h19" stroke="#fff3b8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+{% when 'routes' %}
+  <path d="M48 133V32h102v101M48 80h102M100 32v101" stroke="#fff3b8" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="32" r="18" fill="#2864ff"/><circle cx="150" cy="32" r="18" fill="#ffc2d1"/><circle cx="48" cy="133" r="18" fill="#ffd33d"/><circle cx="100" cy="80" r="18" fill="#5941d9"/><circle cx="150" cy="133" r="18" fill="#00c6c8"/>
+{% when 'generator' %}
+  <path d="m100 5 19 21 28-5 5 29 25 14-14 26 11 27-28 10-9 28-28-9-24 15-17-24-29-2 2-30-23-19 20-22-2-29 30-2L100 5Z" fill="#ffd33d"/>
+  <rect x="56" y="53" width="88" height="65" rx="10" fill="#5941d9"/><path d="m77 85 12 12 28-25" stroke="#fff3b8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+{% when 'recipes' %}
+  <path d="M100 93v47" stroke="#5941d9" stroke-width="11"/><path d="M98 125c-34 0-46-12-48-31 31-2 45 12 48 31Zm5-12c30 0 42-13 44-31-28 0-40 13-44 31Z" fill="#2864ff"/>
+  <path d="M99 8c17 0 20 19 20 19s22-10 31 6-6 30-6 30 15 18 3 31-31 3-31 3-10 20-27 14-16-27-16-27-25 1-27-17 18-27 18-27S60 16 77 11c9-3 16 4 22-3Z" fill="#fd4401"/>
+  <circle cx="99" cy="58" r="23" fill="#ffd33d"/><path d="M70 139h61l-9 21H79l-9-21Z" fill="#5941d9"/>
+{% when 'cloud' %}
+  <path d="M55 101C11 98 15 44 52 40 65 2 119 4 134 38c43-3 58 57 13 63H55Z" fill="#fff3b8"/>
+  <rect x="74" y="79" width="56" height="58" rx="10" fill="#ffc2d1"/><path d="M87 80V68a15 15 0 0 1 30 0v12" stroke="#fd4401" stroke-width="9"/><circle cx="102" cy="105" r="7" fill="#5941d9"/><path d="M102 105v13" stroke="#5941d9" stroke-width="6" stroke-linecap="round"/>
+{% when 'codepop' %}
+  <rect x="10" y="24" width="180" height="118" rx="24" fill="#2864ff"/><path d="m60 60-25 23 25 23m80-46 25 23-25 23m-29-58-22 68" stroke="#fff3b8" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+{% endcase %}
+</svg>

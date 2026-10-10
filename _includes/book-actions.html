@@ -1,0 +1,6 @@
+<div class="book-actions">
+  <a class="button button-blue" href="{{ include.book.first_chapter | relative_url }}">Read online <span class="arrow" aria-hidden="true">↗</span></a>
+  <a class="button resume-book" data-resume-book="{{ include.book.id | escape }}" data-book-root="{{ include.book.url | relative_url }}" hidden>Continue reading <span class="arrow" aria-hidden="true">↗</span></a>
+  <a class="button" href="{{ include.book.pdf | relative_url }}" download>Download PDF <span class="arrow" aria-hidden="true">↓</span></a>
+  <a class="button" href="{{ include.book.epub | relative_url }}" download>Download EPUB <span class="arrow" aria-hidden="true">↓</span></a>
+</div>

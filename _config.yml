@@ -8,12 +8,24 @@ author:
   name: Aleksandar Popovic
   username: alekpopovic
   location: Serbia
-  company: SpotHopperLLC
+  company: SpotHopper
   github: https://github.com/alekpopovic
   linkedin: https://www.linkedin.com/in/alekpopovic
   x: https://x.com/alek_popovic
 
+# Public verification token from a Search Console URL-prefix property.
+google_site_verification: ""
+# Owner-provided GA4 measurement ID. Leave empty to disable the Google tag.
+google_analytics: "G-QCGFECRJDS"
+# Enable after creating a Plausible site for this hostname. No requests when empty.
+analytics:
+  domain: ""
+  endpoint: "https://plausible.io/api/event"
+
 exclude:
+  - _site
+  - _site-dev
+  - .venv
   - Gemfile
   - Gemfile.lock
   - node_modules
@@ -22,3 +34,21 @@ exclude:
   - tailwind.config.js
   - src
   - README.md
+  - AGENTS.md
+  - books/modern-ci-book
+  - books/logbranik
+  - books/agentplane-book
+  - books/Secret_Contract_Operator
+  - books/universal-tracking-technical-book
+  - books/ScreenShot Tool -20261010164007.png
+  - logbranik-leanpub-complete-pack.zip
+  - modern-ci-book-open-source.zip
+  - requirements-books.txt
+  - scripts
+  - tests
+  - docs
+  - playwright.config.js
+  - test-results
+  - playwright-report
+  - reports
+  - modern-ci-book.pdf

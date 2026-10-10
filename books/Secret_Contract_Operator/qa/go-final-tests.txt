@@ -1,0 +1,9 @@
+go version go1.23.2 linux/amd64
+ok  	example.com/secret-contract-book/contractlab	0.004s
+ok  	example.com/secret-contract-book/contractlab	1.017s
+fuzz: elapsed: 0s, gathering baseline coverage: 0/2 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 2/2 completed, now fuzzing with 2 workers
+fuzz: elapsed: 3s, execs: 52421 (17466/sec), new interesting: 130 (total: 132)
+fuzz: elapsed: 3s, execs: 52421 (0/sec), new interesting: 130 (total: 132)
+PASS
+ok  	example.com/secret-contract-book/contractlab	3.057s

@@ -1,0 +1,40 @@
+# Lab-only HTTP listener. Merge into the existing TLS site after routing review.
+server {
+    listen 127.0.0.1:8080;
+    server_name example.test;
+    set $guard_site "site-demo";
+
+    # Immediate access-log writes for the baseline; measure overhead before buffering.
+    access_log /var/log/nginx/guard-access.json guard_json;
+    log_subrequest off;
+
+    location / {
+        auth_request /_guard_auth;
+        auth_request_set $guard_outcome $upstream_http_x_guard_outcome;
+        auth_request_set $guard_revision $upstream_http_x_guard_revision;
+
+        # A real echo application for the lab; adapt upstream for the actual site.
+        proxy_set_header Host $host;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_pass http://127.0.0.1:8081;
+    }
+
+    location = /_guard_auth {
+        internal;
+        auth_request off;
+        access_log off;
+        proxy_pass http://unix:/run/nginx-guard/auth.sock:/v1/check;
+        proxy_method GET;
+        proxy_pass_request_body off;
+        proxy_pass_request_headers off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Host localhost;
+        proxy_set_header X-Guard-IP $remote_addr;
+        proxy_set_header X-Guard-Site $guard_site;
+        proxy_connect_timeout 100ms;
+        proxy_send_timeout 100ms;
+        proxy_read_timeout 100ms;
+        proxy_next_upstream off;
+        proxy_cache off;
+    }
+}

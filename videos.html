@@ -1,0 +1,57 @@
+---
+layout: default
+title: Videos · Aleksandar Popovic
+description: Watch engineering walkthroughs on AWS disaster recovery, DevOps, package releases, and infrastructure.
+permalink: /videos/
+---
+
+<main id="main-content">
+  <section class="page-hero videos-hero">
+    <div class="section-shell videos-hero-inner">
+      <div>
+        <p class="eyebrow tag">Videos</p>
+        <h1 class="display">See the<br>systems work.</h1>
+        <p class="page-intro">Engineering ideas, explained on screen. Explore disaster recovery on AWS and the workflows behind building, releasing, and running software.</p>
+        <nav class="video-shortcuts" aria-label="Choose a playlist">
+          {% for playlist in site.data.video_playlists %}<a class="button" href="#{{ playlist.slug }}">{{ playlist.title | escape }} <span aria-hidden="true">↓</span></a>{% endfor %}
+        </nav>
+      </div>
+      <svg class="videos-hero-art" viewBox="0 0 320 280" fill="none" aria-hidden="true">
+        <rect x="38" y="25" width="250" height="195" rx="30" fill="#ffc2d1" transform="rotate(8 163 122)"/>
+        <rect x="18" y="35" width="250" height="195" rx="30" fill="#2864ff" transform="rotate(-7 143 132)"/>
+        <circle cx="143" cy="125" r="58" fill="#fff3b8"/><path d="m130 94 43 31-43 31V94Z" fill="#fd4401"/>
+        <path d="M50 196h180" stroke="#fff3b8" stroke-width="7" stroke-linecap="round"/><path d="M50 196h66" stroke="#ffd33d" stroke-width="7" stroke-linecap="round"/><circle cx="116" cy="196" r="9" fill="#ffd33d"/>
+        <circle cx="265" cy="228" r="38" fill="#5941d9"/><path d="M251 214v28m27-28v28" stroke="#ffd33d" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </section>
+  <section class="section-shell video-library" aria-label="Video playlists">
+    <div class="video-library-heading"><p class="eyebrow">{{ site.data.video_playlists.size }} playlists. Pick your next idea.</p><p>Choose a video below to load the player, or open the playlist on YouTube.</p></div>
+    <div class="playlist-grid">
+      {% for playlist in site.data.video_playlists %}
+      <article class="playlist-card" id="{{ playlist.slug }}" data-playlist="{{ playlist.id }}">
+        <div class="playlist-heading">
+          <div class="playlist-label"><p class="eyebrow">{{ playlist.category | escape }}</p><span aria-hidden="true">0{{ forloop.index }}</span></div>
+          <h2>{{ playlist.title | escape }}</h2>
+          <p class="playlist-description">{{ playlist.description | escape }}</p>
+        </div>
+        <div class="playlist-player">
+          <a class="video-load" href="https://www.youtube.com/playlist?list={{ playlist.id }}" data-load-playlist><span class="video-play-mark" aria-hidden="true">▶</span><strong>Watch {{ playlist.title | escape }}</strong><span>Load the YouTube player</span></a>
+          <iframe data-player-src="https://www.youtube-nocookie.com/embed/videoseries?list={{ playlist.id }}&amp;rel=0&amp;playsinline=1" title="{{ playlist.title | escape }} — YouTube playlist" width="640" height="360" hidden referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+        <div class="playlist-queue-heading"><h3>In this playlist</h3><span>{{ playlist.videos.size }} videos</span></div>
+        <ol class="playlist-queue" aria-label="Videos in {{ playlist.title | escape }}">
+          {% for video in playlist.videos %}
+          <li><a class="playlist-video" href="https://www.youtube.com/watch?v={{ video.id }}&amp;list={{ playlist.id }}" data-video-id="{{ video.id }}" {% if forloop.first %}aria-current="true"{% endif %}>
+            <span class="video-number" aria-hidden="true">{% if forloop.index < 10 %}0{% endif %}{{ forloop.index }}</span>
+            <img src="https://i.ytimg.com/vi/{{ video.id }}/mqdefault.jpg" alt="" width="120" height="68" loading="lazy">
+            <span class="video-title">{{ video.title | escape }}</span><span class="video-duration">{{ video.duration | escape }}</span>
+          </a></li>
+          {% endfor %}
+        </ol>
+        <a class="playlist-youtube" href="https://www.youtube.com/playlist?list={{ playlist.id }}">Open playlist on YouTube <span aria-hidden="true">↗</span></a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>

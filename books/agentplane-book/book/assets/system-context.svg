@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="610" viewBox="0 0 920 610">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0L8,4L0,8Z" fill="#426c77"/></marker></defs>
+<rect width="920" height="610" fill="white"/>
+<rect x="300" y="10" width="320" height="60" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="460.0" y="40.0" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Browser / SDK / CLI</text>
+<rect x="20" y="105" width="420" height="425" rx="12" fill="white" stroke="#9bb8bd" stroke-width="2"/>
+<text x="230" y="135" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="18" fill="#34636e">SAAS CONTROL PLANE</text>
+<rect x="480" y="105" width="420" height="425" rx="12" fill="white" stroke="#9bb8bd" stroke-width="2"/>
+<text x="690" y="135" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="18" fill="#34636e">CUSTOMER CLUSTER</text>
+<rect x="50" y="155" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="230.0" y="174.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">API</text>
+<text x="230.0" y="200.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Identity + tenant authorization</text>
+<path d="M230 220V245" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="50" y="245" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="230.0" y="264.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">PostgreSQL</text>
+<text x="230.0" y="290.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Intent + audit + outbox</text>
+<path d="M230 310V335" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="50" y="335" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="230.0" y="354.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Worker</text>
+<text x="230.0" y="380.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Durable command transport</text>
+<path d="M230 400V425" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="50" y="425" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="230.0" y="444.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Connector gateway</text>
+<text x="230.0" y="470.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Authenticated stream</text>
+<rect x="510" y="155" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="690.0" y="174.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Outbound connector</text>
+<text x="690.0" y="200.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Customer-owned policy bounds</text>
+<path d="M690 220V245" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="510" y="245" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="690.0" y="264.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Operator + upstream adapter</text>
+<text x="690.0" y="290.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Constrained local reconciliation</text>
+<path d="M690 310V335" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="510" y="335" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="690.0" y="354.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Agent Sandbox + runtime</text>
+<text x="690.0" y="380.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Workspace + limited identity</text>
+<path d="M690 400V425" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="510" y="425" width="360" height="65" rx="10" fill="#eef6f6" stroke="#477b83" stroke-width="2"/>
+<text x="690.0" y="444.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Governed tool gateway</text>
+<text x="690.0" y="470.5" text-anchor="middle" dominant-baseline="middle" font-family="DejaVu Sans,sans-serif" font-size="19" fill="#183e49">Policy + approval enforcement</text>
+<path d="M420 70V90H35V187H50" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M410 457H458V187H510" fill="none" stroke="#426c77" stroke-width="2.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="460" y="562" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#34636e">The connector initiates mTLS; the channel still carries remote authority.</text>
+<text x="460" y="588" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#34636e">Local policy bounds must reject requests outside the customer envelope.</text>
+</svg>

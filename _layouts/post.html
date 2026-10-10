@@ -2,24 +2,50 @@
 layout: default
 ---
 
-<main class="min-h-screen bg-paper">
-  <article class="section-shell py-16 sm:py-20">
-    <div class="max-w-3xl">
-      <p class="eyebrow">{{ page.category | default: "Open source" }}</p>
-      <h1 class="mt-4 font-display text-5xl leading-tight text-ink sm:text-6xl">{{ page.title }}</h1>
-      <p class="mt-6 text-xl leading-8 text-moss">{{ page.description }}</p>
-      <div class="mt-8 flex flex-wrap gap-3 text-sm font-bold">
-        {% if page.stack %}
-          <span class="rounded-md bg-white px-3 py-2 text-moss">{{ page.stack }}</span>
-        {% endif %}
-        {% if page.lib_url %}
-          <a class="focus-ring rounded-md bg-ink px-3 py-2 text-white hover:bg-moss" href="{{ page.lib_url }}">View library</a>
-        {% endif %}
+{% if page.section == 'ai' %}
+{% include ai-article.html %}
+{% else %}
+{% assign book = site.data.books | where: 'id', page.book_id | first %}
+{% assign chapter = book.chapters | where: 'slug', page.chapter_slug | first %}
+{% assign reading_minutes = content | number_of_words | divided_by: 200.0 | ceil | at_least: 1 %}
+<main id="main-content" class="post-detail" data-book="{{ page.book_id | escape }}">
+  <div class="article-progress" data-reading-progress hidden aria-hidden="true"><span></span></div>
+  <article class="post-article" data-book-id="{{ page.book_id | escape }}" data-chapter-slug="{{ page.chapter_slug | escape }}">
+    <header class="page-hero article-hero">
+      <div class="section-shell">
+        <nav class="article-breadcrumbs" aria-label="Breadcrumb"><a href="{{ '/posts/' | relative_url }}">All notes</a><span aria-hidden="true">/</span><a href="{{ '/posts/' | relative_url }}?category={{ page.category | url_encode }}">{{ page.category }}</a></nav>
+        <div class="article-heading-grid">
+          <div>
+            <div class="article-meta"><span class="article-category">{{ page.category }}</span><span>{{ reading_minutes }} min read</span><time datetime="{{ page.date | date: '%Y-%m-%d' }}">{{ page.date | date: '%b %-d, %Y' }}</time></div>
+            <h1 class="display">{{ page.title }}</h1>
+            <p class="page-intro">{{ page.description }}</p>
+            <div class="article-byline"><span class="article-author-mark" aria-hidden="true">AP</span><div><strong>{{ site.author.name }}</strong><span>Notes from {{ book.brand | default: book.title }}</span></div><button type="button" class="article-share" data-copy-link hidden>Copy link <span aria-hidden="true">↗</span></button><span class="sr-only" data-share-status role="status"></span></div>
+          </div>
+          <div class="article-visual" aria-hidden="true">{% include post-art.html kind=page.illustration %}<span class="article-visual-caption">One idea, put to work.</span></div>
+        </div>
+      </div>
+    </header>
+    <div class="section-shell article-layout">
+      <aside class="article-sidebar" aria-label="Reading companion"><div class="article-sidebar-inner">
+        <details class="article-toc" data-article-toc hidden open><summary>In this note <span aria-hidden="true">⌄</span></summary><nav aria-label="In this note" data-article-toc-links></nav></details>
+        <div class="article-source"><p class="eyebrow">Keep reading</p><p class="article-source-book">{{ book.title }}</p><p class="article-source-chapter">{{ chapter.title }}</p><a href="{{ chapter.url | relative_url }}">Read the chapter <span aria-hidden="true">↗</span></a><a class="article-source-contents" href="{{ book.url | relative_url }}">Full book contents</a></div>
+      </div></aside>
+      <div class="article-main">
+        <div class="article-prose prose prose-lg" data-post-content>{{ content }}</div>
+        <aside class="article-chapter-callout" aria-label="Related book chapter"><span class="article-chapter-mark" aria-hidden="true">↗</span><div><p class="eyebrow">Take the idea further</p><h2>{{ chapter.title }}</h2><p>The complete explanation, exercises, and worked examples are in {{ book.title }}.</p><a class="button button-blue" href="{{ chapter.url | relative_url }}">Continue with the chapter <span class="arrow" aria-hidden="true">↗</span></a></div></aside>
+        <div class="article-end"><a href="{{ '/posts/' | relative_url }}">← Back to all notes</a><a href="#main-content">Back to top ↑</a></div>
       </div>
     </div>
-
-    <div class="prose prose-lg mt-12 max-w-3xl prose-headings:font-display prose-headings:text-ink prose-p:text-moss prose-a:font-bold prose-a:text-clay prose-strong:text-ink">
-      {{ content }}
-    </div>
   </article>
+  <section class="article-related section-space"><div class="section-shell">
+    <div class="section-top"><div><p class="eyebrow tag">A little more reading</p><h2 class="display">Follow the thread.</h2></div><a class="button" href="{{ '/posts/' | relative_url }}?book={{ book.id }}">More from {{ book.brand | default: book.title }} <span class="arrow" aria-hidden="true">↗</span></a></div>
+    <div class="posts-grid posts-grid-all">
+      {% assign related_posts = site.posts | where: 'book_id', page.book_id %}{% assign related_count = 0 %}
+      {% for related_post in related_posts %}{% unless related_post.url == page.url %}
+        {% include post-card.html post=related_post heading='h3' %}
+        {% assign related_count = related_count | plus: 1 %}{% if related_count == 3 %}{% break %}{% endif %}
+      {% endunless %}{% endfor %}
+    </div>
+  </div></section>
 </main>
+{% endif %}

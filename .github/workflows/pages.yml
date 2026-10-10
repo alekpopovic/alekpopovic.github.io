@@ -3,6 +3,8 @@ name: Deploy Jekyll site to Pages
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
@@ -30,17 +32,64 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Build Tailwind
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install book publishing dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+          python -m pip install -r requirements-books.txt
+
+      - name: Validate book publication
+        working-directory: books/modern-ci-book
+        run: |
+          python scripts/check.py
+          python -m unittest discover -s scripts -p 'test_*.py' -v
+
+      - name: Build book editions and Tailwind
         run: npm run build
+
+      - name: Validate AgentPlane source publication and supplied EPUB
+        run: |
+          python books/agentplane-book/scripts/check.py
+          python books/agentplane-book/scripts/check_epub.py books/agentplane-book/dist/AgentPlane-Book.epub
 
       - name: Build Jekyll
         run: bundle exec jekyll build
+
+      - name: Check books, downloads, and linked posts
+        run: python scripts/check-books.py
+
+      - name: Check SEO, search, feeds, and local links
+        run: npm run check:site
+
+      - name: Install browser for interface checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Check interface and accessibility
+        run: npm run test:ui
+
+      - name: Check mobile performance budgets
+        run: npm run check:performance
+
+      - name: Save quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-quality-reports
+          path: |
+            playwright-report/
+            test-results/
+            reports/
+          retention-days: 14
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -51,6 +100,7 @@ jobs:
           path: ./_site
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

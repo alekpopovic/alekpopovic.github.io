@@ -1,0 +1,27 @@
+<section class="discovery section-shell" aria-labelledby="discovery-title">
+  <div class="discovery-heading"><div><p class="eyebrow">Choose your way in</p><h2 id="discovery-title">Follow your <span>curiosity.</span></h2></div><p>A deep dive, a small idea, or a walkthrough.<br>There’s more than one way to learn.</p></div>
+  <div class="discovery-grid">
+    <a class="discovery-card discovery-books" href="{{ '/books/' | relative_url }}">
+      <div class="discovery-card-top"><span>{% include icon.html name='book' %} Read &amp; explore</span><span aria-hidden="true">01</span></div>
+      <svg class="discovery-stack" viewBox="0 0 280 150" aria-hidden="true" focusable="false" font-family="Passion One, sans-serif" font-size="24">
+        <g transform="rotate(-10 80 70)"><rect x="5" y="8" width="142" height="96" rx="10" fill="#ffc2d1"/><path d="M12 10v92" stroke="#fffaf0" stroke-width="5"/><text x="24" y="43" fill="#37235c">Read.</text></g>
+        <g transform="rotate(-2 130 80)"><rect x="60" y="20" width="142" height="96" rx="10" fill="#2864ff"/><path d="M67 22v92" stroke="#fffaf0" stroke-width="5"/><text x="79" y="55" fill="white">Build.</text></g>
+        <g transform="rotate(7 190 90)"><rect x="115" y="33" width="142" height="96" rx="10" fill="#ffd33d"/><path d="M122 35v92" stroke="#fffaf0" stroke-width="5"/><text x="134" y="68" fill="#20201e">Understand.</text><path d="M133 110h105m-105 7h105" stroke="#20201e" stroke-opacity=".2"/></g>
+      </svg>
+      <h3>Go deeper<br>with a book.</h3><p>Complete engineering books. Read online or take a PDF or EPUB with you.</p>
+      <div class="discovery-card-foot"><span>{{ site.data.books.size }} complete books</span>{% include icon.html name='arrow-up-right' %}</div>
+    </a>
+    <a class="discovery-card discovery-notes" href="{{ '/posts/' | relative_url }}">
+      <div class="discovery-card-top"><span>{% include icon.html name='notes' %} Think &amp; try</span><span aria-hidden="true">02</span></div>
+      <div class="discovery-symbol" aria-hidden="true">{% include icon.html name='code' %}<span>idea → experiment</span></div>
+      <h3>One idea.<br>A useful next step.</h3><p>Practical field notes and AI guides, with something to put to work.</p>
+      <div class="discovery-card-foot"><span>{{ site.posts.size }} notes &amp; guides</span>{% include icon.html name='arrow-up-right' %}</div>
+    </a>
+    <a class="discovery-card discovery-videos" href="{{ '/videos/' | relative_url }}">
+      <div class="discovery-card-top"><span>{% include icon.html name='play' %} Watch &amp; learn</span><span aria-hidden="true">03</span></div>
+      <div class="discovery-symbol discovery-play" aria-hidden="true">{% include icon.html name='play' %}<span>press play. stay curious.</span></div>
+      <h3>Watch it<br>come together.</h3><p>Follow the thinking and the code, one video at a time.</p>
+      <div class="discovery-card-foot"><span>Explore the video library</span>{% include icon.html name='arrow-up-right' %}</div>
+    </a>
+  </div>
+</section>

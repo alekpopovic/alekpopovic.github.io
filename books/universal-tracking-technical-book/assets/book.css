@@ -1,0 +1,295 @@
+@page {
+  size: A4;
+  margin: 20mm 18mm 21mm 20mm;
+  @top-left {
+    content: "Engineering a Universal Real-Time Tracking Platform";
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 7.5pt;
+    color: #60777a;
+  }
+  @top-right {
+    content: string(chapter);
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 7.5pt;
+    color: #60777a;
+  }
+  @bottom-center {
+    content: counter(page);
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 8pt;
+    color: #60777a;
+  }
+}
+
+@page cover {
+  margin: 0;
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-center { content: none; }
+}
+
+@page frontmatter {
+  @top-left { content: none; }
+  @top-right { content: none; }
+}
+
+html {
+  font-family: "DejaVu Serif", serif;
+  font-size: 10.2pt;
+  line-height: 1.48;
+  color: #18282b;
+  hyphens: auto;
+}
+
+body {
+  margin: 0;
+}
+
+.cover-page {
+  page: cover;
+  width: 210mm;
+  height: 297mm;
+  break-after: page;
+  overflow: hidden;
+}
+
+.cover-page img {
+  width: 210mm;
+  height: 297mm;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+}
+
+.contents-page {
+  page: frontmatter;
+  break-before: page;
+  break-after: page;
+}
+
+.contents-page > h1 {
+  margin-top: 15mm;
+  color: #0d5960;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 28pt;
+  border-bottom: 3px solid #39a99d;
+  padding-bottom: 5mm;
+}
+
+#TOC ul {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 0;
+}
+
+#TOC ul ul {
+  padding-left: 7mm;
+}
+
+#TOC li {
+  margin: 1.6mm 0;
+}
+
+#TOC a {
+  color: #173f43;
+  text-decoration: none;
+}
+
+main {
+  counter-reset: figure table;
+}
+
+h1, h2, h3, h4 {
+  font-family: "DejaVu Sans", sans-serif;
+  color: #0c555c;
+  line-height: 1.18;
+  break-after: avoid;
+}
+
+h1.internal-title {
+  page: frontmatter;
+  break-before: page;
+  text-align: center;
+  font-size: 30pt;
+  margin-top: 60mm;
+  border: 0;
+}
+
+h1.internal-title + p,
+h1.internal-title + p + p,
+h1.internal-title + p + p + p {
+  text-align: center;
+}
+
+h1.part {
+  string-set: chapter content();
+  break-before: page;
+  min-height: 185mm;
+  display: flex;
+  align-items: center;
+  font-size: 32pt;
+  color: #ffffff;
+  background: linear-gradient(135deg, #0b2633, #11636a);
+  padding: 25mm;
+  margin: -20mm -18mm -21mm -20mm;
+}
+
+h2 {
+  string-set: chapter content();
+  break-before: page;
+  font-size: 24pt;
+  margin: 0 0 10mm 0;
+  padding-bottom: 4mm;
+  border-bottom: 3px solid #39a99d;
+}
+
+h3 {
+  font-size: 15pt;
+  margin-top: 8mm;
+  margin-bottom: 3mm;
+}
+
+h4 {
+  font-size: 11.5pt;
+  margin-top: 6mm;
+  margin-bottom: 2mm;
+}
+
+p {
+  margin: 0 0 3.2mm 0;
+  orphans: 3;
+  widows: 3;
+}
+
+strong {
+  color: #173f43;
+}
+
+blockquote {
+  margin: 5mm 0;
+  padding: 4mm 5mm;
+  border-left: 4px solid #39a99d;
+  background: #eef8f6;
+  color: #173f43;
+  break-inside: avoid;
+}
+
+ul, ol {
+  margin-top: 2mm;
+  margin-bottom: 4mm;
+  padding-left: 7mm;
+}
+
+li {
+  margin-bottom: 1.3mm;
+}
+
+code {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 0.9em;
+  color: #173f43;
+  background: #eef3f3;
+  padding: 0.15em 0.3em;
+  border-radius: 2px;
+}
+
+pre {
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 7.8pt;
+  line-height: 1.34;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  background: #102a2e;
+  color: #edf8f7;
+  border-left: 4px solid #39a99d;
+  padding: 4mm;
+  margin: 4mm 0 5mm 0;
+  border-radius: 3px;
+  break-inside: auto;
+}
+
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 5mm 0;
+  font-size: 8.4pt;
+  break-inside: auto;
+}
+
+thead {
+  display: table-header-group;
+}
+
+tr {
+  break-inside: avoid;
+}
+
+th {
+  background: #174f55;
+  color: white;
+  font-family: "DejaVu Sans", sans-serif;
+  text-align: left;
+  padding: 2.2mm;
+  border: 0.4pt solid #c6d8d6;
+}
+
+td {
+  padding: 2.1mm;
+  border: 0.4pt solid #c6d8d6;
+  vertical-align: top;
+}
+
+tbody tr:nth-child(even) {
+  background: #f3f8f7;
+}
+
+figure {
+  margin: 6mm 0;
+  text-align: center;
+  break-inside: avoid;
+  counter-increment: figure;
+}
+
+figure img {
+  max-width: 100%;
+  max-height: 175mm;
+  object-fit: contain;
+}
+
+figcaption {
+  margin-top: 2mm;
+  font-family: "DejaVu Sans", sans-serif;
+  font-size: 8.2pt;
+  color: #526c6f;
+}
+
+figcaption::before {
+  content: "Figure " counter(figure) ". ";
+  font-weight: 700;
+}
+
+a {
+  color: #0a6d73;
+  text-decoration: none;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #b9cecc;
+  margin: 8mm 0;
+}
+
+.unlisted {
+  page: frontmatter;
+}
+
+@media print {
+  a[href^="http"]::after { content: none; }
+}

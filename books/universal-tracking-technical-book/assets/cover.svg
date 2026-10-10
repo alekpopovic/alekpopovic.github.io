@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2560" viewBox="0 0 1600 2560">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#081827"/>
+      <stop offset="0.58" stop-color="#0d2f3b"/>
+      <stop offset="1" stop-color="#123f45"/>
+    </linearGradient>
+    <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#39d6c2"/>
+      <stop offset="1" stop-color="#f2c14e"/>
+    </linearGradient>
+    <pattern id="grid" width="90" height="90" patternUnits="userSpaceOnUse">
+      <path d="M90 0H0V90" fill="none" stroke="#d4f3ef" stroke-opacity="0.07" stroke-width="2"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1600" height="2560" fill="url(#bg)"/>
+  <rect width="1600" height="2560" fill="url(#grid)"/>
+  <g opacity="0.18" stroke="#b8e9e3" fill="none">
+    <path d="M-50 560 C220 390, 440 640, 710 470 S1210 240, 1660 500" stroke-width="8"/>
+    <path d="M-30 1840 C270 1640, 500 1980, 820 1770 S1230 1510, 1640 1710" stroke-width="5"/>
+    <path d="M210 80 C380 390, 160 720, 390 1020 S580 1580, 420 2060" stroke-width="4"/>
+    <path d="M1280 -20 C1140 390, 1400 690, 1160 1030 S980 1570, 1260 2110" stroke-width="4"/>
+  </g>
+  <g transform="translate(190,1030)">
+    <path d="M80 500 C260 180, 490 660, 720 360 S1050 80, 1220 300" fill="none" stroke="url(#route)" stroke-width="34" stroke-linecap="round" filter="url(#glow)"/>
+    <circle cx="80" cy="500" r="42" fill="#39d6c2"/>
+    <circle cx="80" cy="500" r="76" fill="none" stroke="#39d6c2" stroke-opacity="0.4" stroke-width="10"/>
+    <circle cx="720" cy="360" r="34" fill="#e8f9f6"/>
+    <path d="M1220 300c0-72 58-130 130-130s130 58 130 130c0 98-130 240-130 240s-130-142-130-240z" fill="#f2c14e" transform="translate(-130,-170) scale(.75)"/>
+    <circle cx="1350" cy="130" r="32" fill="#081827"/>
+  </g>
+  <g fill="#ffffff">
+    <text x="150" y="260" font-family="DejaVu Sans, Arial, sans-serif" font-size="54" letter-spacing="10" fill="#39d6c2">PRODUCTION ENGINEERING</text>
+    <text x="150" y="470" font-family="DejaVu Sans, Arial, sans-serif" font-size="118" font-weight="700">Engineering a</text>
+    <text x="150" y="610" font-family="DejaVu Sans, Arial, sans-serif" font-size="118" font-weight="700">Universal Real-Time</text>
+    <text x="150" y="750" font-family="DejaVu Sans, Arial, sans-serif" font-size="118" font-weight="700">Tracking Platform</text>
+    <rect x="150" y="830" width="930" height="5" fill="#39d6c2"/>
+    <text x="150" y="920" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" fill="#d9eeeb">Go, PostgreSQL, PostGIS, WebSockets, Mobile Location,</text>
+    <text x="150" y="985" font-family="DejaVu Sans, Arial, sans-serif" font-size="48" fill="#d9eeeb">and Native GPS Protocols</text>
+    <text x="150" y="2320" font-family="DejaVu Sans, Arial, sans-serif" font-size="54" font-weight="600">Aleksandar Popovic</text>
+    <text x="150" y="2392" font-family="DejaVu Sans, Arial, sans-serif" font-size="36" fill="#b8d8d3">First Edition - 2026</text>
+  </g>
+</svg>

@@ -1,0 +1,31 @@
+---
+layout: default
+title: Books · Aleksandar Popovic
+description: Read the complete engineering book collection online, or download PDF and EPUB editions in English.
+permalink: /books/
+---
+
+<main id="main-content">
+  <section class="page-hero books-hero">
+    <div class="section-shell"><p class="eyebrow tag">Books</p><h1 class="display">Read. Build.<br>Understand.</h1><p class="page-intro">Practical engineering, from the first idea to the failure conditions. Read the complete books here, or take a copy with you.</p></div>
+  </section>
+  <section class="section-space">
+    <div class="section-shell">
+      {% for book in site.data.books %}
+        <div class="book-feature book-feature-{{ book.id }}">
+          <a class="book-cover-link" href="{{ book.url | relative_url }}" aria-label="{{ book.title | escape }} — contents">{% include book-cover.html book=book %}</a>
+          <div class="book-feature-copy">
+            <p class="eyebrow tag">{% if book.brand %}{{ book.brand }} · {% endif %}{{ book.edition_label }} {{ book.edition }}</p>
+            <h2 class="display"><a href="{{ book.url | relative_url }}">{{ book.title }}</a></h2>
+            <h3 lang="{{ book.language | escape }}">{{ book.subtitle }}</h3>
+            <p class="book-description">{{ book.description }}</p>
+            <p class="book-stats">{{ book.chapter_count }} {{ book.chapter_unit }} <span aria-hidden="true">·</span> {{ book.appendix_count }} appendices <span aria-hidden="true">·</span> {{ book.language_label }}</p>
+            {% include book-actions.html book=book %}
+            <a class="book-contents-link" href="{{ book.url | relative_url }}">Explore the full contents <span aria-hidden="true">→</span></a>
+            <p class="book-license-note">{{ book.author }} · {{ book.license_note }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</main>

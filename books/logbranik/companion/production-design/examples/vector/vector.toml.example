@@ -1,0 +1,57 @@
+# Validate with your pinned Vector version. Environment variables are provisioned securely.
+data_dir = "/var/lib/vector"
+
+[sources.nginx_guard]
+type = "file"
+include = ["/var/log/nginx/guard-access.json", "/var/log/nginx/guard-access.json.1"]
+read_from = "beginning"
+max_line_bytes = 16384
+
+[transforms.guard_events]
+type = "remap"
+inputs = ["nginx_guard"]
+drop_on_error = true
+source = '''
+e = parse_json!(string!(.message))
+. = {
+  "schema_version": to_int!(e.schema_version),
+  "request_id": string!(e.request_id),
+  "event_time": parse_timestamp!(string!(e.event_time), format: "%+"),
+  "site_id": string!(e.site_id),
+  "client_ip": string!(e.client_ip),
+  "method": string!(e.method),
+  "path": string!(e.path),
+  "status": to_int!(e.status),
+  "request_time_ms": to_float!(e.request_time_seconds) * 1000.0,
+  "bytes_sent": to_int!(e.bytes_sent),
+  "enforcement": string!(e.enforcement)
+}
+'''
+
+[sinks.central]
+type = "http"
+inputs = ["guard_events"]
+uri = "${GUARD_INGEST_URL}"
+method = "post"
+compression = "gzip"
+encoding.codec = "json"
+encoding.timestamp_format = "rfc3339"
+framing.method = "newline_delimited"
+request.headers.Content-Type = "application/x-ndjson"
+request.timeout_secs = 10
+acknowledgements.enabled = true
+batch.max_events = 500
+batch.max_bytes = 262144
+batch.timeout_secs = 1
+buffer.type = "disk"
+buffer.max_size = 268435488
+buffer.when_full = "block"
+tls.ca_file = "${GUARD_CA_FILE}"
+tls.crt_file = "${GUARD_COLLECTOR_CERT_FILE}"
+tls.key_file = "${GUARD_COLLECTOR_KEY_FILE}"
+tls.verify_certificate = true
+tls.verify_hostname = true
+healthcheck.enabled = false
+
+# Add internal metrics and a bounded local quarantine/error route in prompt 010.
+# A disabled startup sink probe does not disable delivery metrics/alerts.

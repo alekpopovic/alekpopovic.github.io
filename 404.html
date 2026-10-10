@@ -1,0 +1,15 @@
+---
+layout: default
+title: Page not found — Aleksandar Popovic
+description: Find your way back to the books, engineering notes, projects, and videos.
+permalink: /404.html
+noindex: true
+sitemap: false
+---
+<main id="main-content">
+  <section class="page-hero not-found-hero"><div class="section-shell"><p class="eyebrow tag">404 · Page not found</p><h1 class="display">A small detour.</h1><p class="page-intro" data-missing-message>This address may have changed, or the article may have been retired. There is plenty more to explore.</p>
+    <form class="not-found-search" action="{{ '/search/' | relative_url }}" method="get" role="search"><label for="missing-query">Search the site</label><div class="site-query-row"><input id="missing-query" name="q" type="search" maxlength="120" placeholder="Find a topic, chapter, or project"><button class="button button-blue" type="submit">Search ↗</button></div></form>
+    <div class="hero-links"><a class="button" href="{{ '/books/' | relative_url }}">Read a book ↗</a><a class="button" href="{{ '/posts/' | relative_url }}">Latest notes ↗</a><a class="button" href="{{ '/projects/' | relative_url }}">Explore projects ↗</a><a class="button" href="{{ '/' | relative_url }}">Go home ↗</a></div>
+  </div></section>
+  <section class="section-space"><div class="section-shell"><div class="section-top"><h2 class="display">A good place to start.</h2></div><div class="posts-grid posts-grid-all">{% for post in site.posts limit:3 %}{% include post-card.html post=post heading='h3' %}{% endfor %}</div></div></section>
+</main>

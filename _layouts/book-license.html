@@ -1,0 +1,8 @@
+---
+layout: default
+---
+{% assign book = site.data.books | where: 'id', page.book_id | first %}
+<main id="main-content" class="book-license-page section-shell">
+  <a class="book-back" href="{{ book.url | relative_url }}">← {{ book.title }} contents</a>
+  <article class="book-article">{{ content }}</article>
+</main>

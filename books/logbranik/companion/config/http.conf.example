@@ -1,0 +1,31 @@
+# Place inside http {}. Requires auth_request; uses variables set by the site snippet.
+# Keep this query-free original path through internal redirects.
+map $request_uri $guard_original_path {
+    "~^(?<guard_path_no_query>[^?]*)" $guard_path_no_query;
+    default "/";
+}
+
+map $guard_outcome $guard_log_outcome {
+    default unknown;
+    allow allow;
+    block block;
+    would_block would_block;
+    bypass bypass;
+    unavailable unavailable;
+}
+
+log_format guard_json escape=json
+    '{"schema_version":1,'
+    '"request_id":"$request_id",'
+    '"event_time":"$time_iso8601",'
+    '"site_id":"$guard_site",'
+    '"client_ip":"$remote_addr",'
+    '"method":"$request_method",'
+    '"path":"$guard_original_path",'
+    '"status":"$status",'
+    '"request_time_seconds":"$request_time",'
+    '"bytes_sent":"$bytes_sent",'
+    '"enforcement":"$guard_log_outcome"}';
+
+# Defaults are deliberately direct-edge: no visitor X-Forwarded-For trust.
+# Add trusted proxy settings only after documenting actual ingress topology.

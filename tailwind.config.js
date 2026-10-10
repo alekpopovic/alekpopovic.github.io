@@ -3,21 +3,22 @@ module.exports = {
     "./*.html",
     "./_layouts/**/*.html",
     "./_includes/**/*.html",
+    "./book-pages/**/*.html",
     "./_posts/**/*.md"
   ],
   theme: {
     extend: {
       colors: {
-        ink: "#17211d",
-        moss: "#51685d",
-        fern: "#6f8f3d",
-        clay: "#b66f4a",
-        paper: "#faf7f0",
-        pearl: "#f2eee4"
+        ink: "#20201e",
+        moss: "#535247",
+        fern: "#2864ff",
+        clay: "#fd4401",
+        paper: "#fff3b8",
+        pearl: "#ffd33d"
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Fraunces", "Georgia", "serif"]
+        sans: ["DM Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Passion One", "Arial Black", "sans-serif"]
       },
       boxShadow: {
         soft: "0 18px 60px rgba(23, 33, 29, 0.12)"

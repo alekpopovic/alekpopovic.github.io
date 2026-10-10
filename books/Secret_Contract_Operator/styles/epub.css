@@ -1,0 +1,9 @@
+body { font-family: serif; line-height: 1.5; margin: 5%; }
+h1, h2, h3 { font-family: sans-serif; line-height: 1.25; color: #10263d; }
+a { color: #0b7e83; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f2f6f8; padding: .75em; }
+code { font-family: monospace; overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: .4em; border-bottom: 1px solid #ccd9e2; text-align: left; overflow-wrap: anywhere; }
+img { max-width: 100%; height: auto; }
+.cover { display: block; margin: 0 auto; max-height: 95vh; object-fit: contain; }

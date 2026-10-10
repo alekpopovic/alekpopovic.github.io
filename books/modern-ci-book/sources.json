@@ -1,0 +1,170 @@
+[
+  {
+    "id": "S01",
+    "title": "Jenkins Pipeline",
+    "url": "https://www.jenkins.io/doc/book/pipeline/",
+    "purpose": "Existing pipeline concepts and their supported behavior.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S02",
+    "title": "Jenkins controller isolation",
+    "url": "https://www.jenkins.io/doc/book/security/controller-isolation/",
+    "purpose": "Separating build authority from the controller.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S03",
+    "title": "Git submodules overview",
+    "url": "https://git-scm.com/docs/gitsubmodules",
+    "purpose": "Gitlink identity and separate repository history.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S04",
+    "title": "Git submodule command",
+    "url": "https://git-scm.com/docs/git-submodule",
+    "purpose": "Registration, recursive checkout, and update behavior.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S05",
+    "title": "Go multi-module workspaces",
+    "url": "https://go.dev/doc/tutorial/workspaces",
+    "purpose": "Local development across multiple modules.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S06",
+    "title": "Go Modules Reference",
+    "url": "https://go.dev/ref/mod",
+    "purpose": "Module identity, versions, and workspace resolution.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S07",
+    "title": "PostgreSQL SELECT",
+    "url": "https://www.postgresql.org/docs/current/sql-select.html",
+    "purpose": "Row locking and queue-style SKIP LOCKED consumption.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S08",
+    "title": "Docker Engine security",
+    "url": "https://docs.docker.com/engine/security/",
+    "purpose": "Daemon authority and container isolation boundaries.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S09",
+    "title": "BuildKit upstream project",
+    "url": "https://github.com/moby/buildkit",
+    "purpose": "Builder capabilities and operational configuration.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S10",
+    "title": "Docker cache backends",
+    "url": "https://docs.docker.com/build/cache/backends/",
+    "purpose": "Registry cache and backend-dependent support.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S11",
+    "title": "Docker build secrets",
+    "url": "https://docs.docker.com/build/building/secrets/",
+    "purpose": "Temporary build-secret mounts.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S12",
+    "title": "Angular Signals",
+    "url": "https://angular.dev/guide/signals",
+    "purpose": "Reactive state primitives.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S13",
+    "title": "Angular security",
+    "url": "https://angular.dev/best-practices/security",
+    "purpose": "Untrusted content, sanitization, and trust bypass risks.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S14",
+    "title": "HTML server-sent events",
+    "url": "https://html.spec.whatwg.org/multipage/server-sent-events.html",
+    "purpose": "Event stream format and reconnection behavior.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S15",
+    "title": "GitHub webhook validation",
+    "url": "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+    "purpose": "Raw-byte HMAC signature verification.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S16",
+    "title": "GitHub webhook practices",
+    "url": "https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks",
+    "purpose": "Delivery identity, HTTPS, and acknowledgement practices.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S17",
+    "title": "GitHub secure-use reference",
+    "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+    "purpose": "Untrusted source, privileged contexts, and self-hosted execution.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S18",
+    "title": "PostgreSQL transaction isolation",
+    "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+    "purpose": "Snapshot semantics and transaction retries.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S19",
+    "title": "OpenID Connect for workloads",
+    "url": "https://docs.github.com/en/actions/concepts/security/openid-connect",
+    "purpose": "Federation and short-lived credentials.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S20",
+    "title": "PostgreSQL backup and restore",
+    "url": "https://www.postgresql.org/docs/current/backup.html",
+    "purpose": "Backup strategies and recovery planning.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S21",
+    "title": "GitHub Pages custom workflows",
+    "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages",
+    "purpose": "Build artifacts, deployment permissions, and environment setup.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S22",
+    "title": "GitHub Pages publishing source",
+    "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site",
+    "purpose": "Selecting GitHub Actions as the publication source.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S23",
+    "title": "Creative Commons Attribution 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "purpose": "Book-content reuse and attribution conditions.",
+    "checked_on": "2026-10-10"
+  },
+  {
+    "id": "S24",
+    "title": "MIT License",
+    "url": "https://opensource.org/license/mit",
+    "purpose": "Permission notice for original code.",
+    "checked_on": "2026-10-10"
+  }
+]

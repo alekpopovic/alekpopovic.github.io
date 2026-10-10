@@ -1,0 +1,17 @@
+# Optional guidance, NOT a complete include file. Test on the selected Nginx build.
+# Add ONLY inside location = /_guard_auth:
+#     proxy_intercept_errors on;
+#     error_page 500 502 503 504 = @guard_auth_unavailable;
+#
+# Add this named location at the same server {} level:
+#     location @guard_auth_unavailable {
+#         auth_request off;
+#         access_log off;
+#         add_header X-Guard-Outcome unavailable always;
+#         return 204;
+#     }
+#
+# Never include 403 in the mapped status list. Do not attach error_page to location /.
+# Verify outcome-header capture for internal fallback on your build; if it is not available
+# via upstream_http, log auth subrequest status separately and derive unavailable metrics.
+# A normal application 500 must still be a normal application 500.

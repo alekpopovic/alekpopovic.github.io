@@ -1,0 +1,13 @@
+_site/
+.build/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.kubeconfig
+.DS_Store

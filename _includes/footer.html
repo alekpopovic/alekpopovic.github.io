@@ -1,0 +1,41 @@
+<footer class="site-footer">
+  <div class="section-shell">
+    <div class="footer-cta">
+      <div><p class="eyebrow">{% include icon.html name='sparkles' %} Have something in mind?</p><h2 class="display">Let’s make<br><span>it work.</span></h2></div>
+      <a class="footer-contact" href="{{ '/contact/' | relative_url }}">Start a conversation <span>{% include icon.html name='arrow-up-right' %}</span></a>
+    </div>
+    <div class="footer-main">
+      <div class="footer-profile footer-column">
+        <a class="footer-brand" href="{{ '/' | relative_url }}"><span class="brand-mark">{% include flower.html %}</span><span>Aleksandar<br>Popovic</span></a>
+        <p>Ruby, Rails, Elixir, Go, cloud architecture, and product infrastructure.</p>
+        <nav class="footer-social" aria-label="Social profiles">
+          {% for social in site.data.footer.social %}<a href="{{ social.url }}" aria-label="{{ social.title }}" title="{{ social.title }}">{% include icon.html name=social.icon %}</a>{% endfor %}
+        </nav>
+        <a class="footer-codepop" href="{{ '/codepop/' | relative_url }}"><span>{% include icon.html name='code' %} CodePop</span>{% include icon.html name='arrow-up-right' %}</a>
+      </div>
+      <div class="footer-navigation">
+      <nav class="footer-links footer-column" aria-label="Footer explore">
+        <h2 class="eyebrow">{% include icon.html name='compass' %} Explore</h2>
+        <ul>{% for link in site.data.footer.explore %}<li><a href="{{ link.url | relative_url }}">{% include icon.html name=link.icon %}<span>{{ link.title }}</span></a></li>{% endfor %}</ul>
+      </nav>
+      <nav class="footer-links footer-column" aria-label="Footer library">
+        <h2 class="eyebrow">{% include icon.html name='notes' %} Library</h2>
+        <ul>{% for link in site.data.footer.library %}<li><a href="{{ link.url | relative_url }}">{% include icon.html name=link.icon %}<span>{{ link.title }}</span></a></li>{% endfor %}</ul>
+      </nav>
+      <nav class="footer-links footer-column" aria-label="Footer projects">
+        <h2 class="eyebrow"><a href="{{ '/projects/' | relative_url }}">{% include icon.html name='code' %} Projects {% include icon.html name='arrow-up-right' %}</a></h2>
+        <ul>{% for project in site.data.projects %}{% case project.id %}{% when 'orch' %}{% assign project_icon = 'network' %}{% when 'cloudivision' %}{% assign project_icon = 'cloud' %}{% when 'clusterforge' %}{% assign project_icon = 'layers' %}{% else %}{% assign project_icon = 'desktop' %}{% endcase %}<li><a href="{{ '/projects/' | append: project.id | append: '/' | relative_url }}">{% include icon.html name=project_icon %}<span>{{ project.name }}</span></a></li>{% endfor %}</ul>
+      </nav>
+      <nav class="footer-links footer-column" aria-label="Footer books">
+        <h2 class="eyebrow"><a href="{{ '/books/' | relative_url }}">{% include icon.html name='book' %} Books {% include icon.html name='arrow-up-right' %}</a></h2>
+        <ul>{% for book in site.data.books %}<li><a href="{{ book.url | relative_url }}">{% include icon.html name='book' %}<span>{{ book.title }}</span></a></li>{% endfor %}</ul>
+      </nav>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© {{ site.time | date: '%Y' }} Aleksandar Popovic</p>
+      <p class="footer-location">{% include icon.html name='pin' %} Based in Serbia</p>
+      <a class="back-top" href="#top">Back to top <span class="round-arrow">{% include icon.html name='arrow-up' %}</span></a>
+    </div>
+  </div>
+</footer>

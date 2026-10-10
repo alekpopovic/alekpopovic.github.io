@@ -1,0 +1,27 @@
+name: Validate book
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache: false
+      - run: python -m pip install -r requirements-site.txt
+      - run: make check
+      - run: python scripts/build.py epub
+      - run: python scripts/build.py site

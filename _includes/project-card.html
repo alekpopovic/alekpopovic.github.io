@@ -1,0 +1,1 @@
+<a class="work-card" href="{{ '/projects/' | append: include.project.id | append: '/' | relative_url }}"><p class="eyebrow">{{ include.project.category }}</p>{% include project-art.html kind=include.project.illustration %}<h3>{{ include.project.name }}</h3><p>{{ include.project.description }}</p><span class="round-arrow" aria-hidden="true">↗</span></a>

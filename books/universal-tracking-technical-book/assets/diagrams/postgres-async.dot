@@ -1,0 +1,24 @@
+digraph G {
+
+graph [bgcolor="transparent", fontname="DejaVu Sans", fontsize=18, pad=0.25, nodesep=0.55, ranksep=0.7];
+node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, color="#1c5961", fillcolor="#eef8f6", fontcolor="#102a2e", penwidth=1.8, margin="0.16,0.10"];
+edge [fontname="DejaVu Sans", fontsize=13, color="#3f6d72", fontcolor="#355d61", penwidth=1.8, arrowsize=0.8];
+
+rankdir=LR;
+write [label="Business transaction"];
+outbox [label="outbox_events", shape=cylinder, fillcolor="#e9e2f8", color="#65508d"];
+jobs [label="jobs
+SKIP LOCKED", shape=cylinder, fillcolor="#e9e2f8", color="#65508d"];
+notify [label="LISTEN / NOTIFY
+wake-up only"];
+worker [label="Go workers
+lease, retry, dead-letter"];
+side [label="Email, webhook, report,
+retention, derived data"];
+write -> outbox [label="same commit"];
+outbox -> notify [label="identifier"];
+notify -> worker;
+outbox -> worker [label="reconciliation"];
+worker -> jobs [dir=both, label="claim / complete"];
+worker -> side;
+}

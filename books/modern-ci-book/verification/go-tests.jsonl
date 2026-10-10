@@ -1,0 +1,131 @@
+{"Time":"2026-10-09T23:49:28.773175862Z","Action":"start","Package":"example.com/modern-ci-book/lab"}
+{"Time":"2026-10-09T23:49:28.773362542Z","Action":"start","Package":"example.com/modern-ci-book/lab/cmd/demo"}
+{"Time":"2026-10-09T23:49:28.77337463Z","Action":"output","Package":"example.com/modern-ci-book/lab/cmd/demo","Output":"?   \texample.com/modern-ci-book/lab/cmd/demo\t[no test files]\n"}
+{"Time":"2026-10-09T23:49:28.773395501Z","Action":"skip","Package":"example.com/modern-ci-book/lab/cmd/demo","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774786293Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileValid"}
+{"Time":"2026-10-09T23:49:28.774802047Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileValid","Output":"=== RUN   TestCompileValid\n"}
+{"Time":"2026-10-09T23:49:28.774899844Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileValid","Output":"--- PASS: TestCompileValid (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774904441Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileValid","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774907074Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid"}
+{"Time":"2026-10-09T23:49:28.774909037Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid","Output":"=== RUN   TestCompileInvalid\n"}
+{"Time":"2026-10-09T23:49:28.77491085Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/self"}
+{"Time":"2026-10-09T23:49:28.774912613Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/self","Output":"=== RUN   TestCompileInvalid/self\n"}
+{"Time":"2026-10-09T23:49:28.774915187Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/self","Output":"--- PASS: TestCompileInvalid/self (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.77491726Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/self","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774919343Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate-edge"}
+{"Time":"2026-10-09T23:49:28.774920955Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate-edge","Output":"=== RUN   TestCompileInvalid/duplicate-edge\n"}
+{"Time":"2026-10-09T23:49:28.77492392Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate-edge","Output":"--- PASS: TestCompileInvalid/duplicate-edge (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774926764Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate-edge","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774929518Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/cycle"}
+{"Time":"2026-10-09T23:49:28.774931972Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/cycle","Output":"=== RUN   TestCompileInvalid/cycle\n"}
+{"Time":"2026-10-09T23:49:28.774934335Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/cycle","Output":"--- PASS: TestCompileInvalid/cycle (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.77493752Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/cycle","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774939233Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty"}
+{"Time":"2026-10-09T23:49:28.774940905Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty","Output":"=== RUN   TestCompileInvalid/empty\n"}
+{"Time":"2026-10-09T23:49:28.774942828Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty","Output":"--- PASS: TestCompileInvalid/empty (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774944641Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.77495062Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty-id"}
+{"Time":"2026-10-09T23:49:28.774952192Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty-id","Output":"=== RUN   TestCompileInvalid/empty-id\n"}
+{"Time":"2026-10-09T23:49:28.774954405Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty-id","Output":"--- PASS: TestCompileInvalid/empty-id (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774956328Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/empty-id","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774958482Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate"}
+{"Time":"2026-10-09T23:49:28.774959794Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate","Output":"=== RUN   TestCompileInvalid/duplicate\n"}
+{"Time":"2026-10-09T23:49:28.774962327Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate","Output":"--- PASS: TestCompileInvalid/duplicate (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.77496422Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/duplicate","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774966273Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/unknown"}
+{"Time":"2026-10-09T23:49:28.774967735Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/unknown","Output":"=== RUN   TestCompileInvalid/unknown\n"}
+{"Time":"2026-10-09T23:49:28.77497073Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/unknown","Output":"--- PASS: TestCompileInvalid/unknown (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774972743Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid/unknown","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774975006Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid","Output":"--- PASS: TestCompileInvalid (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774979353Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileInvalid","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774981356Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCompileLimit"}
+{"Time":"2026-10-09T23:49:28.774983018Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileLimit","Output":"=== RUN   TestCompileLimit\n"}
+{"Time":"2026-10-09T23:49:28.774986023Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCompileLimit","Output":"--- PASS: TestCompileLimit (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774988096Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCompileLimit","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.77499065Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestSingleConcurrentClaim"}
+{"Time":"2026-10-09T23:49:28.774992232Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestSingleConcurrentClaim","Output":"=== RUN   TestSingleConcurrentClaim\n"}
+{"Time":"2026-10-09T23:49:28.774994275Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestSingleConcurrentClaim","Output":"--- PASS: TestSingleConcurrentClaim (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.774996228Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestSingleConcurrentClaim","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.774998061Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestExpiryDoesNotRequeue"}
+{"Time":"2026-10-09T23:49:28.774999563Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiryDoesNotRequeue","Output":"=== RUN   TestExpiryDoesNotRequeue\n"}
+{"Time":"2026-10-09T23:49:28.775002217Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiryDoesNotRequeue","Output":"--- PASS: TestExpiryDoesNotRequeue (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775005492Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestExpiryDoesNotRequeue","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775007235Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestStaleCompletion"}
+{"Time":"2026-10-09T23:49:28.775009338Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestStaleCompletion","Output":"=== RUN   TestStaleCompletion\n"}
+{"Time":"2026-10-09T23:49:28.775011641Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestStaleCompletion","Output":"--- PASS: TestStaleCompletion (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775013394Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestStaleCompletion","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775015998Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestDuplicateCompletion"}
+{"Time":"2026-10-09T23:49:28.77501755Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestDuplicateCompletion","Output":"=== RUN   TestDuplicateCompletion\n"}
+{"Time":"2026-10-09T23:49:28.775021015Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestDuplicateCompletion","Output":"--- PASS: TestDuplicateCompletion (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775022778Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestDuplicateCompletion","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775024591Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredCompletion"}
+{"Time":"2026-10-09T23:49:28.775025963Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredCompletion","Output":"=== RUN   TestExpiredCompletion\n"}
+{"Time":"2026-10-09T23:49:28.775027956Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredCompletion","Output":"--- PASS: TestExpiredCompletion (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775029668Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredCompletion","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775031211Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestRunnerIdentity"}
+{"Time":"2026-10-09T23:49:28.775032753Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestRunnerIdentity","Output":"=== RUN   TestRunnerIdentity\n"}
+{"Time":"2026-10-09T23:49:28.775034656Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestRunnerIdentity","Output":"--- PASS: TestRunnerIdentity (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775036469Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestRunnerIdentity","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775038141Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestFenceIdentity"}
+{"Time":"2026-10-09T23:49:28.775039453Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestFenceIdentity","Output":"=== RUN   TestFenceIdentity\n"}
+{"Time":"2026-10-09T23:49:28.775042367Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestFenceIdentity","Output":"--- PASS: TestFenceIdentity (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.77504421Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestFenceIdentity","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775045943Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCancellationIsRequest"}
+{"Time":"2026-10-09T23:49:28.775047485Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCancellationIsRequest","Output":"=== RUN   TestCancellationIsRequest\n"}
+{"Time":"2026-10-09T23:49:28.77505041Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCancellationIsRequest","Output":"--- PASS: TestCancellationIsRequest (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775052172Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCancellationIsRequest","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775053895Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCancelCanRaceSuccess"}
+{"Time":"2026-10-09T23:49:28.775056799Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCancelCanRaceSuccess","Output":"=== RUN   TestCancelCanRaceSuccess\n"}
+{"Time":"2026-10-09T23:49:28.775058702Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCancelCanRaceSuccess","Output":"--- PASS: TestCancelCanRaceSuccess (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775060805Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCancelCanRaceSuccess","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775062438Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredHeartbeatCannotResurrect"}
+{"Time":"2026-10-09T23:49:28.77506411Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredHeartbeatCannotResurrect","Output":"=== RUN   TestExpiredHeartbeatCannotResurrect\n"}
+{"Time":"2026-10-09T23:49:28.775066874Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredHeartbeatCannotResurrect","Output":"--- PASS: TestExpiredHeartbeatCannotResurrect (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775069498Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestExpiredHeartbeatCannotResurrect","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775071151Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestHeartbeatExtends"}
+{"Time":"2026-10-09T23:49:28.775072643Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestHeartbeatExtends","Output":"=== RUN   TestHeartbeatExtends\n"}
+{"Time":"2026-10-09T23:49:28.775074826Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestHeartbeatExtends","Output":"--- PASS: TestHeartbeatExtends (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775076739Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestHeartbeatExtends","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775078472Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestClaimValidation"}
+{"Time":"2026-10-09T23:49:28.775080134Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestClaimValidation","Output":"=== RUN   TestClaimValidation\n"}
+{"Time":"2026-10-09T23:49:28.775083189Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestClaimValidation","Output":"--- PASS: TestClaimValidation (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775085402Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestClaimValidation","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775087385Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestCannotCompleteBeforeStart"}
+{"Time":"2026-10-09T23:49:28.775089588Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCannotCompleteBeforeStart","Output":"=== RUN   TestCannotCompleteBeforeStart\n"}
+{"Time":"2026-10-09T23:49:28.775092473Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestCannotCompleteBeforeStart","Output":"--- PASS: TestCannotCompleteBeforeStart (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775094325Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestCannotCompleteBeforeStart","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775096188Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestRetryCannotAcceptPreviousResult"}
+{"Time":"2026-10-09T23:49:28.775097811Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestRetryCannotAcceptPreviousResult","Output":"=== RUN   TestRetryCannotAcceptPreviousResult\n"}
+{"Time":"2026-10-09T23:49:28.775100475Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestRetryCannotAcceptPreviousResult","Output":"--- PASS: TestRetryCannotAcceptPreviousResult (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775105082Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestRetryCannotAcceptPreviousResult","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775107175Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookExactBytes"}
+{"Time":"2026-10-09T23:49:28.775109729Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookExactBytes","Output":"=== RUN   TestWebhookExactBytes\n"}
+{"Time":"2026-10-09T23:49:28.77513085Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookExactBytes","Output":"--- PASS: TestWebhookExactBytes (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775132883Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookExactBytes","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775135057Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookInvalid"}
+{"Time":"2026-10-09T23:49:28.775136519Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookInvalid","Output":"=== RUN   TestWebhookInvalid\n"}
+{"Time":"2026-10-09T23:49:28.775139323Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookInvalid","Output":"--- PASS: TestWebhookInvalid (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775166243Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestWebhookInvalid","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775168026Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestLogRetryAndConflict"}
+{"Time":"2026-10-09T23:49:28.775169618Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogRetryAndConflict","Output":"=== RUN   TestLogRetryAndConflict\n"}
+{"Time":"2026-10-09T23:49:28.775172733Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogRetryAndConflict","Output":"--- PASS: TestLogRetryAndConflict (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775174956Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestLogRetryAndConflict","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775176589Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestLogLimitsAndGap"}
+{"Time":"2026-10-09T23:49:28.775178261Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogLimitsAndGap","Output":"=== RUN   TestLogLimitsAndGap\n"}
+{"Time":"2026-10-09T23:49:28.775180625Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogLimitsAndGap","Output":"--- PASS: TestLogLimitsAndGap (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775182608Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestLogLimitsAndGap","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775184601Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestLogCopiesInput"}
+{"Time":"2026-10-09T23:49:28.775186083Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogCopiesInput","Output":"=== RUN   TestLogCopiesInput\n"}
+{"Time":"2026-10-09T23:49:28.775188867Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestLogCopiesInput","Output":"--- PASS: TestLogCopiesInput (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.77519057Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestLogCopiesInput","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775192603Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalIdentity"}
+{"Time":"2026-10-09T23:49:28.775194075Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalIdentity","Output":"=== RUN   TestApprovalIdentity\n"}
+{"Time":"2026-10-09T23:49:28.77522424Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalIdentity","Output":"--- PASS: TestApprovalIdentity (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775228256Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalIdentity","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.775465302Z","Action":"run","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalMissingIdentity"}
+{"Time":"2026-10-09T23:49:28.775467545Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalMissingIdentity","Output":"=== RUN   TestApprovalMissingIdentity\n"}
+{"Time":"2026-10-09T23:49:28.77547058Z","Action":"output","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalMissingIdentity","Output":"--- PASS: TestApprovalMissingIdentity (0.00s)\n"}
+{"Time":"2026-10-09T23:49:28.775475287Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Test":"TestApprovalMissingIdentity","Elapsed":0}
+{"Time":"2026-10-09T23:49:28.77547751Z","Action":"output","Package":"example.com/modern-ci-book/lab","Output":"PASS\n"}
+{"Time":"2026-10-09T23:49:28.775547951Z","Action":"output","Package":"example.com/modern-ci-book/lab","Output":"ok  \texample.com/modern-ci-book/lab\t0.002s\n"}
+{"Time":"2026-10-09T23:49:28.775567891Z","Action":"pass","Package":"example.com/modern-ci-book/lab","Elapsed":0.002}

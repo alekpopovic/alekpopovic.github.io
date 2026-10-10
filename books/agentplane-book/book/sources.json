@@ -1,0 +1,149 @@
+{
+  "reviewed_on": "2026-10-10",
+  "sources": [
+    {
+      "id": "s01",
+      "title": "Agent Sandbox documentation",
+      "url": "https://agent-sandbox.sigs.k8s.io/docs/",
+      "note": "Resource concepts and documentation entry point. Upstream capability is not an AgentPlane implementation claim."
+    },
+    {
+      "id": "s02",
+      "title": "Agent Sandbox source repository",
+      "url": "https://github.com/kubernetes-sigs/agent-sandbox",
+      "note": "Inspect release-specific APIs, runtime server, router and extension resources before implementing adapters."
+    },
+    {
+      "id": "s03",
+      "title": "Kubernetes multi-tenancy",
+      "url": "https://kubernetes.io/docs/concepts/security/multi-tenancy/",
+      "note": "Namespace isolation, shared infrastructure and tenancy tradeoffs."
+    },
+    {
+      "id": "s04",
+      "title": "Kubernetes Network Policies",
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "note": "Additive allow rules, implementation dependencies and network-policy limitations."
+    },
+    {
+      "id": "s05",
+      "title": "Kubernetes Pod Security Standards",
+      "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "note": "Restricted pod configuration is not a complete hostile-code isolation system."
+    },
+    {
+      "id": "s06",
+      "title": "gVisor security model",
+      "url": "https://gvisor.dev/docs/architecture_guide/security/",
+      "note": "Isolation design, assumptions and responsibilities outside the sandbox."
+    },
+    {
+      "id": "s07",
+      "title": "PostgreSQL 18 row security",
+      "url": "https://www.postgresql.org/docs/18/ddl-rowsecurity.html",
+      "note": "RLS semantics, owner bypass, BYPASSRLS and policy behavior."
+    },
+    {
+      "id": "s08",
+      "title": "PostgreSQL 18 explicit locking",
+      "url": "https://www.postgresql.org/docs/18/explicit-locking.html",
+      "note": "Row locks and transaction concurrency. The SQL lab requires independent execution."
+    },
+    {
+      "id": "s09",
+      "title": "NATS JetStream concepts",
+      "url": "https://docs.nats.io/concepts/jetstream",
+      "note": "Persistence and delivery semantics; transport guarantees do not make arbitrary business effects exactly once."
+    },
+    {
+      "id": "s10",
+      "title": "MCP security best practices",
+      "url": "https://modelcontextprotocol.io/docs/2026-07-28/tutorials/security/security_best_practices",
+      "note": "Audience separation, proxy risks, discovery SSRF and untrusted tool metadata. Protocol assumptions must be versioned."
+    },
+    {
+      "id": "s11",
+      "title": "agentgateway documentation",
+      "url": "https://agentgateway.dev/docs/",
+      "note": "Verify the deployed release, Kubernetes resources and external-authorization capabilities rather than assuming them."
+    },
+    {
+      "id": "s12",
+      "title": "Kubernetes volume snapshots",
+      "url": "https://kubernetes.io/docs/concepts/storage/volume-snapshots/",
+      "note": "CSI snapshot resources and support requirements; not a general memory checkpoint."
+    },
+    {
+      "id": "s13",
+      "title": "Kubernetes Secrets",
+      "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "note": "Secret objects, projections and access boundaries."
+    },
+    {
+      "id": "s14",
+      "title": "OWASP session management",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+      "note": "Session lifecycle, cookies and browser attack surfaces."
+    },
+    {
+      "id": "s15",
+      "title": "OpenAI AGENTS.md guidance",
+      "url": "https://developers.openai.com/codex/guides/agents-md/",
+      "note": "Repository instructions for coding agents. This book does not prescribe unverified model IDs or reasoning settings."
+    },
+    {
+      "id": "s16",
+      "title": "GitHub Pages custom workflows",
+      "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages",
+      "note": "Pages artifact deployment, permissions and environment requirements."
+    },
+    {
+      "id": "s17",
+      "title": "Mistune usage guide",
+      "url": "https://mistune.lepture.com/en/latest/guide.html",
+      "note": "The small Markdown renderer used by this book build."
+    },
+    {
+      "id": "s18",
+      "title": "CC BY-SA 4.0 legal code",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/legalcode.en",
+      "note": "License for original narrative text, diagrams and prompts. License scope is defined in LICENSE.md."
+    },
+    {
+      "id": "s19",
+      "title": "MIT License",
+      "url": "https://opensource.org/license/mit",
+      "note": "License for original program code and configuration examples."
+    },
+    {
+      "id": "s20",
+      "title": "OpenTelemetry sensitive-data handling",
+      "url": "https://opentelemetry.io/docs/security/handling-sensitive-data/",
+      "note": "Minimize, redact and govern telemetry rather than recording everything."
+    },
+    {
+      "id": "s21",
+      "title": "Kubernetes Leases",
+      "url": "https://kubernetes.io/docs/concepts/architecture/leases/",
+      "note": "Coordination mechanism; resource-side fencing remains a separate design requirement."
+    },
+    {
+      "id": "s22",
+      "title": "Kubernetes operator pattern",
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/operator/",
+      "note": "Reconciliation-based extensions and controllers."
+    },
+    {
+      "id": "s23",
+      "title": "Go traversal-resistant file APIs",
+      "url": "https://go.dev/blog/osroot",
+      "note": "Root-relative operations and filesystem race considerations; API availability depends on Go version."
+    },
+    {
+      "id": "s24",
+      "title": "GitHub Actions secure use",
+      "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+      "note": "Least-privilege workflows, untrusted inputs and immutable action references."
+    }
+  ]
+}

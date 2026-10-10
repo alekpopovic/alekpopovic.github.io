@@ -1,0 +1,26 @@
+digraph G {
+
+graph [bgcolor="transparent", fontname="DejaVu Sans", fontsize=18, pad=0.25, nodesep=0.55, ranksep=0.7];
+node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, color="#1c5961", fillcolor="#eef8f6", fontcolor="#102a2e", penwidth=1.8, margin="0.16,0.10"];
+edge [fontname="DejaVu Sans", fontsize=13, color="#3f6d72", fontcolor="#355d61", penwidth=1.8, arrowsize=0.8];
+
+rankdir=TB;
+subgraph cluster_clients { label="Clients"; color="#9bc9c4"; style="rounded";
+ dashboard [label="Angular dashboard"];
+ public [label="Public tracking"];
+ mobile [label="Capacitor mobile app"];
+ gps [label="Physical GPS devices"];
+}
+proxy [label="Nginx
+TLS, HTTP, WebSocket, TCP/UDP", fillcolor="#dceef8"];
+subgraph cluster_go { label="Go application roles"; color="#9bc9c4"; style="rounded";
+ api [label="api"];
+ worker [label="worker"];
+ scheduler [label="scheduler"];
+ gateway [label="gps-gateway"];
+}
+pg [label="PostgreSQL + PostGIS
+only mandatory infrastructure", shape=cylinder, fillcolor="#e9e2f8", color="#65508d", penwidth=2.5];
+dashboard -> proxy; public -> proxy; mobile -> proxy; gps -> proxy;
+proxy -> api; proxy -> gateway; api -> pg; worker -> pg; scheduler -> pg; gateway -> pg;
+}

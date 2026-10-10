@@ -1,0 +1,191 @@
+[
+  {
+    "id": "S01",
+    "title": "Kubernetes — Secrets",
+    "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+    "note": "Native Secret objects and consumption methods.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S02",
+    "title": "External Secrets Operator — ExternalSecret",
+    "url": "https://external-secrets.io/latest/api/externalsecret/",
+    "note": "Synchronization, target, refreshTime, and conditions.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S03",
+    "title": "Kubernetes — Operator pattern",
+    "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/operator/",
+    "note": "Custom resources and the operator pattern.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S04",
+    "title": "Kubebuilder — Introduction",
+    "url": "https://book.kubebuilder.io/",
+    "note": "Scaffolding and Kubernetes API development.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S05",
+    "title": "Kubernetes — API Concepts",
+    "url": "https://kubernetes.io/docs/reference/using-api/api-concepts/",
+    "note": "Object versioning, reads, and concurrency.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S06",
+    "title": "controller-runtime — client package",
+    "url": "https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/client",
+    "note": "Clients, readers, and optimistic merge patches.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S07",
+    "title": "Kubernetes — RBAC Good Practices",
+    "url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/",
+    "note": "Privileges, Secret reads, and indirect access.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S08",
+    "title": "Kubernetes — Good Practices for Secrets",
+    "url": "https://kubernetes.io/docs/concepts/security/secrets-good-practices/",
+    "note": "Access controls and secret handling.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S09",
+    "title": "Kubebuilder — Generating CRDs",
+    "url": "https://book.kubebuilder.io/reference/generating-crd.html",
+    "note": "Markers, status subresources, and schema generation.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S10",
+    "title": "Kubebuilder — Configuring envtest",
+    "url": "https://book.kubebuilder.io/reference/envtest.html",
+    "note": "API server and etcd without a full workload control plane.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S11",
+    "title": "Go — regexp package",
+    "url": "https://pkg.go.dev/regexp",
+    "note": "Regexp semantics and linear execution.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S12",
+    "title": "Go — Fuzzing",
+    "url": "https://go.dev/doc/security/fuzz/",
+    "note": "Built-in fuzz testing.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S13",
+    "title": "Kubernetes — Extend API with CRDs",
+    "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+    "note": "Structural schemas, defaults, and subresource capabilities.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S14",
+    "title": "Kubebuilder — Watching Resources",
+    "url": "https://book.kubebuilder.io/reference/watching-resources.html",
+    "note": "Watches, event mapping, and predicates.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S15",
+    "title": "controller-runtime — cache package",
+    "url": "https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/cache",
+    "note": "Informer-cache configuration and scope.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S16",
+    "title": "Kubernetes — Define Environment Variables",
+    "url": "https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/",
+    "note": "Container environment configuration.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S17",
+    "title": "Kubernetes — Distribute Credentials Securely",
+    "url": "https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/",
+    "note": "Secret consumption and environment-value updates.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S18",
+    "title": "Kubernetes — Deployments",
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+    "note": "PodTemplate changes and rollout strategies.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S19",
+    "title": "Kubernetes — StatefulSets",
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+    "note": "RollingUpdate, OnDelete, and partition behavior.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S20",
+    "title": "Kubernetes — DaemonSet",
+    "url": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/",
+    "note": "DaemonSet lifecycle and updates.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S21",
+    "title": "Kubernetes — Disruptions",
+    "url": "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+    "note": "PDBs and limitations during workload rolling updates.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S22",
+    "title": "Kubernetes — Admission Webhook Good Practices",
+    "url": "https://kubernetes.io/docs/concepts/cluster-administration/admission-webhooks-good-practices/",
+    "note": "Availability, scope, and admission-control risks.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S23",
+    "title": "Prometheus — Metric and Label Naming",
+    "url": "https://prometheus.io/docs/practices/naming/",
+    "note": "Units, naming, and cardinality.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S24",
+    "title": "Helm — Custom Resource Definitions",
+    "url": "https://helm.sh/docs/chart_best_practices/custom_resource_definitions/",
+    "note": "CRD installation and lifecycle limitations.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S25",
+    "title": "OpenAI — Custom Instructions with AGENTS.md",
+    "url": "https://developers.openai.com/codex/guides/agents-md/",
+    "note": "Project instructions for a coding agent.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S26",
+    "title": "GitHub — Secure Use of Actions",
+    "url": "https://docs.github.com/en/actions/reference/security/secure-use",
+    "note": "Permissions, untrusted input, and Actions pinning.",
+    "accessed": "2026-10-10"
+  },
+  {
+    "id": "S27",
+    "title": "Kubernetes — Versions in CRDs",
+    "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/",
+    "note": "Served/storage versions, conversion, and migration.",
+    "accessed": "2026-10-10"
+  }
+]

@@ -1,0 +1,53 @@
+/* SPDX-License-Identifier: MIT */
+@page {
+  size: 7.5in 10in;
+  margin: 0.72in 0.66in 0.70in;
+  @top-left { content: "AGENTPLANE"; font: 8pt "DejaVu Sans",sans-serif; letter-spacing: 1.4pt; color: #49646d; }
+  @top-right { content: "OPEN ENGINEERING BOOK"; font: 7pt "DejaVu Sans",sans-serif; color:#6b7d83; }
+  @bottom-left { content: "English edition 0.1.0"; font: 7.5pt "DejaVu Sans",sans-serif; color:#6b7d83; }
+  @bottom-right { content: counter(page); font: 9pt "DejaVu Sans",sans-serif; color:#183d47; }
+}
+@page cover { margin:0; @top-left {content:none} @top-right{content:none} @bottom-left{content:none} @bottom-right{content:none} }
+@page colophon { @top-left{content:none} @top-right{content:none} }
+* { box-sizing:border-box; }
+html { font:10pt/1.48 "DejaVu Serif",serif; color:#263940; }
+body { margin:0; }
+.cover { page:cover; width:7.5in; height:10in; break-after:page; }
+.cover img { display:block; width:7.5in; height:10in; object-fit:fill; }
+.colophon {page:colophon; break-after:page; padding-top:0.35in;}
+.colophon h1{font-size:40pt; bookmark-level:none; margin-top:0.2in;}
+.colophon h2{font-size:20pt; font-weight:400; bookmark-level:none; margin-top:0.15in; line-height:1.3;}
+.colophon p{font-size:9.2pt;}
+.colophon .eyebrow{font-family:"DejaVu Sans",sans-serif;font-size:8.5pt;letter-spacing:1.1pt;color:#158071;}
+.colophon .author{margin-top:0.35in; font-size:12pt;}
+.colophon hr{border:0;border-top:1pt solid #d1e2e3;margin:0.3in 0;}
+.colophon-note{margin-top:0.3in;color:#158071;font-style:italic;}
+h1,h2,h3,h4{font-family:"DejaVu Sans",sans-serif;color:#123e4a;break-after:avoid;line-height:1.2;}
+h1{font-size:25pt;letter-spacing:-0.55pt;margin:0 0 18pt;font-weight:700;bookmark-level:1;}
+h2{font-size:13.6pt;margin:20pt 0 8pt;bookmark-level:2;}
+h3{font-size:11pt;margin:14pt 0 6pt;bookmark-level:3;}
+p{margin:0 0 9pt;orphans:3;widows:3;}
+p,li,td,th {overflow-wrap:break-word;}
+a{color:#146b72;text-decoration:none;}
+.chapter{break-before:page;}
+.chapter > h1 + p{font-family:"DejaVu Sans",sans-serif;font-size:9pt;color:#1b897b;margin-bottom:18pt;}
+.chapter img{max-width:100%;max-height:4.6in;display:block;margin:14pt auto;object-fit:contain;}
+blockquote{margin:12pt 0;padding:8pt 14pt;border-left:3pt solid #36a998;background:#f0f7f7;}
+ul,ol{padding-left:19pt;margin-top:5pt;margin-bottom:12pt;}
+li{margin-bottom:4pt;}
+pre{font:8.1pt/1.4 "DejaVu Sans Mono",monospace;background:#eef4f5;border:0.6pt solid #d9e7e9;padding:11pt;white-space:pre-wrap;overflow-wrap:anywhere;break-inside:avoid;margin:12pt 0;}
+code{font-family:"DejaVu Sans Mono",monospace;font-size:0.85em;overflow-wrap:anywhere;}
+pre code{font-size:1em;}
+table{border-collapse:collapse;width:100%;table-layout:fixed;margin:13pt 0 16pt;font:8.2pt/1.4 "DejaVu Sans",sans-serif;}
+thead{display:table-header-group;}
+tr{break-inside:avoid;}
+th{background:#164957;color:white;font-weight:600;text-align:left;}
+th,td{padding:7pt 7pt;border-bottom:0.6pt solid #d5e2e4;vertical-align:top;overflow-wrap:anywhere;}
+tbody tr:nth-child(even){background:#f2f7f7;}
+.toc {break-after:page;}
+.toc h1{margin-bottom:14pt;}
+.toc .part{font:8.5pt "DejaVu Sans",sans-serif;text-transform:uppercase;letter-spacing:0.5pt;color:#1c8276;margin:13pt 0 5pt;break-after:avoid;}
+.toc a{display:block;font:9.1pt/1.55 "DejaVu Sans",sans-serif;color:#26414c;margin-bottom:3pt;padding-right:26pt;position:relative;}
+.toc a::after{content:target-counter(attr(href),page);position:absolute;right:0;bottom:0;}
+
+.cover { background:#102b36; }

@@ -1,0 +1,20 @@
+{%- assign current_year = site.time | date: '%Y' | plus: 0 -%}
+{%- assign current_month = site.time | date: '%m' | plus: 0 -%}
+{%- assign end_parts = include.end | split: '-' -%}
+{%- assign end_year = end_parts[0] | default: current_year | plus: 0 -%}
+{%- assign end_month = end_parts[1] | default: current_month | plus: 0 -%}
+{%- assign start_parts = include.start | split: '-' -%}
+{%- assign start_year = start_parts[0] | plus: 0 -%}
+{%- assign start_month = start_parts[1] | plus: 0 -%}
+{%- assign months = end_year | minus: start_year | times: 12 | plus: end_month | minus: start_month | plus: 1 -%}
+{%- assign years = months | divided_by: 12 -%}
+{%- assign remaining = months | modulo: 12 -%}
+{%- assign duration = '' -%}
+{%- if years > 0 -%}
+  {%- capture duration -%}{{ years }} {% if years == 1 %}yr{% else %}yrs{% endif %}{%- endcapture -%}
+{%- endif -%}
+{%- if remaining > 0 -%}
+  {%- if years > 0 -%}{%- assign duration = duration | append: ' ' -%}{%- endif -%}
+  {%- capture duration -%}{{ duration }}{{ remaining }} {% if remaining == 1 %}mo{% else %}mos{% endif %}{%- endcapture -%}
+{%- endif -%}
+{{- duration -}}

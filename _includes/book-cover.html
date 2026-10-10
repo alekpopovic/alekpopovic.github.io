@@ -1,0 +1,11 @@
+{% if include.book.cover_image %}
+<img class="book-cover-image" src="{{ '/assets/books/' | append: include.book.id | append: '/cover-640.webp' | relative_url }}" srcset="{{ '/assets/books/' | append: include.book.id | append: '/cover-320.webp' | relative_url }} 320w, {{ '/assets/books/' | append: include.book.id | append: '/cover-640.webp' | relative_url }} 640w, {{ '/assets/books/' | append: include.book.id | append: '/cover-960.webp' | relative_url }} 960w" sizes="(max-width: 650px) 260px, (max-width: 980px) 320px, 420px" alt="{{ include.book.title | escape }} — {{ include.book.subtitle | escape }}" width="{{ include.book.cover_width }}" height="{{ include.book.cover_height }}" {% if include.priority %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+{% else %}
+<div class="book-cover" aria-hidden="true">
+  <p class="book-cover-kicker">Open engineering book · {{ include.book.edition }}</p>
+  <p class="book-cover-title display">Modern<br>CI<span>.</span></p>
+  <p class="book-cover-subtitle">Building a Reliable<br>CI/CD Platform</p>
+  <div class="book-cover-art">{% include project-art.html kind='routes' %}</div>
+  <div class="book-cover-bottom"><p>Go · Angular · PostgreSQL</p><p>{{ include.book.author }}</p></div>
+</div>
+{% endif %}

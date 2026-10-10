@@ -1,0 +1,59 @@
+body {
+  font-family: serif;
+  line-height: 1.5;
+  color: #18282b;
+  margin: 5%;
+}
+h1, h2, h3, h4 {
+  font-family: sans-serif;
+  color: #0c555c;
+  line-height: 1.2;
+}
+h1.part, h2 {
+  page-break-before: always;
+}
+h1.part {
+  color: #0b4c52;
+  border-bottom: 0.2em solid #39a99d;
+  padding-bottom: 0.4em;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.78em;
+  background: #102a2e;
+  color: #edf8f7;
+  padding: 0.8em;
+  border-left: 0.3em solid #39a99d;
+}
+code {
+  font-family: monospace;
+}
+blockquote {
+  border-left: 0.3em solid #39a99d;
+  background: #eef8f6;
+  padding: 0.5em 0.8em;
+  margin-left: 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82em;
+}
+th, td {
+  border: 1px solid #b9cecc;
+  padding: 0.35em;
+  vertical-align: top;
+}
+th {
+  background: #174f55;
+  color: white;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+figcaption {
+  font-size: 0.82em;
+  color: #526c6f;
+}

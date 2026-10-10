@@ -1,0 +1,22 @@
+# Post-deploy ugovor: ne koristiti kao preflight dok Deployment ne postoji.
+apiVersion: secrets.codepop.tech/v1alpha1
+kind: SecretContract
+metadata:
+  name: demo-workload
+  namespace: sco-lab
+spec:
+  secretRef:
+    name: demo-secrets
+  requiredKeys:
+    - name: DB_USERNAME
+    - name: DB_PASSWORD
+      minLength: 16
+  workloadRefs:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: demo-api
+      containers: [api]
+      includeInitContainers: false
+      consumption: EnvVars
+  policy:
+    requireWorkloadReference: true

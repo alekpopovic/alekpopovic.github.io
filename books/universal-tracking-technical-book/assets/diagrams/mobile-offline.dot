@@ -1,0 +1,21 @@
+digraph G {
+
+graph [bgcolor="transparent", fontname="DejaVu Sans", fontsize=18, pad=0.25, nodesep=0.55, ranksep=0.7];
+node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, color="#1c5961", fillcolor="#eef8f6", fontcolor="#102a2e", penwidth=1.8, margin="0.16,0.10"];
+edge [fontname="DejaVu Sans", fontsize=13, color="#3f6d72", fontcolor="#355d61", penwidth=1.8, arrowsize=0.8];
+
+rankdir=LR;
+os [label="Native location engine
+Kotlin or Swift"];
+sqlite [label="SQLite queue
+sequence + sync state", shape=cylinder, fillcolor="#fff2d7", color="#a36c16"];
+sync [label="Batch synchronizer
+retry + backoff"];
+api [label="Go ingest API"];
+ack [label="Accepted / duplicate / rejected
+sequence acknowledgement"];
+os -> sqlite [label="append first"];
+sqlite -> sync;
+sync -> api;
+api -> ack -> sqlite [label="delete only acknowledged"];
+}

@@ -1,0 +1,25 @@
+{
+  "agent_id": "edge-demo-01",
+  "epoch": "2c6be559-4eaf-4c81-b075-5847c6f28570",
+  "auth_socket": "/run/nginx-guard/auth.sock",
+  "auth_socket_mode": "0660",
+  "control_listen": "10.20.0.10:9444",
+  "state_file": "/var/lib/nginx-guard/state.json",
+  "central_url": "https://guard-central.internal",
+  "reconcile_interval_seconds": 15,
+  "heartbeat_interval_seconds": 30,
+  "max_snapshot_bytes": 8388608,
+  "max_decisions": 50000,
+  "max_automatic_ttl_seconds": 86400,
+  "max_manual_ttl_seconds": 604800,
+  "tls": {
+    "ca_file": "/etc/nginx-guard/pki/ca.pem",
+    "cert_file": "/etc/nginx-guard/pki/agent.pem",
+    "key_file": "/etc/nginx-guard/pki/agent-key.pem"
+  },
+  "signing_public_keys": {
+    "signer-test-01": "/etc/nginx-guard/keys/signer-test-01.pub"
+  },
+  "local_allowlist_file": "/etc/nginx-guard/emergency-allowlist.json",
+  "local_bypass_file": "/etc/nginx-guard/emergency-bypass.json"
+}

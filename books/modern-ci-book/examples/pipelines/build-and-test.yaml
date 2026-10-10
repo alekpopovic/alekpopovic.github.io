@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Proposed Modern CI syntax, not an executable GitHub or Jenkins configuration.
+apiVersion: ci/v1
+name: build-and-test
+triggers:
+  manual: true
+jobs:
+  test:
+    pool: trusted-linux
+    toolchain: go-stable
+    checkout: true
+    commands:
+      - go test -race ./...
+  package:
+    needs: [test]
+    pool: trusted-linux
+    checkout: true
+    build:
+      type: oci
+      dockerfile: Dockerfile
+      registry: project-registry

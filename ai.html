@@ -1,0 +1,39 @@
+---
+layout: default
+title: AI Lab · Practical AI guides by Aleksandar Popovic
+description: A practical library for working with AI. Explore slash commands, coding agents, chat assistants, and workflows for ChatGPT, Codex, Claude, Gemini, Cursor, and Copilot.
+permalink: /ai/
+---
+{% assign ai_posts = site.posts | where: 'section', 'ai' %}
+{% assign ai_categories = ai_posts | map: 'category' | uniq | sort %}
+<main id="main-content" class="ai-page">
+  <section class="ai-hero section-shell">
+    <div class="ai-hero-copy">
+      <p class="ai-kicker"><span aria-hidden="true">✳</span> AI Lab <span class="ai-kicker-divider">/</span> A practical field guide</p>
+      <h1>Less friction.<br><span>More possibility.</span></h1>
+      <p class="ai-lead">Learn the tools. Find the command. Build something useful. A growing collection of hands-on guides for your everyday work with AI.</p>
+      <div class="ai-actions"><a class="ai-button" href="#ai-guides">Explore the guides {% include icon.html name='arrow-up-right' %}</a><a class="ai-subtle-link" href="#ai-tools">Find your tool <span aria-hidden="true">↓</span></a></div>
+      <dl class="ai-stats"><div><dt>Practical guides</dt><dd>{% if ai_posts.size < 10 %}0{% endif %}{{ ai_posts.size }}</dd></div><div><dt>Tools covered</dt><dd>{% if site.data.ai_tools.size < 10 %}0{% endif %}{{ site.data.ai_tools.size }}</dd></div><div><dt>Ways to explore</dt><dd>{% if ai_categories.size < 10 %}0{% endif %}{{ ai_categories.size }}</dd></div></dl>
+    </div>
+    <div class="ai-console" aria-label="Shortcuts by tool">
+      <div class="ai-console-top"><span>{% include icon.html name='sparkles' %} Your next useful command</span><span class="ai-console-badge">Quick reference</span></div>
+      <p class="ai-console-prompt"><span aria-hidden="true">/</span> A shortcut to better work.</p>
+      <div class="ai-command-links">{% for tool in site.data.ai_tools %}<a href="{{ tool.guide | relative_url }}"><span class="ai-tool-mark" data-tool="{{ tool.id }}">{{ tool.mark }}</span><span><code>{{ tool.preview }}</code><small>{{ tool.name }} · {{ tool.surface }}</small></span>{% include icon.html name='arrow-up-right' %}</a>{% endfor %}</div>
+      <p class="ai-console-foot">Real commands. Clear context. Official sources.</p>
+    </div>
+  </section>
+  <section class="ai-tools section-shell" id="ai-tools" aria-label="AI tools"><div class="ai-section-label"><span>Pick your starting point</span><span>Six tools. One library.</span></div><div class="ai-tool-strip">{% for tool in site.data.ai_tools %}<a href="{{ tool.guide | relative_url }}"><span class="ai-tool-mark" data-tool="{{ tool.id }}">{{ tool.mark }}</span><span>{{ tool.name }}<small>{{ tool.surface }}</small></span>{% include icon.html name='arrow-up-right' %}</a>{% endfor %}</div></section>
+  <section class="ai-library section-shell" id="ai-guides" aria-labelledby="ai-library-title" data-ai-library>
+    <aside class="ai-library-sidebar"><p class="ai-section-label">Explore the library</p><h2 id="ai-library-title">Find your<br>next step.</h2><p>From your first slash command to a repeatable workflow.</p>
+      <div class="ai-category-filters" data-ai-controls hidden role="group" aria-label="Filter AI guides by category"><button type="button" data-ai-category="" class="is-active" aria-pressed="true" aria-controls="ai-posts">All guides <span>{{ ai_posts.size }}</span></button>{% for category in ai_categories %}{% assign category_posts = ai_posts | where: 'category', category %}<button type="button" data-ai-category="{{ category | escape }}" aria-pressed="false" aria-controls="ai-posts">{{ category }} <span>{{ category_posts.size }}</span></button>{% endfor %}</div>
+      <a class="ai-sidebar-link" href="{{ '/posts/' | relative_url }}">Engineering field notes {% include icon.html name='arrow-up-right' %}</a>
+    </aside>
+    <div class="ai-library-main">
+      <div class="ai-search-controls" data-ai-controls hidden><label class="ai-search">{% include icon.html name='search' %}<span class="sr-only">Search AI guides</span><input type="search" data-ai-search placeholder="Search a tool, /command, or idea…" autocomplete="off" maxlength="120" aria-controls="ai-posts"></label><label class="ai-select"><span class="sr-only">Filter AI guides by tool</span><select data-ai-tool aria-controls="ai-posts"><option value="">All tools</option>{% for tool in site.data.ai_tools %}<option value="{{ tool.id }}">{{ tool.name }}</option>{% endfor %}<option value="workflow">Across tools</option></select></label></div>
+      <div class="ai-results-row"><p role="status" aria-live="polite" aria-atomic="true" data-ai-results>{{ ai_posts.size }} guides to explore</p><button type="button" data-ai-reset hidden>Clear filters ×</button></div>
+      <div class="ai-posts" id="ai-posts">{% for post in ai_posts %}{% include post-card.html post=post searchable=true %}{% endfor %}</div>
+      <div class="ai-empty" data-ai-empty hidden><span aria-hidden="true">/</span><h3>No matching guides yet.</h3><p>Try another command, a different tool, or clear your filters.</p><button type="button" class="ai-button" data-ai-clear>Explore all guides</button></div>
+    </div>
+  </section>
+  <section class="ai-bottom-note section-shell"><span aria-hidden="true">✳</span><div><h2>Useful today. Kept honest tomorrow.</h2><p>Each reference identifies the app it covers and links to the official documentation. Commands evolve; your installed app’s menu is the final check.</p></div><a class="ai-subtle-link" href="{{ '/feed.xml' | relative_url }}">Follow new guides {% include icon.html name='rss' %}</a></section>
+</main>

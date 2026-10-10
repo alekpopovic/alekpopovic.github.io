@@ -1,0 +1,946 @@
+[
+  {
+    "id": "000",
+    "title": "Repository audit, toolchain locks, and architectural decisions",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "001",
+    "title": "Go workspace and modular process skeletons",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "002",
+    "title": "Local development infrastructure without mandatory Kubernetes",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "003",
+    "title": "Database migrations, query generation, and persistence conventions",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "004",
+    "title": "Versioned HTTP API and generated client contract",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "005",
+    "title": "Angular application shell and design foundation",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "006",
+    "title": "Shared integration fixtures and CI quality gates",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "007",
+    "title": "Execution state machines and trust-boundary contracts",
+    "phase": "Foundations",
+    "chapters": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "008",
+    "title": "Installation bootstrap and secure local authentication",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "009",
+    "title": "Organizations, projects, memberships, and explicit RBAC",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "010",
+    "title": "Append-oriented audit events and administrative history",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "011",
+    "title": "Encrypted scoped secret storage and key management",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "012",
+    "title": "Runner pools, enrollment tokens, and capability policies",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "013",
+    "title": "Scoped API tokens and initial CLI authentication",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "014",
+    "title": "Administrative settings and secret-management user experience",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "015",
+    "title": "Identity and secret-security acceptance gate",
+    "phase": "Identity",
+    "chapters": [
+      6,
+      17
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "016",
+    "title": "Versioned pipeline YAML schema and bounded parser",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "017",
+    "title": "DAG compiler and dependency validation",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "018",
+    "title": "Typed parameters and restricted conditions",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "019",
+    "title": "Immutable run snapshots and definition version history",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "020",
+    "title": "Manual triggering, idempotency, and run creation API",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "021",
+    "title": "Freestyle jobs using the same pipeline model",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "022",
+    "title": "Pipeline editor, graph viewer, and validation feedback",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "023",
+    "title": "Pipeline compiler and authoring acceptance gate",
+    "phase": "Authoring",
+    "chapters": [
+      7,
+      8,
+      20
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "024",
+    "title": "PostgreSQL queue and atomic job leasing",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "025",
+    "title": "Authorized runner matching and scoped claim API",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "026",
+    "title": "Heartbeats, fencing, and idempotent result acceptance",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "027",
+    "title": "Failure classification, retry budgets, and reconciliation",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "028",
+    "title": "Cancellation, deadlines, and timeout propagation",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "029",
+    "title": "Concurrency limits, capacity accounting, and resource locks",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "030",
+    "title": "Durable events, live state updates, and queue explanations",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "031",
+    "title": "Scheduler crash and concurrency acceptance gate",
+    "phase": "Scheduling",
+    "chapters": [
+      9,
+      10,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "032",
+    "title": "Outbound runner service and durable local identity",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "033",
+    "title": "Container executor with explicit isolation limits",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "034",
+    "title": "Deterministic and credential-safe Git checkout",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "035",
+    "title": "Sequential steps and bounded command lifecycle",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "036",
+    "title": "Durable log segments, redaction, and upload resumption",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "037",
+    "title": "Runner restart reconciliation and orphan cleanup",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "038",
+    "title": "Run detail screen and resumable live log viewer",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "039",
+    "title": "First real CI job and execution reliability gate",
+    "phase": "Execution",
+    "chapters": [
+      11,
+      12,
+      13
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "040",
+    "title": "GitHub App connection and signed webhook ingestion",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "041",
+    "title": "Branch and pull-request discovery with trust policies",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "042",
+    "title": "GitHub checks, commit statuses, and delivery reconciliation",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "043",
+    "title": "Scheduled runs, cron timezones, and catch-up policy",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "044",
+    "title": "Bounded matrix jobs and conditional fan-out",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "045",
+    "title": "Automation timeline, run comparison, and actionable history",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "046",
+    "title": "Scoped notifications and safe outbound delivery",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "047",
+    "title": "Git automation and trigger-security acceptance gate",
+    "phase": "Source automation",
+    "chapters": [
+      8,
+      16
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "048",
+    "title": "Artifact upload, integrity, and storage abstraction",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "049",
+    "title": "Artifact retention, secure downloads, and explicit job handoff",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "050",
+    "title": "JUnit reports and test-result visualization",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "051",
+    "title": "Dependency cache with trust-aware namespaces",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "052",
+    "title": "BuildKit image builds and immutable registry outputs",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "053",
+    "title": "Registry build cache and measurable build performance",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "054",
+    "title": "SBOM and provenance records for release artifacts",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "055",
+    "title": "Artifact, cache, and build acceptance gate",
+    "phase": "Build outputs",
+    "chapters": [
+      14,
+      15
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "056",
+    "title": "Environments and server-enforced deployment policy",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "057",
+    "title": "Deployment records, orchestration, and uncertain outcomes",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "058",
+    "title": "Approval gates with immutable subject binding",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "059",
+    "title": "Restricted SSH deployment executor",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "060",
+    "title": "Container release rollout, health checks, and controlled rollback",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "061",
+    "title": "Opt-in workload OIDC and short-lived cloud credentials",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "062",
+    "title": "Environment dashboards and deployment audit experience",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "063",
+    "title": "Deployment safety and recovery acceptance gate",
+    "phase": "Delivery",
+    "chapters": [
+      17,
+      18,
+      19
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "064",
+    "title": "Complete operational CLI with streaming and safe exits",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "065",
+    "title": "Operational dashboards and efficient search",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "066",
+    "title": "Operational quotas and abuse-resistant limits",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "067",
+    "title": "Versioned reusable templates and isolated action contracts",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "068",
+    "title": "Limited Jenkins migration analyzer and explicit unsupported cases",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "069",
+    "title": "Guided onboarding and operator diagnostics",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "070",
+    "title": "Accessibility, responsive behavior, and browser reliability",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "071",
+    "title": "Feature-complete self-hosted acceptance and migration demo",
+    "phase": "Operator experience",
+    "chapters": [
+      20,
+      21
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "072",
+    "title": "OpenTelemetry, Prometheus, and actionable alerts",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "073",
+    "title": "Backup, restore, and recovery consistency",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "074",
+    "title": "Multi-scheduler hardening and safe schema upgrades",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "075",
+    "title": "Self-hosted packaging, TLS topology, and runner installation",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "076",
+    "title": "Release build pipeline and software supply-chain checks",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "077",
+    "title": "Security regression, fuzzing, and release threat-model review",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "078",
+    "title": "Load, chaos, and operational endurance verification",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  },
+  {
+    "id": "079",
+    "title": "Self-hosted release-candidate audit and repository handoff",
+    "phase": "Release hardening",
+    "chapters": [
+      22,
+      23,
+      24
+    ],
+    "status": "planned",
+    "evidence": []
+  }
+]

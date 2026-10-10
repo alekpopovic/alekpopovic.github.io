@@ -1,0 +1,26 @@
+digraph G {
+
+graph [bgcolor="transparent", fontname="DejaVu Sans", fontsize=18, pad=0.25, nodesep=0.55, ranksep=0.7];
+node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, color="#1c5961", fillcolor="#eef8f6", fontcolor="#102a2e", penwidth=1.8, margin="0.16,0.10"];
+edge [fontname="DejaVu Sans", fontsize=13, color="#3f6d72", fontcolor="#355d61", penwidth=1.8, arrowsize=0.8];
+
+rankdir=TB;
+internet [label="Internet / private device networks"];
+nginx [label="Nginx
+TLS, static files, WebSocket, streams", fillcolor="#dceef8"];
+subgraph cluster_apps { label="Application hosts"; color="#9bc9c4"; style="rounded";
+ api1 [label="Go api + realtime A"];
+ api2 [label="Go api + realtime B"];
+ worker [label="Go workers + scheduler"];
+ gateway [label="Go GPS gateway"];
+}
+primary [label="PostgreSQL primary
+PostGIS + WAL", shape=cylinder, fillcolor="#e9e2f8", color="#65508d"];
+standby [label="Optional hot standby", shape=cylinder, fillcolor="#f2eff8", color="#65508d"];
+backup [label="Encrypted off-site backups
+and restore drills", fillcolor="#fff2d7", color="#a36c16"];
+internet -> nginx; nginx -> api1; nginx -> api2; nginx -> gateway;
+api1 -> primary; api2 -> primary; worker -> primary; gateway -> primary;
+primary -> standby [label="streaming replication"];
+primary -> backup [label="base backup + WAL"];
+}

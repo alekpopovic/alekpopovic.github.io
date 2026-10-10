@@ -1,0 +1,14 @@
+{% assign card_post = include.post %}
+{% assign card_book = site.data.books | where: 'id', card_post.book_id | first %}
+{% assign card_minutes = card_post.content | number_of_words | divided_by: 200.0 | ceil | at_least: 1 %}
+{% assign card_heading = include.heading | default: 'h2' %}
+{% assign card_tool = site.data.ai_tools | where: 'id', card_post.tool | first %}
+<a class="post-card{% if card_post.section == 'ai' %} ai-card{% endif %}" href="{{ card_post.url | relative_url }}" data-post-card data-section="{{ card_post.section | default: 'engineering' }}" data-tool="{{ card_post.tool | escape }}" data-book="{{ card_post.book_id | escape }}" data-category="{{ card_post.category | escape }}" data-search="{{ card_post.title | escape }} {{ card_post.description | escape }} {{ card_post.category | escape }} {{ card_post.tags | join: ' ' | escape }} {{ card_tool.name | escape }} {{ card_book.title | escape }} {{ card_book.brand | escape }}{% if include.searchable %} {{ card_post.content | strip_html | normalize_whitespace | escape }}{% endif %}">
+  {% if card_post.section == 'ai' %}<div class="ai-card-top"><span class="ai-tool-mark" data-tool="{{ card_post.tool }}">{{ card_tool.mark | default: '✳' }}</span><span>{{ card_tool.name | default: 'Across tools' }}<small>{{ card_post.format }}</small></span><span class="ai-card-arrow" aria-hidden="true">↗</span></div>{% else %}<div class="post-card-visual"><span class="post-card-book">{{ card_book.brand | default: card_book.title }}</span>{% include post-art.html kind=card_post.illustration %}<span class="post-card-open" aria-hidden="true">↗</span></div>{% endif %}
+  <div class="post-card-body">
+    <div class="post-card-meta"><span>{{ card_post.category }}</span><span>{{ card_minutes }} min read</span></div>
+    <{{ card_heading }}>{{ card_post.title }}</{{ card_heading }}>
+    <p>{{ card_post.description }}</p>
+    <div class="post-card-bottom"><time datetime="{{ card_post.date | date: '%Y-%m-%d' }}">{{ card_post.date | date: '%b %-d, %Y' }}</time><span>{% if card_post.section == 'ai' %}Read the guide{% else %}Read the note{% endif %} <span aria-hidden="true">↗</span></span></div>
+  </div>
+</a>

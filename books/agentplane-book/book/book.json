@@ -1,0 +1,184 @@
+{
+  "title": "AgentPlane",
+  "subtitle": "Building a Kubernetes-Native Platform for AI Agents",
+  "language": "en",
+  "edition": "0.1.0",
+  "reviewed_on": "2026-10-10",
+  "author": "AgentPlane Book contributors",
+  "chapters": [
+    {
+      "number": 1,
+      "path": "book/chapters/01-product-boundary.md",
+      "title": "Choose a Product Boundary Before a Technology Stack",
+      "part": "Part I \u2014 Foundations"
+    },
+    {
+      "number": 2,
+      "path": "book/chapters/02-architecture.md",
+      "title": "Separate the Control Plane from the Execution Plane",
+      "part": "Part I \u2014 Foundations"
+    },
+    {
+      "number": 3,
+      "path": "book/chapters/03-threat-model.md",
+      "title": "Turn the Threat Model into Testable Invariants",
+      "part": "Part I \u2014 Foundations"
+    },
+    {
+      "number": 4,
+      "path": "book/chapters/04-engineering-workspace.md",
+      "title": "Create a Reproducible Engineering Workspace",
+      "part": "Part I \u2014 Foundations"
+    },
+    {
+      "number": 5,
+      "path": "book/chapters/05-tenant-data.md",
+      "title": "Design Tenant-Safe PostgreSQL Data",
+      "part": "Part II \u2014 Control Plane"
+    },
+    {
+      "number": 6,
+      "path": "book/chapters/06-identity.md",
+      "title": "Keep Human, Service and Cluster Identities Distinct",
+      "part": "Part II \u2014 Control Plane"
+    },
+    {
+      "number": 7,
+      "path": "book/chapters/07-asynchronous-api.md",
+      "title": "Design APIs for Work That Finishes Later",
+      "part": "Part II \u2014 Control Plane"
+    },
+    {
+      "number": 8,
+      "path": "book/chapters/08-connector-pki.md",
+      "title": "Enroll Clusters Without Exporting Their Authority",
+      "part": "Part II \u2014 Control Plane"
+    },
+    {
+      "number": 9,
+      "path": "book/chapters/09-durable-messaging.md",
+      "title": "Make Delivery Durable Without Promising Exactly-Once Effects",
+      "part": "Part II \u2014 Control Plane"
+    },
+    {
+      "number": 10,
+      "path": "book/chapters/10-reconciliation.md",
+      "title": "Use Kubernetes Reconciliation Without Expanding Authority",
+      "part": "Part III \u2014 Kubernetes Integration"
+    },
+    {
+      "number": 11,
+      "path": "book/chapters/11-upstream-adapters.md",
+      "title": "Integrate Agent Sandbox Through a Capability Adapter",
+      "part": "Part III \u2014 Kubernetes Integration"
+    },
+    {
+      "number": 12,
+      "path": "book/chapters/12-runtime-isolation.md",
+      "title": "Build Runtime Profiles for the Actual Threat Model",
+      "part": "Part III \u2014 Kubernetes Integration"
+    },
+    {
+      "number": 13,
+      "path": "book/chapters/13-session-lifecycle.md",
+      "title": "Model Sessions, Executions and Uncertainty Separately",
+      "part": "Part IV \u2014 Safe Execution"
+    },
+    {
+      "number": 14,
+      "path": "book/chapters/14-execution-files-git.md",
+      "title": "Execute Commands and Handle Files Without Hidden Privilege",
+      "part": "Part IV \u2014 Safe Execution"
+    },
+    {
+      "number": 15,
+      "path": "book/chapters/15-network-policy.md",
+      "title": "Make Network Policy an Enforced Property",
+      "part": "Part IV \u2014 Safe Execution"
+    },
+    {
+      "number": 16,
+      "path": "book/chapters/16-secrets-workload-identity.md",
+      "title": "Broker References, Not Customer Secret Values",
+      "part": "Part IV \u2014 Safe Execution"
+    },
+    {
+      "number": 17,
+      "path": "book/chapters/17-mcp-gateway.md",
+      "title": "Discover Tools Without Trusting Their Descriptions",
+      "part": "Part V \u2014 Tool Governance"
+    },
+    {
+      "number": 18,
+      "path": "book/chapters/18-approvals.md",
+      "title": "Bind Authorization and Approval to the Exact Action",
+      "part": "Part V \u2014 Tool Governance"
+    },
+    {
+      "number": 19,
+      "path": "book/chapters/19-workspaces-snapshots.md",
+      "title": "Preserve Workspaces Without Inventing Checkpoint Guarantees",
+      "part": "Part VI \u2014 State and Evidence"
+    },
+    {
+      "number": 20,
+      "path": "book/chapters/20-metering-budgets.md",
+      "title": "Meter Usage and Reserve Capacity Without Double Counting",
+      "part": "Part VI \u2014 State and Evidence"
+    },
+    {
+      "number": 21,
+      "path": "book/chapters/21-observability-audit.md",
+      "title": "Observe the System Without Collecting the Customer",
+      "part": "Part VI \u2014 State and Evidence"
+    },
+    {
+      "number": 22,
+      "path": "book/chapters/22-console-sdks.md",
+      "title": "Build Interfaces That Preserve Scope and Uncertainty",
+      "part": "Part VII \u2014 Product and Operations"
+    },
+    {
+      "number": 23,
+      "path": "book/chapters/23-deployment-upgrades.md",
+      "title": "Deploy and Upgrade Without Crossing the Trust Boundary",
+      "part": "Part VII \u2014 Product and Operations"
+    },
+    {
+      "number": 24,
+      "path": "book/chapters/24-reliability-recovery.md",
+      "title": "Design Recovery Before the First Production Incident",
+      "part": "Part VII \u2014 Product and Operations"
+    },
+    {
+      "number": 25,
+      "path": "book/chapters/25-verification.md",
+      "title": "Build Evidence for Every Important Claim",
+      "part": "Part VII \u2014 Product and Operations"
+    },
+    {
+      "number": 26,
+      "path": "book/chapters/26-coding-agents.md",
+      "title": "Use Coding Agents as Bounded Engineering Collaborators",
+      "part": "Part VIII \u2014 Implementation and Publication"
+    },
+    {
+      "number": 27,
+      "path": "book/chapters/27-capstone.md",
+      "title": "Deliver One Complete Vertical Slice",
+      "part": "Part VIII \u2014 Implementation and Publication"
+    },
+    {
+      "number": 28,
+      "path": "book/chapters/28-open-publication.md",
+      "title": "Maintain an Open Book Like a Software Project",
+      "part": "Part VIII \u2014 Implementation and Publication"
+    }
+  ],
+  "appendices": [
+    "book/appendices/a-glossary.md",
+    "book/appendices/b-design-records.md",
+    "book/appendices/c-review-exercises.md",
+    "book/appendices/d-companion-files.md"
+  ]
+}

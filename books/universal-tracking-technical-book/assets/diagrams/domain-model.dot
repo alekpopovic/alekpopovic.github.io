@@ -1,0 +1,28 @@
+digraph G {
+
+graph [bgcolor="transparent", fontname="DejaVu Sans", fontsize=18, pad=0.25, nodesep=0.55, ranksep=0.7];
+node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=16, color="#1c5961", fillcolor="#eef8f6", fontcolor="#102a2e", penwidth=1.8, margin="0.16,0.10"];
+edge [fontname="DejaVu Sans", fontsize=13, color="#3f6d72", fontcolor="#355d61", penwidth=1.8, arrowsize=0.8];
+
+rankdir=LR;
+org [label="Organization"];
+subject [label="TrackingSubject
+person, vehicle, package, asset"];
+profile [label="Typed profile
+person / vehicle / asset"];
+device [label="TrackingDevice
+phone, tracker, watch"];
+assignment [label="DeviceAssignment
+valid_from / valid_until"];
+session [label="TrackingSession
+activity, privacy, shift/task"];
+point [label="LocationPoint
+immutable observation"];
+org -> subject [label="owns"];
+subject -> profile [label="describes"];
+subject -> assignment [label="tracked by"];
+device -> assignment [label="assigned through"];
+subject -> session [label="participates"];
+device -> session [label="produces"];
+session -> point [label="contains"];
+}

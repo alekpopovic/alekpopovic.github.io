@@ -1,0 +1,25 @@
+---
+layout: default
+title: Search — Aleksandar Popovic
+description: Find practical engineering notes, complete book chapters, open-source projects, and videos.
+permalink: /search/
+noindex: true
+sitemap: false
+---
+<main id="main-content">
+  <section class="page-hero search-hero"><div class="section-shell"><p class="eyebrow tag">Find your next idea</p><h1 class="display">Search everything.</h1><p class="page-intro">Notes, complete book chapters, projects, and videos. One place to look.</p></div></section>
+  <section class="section-shell search-library" data-site-search data-index="{{ '/search-index.json' | relative_url }}">
+    <form class="site-search-form" role="search" action="{{ '/search/' | relative_url }}" method="get">
+      <div><label for="site-query">What are you looking for?</label><div class="site-query-row"><input id="site-query" name="q" type="search" maxlength="120" placeholder="Try: deployment, SSH, proxy trust…" autocomplete="off"><button class="button button-blue" type="submit">Search <span aria-hidden="true">↗</span></button></div></div>
+      <div data-search-filter hidden><label for="search-type">Look in</label><select id="search-type" name="type"><option value="all">Everything</option><option value="posts">Posts</option><option value="books">Books</option><option value="chapters">Book chapters</option><option value="projects">Projects</option><option value="videos">Videos</option><option value="pages">Pages</option></select></div>
+    </form>
+    <div data-search-panel hidden><p class="search-status" data-search-status role="status" aria-live="polite"></p><ol class="search-results" data-search-results aria-label="Search results"></ol><button class="button" type="button" data-search-more hidden>Show more results ↓</button></div>
+    <div class="search-directory" data-search-directory><h2>Explore the library</h2><p>Browse the complete catalog below. Enable JavaScript to search within chapters and posts.</p>
+      <details open><summary>Books and chapters</summary>{% for book in site.data.books %}<h3><a href="{{ book.url | relative_url }}">{{ book.title }}</a></h3><ul>{% for chapter in book.chapters %}<li><a href="{{ chapter.url | relative_url }}">{{ chapter.title }}</a></li>{% endfor %}</ul>{% endfor %}</details>
+      <details><summary>Field notes</summary><ul>{% for post in site.posts %}<li><a href="{{ post.url | relative_url }}">{{ post.title }}</a></li>{% endfor %}</ul></details>
+      <details><summary>Projects</summary><ul>{% for project in site.data.projects %}<li><a href="{{ '/projects/' | append: project.id | append: '/' | relative_url }}">{{ project.name }}</a></li>{% endfor %}</ul></details>
+      <p><a href="{{ '/videos/' | relative_url }}">Explore the video playlists ↗</a></p>
+      <p><a href="{{ '/ai/' | relative_url }}">Explore AI Lab ↗</a></p>
+    </div>
+  </section>
+</main>

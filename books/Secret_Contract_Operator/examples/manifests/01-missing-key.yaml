@@ -1,0 +1,22 @@
+# Sinteticki test. Zahteva implementiran SecretContract CRD i operator.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo-secrets
+  namespace: sco-lab
+type: Opaque
+stringData:
+  DB_USERNAME: demo-user
+---
+apiVersion: secrets.codepop.tech/v1alpha1
+kind: SecretContract
+metadata:
+  name: demo
+  namespace: sco-lab
+spec:
+  secretRef:
+    name: demo-secrets
+  requiredKeys:
+    - name: DB_USERNAME
+    - name: DB_PASSWORD
+      minLength: 16

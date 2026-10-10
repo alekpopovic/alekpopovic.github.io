@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "agent_id": "edge-demo-01",
+  "epoch": "2c6be559-4eaf-4c81-b075-5847c6f28570",
+  "revision": 1,
+  "issued_at": "2026-10-09T09:00:01Z",
+  "valid_until": "2026-10-09T09:02:01Z",
+  "sites": [
+    {
+      "site_id": "site-demo",
+      "mode": "monitor"
+    }
+  ],
+  "allowlist": [],
+  "decisions": [
+    {
+      "decision_id": "dec-demo-001",
+      "site_id": "site-demo",
+      "ip": "203.0.113.42",
+      "issued_at": "2026-10-09T09:00:01Z",
+      "expires_at": "2026-10-09T09:15:01Z",
+      "reason_code": "sensitive_path_scan",
+      "source": "automatic",
+      "rule_version": "path-scan-v1",
+      "evidence_ids": [
+        "0123456789abcdef0123456789abcdef"
+      ]
+    }
+  ]
+}
