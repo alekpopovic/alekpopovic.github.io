@@ -2,6 +2,7 @@ const { test, expect } = require('./fixtures');
 const AxeBuilder = require('@axe-core/playwright').default;
 const fs = require('node:fs');
 const aiCount = fs.readdirSync('_posts').filter(name => name.endsWith('.md') && /\nsection: ai\n/.test(fs.readFileSync(`_posts/${name}`, 'utf8'))).length;
+const codingAgentCount = fs.readdirSync('_posts').filter(name => name.endsWith('.md') && /\nsection: ai\n/.test(fs.readFileSync(`_posts/${name}`, 'utf8')) && /\ncategory: Coding agents\n/.test(fs.readFileSync(`_posts/${name}`, 'utf8'))).length;
 
 test('AI Lab is featured and all tool references link to sourced standalone guides', async ({ page, request }) => {
   await page.goto('/');
@@ -63,7 +64,7 @@ test('AI filters handle unknown URL values, browser history and keyboard activat
   await category.focus();
   await page.keyboard.press('Space');
   await expect(category).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#ai-posts [data-post-card]:visible')).toHaveCount(3);
+  await expect(page.locator('#ai-posts [data-post-card]:visible')).toHaveCount(codingAgentCount);
 });
 
 test('AI guides and navigation remain readable without JavaScript', async ({ browser, baseURL }) => {

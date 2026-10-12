@@ -70,6 +70,9 @@ JavaScript. Keep filter labels and reading controls accessible by keyboard.
 - Analytics and Search Console need the owner's account configuration. Never
   invent verification tokens or claim collection while settings are empty.
   See `docs/measurement.md`.
+- Owner-supplied Google HTML verification files are machine-readable resources,
+  not rendered pages. Keep their exact verification text and check them separately;
+  all rendered HTML pages retain the shared layout and analytics rules above.
 
 ## Learning, editorial maintenance, and publication
 
@@ -96,3 +99,13 @@ JavaScript. Keep filter labels and reading controls accessible by keyboard.
 - The production origin is `https://www.alekpopovic.com`. Keep absolute metadata
   and social-card branding aligned with `_config.yml`. Newsletter links require
   an owner-configured `newsletter_url`; RSS works independently.
+- Keep workshop source and tests in `labs/ai-workshops/`. Ordinary builds package
+  them locally. Run `npm run check:labs`: untouched exercise starters must fail
+  their acceptance tests, and separate reference solutions must pass. Do not
+  overwrite editorial posts or weaken tests to make an exercise pass.
+- Reading backups are versioned, device-local JSON. Validate catalogue IDs,
+  section URLs, bounded notes and checklist steps before writing, preview the
+  restore, preserve merge choices, and roll back partial storage writes.
+- Keep captured project evidence in `_data/project_demos.json`, with matching
+  source pins and explicit scope. See `docs/project-demos.md`. Replaying a
+  transcript is not a fresh capture; browser fixtures are not connected hosts.

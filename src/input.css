@@ -977,3 +977,22 @@
   .cv-section h2, .cv-hero h1, .cv-hero h1 > span { color: black; }
   .cv-page .section-shell { width: 100%; }
 }
+
+/* Local reading backups and workshop files. */
+html:not(.js) [data-backup-controls] { display: none; }
+.backup-file { display: block; width: 100%; max-width: 100%; margin-block: 16px; font-size: 16px; }
+.backup-file::file-selector-button { border: 1px solid currentColor; border-radius: 8px; background: #fff3b8; padding: 10px 12px; margin-right: 10px; cursor: pointer; }
+.backup-options { margin-block: 20px; }
+.backup-options legend { font-weight: 700; }
+.backup-options label { display: flex; gap: 10px; align-items: flex-start; margin-block: 14px; }
+.backup-options input { flex-shrink: 0; width: 20px; height: 20px; margin-top: 3px; accent-color: #214fc5; }
+.reading-shelf { margin-block: 50px; }
+.reading-shelf > h2 { font-size: 30px; font-weight: 700; margin-bottom: 22px; }
+[data-backup-status] { margin-bottom: 24px; }
+.learning-exercise pre { overflow: auto; margin-block: 20px; padding: 20px; border-radius: 12px; background: #20201e; color: #fff3b8; font: 14px/1.8 ui-monospace, monospace; }
+.project-demo video { display: block; width: 100%; height: auto; border: 1px solid #20201e; border-radius: 16px; margin-block: 22px; background: #171923; }
+.project-demo details { margin-block: 20px; }
+.project-demo summary { cursor: pointer; font-weight: 600; }
+.project-demo pre { max-height: 420px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.reading-shelf h3 { font-size: 23px; font-weight: 700; line-height: 1.3; }

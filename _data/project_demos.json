@@ -1,0 +1,94 @@
+{
+  "orch": {
+    "title": "Validate, deploy, and inspect a local container",
+    "scope": "Actual output from a temporary loopback-only orch server and agent, using a real local Docker container. The control plane uses its in-memory development runtime. The service, agent, and server were removed after the check.",
+    "captured_at": "2026-10-12",
+    "source_commit": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "video": "/assets/projects/demos/orch.webm",
+    "poster": "/assets/projects/demos/orch.webp",
+    "steps": [
+      {
+        "command": "orch validate website-demo.yaml",
+        "output": "service spec \"codepop-website-demo\" is valid",
+        "exit_code": 0
+      },
+      {
+        "command": "orch deploy website-demo.yaml",
+        "output": "ID                                    NAME                  IMAGE              REPLICAS  VERSION\n90c36f3a-c7fc-4a05-b4ae-3d5ce0f7a1c2  codepop-website-demo  nginx:1.27-alpine  1         1",
+        "exit_code": 0
+      },
+      {
+        "command": "orch service ps codepop-website-demo",
+        "output": "ID                                    SERVICE                               NODE                                  DESIRED  ACTUAL   IMAGE              RESTARTS\n76bd3f66-7451-47bf-955b-4aa3145cc347  90c36f3a-c7fc-4a05-b4ae-3d5ce0f7a1c2  644eac5c-fcb0-406b-8f37-dc0ca7c45a2c  running  running  nginx:1.27-alpine  0",
+        "exit_code": 0
+      },
+      {
+        "command": "orch events --service codepop-website-demo",
+        "output": "TIME                  SEVERITY  TYPE             SOURCE        OBJECT                                        MESSAGE\n2026-10-12T19:57:36Z  info      service.created  controlplane  service/90c36f3a-c7fc-4a05-b4ae-3d5ce0f7a1c2  service created",
+        "exit_code": 0
+      }
+    ]
+  },
+  "clusterforge": {
+    "title": "Generate a readable local Kubernetes environment",
+    "scope": "Actual CLI output from a fresh local scaffold and Terraform file generation. Plugin discovery was disabled. Terraform initialization, planning, apply, and cluster access were not performed.",
+    "captured_at": "2026-10-12",
+    "source_commit": "79969212d6060d8261c4b058b36d7674a584e7d1",
+    "video": "/assets/projects/demos/clusterforge.webm",
+    "poster": "/assets/projects/demos/clusterforge.webp",
+    "steps": [
+      {
+        "command": "cf --no-plugins --non-interactive wizard --defaults",
+        "output": "Scaffolding summary\nProject: clusterforge-demo\nOwner: platform-team\nTarget: local-kind\nEnvironment: dev\nBackend: local\nAdd-ons: ingress, cert-manager, monitoring\nDemo app: true\nSafety: production plan required=true, destroy blocked=true, disallow latest=true\nProject scaffold created. Review files, then run generate/plan; no apply was run.",
+        "exit_code": 0
+      },
+      {
+        "command": "cf --no-plugins generate dev",
+        "output": "ok: generated existing-kubernetes environment files in live/dev/existing-kubernetes",
+        "exit_code": 0
+      },
+      {
+        "command": "cf --no-plugins env list",
+        "output": "dev\texisting\tlocal\tkubernetes\tlive/dev/existing-kubernetes",
+        "exit_code": 0
+      }
+    ]
+  },
+  "cloudivision": {
+    "title": "Check webhook signatures, redaction, and admission policy",
+    "scope": "Actual local Go unit-test output for three components. Fixtures exercise signature verification, data redaction, and policy decisions; they do not demonstrate a running Kubernetes controller or a production build. The replay shows each package\u2019s output excerpt from one combined test command.",
+    "captured_at": "2026-10-12",
+    "source_commit": "7eb7739da478c7e88cca99cc9e9a41e59e53d143",
+    "video": "/assets/projects/demos/cloudivision.webm",
+    "poster": "/assets/projects/demos/cloudivision.webp",
+    "steps": [
+      {
+        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
+        "output": "=== RUN   TestFilter\n=== RUN   TestFilter/included_branch\n=== RUN   TestFilter/excluded_branch\n=== RUN   TestFilter/tag\n=== RUN   TestFilter/pull_request\n=== RUN   TestFilter/fork_pull_request\n=== RUN   TestFilter/unknown\n--- PASS: TestFilter (0.00s)\n    --- PASS: TestFilter/included_branch (0.00s)\n    --- PASS: TestFilter/excluded_branch (0.00s)\n    --- PASS: TestFilter/tag (0.00s)\n    --- PASS: TestFilter/pull_request (0.00s)\n    --- PASS: TestFilter/fork_pull_request (0.00s)\n    --- PASS: TestFilter/unknown (0.00s)\n=== RUN   TestParseGitHubPullRequest\n--- PASS: TestParseGitHubPullRequest (0.00s)\n=== RUN   TestParseGitHubPing\n--- PASS: TestParseGitHubPing (0.00s)\n=== RUN   TestParseGitHubTag\n--- PASS: TestParseGitHubTag (0.00s)\n=== RUN   TestParseGitHubForkPullRequest\n--- PASS: TestParseGitHubForkPullRequest (0.00s)\n=== RUN   TestVerifyGitHubSignature\n--- PASS: TestVerifyGitHubSignature (0.00s)\n=== RUN   TestVerifyGitHubSignatureRejectsInvalidSignature\n--- PASS: TestVerifyGitHubSignatureRejectsInvalidSignature (0.00s)\n=== RUN   TestVerifyGitLabToken\n--- PASS: TestVerifyGitLabToken (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/webhook\t0.004s",
+        "exit_code": 0,
+        "excerpt": "internal/webhook"
+      },
+      {
+        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
+        "output": "=== RUN   TestRedactorMasksSecretValues\n=== RUN   TestRedactorMasksSecretValues/token\n=== RUN   TestRedactorMasksSecretValues/lower_token\n=== RUN   TestRedactorMasksSecretValues/password\n=== RUN   TestRedactorMasksSecretValues/secret\n=== RUN   TestRedactorMasksSecretValues/authorization\n=== RUN   TestRedactorMasksSecretValues/private_key\n=== RUN   TestRedactorMasksSecretValues/private_key_spaced\n=== RUN   TestRedactorMasksSecretValues/client_secret\n=== RUN   TestRedactorMasksSecretValues/hyphenated_client_secret\n=== RUN   TestRedactorMasksSecretValues/dotted_token\n--- PASS: TestRedactorMasksSecretValues (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/token (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/lower_token (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/password (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/authorization (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/private_key (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/private_key_spaced (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/client_secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/hyphenated_client_secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/dotted_token (0.00s)\n=== RUN   TestMaskStringMasksInlineSecretKeyValues\n--- PASS: TestMaskStringMasksInlineSecretKeyValues (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/redact\t0.002s",
+        "exit_code": 0,
+        "excerpt": "internal/redact"
+      },
+      {
+        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
+        "output": "=== RUN   TestProductionReleaseRequiresApproval\n--- PASS: TestProductionReleaseRequiresApproval (0.00s)\n=== RUN   TestProductionReleaseRequiresDigestWhenConfigured\n--- PASS: TestProductionReleaseRequiresDigestWhenConfigured (0.00s)\n=== RUN   TestProductionReleaseBlocksLatestByDefault\n--- PASS: TestProductionReleaseBlocksLatestByDefault (0.00s)\n=== RUN   TestUnsignedImageDeniedWhenConfigured\n--- PASS: TestUnsignedImageDeniedWhenConfigured (0.00s)\n=== RUN   TestCriticalVulnerabilitiesDeniedWhenConfigured\n--- PASS: TestCriticalVulnerabilitiesDeniedWhenConfigured (0.00s)\n=== RUN   TestPrivilegedRunnerDeniedByDefault\n--- PASS: TestPrivilegedRunnerDeniedByDefault (0.00s)\n=== RUN   TestSafeBuildRunAllowed\n--- PASS: TestSafeBuildRunAllowed (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/policy\t0.004s",
+        "exit_code": 0,
+        "excerpt": "internal/policy"
+      }
+    ]
+  },
+  "container-desk": {
+    "title": "Explore the built-in browser demo",
+    "scope": "A recording of the actual browser build from the pinned source version using the project\u2019s clearly labeled synthetic demo fixtures. No native Tauri bridge, SSH connection, or remote Docker operation is involved.",
+    "captured_at": "2026-10-12",
+    "source_commit": "499545b5020b05cd10585ca4f9ac0650d314e726",
+    "video": "/assets/projects/demos/container-desk.webm",
+    "poster": "/assets/projects/demos/container-desk.webp",
+    "steps": []
+  }
+}

@@ -48,11 +48,13 @@ custom Jekyll plugin. It can replace the complete site with a build that has
 an empty book library and missing downloads. Use the Actions workflow as the
 only publishing source.
 
-For browser checks matching CI, install the Playwright-managed Chromium:
+For browser checks matching CI, install the Playwright-managed browsers:
 
 ```sh
-npx playwright install chromium
+npx playwright install --with-deps chromium firefox webkit
 npm run test:ui
+SITE_BROWSER=firefox npm run test:ui -- tests/compatibility.spec.js
+SITE_BROWSER=webkit npm run test:ui -- tests/compatibility.spec.js
 ```
 
 `CHROME_PATH` is an optional local browser override. CI uses Playwright's pinned
@@ -246,7 +248,7 @@ RSS/Atom at `/feed.xml`, custom 404 and compatibility downloads. See
 [measurement setup](docs/measurement.md) for Search Console, Google Analytics,
 optional Plausible analytics, quality checks and Lighthouse reports. The owner's
 GA4 tag `G-QCGFECRJDS` is configured for all HTML pages. Search Console ownership still needs confirmation in the owner's account;
-the repository's HTML verification token is empty.
+the owner's HTML token and raw verification file are configured and checked.
 
 
 ## Learning and a personal reading workspace
@@ -260,7 +262,10 @@ The book toolbar's notes button opens the reading workspace: chapter bookmarks,
 completed sections, a note per section, and Markdown export. All values stay in
 browser storage and are never sent to analytics. Storage failure keeps controls
 usable for the current visit and offers export. Notes are saved explicitly and
-when leaving the page. There is no cross-device synchronization.
+when leaving the page. `/reading/` exports a versioned JSON backup and previews
+imports before writing. Merge keeps local entries; replacement affects included
+entries only. It carries learning checklists and reading preferences too. There
+is no automatic cross-device synchronization or upload.
 
 Offline reading is opt-in per section. The service worker is registered only
 when Save offline is activated, caches at most 24 chosen sections and their
@@ -274,8 +279,24 @@ Project walkthroughs explain documented architecture without executing commands.
 chapters. Native captures retain links to their original verification record;
 documentation previews and historical/disconnected states are labeled.
 
+Featured project pages also include explicitly scoped local recordings, with
+transcripts and matching source pins. `/codepop/engineering-notes/` describes
+public engineering decisions without inventing client case studies. See
+[recording evidence](docs/project-demos.md) before updating those assets.
+
+`/ai/workshops/` offers four original exercises with local Node.js starters,
+acceptance tests, and separate reference solutions in `labs/ai-workshops/`.
+`npm run build:labs` packages the source reproducibly for download, and
+`npm run check:labs` confirms that starters fail assertions and solutions pass.
+Ordinary builds need no network access for these exercises.
+
 `/subscribe/` makes article RSS and site-change updates discoverable. Optional
-email signup needs the owner's real `newsletter_url`. Add stable changelog IDs
+email signup needs the owner's real `newsletter_url`. The first web issue lives
+at `/newsletter/`; [newsletter setup](docs/newsletter.md) explains the owner steps
+needed for email signup and delivery. Add stable changelog IDs
 in `_data/updates.yml`; `last_modified_at` is an explicit editorial timestamp.
 See [measurement and maintenance](docs/measurement.md) for GA4 events, owner
 account setup, scheduled source reviews and post-deployment public checks.
+See [browser review](docs/browser-review.md) for tested coverage and the remaining
+manual checks, and [dependency maintenance](docs/dependencies.md) for the
+reviewed parser override and outstanding upstream finding.

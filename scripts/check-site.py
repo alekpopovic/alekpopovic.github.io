@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Validate SEO output, search, feeds, aliases, metadata and all local links."""
 import json
+import hashlib
 import os
 import re
 import sys
+import zipfile
 from functools import cache
 from html.parser import HTMLParser
 from pathlib import Path
@@ -28,6 +30,7 @@ class Page(HTMLParser):
         self.links, self.ids, self.meta, self.canonicals = [], [], {}, []
         self.schema, self.script = [], None
         self.google_tags = []
+        self.verification = []
         self.feed(path.read_text())
 
     def handle_starttag(self, tag, attributes):
@@ -41,6 +44,8 @@ class Page(HTMLParser):
             self.links.extend(item.strip().split()[0] for item in attrs['srcset'].split(','))
         if tag == 'meta':
             self.meta[attrs.get('name', attrs.get('property'))] = attrs.get('content')
+            if attrs.get('name') == 'google-site-verification':
+                self.verification.append(attrs.get('content'))
         if tag == 'link' and attrs.get('rel') == 'canonical':
             self.canonicals.append(attrs['href'])
         if tag == 'script' and attrs.get('type') == 'application/ld+json':
@@ -72,7 +77,15 @@ def image_size(path):
 
 
 def main():
-    pages = {path: Page(path) for path in SITE.rglob('*.html')}
+    verification_file = CONFIG.get('google_verification_file', '')
+    verification_path = None
+    if verification_file:
+        require(bool(re.fullmatch(r'google[a-f0-9]+\.html', verification_file)), 'Invalid Google verification filename')
+        verification_path = SITE / verification_file
+        require(verification_path.is_file() and verification_path.read_text().strip() == f'google-site-verification: {verification_file}', 'Google verification resource must retain its original content')
+    # Google's opaque verification resource is not an HTML document. All actual
+    # pages still require their layout, metadata, and exactly one configured tag.
+    pages = {path: Page(path) for path in SITE.rglob('*.html') if path != verification_path}
     checked = 0
     indexed = set()
     google_analytics = CONFIG.get('google_analytics', '')
@@ -87,6 +100,8 @@ def main():
         require(len(page.canonicals) == 1, f'Missing or duplicate canonical: {relative}')
         require(page.canonicals[0].startswith(ORIGIN + '/'), f'Non-production canonical: {relative}')
         require(len(page.google_tags) == int(bool(google_analytics)), f'Missing, duplicate or unconfigured Google tag: {relative}')
+        if CONFIG.get('google_site_verification'):
+            require(page.verification == [CONFIG['google_site_verification']], f'Missing or duplicate Search Console verification tag: {relative}')
         if google_analytics:
             tag = page.google_tags[0]
             require('async' in tag and parse_qs(urlsplit(tag['src']).query).get('id') == [google_analytics], f'Incorrect Google tag: {relative}')
@@ -149,6 +164,24 @@ def main():
             source = SITE / book[extension].lstrip('/')
             legacy = SITE / 'books' / book['id'] / 'downloads' / source.name
             require(source.read_bytes() == legacy.read_bytes(), f'Legacy download differs: {legacy}')
+    archive_path = SITE / 'assets/labs/ai-workshops.zip'
+    archive_data = archive_path.read_bytes()
+    archive_manifest = json.loads((SITE / 'assets/labs/manifest.json').read_text())
+    require(archive_manifest == {'file': archive_path.name, 'sha256': hashlib.sha256(archive_data).hexdigest(), 'bytes': len(archive_data)}, 'Workshop archive checksum or size differs')
+    workshop_source = ROOT / 'labs/ai-workshops'
+    workshop_files = {f'ai-workshops/{path.relative_to(workshop_source).as_posix()}': path for path in workshop_source.rglob('*') if path.is_file() and path.suffix in {'.md', '.mjs', '.json'}}
+    with zipfile.ZipFile(archive_path) as archive:
+        require(set(archive.namelist()) == set(workshop_files), 'Workshop archive omits files or includes unmanaged content')
+        require(all(archive.read(name) == path.read_bytes() for name, path in workshop_files.items()), 'Workshop archive contains stale source files')
+    projects = {project['id']: project for project in json.loads((ROOT / '_data/projects.json').read_text())}
+    demos = json.loads((ROOT / '_data/project_demos.json').read_text())
+    require(set(demos) == set(projects), 'Featured projects need a scoped recording')
+    for project_id, demo in demos.items():
+        require(demo['source_commit'] == projects[project_id]['source_commit'], f'Demo uses another source revision: {project_id}')
+        require(all(demo.get(key) for key in ['title', 'scope', 'captured_at', 'video', 'poster']), f'Incomplete demo metadata: {project_id}')
+        require((SITE / demo['video'].lstrip('/')).read_bytes().startswith(b'\x1a\x45\xdf\xa3'), f'Invalid WebM recording: {project_id}')
+        require(image_size(SITE / demo['poster'].lstrip('/')) == (1280, 800), f'Invalid demo poster: {project_id}')
+        require(all(step['exit_code'] == 0 and step['command'] and step['output'] for step in demo['steps']), f'Demo contains a failed or empty command: {project_id}')
     for path in (ROOT / '_posts').glob('*.md'):
         metadata = yaml.safe_load(path.read_text().split('---', 2)[1])
         require(all(metadata.get(key) for key in ['layout', 'title', 'description', 'category', 'illustration', 'tags']), f'Incomplete post metadata: {path}')

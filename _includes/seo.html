@@ -14,7 +14,7 @@
 <meta name="twitter:image" content="{{ image_url | escape }}">
 {% if page.layout == 'post' %}<meta property="article:published_time" content="{{ page.date | date_to_xmlschema }}"><meta property="article:author" content="{{ '/about/' | absolute_url }}">{% endif %}
 {% if page.noindex %}<meta name="robots" content="noindex, follow">{% endif %}
-{% if site.google_site_verification != '' and site.google_site_verification %}<meta name="google-site-verification" content="{{ site.google_site_verification | escape }}">{% endif %}
+{% include google-verification.html %}
 {% if page.structured_data %}<script type="application/ld+json">{{ page.structured_data }}</script>{% endif %}
 <link rel="alternate" type="application/atom+xml" title="Aleksandar Popovic — Field notes" href="{{ '/feed.xml' | relative_url }}">
 <link rel="icon" type="image/svg+xml" href="{{ '/assets/brand/favicon.svg' | relative_url }}">

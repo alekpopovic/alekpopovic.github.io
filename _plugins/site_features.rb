@@ -115,7 +115,7 @@ module SiteFeatures
         index << { title: project['name'], url: "/projects/#{project['id']}/", type: 'projects', label: project['category'],
           description: project['description'], text: [project['problem'], project['approach'], project['result'], project['stack'].join(' ')].join(' ') }
       end
-      %w[/about/ /contact/ /cv/ /codepop/ /ai/ /learn/ /subscribe/ /updates/ /offline/].each do |path|
+      %w[/about/ /contact/ /cv/ /codepop/ /codepop/engineering-notes/ /ai/ /ai/workshops/ /learn/ /subscribe/ /newsletter/ /updates/ /offline/ /reading/].each do |path|
         page = site.pages.find { |item| item.url == path }
         next unless page
         text = SiteFeatures.text(page.content)

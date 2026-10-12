@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "08:00"
+      timezone: Europe/Belgrade
+    open-pull-requests-limit: 3
+    groups:
+      browser-checks:
+        patterns: ["@playwright/*", "@axe-core/*", "lighthouse"]
+      styles:
+        patterns: ["tailwindcss", "@tailwindcss/*"]
+  - package-ecosystem: bundler
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

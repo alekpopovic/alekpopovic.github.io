@@ -1,0 +1,16 @@
+---
+layout: default
+section: ai
+permalink: /ai/workshops/
+title: AI engineering workshops — code, tests, and evidence
+description: Four practical AI workshops with downloadable starter code, failing tests, worked solutions, and a clear way to check your own result.
+---
+<main id="main-content" class="ai-page">
+  <section class="ai-hero ai-workshop-hero section-shell"><div class="ai-hero-copy"><p class="ai-kicker">AI Lab / Put it to work</p><h1>Build something.<br>Check what changed.</h1><p class="ai-lead">Four small engineering tasks with real files and testable outcomes. Practice fixing a bug, reviewing a change, designing tests, and automating release evidence.</p><div class="ai-actions"><a class="ai-button" href="{{ '/assets/labs/ai-workshops.zip' | relative_url }}" download>Download all workshop files ↓</a><a class="ai-subtle-link" href="{{ '/ai/' | relative_url }}">Back to AI Lab ↗</a></div></div></section>
+  <section class="section-shell learning-directory"><div class="learning-exercise"><h2>One small, local workspace</h2><p>You need Node.js 20+ and a terminal. The exercises have no dependencies to install, make no network calls, and need no API key. Codex CLI is the documented coding-assistant surface; you can also solve the tasks yourself. Using an AI assistant requires that tool's own installation and account.</p><p>Each starter intentionally fails its tests. Edit its <code>app.mjs</code>, rerun the check, and compare the worked solution after your attempt. A passing test demonstrates the stated exercise contract.</p><pre tabindex="0" aria-label="Workshop setup commands"><code>unzip ai-workshops.zip
+cd ai-workshops
+node verify.mjs bugfix</code></pre><p><a href="{{ '/assets/labs/manifest.json' | relative_url }}">Archive size and SHA-256 checksum →</a></p></div>
+    <div class="ai-posts">{% assign workshops = site.posts | where: 'format', 'Workshop' %}{% for post in workshops %}{% include post-card.html post=post %}{% endfor %}</div>
+    <div class="learning-exercise"><h2>Keep your evidence</h2><p>For each task, save the initial failure, your patch, the final test result, and a sentence explaining what remains outside the tests. Keep credentials and private repository data out of shared examples.</p><a class="ai-subtle-link" href="{{ '/learn/ai-workflows/' | relative_url }}">Follow the complete AI learning path →</a></div>
+  </section>
+</main>

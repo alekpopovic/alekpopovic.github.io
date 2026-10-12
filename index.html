@@ -28,7 +28,7 @@ description: Practical AI workflows, complete engineering books, and open-source
   </section>
 
   <section class="ai-spotlight section-shell" id="home-ai" aria-labelledby="home-ai-title">
-    <div><p class="ai-kicker"><span aria-hidden="true">✳</span> Introducing AI Lab</p><h2 id="home-ai-title">Make AI part of<br><span>your everyday work.</span></h2><p>Practical guides, slash-command references, and workflows for the tools you actually use. Start with a command. Leave with a useful next step.</p><a class="ai-button" href="{{ '/ai/' | relative_url }}">Explore the AI library {% include icon.html name='arrow-up-right' %}</a></div>
+    <div><p class="ai-kicker"><span aria-hidden="true">✳</span> Introducing AI Lab</p><h2 id="home-ai-title">Make AI part of<br><span>your everyday work.</span></h2><p>Practical guides, slash-command references, and workflows for the tools you actually use. Start with a command. Leave with a useful next step.</p><a class="ai-button" href="{{ '/ai/' | relative_url }}">Explore the AI library {% include icon.html name='arrow-up-right' %}</a><p><a class="ai-subtle-link" href="{{ '/ai/workshops/' | relative_url }}">Try a hands-on workshop →</a></p></div>
     <div class="ai-spotlight-tools">{% for tool in site.data.ai_tools %}<a href="{{ tool.guide | relative_url }}"><span class="ai-tool-mark" data-tool="{{ tool.id }}">{{ tool.mark }}</span><span>{{ tool.name }}</span><code>{{ tool.preview }}</code></a>{% endfor %}</div>
   </section>
 

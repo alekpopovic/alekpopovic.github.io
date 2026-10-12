@@ -10,14 +10,16 @@ redirects for those files.
 
 ## Google Search Console
 
-The repository has no verification token. A domain may also be verified outside
-this repository through DNS; confirm ownership in the owner's account. After publishing:
+The owner's HTML-tag token is configured in `google_site_verification`. The
+owner-supplied `google2ab5b70940fe5c89.html` verification resource is also kept at
+the public root, with its exact original text. Public checks validate both.
+These files do not establish account verification by themselves. After publishing:
 
 1. Create a **URL-prefix property** for `https://www.alekpopovic.com/` in
    [Search Console](https://search.google.com/search-console/).
-2. Choose HTML-tag verification. Put only the `content` token into
-   `google_site_verification` in `_config.yml`.
-3. Rebuild and publish, then click Verify in Search Console.
+2. Choose HTML-tag verification using the supplied token, or the HTML-file
+   method if that file was issued for this property.
+3. Click Verify in Search Console after the public deployment checks pass.
 4. Submit `https://www.alekpopovic.com/sitemap.xml` and inspect a homepage,
    book, chapter and post.
 
@@ -40,7 +42,7 @@ After publishing, check the production site with
 [Tag Assistant](https://tagassistant.google.com/) and the property's Realtime
 report. Local checks verify the rendered tag and initialization; they do not
 verify access to the owner's account or receipt of events in Google Analytics.
-Search Console still needs its separate verification token.
+Search Console still needs the owner to complete verification in their account.
 
 UI tests stub the Google tag and local Lighthouse runs block Google Analytics
 requests so synthetic visits do not enter the owner's reports. Production
@@ -81,8 +83,11 @@ npm run build
 bundle exec jekyll build
 python scripts/check-books.py
 npm run check:site
-npx playwright install chromium
+npx playwright install --with-deps chromium firefox webkit
 npm run test:ui
+SITE_BROWSER=firefox npm run test:ui -- tests/compatibility.spec.js
+SITE_BROWSER=webkit npm run test:ui -- tests/compatibility.spec.js
+npm run check:labs
 npm run check:performance
 ```
 
@@ -97,8 +102,10 @@ manual keyboard/screen-reader testing; they do not certify full conformance.
 Lighthouse reports go to ignored `reports/`. CI requires mobile performance >= 85,
 accessibility = 100 and CLS <= 0.1 on the homepage, AI Lab, AI guide, CV, CodePop,
 book overview, chapter reader, engineering post, learning path and project page.
+The workshop directory and reading backup page are included too.
 Each generated HTML page has a 130 KB CSS budget for its linked stylesheets;
-the reader and AI styles load only where used. Total JS has a 65 KB budget. These assets
+the reader uses a smaller shared-shell bundle, and reader and AI styles load only
+where used. Total JS has a 65 KB budget. These assets
 are generated locally. Lighthouse is a lab measurement; field LCP, INP and CLS
 depend on actual visits and should be reviewed in Search Console.
 

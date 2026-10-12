@@ -12,7 +12,7 @@ permalink: /ai/
       <p class="ai-kicker"><span aria-hidden="true">✳</span> AI Lab <span class="ai-kicker-divider">/</span> A practical field guide</p>
       <h1>Less friction.<br><span>More possibility.</span></h1>
       <p class="ai-lead">Learn the tools. Find the command. Build something useful. A growing collection of hands-on guides for your everyday work with AI.</p>
-      <div class="ai-actions"><a class="ai-button" href="#ai-guides">Explore the guides {% include icon.html name='arrow-up-right' %}</a><a class="ai-subtle-link" href="#ai-tools">Find your tool <span aria-hidden="true">↓</span></a></div>
+      <div class="ai-actions"><a class="ai-button" href="#ai-guides">Explore the guides {% include icon.html name='arrow-up-right' %}</a><a class="ai-subtle-link" href="{{ '/ai/workshops/' | relative_url }}">Hands-on workshops ↗</a><a class="ai-subtle-link" href="#ai-tools">Find your tool <span aria-hidden="true">↓</span></a></div>
       <dl class="ai-stats"><div><dt>Practical guides</dt><dd>{% if ai_posts.size < 10 %}0{% endif %}{{ ai_posts.size }}</dd></div><div><dt>Tools covered</dt><dd>{% if site.data.ai_tools.size < 10 %}0{% endif %}{{ site.data.ai_tools.size }}</dd></div><div><dt>Ways to explore</dt><dd>{% if ai_categories.size < 10 %}0{% endif %}{{ ai_categories.size }}</dd></div></dl>
     </div>
     <div class="ai-console" aria-label="Shortcuts by tool">

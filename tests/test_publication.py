@@ -15,7 +15,7 @@ ORIGIN = 'https://site.example'
 
 class PublicationTests(unittest.TestCase):
     @contextlib.contextmanager
-    def server(self, wrong_canonical=False, broken_pdf=False, soft_404=False):
+    def server(self, wrong_canonical=False, broken_pdf=False, soft_404=False, verification='', duplicate_verification=False, broken_verification_file=False):
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args): pass
 
@@ -27,6 +27,10 @@ class PublicationTests(unittest.TestCase):
                 elif self.path in ['/', '/books/sample/']:
                     canonical = ('https://wrong.example' if wrong_canonical else ORIGIN) + self.path
                     body = f'<link rel="canonical" href="{canonical}"><meta property="og:url" content="{canonical}">'.encode()
+                    if verification:
+                        body += (f'<meta name="google-site-verification" content="{verification}">' * (2 if duplicate_verification else 1)).encode()
+                elif self.path == '/google0123456789abcdef.html':
+                    body = b'<html>Changed</html>' if broken_verification_file else b'google-site-verification: google0123456789abcdef.html'
                 elif self.path == '/book.pdf':
                     kind = 'application/pdf'; body = b'<html>Missing</html>' if broken_pdf else b'%PDF-1.7'
                 elif self.path == '/sitemap.xml':
@@ -61,6 +65,19 @@ class PublicationTests(unittest.TestCase):
     def test_soft_404_is_rejected(self):
         with self.server(soft_404=True) as base, self.assertRaisesRegex(AssertionError, 'genuine 404'):
             publication.verify(base, ORIGIN)
+
+    def test_owner_verification_metadata_and_raw_file(self):
+        with self.server(verification='owner-token') as base:
+            publication.verify(base, ORIGIN, verification='owner-token', verification_file='google0123456789abcdef.html')
+
+    def test_duplicate_or_missing_verification_tag_is_rejected(self):
+        for options in [{}, {'verification': 'owner-token', 'duplicate_verification': True}]:
+            with self.subTest(options=options), self.server(**options) as base, self.assertRaisesRegex(AssertionError, 'incorrect Search Console'):
+                publication.verify(base, ORIGIN, verification='owner-token')
+
+    def test_wrapped_verification_resource_is_rejected(self):
+        with self.server(broken_verification_file=True) as base, self.assertRaisesRegex(AssertionError, 'resource is missing or changed'):
+            publication.verify(base, ORIGIN, verification_file='google0123456789abcdef.html')
 
 
 if __name__ == '__main__': unittest.main()

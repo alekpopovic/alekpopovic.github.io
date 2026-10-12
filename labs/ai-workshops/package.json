@@ -1,0 +1,7 @@
+{
+  "name": "codepop-ai-workshops",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node verify.mjs", "verify": "node verify-all.mjs" },
+  "engines": { "node": ">=20" }
+}

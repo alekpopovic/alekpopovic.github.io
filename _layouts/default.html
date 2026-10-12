@@ -14,7 +14,7 @@
     {% include seo.html %}
     <link rel="preload" href="{{ '/assets/fonts/dm-sans.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{{ '/assets/fonts/passion-one-bold.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
+    {% if page.layout == 'book' %}<link rel="stylesheet" href="{{ '/assets/css/reader-shell.css' | relative_url }}">{% else %}<link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">{% endif %}
     {% if page.layout == 'book' %}<link rel="stylesheet" href="{{ '/assets/css/reader.css' | relative_url }}">{% endif %}
     {% if page.url == '/' or page.url == '/ai/' or page.section == 'ai' or page.url == '/posts/' %}<link rel="stylesheet" href="{{ '/assets/css/ai.css' | relative_url }}">{% endif %}
     <script>document.documentElement.classList.add('js');{% if page.layout == 'book' %}try { if (sessionStorage.getItem('codepop:reader-navigation:' + {{ page.book_id | jsonify }}) === 'hidden') document.documentElement.classList.add('reader-navigation-hidden'); } catch {}{% endif %}</script>
@@ -30,6 +30,7 @@
     <script src="{{ '/assets/js/reader.js' | relative_url }}" defer></script>
     {% if page.layout == 'book' %}<script src="{{ '/assets/js/reader-library.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'learning-path' %}<script src="{{ '/assets/js/learning.js' | relative_url }}" defer></script>{% endif %}
+    {% if page.url == '/reading/' %}<script src="{{ '/assets/js/reading-backup.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'project' %}<script src="{{ '/assets/js/project.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'book' or page.url == '/offline/' %}<script src="{{ '/assets/js/offline.js' | relative_url }}" defer></script>{% endif %}
     {% if site.google_analytics and site.google_analytics != '' %}<script src="{{ '/assets/js/ga4-events.js' | relative_url }}" data-ga4-host="{{ site.url | remove: 'https://' | remove: 'http://' | escape }}" defer></script>{% endif %}

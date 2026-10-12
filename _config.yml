@@ -14,7 +14,9 @@ author:
   x: https://x.com/alek_popovic
 
 # Public verification token from a Search Console URL-prefix property.
-google_site_verification: ""
+google_site_verification: "qpmaCoDdV6Otp9NPk6cF277fGMIdSxB-7uAS0DyvxWM"
+# Owner-supplied Google verification resource; publish its exact original bytes.
+google_verification_file: "google2ab5b70940fe5c89.html"
 # Owner-provided GA4 measurement ID. Leave empty to disable the Google tag.
 google_analytics: "G-QCGFECRJDS"
 # Optional external email subscription form. RSS works without this setting.
@@ -48,6 +50,7 @@ exclude:
   - modern-ci-book-open-source.zip
   - requirements-books.txt
   - scripts
+  - labs
   - tests
   - docs
   - playwright.config.js

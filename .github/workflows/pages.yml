@@ -74,14 +74,27 @@ jobs:
       - name: Check editorial metadata
         run: npm run check:content
 
+      - name: Check runnable workshop starters and solutions
+        run: npm run check:labs
+
       - name: Test public deployment checks
         run: python -m unittest discover -s tests -p 'test_*.py' -v
 
       - name: Install browser for interface checks
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Check interface and accessibility
         run: npm run test:ui
+
+      - name: Check Firefox reading and keyboard navigation
+        run: npm run test:ui -- tests/compatibility.spec.js
+        env:
+          SITE_BROWSER: firefox
+
+      - name: Check WebKit reading and keyboard navigation
+        run: npm run test:ui -- tests/compatibility.spec.js
+        env:
+          SITE_BROWSER: webkit
 
       - name: Check mobile performance budgets
         run: npm run check:performance

@@ -218,3 +218,6 @@
   .ai-prose table { break-inside: auto; }
   .ai-prose tr { break-inside: avoid; }
 }
+
+.ai-workshop-hero { grid-template-columns: 1fr; min-height: auto; }
+.ai-workshop-hero .ai-hero-copy { max-width: 900px; }

@@ -6,13 +6,15 @@ module.exports = defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : 2,
   retries: process.env.CI ? 1 : 0,
-  reporter: [['list'], ['html', { open: 'never' }]],
+  outputDir: `test-results/${process.env.SITE_BROWSER || 'chromium'}`,
+  reporter: [['list'], ['html', { open: 'never', outputFolder: `playwright-report/${process.env.SITE_BROWSER || 'chromium'}` }]],
   use: {
+    browserName: process.env.SITE_BROWSER || 'chromium',
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 1440, height: 1000 },
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',
-    launchOptions: process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH, args: ['--no-sandbox'] } : {},
+    launchOptions: process.env.CHROME_PATH && (!process.env.SITE_BROWSER || process.env.SITE_BROWSER === 'chromium') ? { executablePath: process.env.CHROME_PATH, args: ['--no-sandbox'] } : {},
   },
   webServer: {
     command: 'python3 scripts/serve-site.py',

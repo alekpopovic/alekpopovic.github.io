@@ -16,13 +16,14 @@ from xml.etree import ElementTree
 class Metadata(HTMLParser):
     def __init__(self, text):
         super().__init__()
-        self.canonical, self.tags, self.og = [], [], []
+        self.canonical, self.tags, self.og, self.verification = [], [], [], []
         self.feed(text)
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
         if tag == 'link' and attrs.get('rel') == 'canonical': self.canonical.append(attrs.get('href'))
         if tag == 'meta' and attrs.get('property') == 'og:url': self.og.append(attrs.get('content'))
+        if tag == 'meta' and attrs.get('name') == 'google-site-verification': self.verification.append(attrs.get('content'))
         if tag == 'script' and attrs.get('src', '').startswith('https://www.googletagmanager.com/gtag/js'): self.tags.append(attrs['src'])
 
 
@@ -38,7 +39,7 @@ def read(base, path, limit=2_000_000, ranged=False):
             return error.code, {key.lower(): value for key, value in error.headers.items()}, error.read(limit), error.geturl()
 
 
-def verify(base, origin, measurement='', revision=None):
+def verify(base, origin, measurement='', revision=None, verification='', verification_file=''):
     status, _, body, _ = read(base, '/publication-manifest.json')
     assert status == 200, f'Publication manifest: HTTP {status}'
     manifest = json.loads(body)
@@ -56,6 +57,7 @@ def verify(base, origin, measurement='', revision=None):
         assert meta.og == meta.canonical, f'{path}: sharing URL differs from canonical'
         expected_tag = ['https://www.googletagmanager.com/gtag/js?id=' + measurement] if measurement else []
         assert meta.tags == expected_tag, f'{path}: missing, duplicated or unconfigured Google tag'
+        if verification: assert meta.verification == [verification], f'{path}: incorrect Search Console verification tag'
 
     def download(item):
         status, headers, body, _ = read(base, item['url'], limit=8, ranged=True)
@@ -69,6 +71,10 @@ def verify(base, origin, measurement='', revision=None):
     with ThreadPoolExecutor(max_workers=4) as pool:
         list(pool.map(page, paths))
         list(pool.map(download, manifest['downloads']))
+    if verification_file:
+        assert re.fullmatch(r'google[a-f0-9]+\.html', verification_file), 'Invalid verification resource filename'
+        status, _, body, _ = read(base, '/' + verification_file, limit=1000)
+        assert status == 200 and body.decode().strip() == f'google-site-verification: {verification_file}', 'Google verification resource is missing or changed'
     status, _, body, _ = read(base, '/sitemap.xml')
     assert status == 200, f'Sitemap HTTP {status}'
     urls = [element.text for element in ElementTree.fromstring(body).iter() if element.tag.endswith('}loc')]
@@ -90,6 +96,8 @@ def main():
     config = (Path(__file__).resolve().parents[1] / '_config.yml').read_text()
     origin = re.search(r'^url:\s*[\"\']?([^\"\'\s]+)', config, re.M)[1]
     measurement = re.search(r'^google_analytics:\s*\"([^\"]*)\"', config, re.M)[1]
+    verification = re.search(r'^google_site_verification:\s*\"([^\"]*)\"', config, re.M)[1]
+    file_match = re.search(r'^google_verification_file:\s*\"([^\"]*)\"', config, re.M)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', default=origin)
     parser.add_argument('--expected-sha')
@@ -98,7 +106,7 @@ def main():
     args = parser.parse_args()
     for attempt in range(args.attempts):
         try:
-            verify(args.base_url, origin, measurement, args.expected_sha)
+            verify(args.base_url, origin, measurement, args.expected_sha, verification, file_match[1] if file_match else '')
             return
         except Exception as error:
             print(f'Publication check {attempt + 1}/{args.attempts}: {error}', flush=True)

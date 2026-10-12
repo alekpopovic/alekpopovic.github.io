@@ -1,0 +1,13 @@
+---
+layout: default
+permalink: /codepop/engineering-notes/
+title: Public engineering case studies — CodePop founder
+description: "Source-backed engineering case studies from Aleksandar Popovic's public projects: container orchestration, Kubernetes delivery, infrastructure generation, and Docker over SSH."
+---
+<main id="main-content">
+  <section class="page-hero"><div class="section-shell"><a class="book-back" href="{{ '/codepop/' | relative_url }}">← CodePop</a><p class="eyebrow tag">The founder's public work</p><h1 class="display">Engineering<br>you can inspect.</h1><p class="page-intro">Public projects by Aleksandar Popovic, CodePop's founder. Each case connects a concrete engineering problem with the implementation, its current boundaries, and evidence you can inspect.</p></div></section>
+  <div class="section-shell learning-directory"><div class="learning-exercise"><h2>From a problem to a working boundary</h2><p>These are open-source engineering case studies. The linked repositories and local verification captures establish the scope of each example. They do not represent unnamed client engagements or production adoption figures.</p></div>
+    {% for project in site.data.projects %}<article class="learning-exercise"><p class="eyebrow">{{ forloop.index | prepend: '0' | slice: -2, 2 }} / {{ project.category }}</p><h2>{{ project.name }}</h2><h3>The problem</h3><p>{{ project.problem }}</p><h3>The engineering decision</h3><p>{{ project.approach }}</p><h3>What the evidence establishes</h3><p>{{ project.result }}</p><p>Documentation checked {{ project.verified_at | date: '%B %-d, %Y' }} against source <a href="{{ project.verification_url }}">{{ project.source_commit | slice: 0, 7 }} ↗</a>.</p><p><a class="button" href="{{ '/projects/' | append: project.id | append: '/' | relative_url }}">Explore the implementation and demo ↗</a></p></article>{% endfor %}
+    <div class="learning-exercise"><h2>Bring your system's constraints</h2><p>A useful project brief identifies the workflow, current system, failure mode, and outcome you need. For a delivery system, that might mean a release that can be traced and recovered. For an operator tool, it might mean knowing exactly which host an action will affect.</p><a class="button button-blue" href="{{ '/codepop/#company-contact' | relative_url }}">Discuss your engineering problem ↗</a></div>
+  </div>
+</main>
