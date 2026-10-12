@@ -9,6 +9,9 @@
   const form = root.querySelector('form');
   const query = root.querySelector('#site-query');
   const type = root.querySelector('#search-type');
+  const book = root.querySelector('#search-book');
+  const helper = window.CodepopSearch;
+  if (!helper) return; // Keep the readable directory if enhancement cannot load.
   const results = root.querySelector('[data-search-results]');
   const status = root.querySelector('[data-search-status]');
   const more = root.querySelector('[data-search-more]');
@@ -18,24 +21,18 @@
   const readUrl = () => {
     const params = new URLSearchParams(location.search);
     query.value = (params.get('q') || '').slice(0, 120);
+    book.value = [...book.options].some(option => option.value === params.get('book')) ? params.get('book') : '';
     type.value = [...type.options].some(option => option.value === params.get('type')) ? params.get('type') : 'all';
-  };
-  const snippet = (document, terms) => {
-    if (!terms.length) return document.description || document.text.slice(0, 180);
-    const position = document.body.indexOf(terms[0]);
-    if (position < 0) return document.description || document.text.slice(0, 180);
-    const start = Math.max(0, position - 65);
-    return `${start ? '…' : ''}${document.text.slice(start, start + 230)}${document.text.length > start + 230 ? '…' : ''}`;
   };
   const draw = () => {
     const fragment = document.createDocumentFragment();
-    const terms = normalize(query.value).trim().split(/\s+/).filter(Boolean).slice(0, 12);
     for (const item of matches.slice(0, limit)) {
       const row = document.createElement('li');
       const link = document.createElement('a'); link.href = item.url;
+      if (item.type === 'chapters' && query.value.trim()) { const url = new URL(item.url, location.origin); url.searchParams.set('find', query.value.trim()); link.href = url.pathname + url.search; }
       const label = document.createElement('span'); label.className = 'eyebrow'; label.textContent = `${item.type === 'chapters' ? 'Chapter' : item.type.replace(/s$/, '')} · ${item.label}`;
       const heading = document.createElement('h2'); heading.textContent = item.title;
-      const text = document.createElement('p'); text.textContent = snippet(item, terms);
+      const text = document.createElement('p'); helper.highlight(text, helper.excerpt(item.text, query.value, item.description), query.value);
       link.append(label, heading, text); row.append(link); fragment.append(row);
     }
     results.replaceChildren(fragment);
@@ -46,12 +43,13 @@
     const url = new URL(location.href); url.search = '';
     if (query.value.trim()) url.searchParams.set('q', query.value.trim());
     if (type.value !== 'all') url.searchParams.set('type', type.value);
+    if (book.value) url.searchParams.set('book', book.value);
     history.replaceState(null, '', url);
   };
   const search = (updateUrl = true) => {
     if (!ready) return;
     const terms = normalize(query.value).trim().split(/\s+/).filter(Boolean).slice(0, 12);
-    matches = documents.filter(item => (type.value === 'all' || item.type === type.value) && terms.every(term => item.haystack.includes(term)))
+    matches = documents.filter(item => (type.value === 'all' || item.type === type.value) && (!book.value || item.book_id === book.value) && terms.every(term => item.haystack.includes(term)))
       .map(item => ({ ...item, score: terms.reduce((score, term) => score + (item.heading.includes(term) ? 10 : 1), 0) }))
       .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
     limit = 24;
@@ -59,7 +57,7 @@
     draw();
   };
   readUrl();
-  root.querySelector('[data-search-filter]').hidden = false;
+  root.querySelectorAll('[data-search-filter]').forEach(filter => { filter.hidden = false; });
   root.querySelector('[data-search-panel]').hidden = false;
   status.textContent = 'Loading the library…';
   fetch(root.dataset.index).then(response => {
@@ -74,6 +72,7 @@
   form.addEventListener('submit', event => { event.preventDefault(); clearTimeout(timer); search(); });
   query.addEventListener('input', () => { syncUrl(); clearTimeout(timer); timer = setTimeout(() => search(false), 180); });
   type.addEventListener('change', () => search());
+  book.addEventListener('change', () => search());
   more.addEventListener('click', () => { limit += 24; draw(); });
   window.addEventListener('popstate', () => { clearTimeout(timer); readUrl(); search(false); });
 })();

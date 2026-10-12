@@ -1,0 +1,51 @@
+const { test, expect } = require('./fixtures');
+const AxeBuilder = require('@axe-core/playwright').default;
+
+test('modern AI dropdowns support pointer, keyboard, typeahead and clearing shared filters', async ({ page }) => {
+  await page.goto('/ai/?format=Workshop&level=Beginner');
+  await expect(page.getByRole('combobox')).toHaveCount(4);
+  const tool = page.getByRole('combobox', { name: /^AI tool/ });
+  await tool.click();
+  await page.getByRole('option', { name: 'Codex', exact: true }).click();
+  await expect(page.locator('[data-ai-tool]')).toHaveValue('codex');
+  await expect(tool).toContainText('Codex');
+  await expect(page.locator('#ai-posts .post-card:visible')).toHaveCount(1);
+  await expect(page).toHaveURL(/tool=codex/);
+  await tool.focus(); await page.keyboard.press('ArrowDown'); await page.keyboard.press('End');
+  await expect(tool).toHaveAttribute('aria-activedescendant', 'ai-tool-option-7');
+  await page.keyboard.press('Escape');
+  await expect(tool).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('[data-ai-tool]')).toHaveValue('codex');
+  await page.keyboard.type('co'); await page.keyboard.press('Enter');
+  await expect(page.locator('[data-ai-tool]')).toHaveValue('codex');
+  await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  await expect(page.locator('[data-ai-tool]')).toHaveValue('chatgpt');
+  await expect(page.locator('[data-ai-empty]')).toBeVisible();
+  await page.getByRole('button', { name: 'Explore all guides' }).click();
+  await expect(tool).toContainText('All tools');
+  await expect(page.getByRole('combobox', { name: /^Guide type/ })).toContainText('All formats');
+  await expect(page.getByRole('combobox', { name: /^Experience/ })).toContainText('All levels');
+  await expect(page).toHaveURL('/ai/');
+  await page.goto('/ai/?environment=ide&format=Command+reference');
+  await expect(page.getByRole('combobox', { name: /^Environment/ })).toContainText('IDE / editor');
+  await expect(page.locator('#ai-posts .post-card:visible')).toHaveCount(1);
+  await page.reload(); await expect(page.getByRole('combobox', { name: /^Environment/ })).toContainText('IDE / editor');
+});
+
+test('dropdown Tab commits, outside clicks close, mobile popups fit, and native fallback works', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/ai/');
+  const tool = page.getByRole('combobox', { name: /^AI tool/ });
+  await tool.focus(); await page.keyboard.press('Home'); await page.keyboard.press('ArrowDown'); await page.keyboard.press('Tab');
+  await expect(page.locator('[data-ai-tool]')).toHaveValue('chatgpt');
+  await expect(tool).not.toBeFocused(); await expect(tool).toHaveAttribute('aria-expanded', 'false');
+  await tool.click();
+  const bounds = await page.getByRole('listbox').boundingBox();
+  expect(bounds.x).toBeGreaterThanOrEqual(0); expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+  expect(bounds.y).toBeGreaterThanOrEqual(0); expect(bounds.y + bounds.height).toBeLessThanOrEqual(845);
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
+  await page.locator('[data-ai-search]').click(); await expect(tool).toHaveAttribute('aria-expanded', 'false');
+  await page.route('**/library/ai-select.js', route => route.abort()); await page.reload();
+  await expect(page.locator('[data-ai-tool]')).toBeVisible();
+  await page.locator('[data-ai-tool]').selectOption('codex');
+  await expect(page.locator('[data-ai-results]')).toContainText('5 of');
+});

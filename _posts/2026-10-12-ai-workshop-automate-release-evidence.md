@@ -1,12 +1,16 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "AI workshop: automate a reproducible release manifest"
 description: "Build a deterministic artifact manifest, validate its inputs, and use byte-for-byte checks to evaluate an AI-assisted automation change."
 category: Automation
 tool: codex
 surface: Codex CLI
 format: Workshop
+environments: [web, cli]
+level: Intermediate
+workshop_id: automation
 verified_at: 2026-10-12
 illustration: package
 tags: [ai, workshop, codex, automation, releases, reproducibility]

@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "Gemini CLI slash commands: context, tools, and sessions"
 description: "The documented Gemini CLI command families and their subcommands, with a practical way to inspect project context before changing code."
 category: Coding agents
 tool: gemini
 surface: Gemini CLI
 format: Command reference
+environments: [cli]
+level: Beginner
 verified_at: 2026-10-10
 illustration: logs
 tags: [ai, gemini, gemini-cli, slash-commands, memory, mcp]

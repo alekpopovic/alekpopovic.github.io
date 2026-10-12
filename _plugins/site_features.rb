@@ -93,15 +93,15 @@ module SiteFeatures
       converter = site.find_converter_instance(Jekyll::Converters::Markdown)
       index = site.posts.docs.map do |post|
         { title: post.data['title'], url: post.url, type: 'posts',
-          label: post.data['category'], description: post.data['description'],
+          label: post.data['category'], book_id: post.data['book_id'], description: post.data['description'],
           text: SiteFeatures.text(converter.convert(post.content)), tags: post.data['tags'] }
       end
       books.each do |book|
-        index << { title: "#{book['title']}: #{book['subtitle']}", url: book['url'], type: 'books',
+        index << { title: "#{book['title']}: #{book['subtitle']}", url: book['url'], type: 'books', book_id: book['id'],
                    label: 'Complete book', description: book['description'], text: book['description'] }
         book['chapters'].each do |chapter|
           source = site.pages.find { |page| page.url == chapter['url'] }
-          index << { title: chapter['title'], url: chapter['url'], type: 'chapters', label: book['title'],
+          index << { title: chapter['title'], url: chapter['url'], type: 'chapters', book_id: book['id'], label: book['title'],
                      description: "#{chapter['label']} · #{chapter['reading_minutes']} min read", text: SiteFeatures.text(source&.content) }
         end
       end

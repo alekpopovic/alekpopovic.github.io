@@ -138,6 +138,31 @@ def main():
     index = json.loads((SITE / 'search-index.json').read_text())
     books = json.loads((ROOT / '_data/books.json').read_text())
     learning_paths = yaml.safe_load((ROOT / '_data/learning_paths.yml').read_text())
+    quizzes = yaml.safe_load((ROOT / '_data/knowledge_checks.yml').read_text())
+    glossary = yaml.safe_load((ROOT / '_data/glossary.yml').read_text())
+    workshops = yaml.safe_load((ROOT / '_data/workshops.yml').read_text())
+    require(set(glossary) == {book['id'] for book in books}, 'Every book needs a glossary')
+    for book in books:
+        slugs = {chapter['slug'] for chapter in book['chapters']}
+        require(len(glossary[book['id']]) >= 3, f'Book glossary needs substantive terms: {book["id"]}')
+        for term in glossary[book['id']]:
+            require(term.get('term') and term.get('definition') and term.get('chapter') in slugs, f'Invalid glossary term in {book["id"]}')
+    require(len({item['id'] for item in workshops}) == len(workshops), 'Workshop IDs must be unique')
+    browser_labs = json.loads((SITE / 'assets/labs/browser-workshops.json').read_text())
+    require({item['id'] for item in browser_labs} == {item['id'] for item in workshops}, 'Browser exercises must match the workshop catalog')
+    for lab in browser_labs:
+        folder = ROOT / 'labs/ai-workshops' / lab['id']
+        require(lab['starter'] == (folder / 'app.mjs').read_text() and lab['solution'] == (folder / 'solution.mjs').read_text(), f'Workshop sources drifted: {lab["id"]}')
+        require(lab['display_tests'] == (folder / 'test.mjs').read_text(), f'Browser tests drifted: {lab["id"]}')
+        require(any(item['url'] == lab['guide'] for item in index), f'Missing workshop guide: {lab["id"]}')
+    require(set(quizzes) == {path['id'] for path in learning_paths}, 'Every learning path needs its knowledge check')
+    for quiz_id, quiz in quizzes.items():
+        questions = quiz.get('questions', [])
+        require(len(questions) >= 3 and len({question['id'] for question in questions}) == len(questions), f'Incomplete knowledge check: {quiz_id}')
+        for question in questions:
+            require(question.get('prompt') and question.get('explanation') and len(question.get('options', [])) >= 2, f'Incomplete quiz scenario: {quiz_id}')
+            require(type(question.get('answer')) is int and 0 <= question['answer'] < len(question['options']), f'Invalid quiz answer: {quiz_id}')
+            require(any(item['url'] == question.get('url') for item in index), f'Quiz references missing content: {quiz_id}')
     for learning in learning_paths:
         require(all(learning.get(key) for key in ['id', 'title', 'description', 'prerequisites', 'outcome', 'steps']), f'Incomplete learning path: {learning.get("id")}')
         require(len(learning['steps']) >= 3, f'Learning path needs at least three steps: {learning["id"]}')
@@ -145,6 +170,7 @@ def main():
         for step in learning['steps']:
             require(all(step.get(key) for key in ['title', 'url', 'kind', 'goal', 'exercise', 'evidence']), f'Incomplete learning step in {learning["id"]}')
             require(step['url'].startswith('/') and any(item['url'] == step['url'] for item in index), f'Learning step references missing indexed content: {step["url"]}')
+            require(all(id in {item['id'] for item in workshops} for id in step.get('workshops', [])), f'Learning step references an unknown workshop: {learning["id"]}')
     updates = yaml.safe_load((ROOT / '_data/updates.yml').read_text())
     require(len({item['id'] for item in updates}) == len(updates), 'Changelog IDs must be unique and stable')
     ET.parse(SITE / 'updates.xml')
@@ -191,6 +217,10 @@ def main():
             tools = yaml.safe_load((ROOT / '_data/ai_tools.yml').read_text())
             require(metadata['tool'] in [tool['id'] for tool in tools] + ['workflow'], f'Unknown AI tool: {path}')
             require(all(source.get('title') and urlsplit(source.get('url', '')).scheme == 'https' and urlsplit(source['url']).netloc for source in metadata['sources']), f'AI guide needs source links: {path}')
+            require(metadata.get('level') in ['Beginner', 'Intermediate'], f'AI guide needs an editorial level: {path}')
+            require(isinstance(metadata.get('environments'), list) and metadata['environments'] and set(metadata['environments']) <= {'web', 'desktop', 'cli', 'ide'}, f'AI guide needs valid environments: {path}')
+            if metadata['format'] == 'Workshop':
+                require(metadata.get('workshop_id') in {item['id'] for item in workshops}, f'AI workshop needs a runnable exercise: {path}')
         else:
             require(metadata.get('book_id') and metadata.get('chapter_slug'), f'Book note needs chapter metadata: {path}')
         require(metadata['illustration'] in ['clock', 'queue', 'shield', 'network', 'package', 'logs'], f'Unknown post illustration: {path}')

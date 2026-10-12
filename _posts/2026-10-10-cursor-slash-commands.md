@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "Cursor slash commands: ask, plan, and inspect"
 description: "A complete snapshot of the documented Cursor CLI command families, including aliases, with a small workflow for investigating a UI bug."
 category: IDE workflows
 tool: cursor
 surface: Cursor CLI; editor commands differ
 format: Command reference
+environments: [cli]
+level: Beginner
 verified_at: 2026-10-10
 illustration: queue
 tags: [ai, cursor, slash-commands, cli, editor, debugging]

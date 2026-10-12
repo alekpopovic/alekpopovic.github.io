@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "GitHub Copilot slash commands in VS Code"
 description: "The commands in GitHub’s VS Code cheat sheet, practical prompts for fixing code and writing tests, and how to check commands supplied by extensions."
 category: IDE workflows
 tool: copilot
 surface: GitHub Copilot Chat in VS Code
 format: Command reference
+environments: [ide]
+level: Beginner
 verified_at: 2026-10-10
 illustration: shield
 tags: [ai, copilot, github, vscode, slash-commands, testing]

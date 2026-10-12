@@ -1,0 +1,50 @@
+modern-ci:
+  - term: Run
+    definition: A durable record of a pipeline invocation and its inputs. A worker attempt can end while the run remains observable and recoverable.
+    chapter: 01-runs-not-scripts
+  - term: Fencing
+    definition: Checking an attempt's current ownership at a state-changing boundary so a stale worker cannot publish an authoritative result.
+    chapter: 10-fences
+  - term: Artifact evidence
+    definition: Recorded identity and content information for a produced file, such as its source revision and checksum, used to inspect what was actually published.
+    chapter: 24-release
+logbranik:
+  - term: Field allowlist
+    definition: An explicit set of fields permitted in a log event. Newly added request properties remain excluded unless the logging contract changes.
+    chapter: 05-logs-without-secrets
+  - term: Backpressure
+    definition: A bounded response to a producer sending data faster than a consumer can handle it. Queue limits and an explicit overflow policy make overload behavior inspectable.
+    chapter: 06-collection-and-backpressure
+  - term: Proxy trust
+    definition: A policy identifying which peers may supply forwarding information. A client-provided forwarding header alone does not prove the client's address.
+    chapter: 09-client-ip-and-proxy-trust
+agentplane:
+  - term: Control plane
+    definition: The components that manage intent, policy, and decisions about work. Separating them from execution makes the authorization boundary easier to inspect.
+    chapter: 02-architecture
+  - term: Reconciliation
+    definition: Repeatedly comparing desired and observed state and applying bounded changes. A retry should preserve the same authority limits as the original action.
+    chapter: 10-reconciliation
+  - term: Action-bound approval
+    definition: Approval tied to the exact action and its scope. Changing its target or arguments requires evaluating the changed action's authorization.
+    chapter: 18-approvals
+secret-contract-operator:
+  - term: Secret contract
+    definition: A declared agreement about the secret material a consumer requires and how its availability is reported. The contract is distinct from permission to read the secret value.
+    chapter: 05-api-i-semantika
+  - term: Least privilege
+    definition: Granting an identity only the permissions required for its task, with explicit namespace and resource boundaries.
+    chapter: 04-bezbednosni-model
+  - term: Reconcile loop
+    definition: The controller's repeated observation of current state and attempt to converge toward the declared contract, with status describing what it observed.
+    chapter: 08-reconcile-i-status
+universal-tracking:
+  - term: Tenant isolation
+    definition: Keeping one customer's data and actions outside another customer's authority. Every data access path needs a consistent tenant boundary.
+    chapter: 06-tenancy-rls
+  - term: Row-level security
+    definition: PostgreSQL policies that constrain visible or writable rows for a database role and request context. The active role and tenant context are part of the security design.
+    chapter: 06-tenancy-rls
+  - term: Realtime delivery
+    definition: Delivering changing tracking state to connected clients with explicit ordering, authorization, and recovery behavior when a connection drops.
+    chapter: 16-realtime

@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "Codex slash commands: a terminal field guide"
 description: "The documented Codex CLI menu, grouped by task, plus a practical plan, inspect, and review loop for a real code change."
 category: Coding agents
 tool: codex
 surface: Codex CLI
 format: Command reference
+environments: [cli]
+level: Beginner
 verified_at: 2026-10-10
 illustration: package
 tags: [ai, codex, slash-commands, cli, review, agents]

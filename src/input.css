@@ -1,4 +1,20 @@
 @font-face { font-family: "DM Sans"; font-style: normal; font-weight: 100 1000; font-display: swap; src: url("../fonts/dm-sans.woff2") format("woff2"); }
+.learning-workshops { display: grid; gap: 12px; margin-top: 24px; font-size: 14px; }
+.learning-workshops h3 { font-weight: 700; }
+.learning-workshops a { color: #214fc5; text-decoration: underline; text-underline-offset: 3px; }
+.knowledge-check { max-width: 960px; margin-block: 45px; padding: clamp(22px, 4vw, 36px); background: #fffdf6; border: 1px solid #20201e26; border-radius: 20px; }
+.knowledge-check h2 { font-size: 28px; font-weight: 600; line-height: 1.3; margin-block: 14px; }
+.knowledge-check p { line-height: 1.8; margin-block: 14px; }
+.knowledge-check fieldset { margin-block: 28px; padding: 20px; border: 1px solid #cac7bc; border-radius: 12px; min-width: 0; }
+.knowledge-check legend { padding-inline: 8px; font-size: 16px; font-weight: 600; line-height: 1.6; }
+.knowledge-check label { display: flex; align-items: start; gap: 12px; padding-block: 10px; line-height: 1.7; cursor: pointer; }
+.knowledge-check input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 5px; accent-color: #214fc5; }
+.knowledge-check summary { cursor: pointer; color: #214fc5; padding-block: 12px; }
+.knowledge-check a { color: #214fc5; text-decoration: underline; text-underline-offset: 3px; }
+.knowledge-check fieldset[data-result='correct'] { border-color: #267048; background: #edf6ef; }
+.knowledge-check fieldset[data-result='retry'] { border-color: #89542f; background: #fff3df; }
+.knowledge-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.search-results mark { color: #20201e; background: #ffe289; padding-inline: 1px; border-radius: 2px; }
 @font-face {
   font-family: 'Passion One';
   font-style: normal;

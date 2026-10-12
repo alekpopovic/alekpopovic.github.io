@@ -18,6 +18,7 @@
       goal: Describe the outcome, relevant files, constraints, and acceptance checks before asking for a change.
       exercise: Pick a small issue in a repository you own. Write a handoff that names the permitted files and the command that will demonstrate success.
       evidence: A task brief another developer can follow without the conversation history.
+      workshops: [bugfix]
     - title: Explore a coding tool deliberately
       url: /posts/codex-slash-commands/
       kind: AI guide
@@ -30,6 +31,7 @@
       goal: Treat generated changes as a hypothesis that needs a diff, checks, and review.
       exercise: Make one bounded change. Inspect the diff, run the stated checks, and record one remaining uncertainty before accepting it.
       evidence: A small diff, check output, and a concise review note.
+      workshops: [review, tests, automation]
     - title: Understand the execution boundary
       url: /books/agentplane/18-approvals.html
       kind: Book chapter
@@ -68,6 +70,7 @@
       goal: Map build execution, image evidence, and deployment intent onto distinct components.
       exercise: Read the pinned project sources. Map each architecture step to a resource or component and identify where credentials are needed.
       evidence: An annotated architecture sketch and a list of prerequisites for a local trial.
+      workshops: [automation]
 - id: logs-and-security
   title: Logs and security
   description: Build an explainable feedback loop without leaking secrets or trusting the wrong client address.
@@ -88,6 +91,7 @@
       goal: Keep useful operational evidence while excluding credentials and sensitive request data.
       exercise: Create three synthetic requests containing a token, a query string, and a user identifier. Define the minimal fields your logs should retain.
       evidence: A logging contract and redacted sample records using synthetic values.
+      workshops: [review]
     - title: Identify the actual client
       url: /books/logbranik/09-client-ip-and-proxy-trust.html
       kind: Book chapter

@@ -1,12 +1,16 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "AI workshop: design retry tests before fixing the parser"
 description: "Turn retry timing into a table of deterministic cases, inject the clock, and use failures to review an AI-generated implementation."
 category: Testing
 tool: codex
 surface: Codex CLI
 format: Workshop
+environments: [web, cli]
+level: Intermediate
+workshop_id: tests
 verified_at: 2026-10-12
 illustration: clock
 tags: [ai, workshop, codex, tests, retries, javascript]

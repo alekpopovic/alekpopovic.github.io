@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "ChatGPT slash commands: know your composer"
 description: "A complete snapshot of the documented desktop command menu, with a clear distinction between ChatGPT web, desktop actions, and custom shortcuts."
 category: Chat assistants
 tool: chatgpt
 surface: ChatGPT desktop; web menu varies
 format: Command reference
+environments: [desktop]
+level: Beginner
 verified_at: 2026-10-10
 illustration: network
 tags: [ai, chatgpt, slash-commands, desktop, prompting]

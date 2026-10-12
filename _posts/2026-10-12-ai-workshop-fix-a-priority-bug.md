@@ -1,12 +1,16 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "AI workshop: fix a priority bug without changing the input"
 description: "Use a small failing test suite to separate numeric ordering, stable ties, and input ownership before asking a coding agent for a patch."
 category: Coding agents
 tool: codex
 surface: Codex CLI
 format: Workshop
+environments: [web, cli]
+level: Beginner
+workshop_id: bugfix
 verified_at: 2026-10-12
 illustration: queue
 tags: [ai, workshop, codex, javascript, debugging, tests]

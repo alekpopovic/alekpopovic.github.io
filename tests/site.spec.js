@@ -52,7 +52,7 @@ test('tracking notes combine shareable filters and chapters appear in full-text 
   await page.locator('#post-search').fill('no-such-tracking-topic-8746');
   await expect(page.locator('[data-post-empty]')).toBeVisible();
   await page.goto('/search/?q=sequence%20epochs&type=chapters');
-  await expect(page.locator('[data-search-results] a[href="/books/universal-tracking/12-idempotency-quality.html"]')).toBeVisible();
+  await expect(page.locator('[data-search-results] a[href^="/books/universal-tracking/12-idempotency-quality.html?find="]')).toBeVisible();
 });
 
 test('post filters combine body search, book and category and survive reload', async ({ page }) => {

@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "AI changes need a verification loop"
 description: "Turn a broad AI request into a small, observable change: define the behavior, inspect the diff, test the boundary, and record the evidence."
 category: Practical workflows
 tool: workflow
 surface: Across coding agents and IDE assistants
 format: Worked workflow
+environments: [web, desktop, cli, ide]
+level: Intermediate
 verified_at: 2026-10-10
 illustration: shield
 tags: [ai, testing, verification, review, workflow, debugging]

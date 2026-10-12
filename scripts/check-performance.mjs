@@ -20,19 +20,23 @@ try {
       }
       if (!started) throw new Error('Static site server did not start. Build Jekyll first.');
     }
-    const js = fs.readdirSync('assets/js').filter(file => file.endsWith('.js')).reduce((total, file) => total + fs.statSync(path.join('assets/js', file)).size, 0);
-    if (js > 65000) throw new Error(`Asset budget exceeded: JS ${js} bytes.`);
     // The reader and AI theme are separate bundles. Enforce the CSS a visitor
     // actually loads on every generated HTML page, including pages outside this lab sample.
-    let largestCSS = 0;
+    let largestCSS = 0, largestJS = 0;
     for (const file of fs.readdirSync('_site', { recursive: true }).filter(file => file.endsWith('.html'))) {
       const html = fs.readFileSync(path.join('_site', file), 'utf8');
       const styles = [...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map(match => match[1]);
       const css = [...new Set(styles)].reduce((total, url) => total + fs.statSync(path.join('_site', new URL(url, origin).pathname)).size, 0);
       if (css > 130000) throw new Error(`CSS budget exceeded on ${file}: ${css} bytes.`);
-      largestCSS = Math.max(largestCSS, css);
+      const scripts = [...html.matchAll(/<script\b[^>]*src="(\/assets\/js\/[^"]+)"/g)].map(match => match[1]);
+      let js = [...new Set(scripts)].reduce((total, url) => total + fs.statSync(path.join('_site', new URL(url, origin).pathname)).size, 0);
+      // The workshop fetches its worker only on its own page. Keep the same
+      // 65 KB ceiling on each page's actual JS, including this deferred asset.
+      if (scripts.some(url => url.endsWith('/labs/editor.js'))) js += fs.statSync('assets/js/labs/worker.js').size;
+      if (js > 65000) throw new Error(`JS budget exceeded on ${file}: ${js} bytes.`);
+      largestCSS = Math.max(largestCSS, css); largestJS = Math.max(largestJS, js);
     }
-    console.log(`Asset budgets OK: largest page CSS ${largestCSS} bytes, total JS ${js} bytes.`);
+    console.log(`Asset budgets OK: largest page CSS ${largestCSS} bytes, largest page JS ${largestJS} bytes.`);
   }
   chrome = await chromeLauncher.launch({ chromePath: process.env.CHROME_PATH || chromium.executablePath(), chromeFlags: ['--headless', '--no-sandbox', '--disable-dev-shm-usage'] });
   const summaries = [];

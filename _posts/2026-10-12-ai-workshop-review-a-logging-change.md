@@ -1,12 +1,16 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "AI workshop: review a logging change for data exposure"
 description: "Review a short request-event function, identify how new fields can leak into logs, and verify a deliberate output contract with regression tests."
 category: Code review
 tool: codex
 surface: Codex CLI
 format: Workshop
+environments: [web, cli]
+level: Intermediate
+workshop_id: review
 verified_at: 2026-10-12
 illustration: shield
 tags: [ai, workshop, codex, review, logging, data-boundaries]

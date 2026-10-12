@@ -1,4 +1,26 @@
 /* Loaded only by the document reader. */
+.reader-assist { margin-block: 12px; padding: 18px 14px; border: 1px solid #d5d9de; border-radius: 14px; background: #f6f7f9; color: #20201e; font-size: 12px; line-height: 1.8; }
+.reader-assist summary { font-weight: 700; cursor: pointer; }
+.reader-assist :is(p, form, ol) { margin-block: 14px; }
+.reader-assist label { display: block; margin-bottom: 8px; }
+.reader-assist input { width: 100%; min-width: 0; border: 1px solid #b3bac5; border-radius: 9px; padding: 11px; background: #fff; color: #20201e; font-size: 16px; margin-bottom: 12px; }
+.reader-find-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.reader-assist :is(a, mark) { overflow-wrap: anywhere; }
+.reader-assist a, .reader-learning-link a { color: #214fc5; text-decoration: underline; text-underline-offset: 3px; }
+.reader-assist li { padding-bottom: 14px; border-bottom: 1px solid #d5d9de; }
+.reader-assist mark, .book-article mark { background: #ffe289; color: #20201e; border-radius: 2px; }
+.book-article mark[data-current] { background: #ffd33d; outline: 2px solid #684c0c; outline-offset: 2px; }
+.reader-glossary dt { font-weight: 700; margin-top: 18px; }
+.reader-glossary dd { margin-top: 5px; }
+.reader-learning-link { margin-block: 16px; font-size: 12px; line-height: 1.8; }
+.reader-figure-open { margin-top: -12px; margin-bottom: 20px; }
+.reader-figure-dialog { width: min(96vw, 1400px); max-height: 92dvh; margin: auto; padding: 22px; border: 1px solid #7c8491; border-radius: 16px; background: #fffdf6; color: #20201e; }
+.reader-figure-dialog::backdrop { background: #0b0d14cc; }
+.reader-figure-dialog h2 { font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+.reader-figure-dialog > label { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 15px; font-size: 14px; }
+.reader-figure-viewport { overflow: auto; max-height: 65dvh; padding: 12px; background: #fff; }
+.reader-figure-viewport img { max-width: none; height: auto; display: block; }
+@media print { .reader-assist, .reader-learning-link, .reader-figure-open, .reader-figure-dialog { display: none !important; } .book-article mark { color: inherit; background: transparent; outline: none; } }
 .js [data-reader-study-open][hidden] { display: inline-flex !important; visibility: hidden; }
 .reader-document-actions [data-reader-study-open] .ui-icon { display: block; }
 .reader-study { margin-block: 12px; padding: 18px 14px; border: 1px solid #d5d9de; border-radius: 14px; background: #f6f7f9; color: #20201e; font-size: 12px; line-height: 1.7; }

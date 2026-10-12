@@ -1,0 +1,63 @@
+ai-workflows:
+  title: Can you explain the boundary?
+  questions:
+    - id: scope
+      prompt: A documented Codex CLI command is absent from another assistant's web menu. What should your guide say?
+      options: [Treat the command as universal, State the application and surface and check their documentation, Invent a similar slash command]
+      answer: 1
+      explanation: A command belongs to a particular application and surface. A natural-language request can express an intent without being a built-in command.
+      url: /posts/codex-slash-commands/
+    - id: evidence
+      prompt: An assistant's patch passes the priority workshop. What evidence should you retain before accepting it?
+      options: [Only the final green count, The initial failure and diff and final checks plus remaining uncertainty, The assistant's confidence score]
+      answer: 1
+      explanation: Tests check the stated contract. Reviewing the diff and recording what remains untested makes the change inspectable without overstating its coverage.
+      url: /posts/ai-changes-need-a-verification-loop/
+    - id: approval
+      prompt: An approved action changes its target resource before execution. Which response preserves the authorization boundary?
+      options: [Reuse the old approval because the intent sounds similar, Let the worker decide without a record, Re-evaluate authorization against the exact changed action]
+      answer: 2
+      explanation: Approval must be bound to the exact action and its scope. A different target is a different action even when the original goal is unchanged.
+      url: /books/agentplane/18-approvals.html
+reliable-delivery:
+  title: Follow the evidence through a failure
+  questions:
+    - id: timeout
+      prompt: The deployment request times out. What can you conclude about the remote side effect?
+      options: [It definitely did not happen, It definitely completed, Its outcome is unknown until you observe the target]
+      answer: 2
+      explanation: A timeout describes how long the caller waited. Recovery must inspect the target and preserve uncertainty before deciding whether to retry.
+      url: /posts/a-timeout-is-not-a-stopped-deployment/
+    - id: fencing
+      prompt: An old worker finishes after a replacement has acquired ownership. Where must ownership be checked?
+      options: [At every state-changing write that needs the current attempt, Only when the old worker starts, Only in a dashboard]
+      answer: 0
+      explanation: An expired attempt can still be running. A fencing check at the write boundary prevents a stale attempt from publishing an authoritative result.
+      url: /books/modern-ci/10-fences.html
+    - id: release
+      prompt: Which field would make a content-only release manifest differ on every rebuild?
+      options: [A deterministic filename order, The current wall-clock timestamp, A normalized artifact hash]
+      answer: 1
+      explanation: A current timestamp changes even when artifact evidence does not. Fixed fields and deterministic ordering allow equivalent inputs to serialize identically.
+      url: /posts/ai-workshop-automate-release-evidence/
+logs-and-security:
+  title: Keep the useful evidence, protect the boundary
+  questions:
+    - id: fields
+      prompt: A request object gains a new secret-bearing property. Which logging design excludes it by default?
+      options: [Spread every request field into the event, Delete only today's known sensitive fields, Construct a new event from an explicit allowlist]
+      answer: 2
+      explanation: An allowlist limits the event to its operational contract. A denylist can silently include a newly introduced credential or personal field.
+      url: /books/logbranik/05-logs-without-secrets.html
+    - id: proxy
+      prompt: An untrusted direct client sends X-Forwarded-For. Which address should you trust for a blocking decision?
+      options: [The first forwarded value regardless of the peer, The observed peer according to an explicit proxy trust policy, The last value because it looks recent]
+      answer: 1
+      explanation: A forwarding header is input. The peer and the configured trusted proxy chain determine whether it can describe the actual client.
+      url: /books/logbranik/09-client-ip-and-proxy-trust.html
+    - id: diagnose
+      prompt: A request was not blocked as expected. What is the most useful first investigation?
+      options: [Trace collection and decision and enforcement for that request, Tighten all blocking rules immediately, Assume the policy service is the only possible cause]
+      answer: 0
+      explanation: Missing evidence, an incorrect decision, and failed local enforcement are different failures. Following the complete loop identifies the boundary that needs attention.
+      url: /books/logbranik/19-debugging-and-runbooks.html

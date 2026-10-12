@@ -109,3 +109,14 @@ JavaScript. Keep filter labels and reading controls accessible by keyboard.
 - Keep captured project evidence in `_data/project_demos.json`, with matching
   source pins and explicit scope. See `docs/project-demos.md`. Replaying a
   transcript is not a fresh capture; browser fixtures are not connected hosts.
+- Maintain browser workshops from the canonical Node acceptance tests. Execute
+  submitted code only in the opaque-origin, network-denying Worker runner;
+  preserve Stop, timeout recovery, draft downloads, and text-only output.
+- Keep knowledge-check question IDs stable, explanations substantive, and
+  reading links real. Quiz answers are optional validated fields in version-1
+  backups; old backups must still restore. Do not auto-complete practical steps.
+- New AI guides need `environments` (web, desktop, cli, ide) and an editorial
+  `level` (Beginner or Intermediate). These filter labels never broaden the
+  documented command surface. Maintain a linked glossary for every book.
+- Keep conditional JavaScript below 65 KB per page, including deferred Workers,
+  and CSS below 130 KB per page. See `docs/interactive-learning.md`.

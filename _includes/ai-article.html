@@ -9,6 +9,7 @@
       <h1>{{ page.title }}</h1><p class="ai-lead">{{ page.description }}</p>
       <div class="ai-article-byline"><span class="ai-tool-mark" data-tool="{{ page.tool }}">{{ ai_tool.mark | default: '✳' }}</span><div><strong>{{ site.author.name }}</strong><span>Checked {{ page.verified_at | date: '%b %-d, %Y' }} · {{ ai_tool.name | default: 'Across tools' }}</span></div></div>
 {% include article-revision.html %}
+      {% if page.workshop_id %}<p class="ai-actions"><a class="ai-button" href="{{ '/ai/workshops/' | relative_url }}?exercise={{ page.workshop_id }}#workshop-lab">Try this exercise in your browser →</a></p>{% endif %}
       {% include share-links.html label='Share this guide' %}
     </header>
     <div class="ai-article-layout section-shell">

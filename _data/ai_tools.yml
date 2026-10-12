@@ -5,6 +5,8 @@
   description: Find the right action in the composer.
   guide: /posts/chatgpt-slash-commands/
   preview: /plan
+  environment: desktop
+  task: Plan and discuss a task in a conversation
 - id: codex
   name: Codex
   mark: Cx
@@ -12,6 +14,8 @@
   description: Plan, build, inspect, and review your code.
   guide: /posts/codex-slash-commands/
   preview: /diff
+  environment: cli
+  task: Inspect and change a repository from the terminal
 - id: claude
   name: Claude Code
   mark: Cl
@@ -19,6 +23,8 @@
   description: Navigate sessions, context, skills, and tools.
   guide: /posts/claude-code-slash-commands/
   preview: /context
+  environment: cli
+  task: Work with code and project context in a terminal session
 - id: gemini
   name: Gemini CLI
   mark: Ge
@@ -26,6 +32,8 @@
   description: Manage memory, extensions, and your workspace.
   guide: /posts/gemini-cli-slash-commands/
   preview: /memory
+  environment: cli
+  task: Explore a terminal workspace and its configured tools
 - id: cursor
   name: Cursor
   mark: Cu
@@ -33,6 +41,8 @@
   description: Move between asking, planning, and debugging.
   guide: /posts/cursor-slash-commands/
   preview: /ask
+  environment: cli
+  task: Ask and plan within the documented CLI surface
 - id: copilot
   name: GitHub Copilot
   mark: Co
@@ -40,3 +50,5 @@
   description: Explain a function and work through a fix.
   guide: /posts/github-copilot-slash-commands/
   preview: /tests
+  environment: ide
+  task: Ask about code in the VS Code editor

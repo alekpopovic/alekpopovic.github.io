@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "Claude Code slash commands: the command map"
 description: "Navigate Claude Code’s documented commands, aliases, bundled skills, and retired entries without confusing the terminal with Claude web chat."
 category: Coding agents
 tool: claude
 surface: Claude Code CLI
 format: Command reference
+environments: [cli]
+level: Beginner
 verified_at: 2026-10-10
 illustration: network
 tags: [ai, claude, claude-code, slash-commands, context, skills]

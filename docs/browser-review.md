@@ -6,21 +6,31 @@ Analytics requests.
 
 ## Completed checks
 
-- 113 Playwright Chromium tests cover navigation, combined filters and shared
+- 127 Playwright Chromium tests cover navigation, combined filters and shared
   URLs, empty results, full-text search, reading controls, printing, notes,
   offline chapters, backup validation/merge/replacement/rollback, blocked
   storage, no-JavaScript reading, recording playback/transcripts, and automated
-  accessibility checks.
-- Three critical reading, keyboard, and no-JavaScript scenarios pass in both
-  Playwright Firefox and WebKit. These are browser-engine tests on Linux,
+  accessibility checks. They also cover all four browser workshop starters and
+  solutions, worker network isolation and timeout recovery, knowledge checks
+  and answer backups, themed dropdown keyboard interaction, contextual book
+  search, figure zoom, and glossary links.
+- Seventeen critical reading, keyboard, workshop, filtering, and no-JavaScript
+  scenarios pass in both Playwright Firefox and WebKit. These are browser-engine tests on Linux,
   not claims about Safari or a physical iPhone.
 - Mobile screenshots at 390 × 844 were visually reviewed for the reading
   backup page, AI workshops, newsletter, and public case studies. The reader
-  was also visually reviewed at 1440 × 1000. Automated layout checks cover
-  widths from 320 to 1920 pixels.
+  was also visually reviewed at 1440 × 1000. The modern AI dropdowns were
+  reviewed at both sizes, including their open popups, and the browser workshop
+  editor was reviewed on desktop. Automated layout checks cover widths from
+  320 to 1920 pixels.
 - Backup preview receives keyboard focus; cancelling returns focus to the file
   chooser. Reader notes, contents, size controls, and hidden site navigation
   remain keyboard-operable across all three engines.
+- Mobile Lighthouse checks pass on 12 representative routes: performance
+  90–96, accessibility/best practices/SEO 100, and CLS below 0.015. These are
+  local lab measurements, not field Core Web Vitals. The largest page loads
+  124,600 bytes of CSS and 38,144 bytes of JavaScript, within the existing
+  per-page ceilings.
 - A separate build with an empty measurement ID contains no Google tag,
   initialization, or GA4 event adapter on all 305 rendered HTML pages. Google's
   exact-text verification resource is checked separately as a machine resource.

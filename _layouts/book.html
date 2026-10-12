@@ -5,7 +5,7 @@ layout: default
 {% assign chapter = book.chapters[page.chapter_index] %}
 {% assign previous_index = page.chapter_index | minus: 1 %}
 {% assign next_index = page.chapter_index | plus: 1 %}
-<main id="main-content" class="book-reader" data-reader-book="{{ book.id | escape }}" data-reader-root="{{ book.url | relative_url }}" data-reader-title="{{ chapter.title | escape }}" data-reader-chapter="{{ chapter.slug | escape }}">
+<main id="main-content" class="book-reader" data-reader-book="{{ book.id | escape }}" data-search-index="{{ '/search-index.json' | relative_url }}" data-reader-root="{{ book.url | relative_url }}" data-reader-title="{{ chapter.title | escape }}" data-reader-chapter="{{ chapter.slug | escape }}">
   <div class="section-shell reader-shell">
     <nav class="book-breadcrumbs" aria-label="Breadcrumb"><a href="{{ '/books/' | relative_url }}">Books</a><span aria-hidden="true">/</span><a href="{{ book.url | relative_url }}">{{ book.title }}</a><span aria-hidden="true">/</span><span>{{ chapter.label }}</span></nav>
     <div class="reader-deskbar">
@@ -15,7 +15,7 @@ layout: default
         <button class="reader-tool" type="button" data-reader-contents aria-expanded="true" aria-controls="reader-sidebar" aria-label="Toggle table of contents" title="Table of contents">{% include icon.html name='sidebar' %}<span>Contents</span></button>
         <div class="reader-section-control"><label class="sr-only" for="reader-chapter">Go to section</label><select id="reader-chapter">{% for item in book.chapters %}<option value="{{ item.url | relative_url }}" {% if item.url == page.url %}selected{% endif %}>{{ forloop.index }} / {{ book.chapters.size }} — {{ item.title }}</option>{% endfor %}</select></div>
         <div class="reader-display-controls"><div><label class="sr-only" for="reader-size">Text size</label><select id="reader-size" title="Text size"><option value="small">Small text</option><option value="regular" selected>Regular text</option><option value="large">Large text</option><option value="extra">Extra large text</option></select></div><div><label class="sr-only" for="reader-theme">Reading theme</label><select id="reader-theme" title="Reading theme"><option value="paper">Paper</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div>
-        <div class="reader-tool-actions"><a class="reader-tool" href="{{ '/search/' | relative_url }}?type=chapters" aria-label="Search chapters" title="Search chapters">{% include icon.html name='search' %}</a><button class="reader-tool" type="button" data-reader-print aria-label="Print this section" title="Print this section">{% include icon.html name='printer' %}</button><button class="reader-tool" type="button" data-reader-focus aria-pressed="false" aria-label="Enter focus mode" title="Focus mode">{% include icon.html name='expand' %}</button><button class="reader-tool" type="button" data-reader-reset aria-label="Reset reading preferences" title="Reset preferences">{% include icon.html name='reset' %}</button></div>
+        <div class="reader-tool-actions"><button class="reader-tool" type="button" data-reader-find-open aria-label="Find in this book" title="Find in this book">{% include icon.html name='search' %}</button><button class="reader-tool" type="button" data-reader-print aria-label="Print this section" title="Print this section">{% include icon.html name='printer' %}</button><button class="reader-tool" type="button" data-reader-focus aria-pressed="false" aria-label="Enter focus mode" title="Focus mode">{% include icon.html name='expand' %}</button><button class="reader-tool" type="button" data-reader-reset aria-label="Reset reading preferences" title="Reset preferences">{% include icon.html name='reset' %}</button></div>
       </div>
       <div class="reader-statusbar" data-reader-progress-bar hidden><span>Section {{ next_index }} of {{ book.chapters.size }}</span><div><progress data-reader-progress value="0" max="100" aria-label="Progress through this section"></progress><span data-reader-percent>0%</span></div><a href="#top" data-reader-start aria-label="Back to start of section">{% include icon.html name='arrow-up' %}</a></div>
     </div>
@@ -34,6 +34,7 @@ layout: default
             <div class="reader-downloads"><a href="{{ book.pdf | relative_url }}" download>PDF ↓</a><a href="{{ book.epub | relative_url }}" download>EPUB ↓</a><a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing</a></div>
           </nav>
         </details>
+        {% include reader-assist.html %}
         <details class="reader-study" data-reader-study hidden><summary>My reading workspace</summary>
           <p class="study-caption">Saved only in this browser. Your notes are never sent to analytics.</p>
           <button class="study-button" type="button" data-reader-bookmark aria-pressed="false">Bookmark this place</button>

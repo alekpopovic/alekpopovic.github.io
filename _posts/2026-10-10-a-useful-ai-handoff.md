@@ -1,12 +1,15 @@
 ---
 layout: post
 section: ai
+last_modified_at: 2026-10-12
 title: "A useful AI handoff fits on one page"
 description: "A practical context brief for moving a task between conversations or tools without losing decisions, evidence, and the next useful step."
 category: Prompting & context
 tool: workflow
 surface: Across chat assistants and coding agents
 format: Worked workflow
+environments: [web, desktop, cli, ide]
+level: Beginner
 verified_at: 2026-10-10
 illustration: queue
 tags: [ai, prompting, context, handoff, workflow, agents]

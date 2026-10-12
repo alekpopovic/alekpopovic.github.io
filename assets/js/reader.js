@@ -152,7 +152,7 @@
     scheduleProgress();
   });
   document.addEventListener('keydown', event => {
-    if (event.key !== 'Escape') return;
+    if (event.key !== 'Escape' || event.defaultPrevented || document.querySelector('dialog[open]')) return;
     if (mobile.matches && !sidebar.hidden) { setSidebar(false); contents.focus(); }
     else if (focus.getAttribute('aria-pressed') === 'true') { setFocus(false); focus.focus(); }
     else if (document.body.classList.contains('reader-scrolled')) { navigationOverride = true; syncNavigation(); }

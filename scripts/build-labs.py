@@ -4,6 +4,8 @@ from pathlib import Path
 import hashlib
 import json
 import zipfile
+import re
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 source = ROOT / 'labs/ai-workshops'
@@ -20,3 +22,15 @@ with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compressleve
         archive.writestr(entry, path.read_bytes())
 (destination / 'manifest.json').write_text(json.dumps({'file': target.name, 'sha256': hashlib.sha256(target.read_bytes()).hexdigest(), 'bytes': target.stat().st_size}, indent=2) + '\n')
 print(f'Built local workshop archive ({target.stat().st_size} bytes).')
+
+# Adapt only the Node imports. Acceptance assertions stay canonical.
+workshops = yaml.safe_load((ROOT / '_data/workshops.yml').read_text())
+for workshop in workshops:
+    folder = source / workshop['id']
+    tests = (folder / 'test.mjs').read_text()
+    browser = tests.replace("import test from 'node:test';\n", '').replace("import assert from 'node:assert/strict';\n", '')
+    browser, count = re.subn(r"await import\(process\.env\.LAB_SOLUTION === '1' \? './solution.mjs' : './app.mjs'\)", 'await import(applicationUrl)', browser)
+    if count != 1 or 'node:' in browser or 'process.env' in browser:
+        raise ValueError(f"Unsupported browser test adapter: {workshop['id']}")
+    workshop.update(starter=(folder / 'app.mjs').read_text(), solution=(folder / 'solution.mjs').read_text(), tests=browser, display_tests=tests)
+(destination / 'browser-workshops.json').write_text(json.dumps(workshops, ensure_ascii=False) + '\n')

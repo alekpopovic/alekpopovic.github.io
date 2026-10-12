@@ -1,0 +1,7 @@
+{% assign quiz = site.data.knowledge_checks[include.path_id] %}
+{% if quiz %}<section class="knowledge-check" data-knowledge-check="{{ include.path_id }}" aria-labelledby="knowledge-title-{{ include.path_id }}">
+  <p class="eyebrow">Pause and check</p><h2 id="knowledge-title-{{ include.path_id }}">{{ quiz.title }}</h2><p>Choose an answer for every scenario, then check your reasoning. Progress is saved only in this browser.</p>
+  <form>{% for question in quiz.questions %}<fieldset data-question="{{ question.id }}" data-answer="{{ question.answer }}"><legend>{{ forloop.index }}. {{ question.prompt }}</legend>{% for option in question.options %}<label><input type="radio" name="{{ include.path_id }}-{{ question.id }}" value="{{ forloop.index0 }}"> {{ option }}</label>{% endfor %}<p data-question-result hidden></p><details class="knowledge-explanation"><summary>Explanation and further reading</summary><p>{{ question.explanation }}</p><a href="{{ question.url | relative_url }}">Revisit the guide or chapter →</a></details></fieldset>{% endfor %}
+  <div class="knowledge-actions" data-knowledge-controls hidden><button class="button button-blue" type="submit">Check my answers</button><button class="button" type="button" data-knowledge-reset>Reset answers</button></div><p data-knowledge-status role="status" aria-live="polite" hidden></p></form>
+  <noscript><p>Write down your choices and open each explanation to check them. The quiz and linked reading work without JavaScript.</p></noscript>
+</section>{% endif %}

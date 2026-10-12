@@ -1,0 +1,20 @@
+- id: bugfix
+  title: Fix a priority bug
+  contract: Sort finite numeric priorities from largest to smallest, preserve arrival order for ties, and return a new array without changing the input.
+  hint: Array.sort changes its receiver. Compare numeric values and decide who owns the array before sorting it.
+  guide: /posts/ai-workshop-fix-a-priority-bug/
+- id: review
+  title: Review a logging change
+  contract: Return exactly event, method, path, status, and duration_ms. Strip query strings and fragments from the URL. Never retain headers, bodies, or future fields; preserve the input.
+  hint: An explicit field allowlist stays safe when a request acquires new properties. Synthetic credentials appear in the acceptance tests.
+  guide: /posts/ai-workshop-review-a-logging-change/
+- id: tests
+  title: Design retry tests
+  contract: Accept whole nonnegative delay-seconds or a canonical HTTP date using the supplied finite clock. Clamp past dates to zero; return null for invalid, fractional, partial, negative, missing, or overflowing values.
+  hint: Parsing a prefix is different from validating a whole value. Check a parsed HTTP date by formatting it back to UTC.
+  guide: /posts/ai-workshop-design-retry-tests/
+- id: automation
+  title: Automate release evidence
+  contract: Return a version-1 manifest with files sorted by name, lowercase 64-digit SHA-256 hashes, and positive safe-integer byte sizes. Reject duplicates and unsafe filenames; exclude clocks and unknown fields without mutating input.
+  hint: Validate each field, keep a set of names, and construct a new output object. Equivalent inputs should serialize identically.
+  guide: /posts/ai-workshop-automate-release-evidence/
