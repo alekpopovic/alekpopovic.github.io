@@ -8,9 +8,10 @@ from pathlib import Path
 import sys
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-if (ROOT / '.venv/bin/python').exists() and Path(sys.prefix).resolve() != (ROOT / '.venv').resolve():
+if __name__ == '__main__' and (ROOT / '.venv/bin/python').exists() and Path(sys.prefix).resolve() != (ROOT / '.venv').resolve():
     os.execv(str(ROOT / '.venv/bin/python'), [str(ROOT / '.venv/bin/python'), __file__, *sys.argv[1:]])
 import yaml
 
@@ -21,7 +22,8 @@ def main():
     parser.add_argument('--strict-age', action='store_true')
     parser.add_argument('--max-age', type=int, default=90)
     args = parser.parse_args()
-    today = dt.date.today()
+    config = yaml.safe_load((ROOT / '_config.yml').read_text())
+    today = dt.datetime.now(ZoneInfo(config.get('timezone', 'UTC'))).date()
     reviews, urls, errors = [], set(), []
     for path in sorted((ROOT / '_posts').glob('*.md')):
         data = yaml.safe_load(path.read_text().split('---', 2)[1])
