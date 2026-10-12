@@ -1,0 +1,14 @@
+---
+layout: default
+---
+{% assign video = page.video %}{% assign lesson = page.lesson %}
+<main id="main-content" data-video-lesson data-video-id="{{ video.id }}" data-video-duration="{{ video.duration }}">
+  <section class="page-hero"><div class="section-shell"><a class="book-back" href="{{ '/videos/' | relative_url }}#{{ video.playlist_slug }}">← {{ video.playlist_title }}</a><p class="eyebrow tag">Watch → Read → Try · {{ video.duration }}</p><h1 class="display video-lesson-title">{{ video.title }}</h1><p class="page-intro">{{ lesson.summary }}</p></div></section>
+  <div class="section-shell learning-directory video-lesson-grid"><article>
+    <div class="lesson-player"><a class="video-load" data-lesson-play href="https://www.youtube.com/watch?v={{ video.id }}"><span class="video-play-mark" aria-hidden="true">▶</span><strong>Watch {{ video.title }}</strong><span>Load the YouTube player</span></a><iframe title="{{ video.title | escape }} — YouTube video" width="960" height="540" hidden referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+    <form class="study-form" data-video-time-form hidden><label for="video-time">Link to a moment in this video (m:ss)</label><input id="video-time" name="time" value="0:00" inputmode="numeric" pattern="[0-9]+:[0-5][0-9]" required aria-describedby="video-time-help"><p id="video-time-help">Choose a time within {{ video.duration }}. Creating a link does not start playback.</p><button class="button" type="submit">Create timestamp link</button><p data-video-time-status role="status"></p><a data-video-time-link>Open this moment →</a></form>
+    <p><a data-lesson-youtube href="https://www.youtube.com/watch?v={{ video.id }}">Watch on YouTube ↗</a></p>
+    <section class="learning-exercise"><p class="eyebrow">Put the idea to work</p><h2>A practical follow-up</h2><p>{{ lesson.exercise }}</p><h3>Keep this evidence</h3><p>{{ lesson.evidence }}</p><p>These learning notes are an original companion to the video, not a transcript or a claim that a demonstration was executed here.</p></section>
+    {% include content-feedback.html %}{% include share-links.html label='Share this video lesson' %}
+  </article><aside class="learning-card video-reading"><p class="eyebrow">Read alongside the video</p><h2>Connect the ideas.</h2><h3><a href="{{ lesson.reading_url | relative_url }}">{{ lesson.reading_title }}</a></h3><p>Read the chapter, then use the follow-up exercise to explain the boundary in your own words.</p><a href="{{ '/learn/' | append: lesson.path_id | append: '/' | relative_url }}">Follow the learning path →</a>{% if lesson.project_id %}<a href="{{ '/projects/' | append: lesson.project_id | append: '/' | relative_url }}">Inspect project sources and recorded evidence →</a>{% endif %}<a href="{{ '/learn/workspace/' | relative_url }}">Continue in My Learning →</a></aside></div>
+</main>

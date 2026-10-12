@@ -87,12 +87,12 @@ jobs:
         run: npm run test:ui
 
       - name: Check Firefox reading and keyboard navigation
-        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js
+        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js tests/study-guidance.spec.js
         env:
           SITE_BROWSER: firefox
 
       - name: Check WebKit reading and keyboard navigation
-        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js
+        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js tests/study-guidance.spec.js
         env:
           SITE_BROWSER: webkit
 

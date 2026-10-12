@@ -1,0 +1,158 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from ssh-auth.Dockerfile
+#1 transferring dockerfile: 2.06kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [ 1/12] FROM docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce
+#5 resolve docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce 0.0s done
+#5 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 6.16kB done
+#4 DONE 0.0s
+
+#6 [ 2/12] RUN apk add --no-cache openssh-server docker-cli docker-engine python3 sudo     && adduser -D -s /bin/sh lab     && addgroup lab docker     && passwd -d lab     && mkdir -p /run/sshd /lab
+#6 CACHED
+
+#7 [ 9/12] COPY docker_list_change.sh /opt/fixture/docker-list-change
+#7 CACHED
+
+#8 [ 3/12] RUN apk add --no-cache docker-cli-compose     && mkdir -p /opt/fixture/compose-plugins     && for directory in /usr/libexec/docker/cli-plugins /usr/lib/docker/cli-plugins; do          if [ -f "$directory/docker-compose" ]; then mv "$directory/docker-compose" /opt/fixture/compose-plugins/docker-compose; fi;        done     && test -x /opt/fixture/compose-plugins/docker-compose
+#8 CACHED
+
+#9 [ 7/12] RUN chmod 0755 /opt/fixture/docker-volume-read
+#9 CACHED
+
+#10 [ 4/12] COPY docker_compose_enabled.sh /opt/fixture/docker-with-compose
+#10 CACHED
+
+#11 [ 5/12] RUN chmod 0755 /opt/fixture/docker-with-compose
+#11 CACHED
+
+#12 [ 8/12] COPY docker_probe_fixture.py /opt/fixture/docker_probe_fixture.py
+#12 CACHED
+
+#13 [10/12] COPY docker_list_hang.sh /opt/fixture/docker-list-hang
+#13 CACHED
+
+#14 [ 6/12] COPY docker_volume_read.py /opt/fixture/docker-volume-read
+#14 CACHED
+
+#15 [11/12] COPY docker_probe_fault.sh /opt/fixture/docker_probe_fault.sh
+#15 CACHED
+
+#16 [12/12] RUN mkdir -p /opt/fixture     && printf 'lab ALL=(root) ALL\n' > /etc/sudoers.d/lab     && chmod 0440 /etc/sudoers.d/lab     && chmod 0755 /opt/fixture/docker_probe_fault.sh /opt/fixture/docker-list-hang /opt/fixture/docker-list-change     && ln -s docker_probe_fault.sh /opt/fixture/docker-flood     && ln -s docker_probe_fault.sh /opt/fixture/docker-hang     && for scenario in rootless stopped denied windows; do          printf '#!/bin/sh\nexec env DOCKER_CONFIG=/tmp/probe-docker-config DOCKER_HOST=unix:///tmp/probe-%s.sock /usr/bin/docker "$@"\n' "$scenario" > "/opt/fixture/docker-$scenario";          chmod 0755 "/opt/fixture/docker-$scenario";        done
+#16 CACHED
+
+#17 exporting to image
+#17 exporting layers done
+#17 exporting manifest sha256:3f865a7816dee25d114f465612b42a8556db6b37a45f1aff5622dce5a21f05e0 done
+#17 exporting config sha256:f733b9434ee48f7a84aa135c9c80ce0be757060c70dc24ae25713db8003e4f23 done
+#17 exporting attestation manifest sha256:9eb1b7e00280298b8090fb1e3ed5edfb8d3d2ebf812f90fb46facc0a9c92ebe5 done
+#17 exporting manifest list sha256:8efb800bbb70bafe03d7ee272ed3873bff4c2efb9c36ccb4950a0d51565d6d94 done
+#17 naming to docker.io/library/containerdesk-ssh-lab:020 done
+#17 unpacking to docker.io/library/containerdesk-ssh-lab:020 done
+#17 DONE 0.1s
+Real isolated Docker Engine ready: 28.3.3
+   Compiling containerdesk v0.1.0 (/tmp/codepop-project-demos/container-desk/src-tauri)
+warning: failed to parse serde attribute
+  | 
+  | deny_unknown_fields 
+  | 
+  = note: ts-rs failed to parse this attribute. It will be ignored.
+warning: failed to parse serde attribute
+  | 
+  | deny_unknown_fields 
+  | 
+  = note: ts-rs failed to parse this attribute. It will be ignored.
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.22s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/containerdesk_lib-bf007cc0efa846e0)
+
+running 7 tests
+lab direct-known: Verified, 126 ms
+native session direct-command-failed: Error, RemoteCommandFailed, 2 completed stages
+lab direct-command-failed: RemoteCommandFailed, 124 ms
+lab direct-unknown: UnknownHostKey, 18 ms
+real SSH + remote Docker CLI, synthetic API: OutputLimit
+lab direct-changed: ChangedHostKey, 21 ms
+lab direct-absent: AuthenticationFailed, 64 ms
+native saved host: direct/jump 0, explicit connect and disconnect passed
+lab direct-encrypted-unloaded: AuthenticationFailed, 63 ms
+native session direct-known: Degraded, DockerUnavailable, 3 completed stages
+native multiplex: three reads reused one TCP connection; cancelled channel and closed owned master
+native session via-jump-absent: Error, AuthenticationFailed, 2 completed stages
+test ssh::sessions::tests::disposable_lab_session_driver_reports_real_authentication_and_no_false_docker_readiness ... ok
+lab direct-encrypted-loaded: Verified, 127 ms
+lab via-known: Verified, 242 ms
+lab via-target-unknown: UnknownHostKey, 135 ms
+lab via-target-changed: ChangedHostKey, 134 ms
+lab via-jump-unknown: UnknownHostKey, 24 ms
+lab via-jump-changed: ChangedHostKey, 25 ms
+lab via-jump-absent: AuthenticationFailed, 69 ms
+native saved host: direct/jump 1, explicit connect and disconnect passed
+test backend::inventory::tests::disposable_lab_saved_host_add_connect_disconnect_remove_and_reopen ... ok
+lab via-jump-encrypted-unloaded: AuthenticationFailed, 70 ms
+native ownership: long config, master death without replay, visible direct fallback, unrelated master retained
+test ssh::multiplex::tests::disposable_lab_ownership_long_paths_stale_socket_fallback_and_master_death ... ok
+native multiplex: three reads reused one TCP connection; cancelled channel and closed owned master
+test ssh::multiplex::tests::disposable_lab_multiplex_reuses_connection_and_cancels_channels_independently ... ok
+lab via-jump-encrypted-loaded: Verified, 243 ms
+test ssh::auth::tests::disposable_lab_authentication_matrix ... ok
+real SSH + remote Docker CLI, synthetic API: TimedOut
+real SSH + remote Docker CLI, synthetic API: DockerMissing
+real SSH + remote Docker CLI, synthetic API: DaemonUnavailable
+real SSH + remote Docker CLI, synthetic API: PermissionDenied
+real SSH + remote Docker CLI, synthetic API: Ready
+real SSH + remote Docker CLI, synthetic API: Ready
+real SSH + remote Docker CLI, synthetic API: UnsupportedOs
+real SSH + remote Docker CLI, synthetic API: SudoAuthenticationRequired
+real SSH + remote Docker CLI, synthetic API: InvalidContext
+native ControlPersist and monitored app idle deadline expired; no reconnect loop
+test ssh::multiplex::tests::disposable_lab_native_idle_persistence_expires_without_reconnect ... ok
+native ProxyJump session reached Ready against explicitly synthetic Docker API
+test docker::probe::tests::disposable_lab_docker_cli_probe_matrix ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 174 filtered out; finished in 6.48s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/containerdesk-814b27a9fe2c93e9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+PASS real Engine direct-known: native SSH, fresh daemon identity, version 28.3.3, empty docker ps JSONL, 5 s / 16 MiB bounds; PATH=/nonexistent
+PASS real Engine via-known: native SSH, fresh daemon identity, version 28.3.3, empty docker ps JSONL, 5 s / 16 MiB bounds; PATH=/nonexistent
+test docker::probe::tests::checkpoint018_real_engine_version_and_bounded_empty_list_without_client_tools ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 1.63s
+
+
+running 1 test
+PASS real Docker listing direct-known: 2 complete IDs/count match independent native CLI and provisioning; wrong daemon rejected; client PATH=/nonexistent
+PASS real Docker listing via-known: 2 complete IDs/count match independent native CLI and provisioning; wrong daemon rejected; client PATH=/nonexistent
+test docker::listing::tests::checkpoint019_real_listing_matches_engine_ids_through_direct_and_proxyjump ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 2.59s
+
+
+running 1 test
+PASS live resource sessions: direct/ProxyJump actual IDs, old/disconnected scopes rejected, inflight read cancelled below 3s, all permits released; controlled identity drift revokes the session
+test backend::inventory::tests::checkpoint020_live_inventory_binds_reads_and_cancels_inflight_without_idle_mutex_deadlock ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 3.88s
+
+PASS: 15 native SSH cases; config/trust hashes unchanged; no askpass invoked
+Cleaned owned containers, network, agent and temporary key directory.

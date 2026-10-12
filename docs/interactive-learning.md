@@ -6,7 +6,7 @@ workshops. An external AI assistant still has its own installation and account.
 
 ## Workshops
 
-`_data/workshops.yml` names four original exercises. `scripts/build-labs.py`
+`_data/workshops.yml` names six original exercises. `scripts/build-labs.py`
 packages their Node workspace and creates `assets/labs/browser-workshops.json`
 from the canonical starters, separate solutions, and acceptance tests. The
 browser adapter replaces only the Node imports; assertions are not rewritten.
@@ -99,3 +99,36 @@ raw strings in storage, check records are JSON. Imports validate known IDs,
 Merge keeps local drafts, replace affects included entries only, and partial
 writes roll back to their exact prior raw values. Backups can contain private
 notes and source code; the interface tells visitors before export/import.
+
+## Guided study and connected videos (2026-10-13)
+
+`/learn/start/` uses `_data/learning_starts.yml` to recommend one existing path.
+Topic, experience, and time are allowlisted URL values. The short option suggests
+one practical step; the longer option suggests three. Times are planning
+estimates, not measured completion times or prerequisites waived by a selector.
+
+My Learning stores an explicit `codepop:study-plan` with a known path, a bounded
+300-character goal, 20/40/60-minute sessions, and 2/3/5 planned sessions. The plan
+uses only unfinished manual steps. Later sessions revisit the knowledge check;
+it does not mark steps complete. Incorrect valid saved answers form a review
+queue with stable question anchors. Unanswered questions remain in the path.
+
+The optional `plan` field extends version-1 backups. Old files work unchanged;
+imports validate values, preview the learning plan, preserve the existing plan
+on merge, replace it only explicitly, and use the existing rollback behavior.
+No goal, quiz text, or planner data is sent to analytics.
+
+Six canonical workshops have three stages each. Each test belongs to exactly
+one stage, validated during packaging. Stage results expire on edits, reset, or
+exercise changes. Hints are native details elements, with static copies below
+the editor for reading without JavaScript. The two new exercises use synthetic
+objects and never connect to Kubernetes or sockets.
+
+`_data/video_lessons.yml` is editorial source independent of playlist sync.
+The video generator creates 15 companion pages before metadata generation.
+Each links a real chapter and path and provides an original exercise with
+observable evidence. These are learning companions, not copied transcripts.
+Public timed captions were unavailable during authoring, so no topic timestamps
+were invented. Visitors can create validated links to moments within the known
+duration; creating a link never loads the player. Chapter/path/project links
+are reciprocal. All companion pages enter search, sitemap, and deployment checks.

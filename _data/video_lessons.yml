@@ -1,0 +1,165 @@
+- video_id: 0eG3tJ08J5s
+  slug: dynamodb-multi-cloud-recovery
+  summary: Compare recovery boundaries for a replicated data store. Work out which failure your copy survives and
+    how you would prove a restore.
+  reading_url: /books/agentplane/24-reliability-recovery.html
+  reading_title: 24. Design Recovery Before the First Production Incident
+  path_id: reliable-delivery
+  exercise: Draw the primary store, recovery copy, and application cutover. Mark a regional outage and a corrupt
+    write separately.
+  evidence: A recovery matrix with a restore observation and an explicit data-loss window.
+  project_id: null
+- video_id: 90gHZD1QFRQ
+  slug: aurora-disaster-recovery
+  summary: Use a database-recovery discussion to separate replication, backup retention, and application recovery.
+    A healthy replica alone does not establish a recoverable product.
+  reading_url: /books/universal-tracking/31-postgres-operations.html
+  reading_title: Chapter 31 - PostgreSQL Operations, Backups, and Disaster Recovery
+  path_id: universal-tracking
+  exercise: Write the order for restoring a database and reconnecting its application. Identify the evidence required
+    before accepting new writes.
+  evidence: A cutover checklist with rollback conditions and one restore test.
+  project_id: null
+- video_id: khg_YK7lJls
+  slug: private-ruby-gems
+  summary: Think through a private package release as an artifact and authorization problem. Keep the published
+    version, credentials, and consumer installation boundary separate.
+  reading_url: /books/modern-ci/14-artifacts-cache.html
+  reading_title: 14. Preserve artifacts and keep cache trust separate
+  path_id: reliable-delivery
+  exercise: Sketch a gem build and publish pipeline. Name its source revision, immutable artifact, publishing identity,
+    and consumer credential scope.
+  evidence: An artifact record and a permission table using synthetic credentials.
+  project_id: null
+- video_id: 9NVllFWz1nA
+  slug: cognito-open-source-options
+  summary: Use the authentication topic to define the capabilities an identity provider must supply before evaluating
+    an alternative. Keep application sessions and user migration visible.
+  reading_url: /books/universal-tracking/07-auth.html
+  reading_title: Chapter 7 - Human Authentication and Session Security
+  path_id: universal-tracking
+  exercise: Create an evaluation table for account migration, session invalidation, recovery, and application integration.
+    Record unknowns instead of inventing support.
+  evidence: A comparison template with explicit acceptance checks.
+  project_id: null
+- video_id: rWZDYITMMHM
+  slug: multi-region-authentication
+  summary: Explore authentication recovery as a chain of identities, signing authority, sessions, and application
+    availability. Choose which guarantees must survive a regional outage.
+  reading_url: /books/agentplane/24-reliability-recovery.html
+  reading_title: 24. Design Recovery Before the First Production Incident
+  path_id: reliable-delivery
+  exercise: Draw a regional-failure timeline. Mark which users can authenticate, which sessions remain valid, and
+    how new signing authority becomes trusted.
+  evidence: A failure timeline with one measurable recovery objective.
+  project_id: null
+- video_id: a0d1DR46a6Q
+  slug: cognito-multi-region-replication
+  summary: Connect the replication topic with a recovery acceptance plan. Separate copied identity data from a working
+    authentication flow.
+  reading_url: /books/universal-tracking/07-auth.html
+  reading_title: Chapter 7 - Human Authentication and Session Security
+  path_id: universal-tracking
+  exercise: List the observations needed to confirm login, token validation, and session revocation after a regional
+    change.
+  evidence: An authentication test matrix that names each dependency.
+  project_id: null
+- video_id: v6OpB6N_NKE
+  slug: dual-registry-npm-publishing
+  summary: Treat two-registry publishing as two observable outcomes for one release artifact. Plan for one publish
+    succeeding while the other times out.
+  reading_url: /books/modern-ci/24-release.html
+  reading_title: 24. Publish a reproducible release and maintain the project
+  path_id: reliable-delivery
+  exercise: Model a release that reaches registry A but loses the response from registry B. Write a retry decision
+    that checks existing versions first.
+  evidence: A release-state table and an idempotent recovery checklist.
+  project_id: null
+- video_id: xTmKmZVL0Ns
+  slug: java-pipeline-evidence
+  summary: Connect a Java pipeline with source identity, build isolation, test evidence, and artifact promotion.
+    Keep a successful build distinct from a successful deployment.
+  reading_url: /books/modern-ci/01-runs-not-scripts.html
+  reading_title: 1. Think in runs, not shell scripts
+  path_id: reliable-delivery
+  exercise: Describe one pipeline run from commit to artifact. Add an attempt ID and show how a late worker result
+    is refused.
+  evidence: A run record and a late-result timeline.
+  project_id: null
+- video_id: GTuQugwjs9I
+  slug: python-release-runbook
+  summary: Use a Python release as a reproducibility exercise. Decide what gets built once, what is published, and
+    what a consumer can verify.
+  reading_url: /books/modern-ci/24-release.html
+  reading_title: 24. Publish a reproducible release and maintain the project
+  path_id: reliable-delivery
+  exercise: Write a release checklist covering version, source revision, wheel or source artifact identity, publication,
+    and install verification.
+  evidence: A checklist with a separate observation for every external publish.
+  project_id: null
+- video_id: pQ2Flh0zIVs
+  slug: elixir-hex-releases
+  summary: Connect a Hex release with stable package identity and an inspectable publishing attempt. Keep package
+    contents and release authorization separate.
+  reading_url: /books/modern-ci/17-secrets.html
+  reading_title: 17. Give credentials to an authorized attempt, not a script name
+  path_id: reliable-delivery
+  exercise: Name the package artifact and publishing identity. Describe a publish timeout and how you would inspect
+    registry state before retrying.
+  evidence: A credential-scope table and a timeout recovery decision.
+  project_id: null
+- video_id: _bbB3BclW0U
+  slug: php-package-releases
+  summary: Think through a PHP package release from source tag to a usable dependency. Verify the consumer-facing
+    package and its source identity rather than relying on a green pipeline.
+  reading_url: /books/modern-ci/14-artifacts-cache.html
+  reading_title: 14. Preserve artifacts and keep cache trust separate
+  path_id: reliable-delivery
+  exercise: Map a package version to its source revision and consumer install. Identify where caching could hide
+    a missing release artifact.
+  evidence: An artifact trace and a clean-install acceptance check.
+  project_id: null
+- video_id: B48cbgaer7w
+  slug: cloudivision-delivery
+  summary: Connect the Cloudivision overview with source-backed build resources and webhook evidence. Inspect what
+    an accepted request establishes before discussing execution.
+  reading_url: /books/modern-ci/01-runs-not-scripts.html
+  reading_title: 1. Think in runs, not shell scripts
+  path_id: reliable-delivery
+  exercise: Trace a signed webhook to a BuildRun. Explain why duplicate delivery must not create a second logical
+    run.
+  evidence: An event-to-run diagram and a duplicate-delivery test plan.
+  project_id: cloudivision
+- video_id: GtoNkI3pGrs
+  slug: securing-nginx-origins
+  summary: Use the Nginx origin topic to examine direct access, trusted proxies, and the source of an accepted client
+    identity. Make trust boundaries explicit.
+  reading_url: /books/logbranik/09-client-ip-and-proxy-trust.html
+  reading_title: 9. Know whose address you are blocking
+  path_id: logs-and-security
+  exercise: Compare a trusted proxy request, a direct request, and a forged forwarding header. State the accepted
+    client identity for each.
+  evidence: A three-case trust table with expected observations.
+  project_id: null
+- video_id: 4kQNJ5ANNtQ
+  slug: orch-docker-orchestration
+  summary: Connect the Orch overview with service intent, actual container state, and observed events. A desired
+    running state needs independent runtime evidence.
+  reading_url: /books/modern-ci/18-deployment.html
+  reading_title: 18. Deploy an approved immutable release
+  path_id: reliable-delivery
+  exercise: Map validate, deploy, inspect, and cleanup to separate observations. Identify a state where the request
+    succeeds but the container does not run.
+  evidence: A desired-versus-actual state table and a rollback observation.
+  project_id: orch
+- video_id: bNbIIZQbCKw
+  slug: clusterforge-safety
+  summary: Explore infrastructure safety through a readable plan, an isolated target, and explicit cleanup. Inspect
+    the pinned module and captured local evidence alongside the video.
+  reading_url: /books/agentplane/18-approvals.html
+  reading_title: 18. Bind Authorization and Approval to the Exact Action
+  path_id: reliable-delivery
+  exercise: Describe a change by its exact target and plan. Change the namespace and explain why the original approval
+    should not cover the new action.
+  evidence: A target-scoped review record and an isolated cleanup plan.
+  project_id: clusterforge

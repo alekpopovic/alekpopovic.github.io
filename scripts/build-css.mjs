@@ -38,7 +38,7 @@ for (const name of ['site', 'ai', 'reader']) {
 }
 // Tailwind 4 keeps custom component rules. Prune the reader shell by the actual
 // classes in its shared templates and scripts, preserving global/base rules.
-const files = ['_layouts/default.html', '_layouts/book.html', '_includes/footer.html', '_includes/icon.html', '_includes/flower.html', '_includes/share-links.html', '_includes/content-feedback.html', '_data/footer.yml', 'assets/js/site.js', 'assets/js/share.js', 'assets/js/reader.js', 'assets/js/reader-library.js'];
+const files = ['_layouts/default.html', '_layouts/book.html', '_includes/footer.html', '_includes/icon.html', '_includes/flower.html', '_includes/share-links.html', '_includes/content-feedback.html', '_includes/related-videos.html', '_data/footer.yml', 'assets/js/site.js', 'assets/js/share.js', 'assets/js/reader.js', 'assets/js/reader-library.js'];
 fs.writeFileSync('assets/css/reader-shell.css', prune(fs.readFileSync('assets/css/site.css', 'utf8'), words(files)));
 const aiFiles = [...files, 'ai.html', 'ai/workshops.html', '_includes/ai-article.html', '_includes/post-card.html', '_includes/workshop-lab.html', '_includes/post-art.html', 'assets/js/article.js', 'assets/js/ai.js'];
 fs.writeFileSync('assets/css/ai-shell.css', prune(fs.readFileSync('assets/css/site.css', 'utf8'), words(aiFiles)));

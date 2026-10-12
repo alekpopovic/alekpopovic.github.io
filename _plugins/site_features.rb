@@ -107,15 +107,17 @@ module SiteFeatures
       end
       site.data.fetch('video_playlists', []).each do |playlist|
         playlist['videos'].each do |video|
-          index << { title: video['title'], url: "/videos/?video=#{video['id']}##{playlist['slug']}", type: 'videos',
-            label: playlist['title'], description: "#{video['duration']} · #{playlist['description']}", text: video['title'] }
+          lesson = site.data.fetch('video_lessons', []).find { |item| item['video_id'] == video['id'] }
+          index << { title: video['title'], url: lesson ? "/videos/#{lesson['slug']}/" : "/videos/?video=#{video['id']}##{playlist['slug']}", type: 'videos',
+            label: playlist['title'], description: lesson ? lesson['summary'] : "#{video['duration']} · #{playlist['description']}",
+            text: [video['title'], lesson&.values].flatten.compact.join(' ') }
         end
       end
       site.data.fetch('projects', []).each do |project|
         index << { title: project['name'], url: "/projects/#{project['id']}/", type: 'projects', label: project['category'],
           description: project['description'], text: [project['problem'], project['approach'], project['result'], project['stack'].join(' ')].join(' ') }
       end
-      directory_pages = %w[/about/ /contact/ /cv/ /codepop/ /codepop/engineering-notes/ /ai/ /ai/workshops/ /learn/ /learn/workspace/ /subscribe/ /newsletter/ /updates/ /offline/ /reading/]
+      directory_pages = %w[/about/ /contact/ /cv/ /codepop/ /codepop/engineering-notes/ /ai/ /ai/workshops/ /learn/ /learn/workspace/ /learn/start/ /subscribe/ /newsletter/ /updates/ /offline/ /reading/]
       directory_pages += site.data.fetch('newsletters', []).map { |issue| issue['url'] }
       directory_pages.each do |path|
         page = site.pages.find { |item| item.url == path }

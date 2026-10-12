@@ -24,9 +24,12 @@
     {% if page.url == '/ai/workshops/' %}<script src="{{ '/assets/js/labs/editor.js' | relative_url }}" defer></script><script src="{{ '/assets/js/labs/editor-ui.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'learning-path' %}<script src="{{ '/assets/js/learning/quiz.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/learn/workspace/' %}<script src="{{ '/assets/js/learning/workspace.js' | relative_url }}" defer></script>{% endif %}
+    {% if page.url == '/learn/workspace/' %}<script src="{{ '/assets/js/learning/planner.js' | relative_url }}" defer></script>{% endif %}
+    {% if page.url == '/learn/start/' %}<script src="{{ '/assets/js/learning/start.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/search/' or page.layout == 'book' %}<script src="{{ '/assets/js/library/search-utils.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'book' %}<script src="{{ '/assets/js/library/reader-assist.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/videos/' %}<script src="{{ '/assets/js/videos.js' | relative_url }}" defer></script>{% endif %}
+    {% if page.layout == 'video' %}<script src="{{ '/assets/js/video-lesson.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/posts/' %}<script src="{{ '/assets/js/posts.js' | relative_url }}" defer></script>{% endif %}
     {% if page.url == '/ai/' %}<script src="{{ '/assets/js/ai.js' | relative_url }}" defer></script><script src="{{ '/assets/js/library/ai-select.js' | relative_url }}" defer></script>{% endif %}
     {% if page.layout == 'post' %}<script src="{{ '/assets/js/article.js' | relative_url }}" defer></script>{% endif %}

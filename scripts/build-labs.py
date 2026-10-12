@@ -28,6 +28,10 @@ workshops = yaml.safe_load((ROOT / '_data/workshops.yml').read_text())
 for workshop in workshops:
     folder = source / workshop['id']
     tests = (folder / 'test.mjs').read_text()
+    names = re.findall(r"test\('([^']+)'", tests)
+    staged = [name for stage in workshop['stages'] for name in stage['tests']]
+    if sorted(staged) != sorted(names) or len(set(staged)) != len(staged):
+        raise ValueError(f"Stages must cover canonical tests exactly once: {workshop['id']}")
     browser = tests.replace("import test from 'node:test';\n", '').replace("import assert from 'node:assert/strict';\n", '')
     browser, count = re.subn(r"await import\(process\.env\.LAB_SOLUTION === '1' \? './solution.mjs' : './app.mjs'\)", 'await import(applicationUrl)', browser)
     if count != 1 or 'node:' in browser or 'process.env' in browser:

@@ -30,6 +30,7 @@
         if (Number.isInteger(value)) { const choice = [...question.querySelectorAll('input')].find(input => Number(input.value) === value); if (choice) choice.checked = true; }
       }
     } catch { available = false; }
+    if (new URLSearchParams(location.search).get('review') === 'mistakes') { checked = true; reviewing = true; }
     root.querySelector('[data-knowledge-controls]').hidden = false; status.hidden = false; draw();
     root.addEventListener('change', () => { checked = false; reviewing = false; save(); draw(); });
     root.querySelector('form').addEventListener('submit', event => {

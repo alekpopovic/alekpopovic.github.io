@@ -30,65 +30,116 @@
     ]
   },
   "clusterforge": {
-    "title": "Generate a readable local Kubernetes environment",
-    "scope": "Actual CLI output from a fresh local scaffold and Terraform file generation. Plugin discovery was disabled. Terraform initialization, planning, apply, and cluster access were not performed.",
-    "captured_at": "2026-10-12",
+    "title": "Plan, apply, observe, and remove a real Kubernetes workload",
+    "scope": "Actual Terraform 1.16.1 execution of the pinned Kubernetes application module on a disposable local kind cluster. An explicit ServiceAccount was created, nginx:1.27-alpine was loaded locally, the Deployment became available, and an HTTP response was read inside its pod. All Terraform-managed resources were destroyed. No cloud infrastructure, ingress, or production environment was exercised.",
+    "captured_at": "2026-10-13",
     "source_commit": "79969212d6060d8261c4b058b36d7674a584e7d1",
     "video": "/assets/projects/demos/clusterforge.webm",
     "poster": "/assets/projects/demos/clusterforge.webp",
     "steps": [
       {
-        "command": "cf --no-plugins --non-interactive wizard --defaults",
-        "output": "Scaffolding summary\nProject: clusterforge-demo\nOwner: platform-team\nTarget: local-kind\nEnvironment: dev\nBackend: local\nAdd-ons: ingress, cert-manager, monitoring\nDemo app: true\nSafety: production plan required=true, destroy blocked=true, disallow latest=true\nProject scaffold created. Review files, then run generate/plan; no apply was run.",
+        "command": "terraform -chdir=/tmp/codepop-clusterforge-live init -no-color",
+        "output": "Initializing the backend...\n\nInitializing modules...\n\nInitializing provider plugins...\n- Reusing previous version of hashicorp/kubernetes from the dependency lock file\n- Using previously-installed hashicorp/kubernetes v2.38.0\n\nTerraform has been successfully initialized!\n\nYou may now begin working with Terraform. Try running \"terraform plan\" to see\nany changes that are required for your infrastructure. All Terraform commands\nshould now work.\n\nIf you ever set or change modules or backend configuration for Terraform,\nrerun this command to reinitialize your working directory. If you forget, other\ncommands will detect it and remind you to do so if necessary.\n",
         "exit_code": 0
       },
       {
-        "command": "cf --no-plugins generate dev",
-        "output": "ok: generated existing-kubernetes environment files in live/dev/existing-kubernetes",
+        "command": "terraform -chdir=/tmp/codepop-clusterforge-live validate -no-color",
+        "output": "Success! The configuration is valid.\n\n",
         "exit_code": 0
       },
       {
-        "command": "cf --no-plugins env list",
-        "output": "dev\texisting\tlocal\tkubernetes\tlive/dev/existing-kubernetes",
+        "command": "terraform -chdir=/tmp/codepop-clusterforge-live plan -no-color -out=demo.tfplan",
+        "output": "Terraform will perform the following actions:\n\n  # module.app.kubernetes_deployment_v1.this will be created\n  + resource \"kubernetes_deployment_v1\" \"this\" {\n      + id               = (known after apply)\n      + wait_for_rollout = true\n\n      + metadata {\n          + generation       = (known after apply)\n          + labels           = {\n              + \"app.kubernetes.io/component\"  = \"app\"\n              + \"app.kubernetes.io/instance\"   = \"codepop-demo\"\n              + \"app.kubernetes.io/managed-by\" = \"terraform\"\n              + \"app.kubernetes.io/name\"       = \"codepop-demo\"\n            }\n          + name             = \"codepop-demo\"\n          + namespace        = \"codepop-clusterforge\"\n          + resource_version = (known after apply)\n          + uid              = (known after apply)\n        }\n\n      + spec {\n          + min_ready_seconds         = 0\n          + paused                    = false\n          + progress_deadline_seconds = 600\n          + replicas                  = \"1\"\n          + revision_history_limit    = 10\n\n          + selector {\n              + match_labels = {\n                  + \"app.kubernetes.io/instance\" = \"codepop-demo\"\n                  + \"app.kubernetes.io/name\"     = \"codepop-demo\"\n                }\n            }\n\n          + strategy (known after apply)\n\n          + template {\n              + metadata {\n                  + generation       = (known after apply)\n                  + labels           = {\n                      + \"app.kubernetes.io/component\"  = \"app\"\n                      + \"app.kubernetes.io/instance\"   = \"codepop-demo\"\n                      + \"app.kubernetes.io/managed-by\" = \"terraform\"\n                      + \"app.kubernetes.io/name\"       = \"codepop-demo\"\n                    }\n                  + name             = (known after apply)\n                  + resource_version = (known after apply)\n                  + uid              = (known after apply)\n                }\n              + spec {\n                  + automount_service_account_token  = true\n                  + dns_policy                       = \"ClusterFirst\"\n                  + enable_service_links             = true\n                  + host_ipc                         = false\n                  + host_network                     = false\n                  + host_pid                         = false\n                  + hostname                         = (known after apply)\n                  + node_name                        = (known after apply)\n                  + restart_policy                   = \"Always\"\n                  + scheduler_name                   = (known after apply)\n                  + service_account_name             = \"codepop-demo\"\n                  + share_process_namespace          = false\n                  + termination_grace_period_seconds = 30\n\n                  + container {\n                      + args                       = []\n                      + command                    = []\n                      + image                      = \"nginx:1.27-alpine\"\n                      + image_pull_policy          = \"Never\"\n                      + name                       = \"codepop-demo\"\n                      + stdin                      = false\n                      + stdin_once                 = false\n                      + termination_message_path   = \"/dev/termination-log\"\n                      + termination_message_policy = (known after apply)\n                      + tty                        = false\n\n                      + port {\n                          + container_port = 80\n                          + name           = \"http\"\n                          + protocol       = \"TCP\"\n                        }\n\n                      + resources (known after apply)\n                    }\n\n                  + image_pull_secrets (known after apply)\n\n                  + readiness_gate (known after apply)\n                }\n            }\n        }\n    }\n\n  # module.app.kubernetes_namespace_v1.this[0] will be created\n  + resource \"kubernetes_namespace_v1\" \"this\" {\n      + id                               = (known after apply)\n      + wait_for_default_service_account = false\n\n      + metadata {\n          + generation       = (known after apply)\n          + labels           = {\n              + \"app.kubernetes.io/component\"  = \"app\"\n              + \"app.kubernetes.io/instance\"   = \"codepop-demo\"\n              + \"app.kubernetes.io/managed-by\" = \"terraform\"\n              + \"app.kubernetes.io/name\"       = \"codepop-demo\"\n            }\n          + name             = \"codepop-clusterforge\"\n          + resource_version = (known after apply)\n          + uid              = (known after apply)\n        }\n    }\n\n  # module.app.kubernetes_service_account_v1.this[0] will be created\n  + resource \"kubernetes_service_account_v1\" \"this\" {\n      + automount_service_account_token = true\n      + default_secret_name             = (known after apply)\n      + id                              = (known after apply)\n\n      + metadata {\n          + generation       = (known after apply)\n          + labels           = {\n              + \"app.kubernetes.io/component\"  = \"app\"\n              + \"app.kubernetes.io/instance\"   = \"codepop-demo\"\n              + \"app.kubernetes.io/managed-by\" = \"terraform\"\n              + \"app.kubernetes.io/name\"       = \"codepop-demo\"\n            }\n          + name             = \"codepop-demo\"\n          + namespace        = \"codepop-clusterforge\"\n          + resource_version = (known after apply)\n          + uid              = (known after apply)\n        }\n    }\n\n  # module.app.kubernetes_service_v1.this[0] will be created\n  + resource \"kubernetes_service_v1\" \"this\" {\n      + id                     = (known after apply)\n      + status                 = (known after apply)\n      + wait_for_load_balancer = true\n\n      + metadata {\n          + generation       = (known after apply)\n          + labels           = {\n              + \"app.kubernetes.io/component\"  = \"app\"\n              + \"app.kubernetes.io/instance\"   = \"codepop-demo\"\n              + \"app.kubernetes.io/managed-by\" = \"terraform\"\n              + \"app.kubernetes.io/name\"       = \"codepop-demo\"\n            }\n          + name             = \"codepop-demo\"\n          + namespace        = \"codepop-clusterforge\"\n          + resource_version = (known after apply)\n          + uid              = (known after apply)\n        }\n\n      + spec {\n          + allocate_load_balancer_node_ports = true\n          + cluster_ip                        = (known after apply)\n          + cluster_ips                       = (known after apply)\n          + external_traffic_policy           = (known after apply)\n          + health_check_node_port            = (known after apply)\n          + internal_traffic_policy           = (known after apply)\n          + ip_families                       = (known after apply)\n          + ip_family_policy                  = (known after apply)\n          + publish_not_ready_addresses       = false\n          + selector                          = {\n              + \"app.kubernetes.io/instance\" = \"codepop-demo\"\n              + \"app.kubernetes.io/name\"     = \"codepop-demo\"\n            }\n          + session_affinity                  = \"None\"\n          + type                              = \"ClusterIP\"\n\n          + port {\n              + name        = \"http\"\n              + node_port   = (known after apply)\n              + port        = 80\n              + protocol    = \"TCP\"\n              + target_port = \"http\"\n            }\n\n          + session_affinity_config (known after apply)\n        }\n    }\n\nPlan: 4 to add, 0 to change, 0 to destroy.\n\n─────────────────────────────────────────────────────────────────────────────\n\nSaved the plan to: demo.tfplan\n\nTo perform exactly these actions, run the following command to apply:\n    terraform apply \"demo.tfplan\"\n",
+        "exit_code": 0,
+        "excerpt": "Reviewed resource plan; provider initialization preamble omitted."
+      },
+      {
+        "command": "terraform -chdir=/tmp/codepop-clusterforge-live apply -no-color demo.tfplan",
+        "output": "module.app.kubernetes_namespace_v1.this[0]: Creating...\nmodule.app.kubernetes_namespace_v1.this[0]: Creation complete after 0s [id=codepop-clusterforge]\nmodule.app.kubernetes_service_account_v1.this[0]: Creating...\nmodule.app.kubernetes_service_v1.this[0]: Creating...\nmodule.app.kubernetes_service_account_v1.this[0]: Creation complete after 0s [id=codepop-clusterforge/codepop-demo]\nmodule.app.kubernetes_service_v1.this[0]: Creation complete after 0s [id=codepop-clusterforge/codepop-demo]\nmodule.app.kubernetes_deployment_v1.this: Creating...\nmodule.app.kubernetes_deployment_v1.this: Creation complete after 1s [id=codepop-clusterforge/codepop-demo]\n\nApply complete! Resources: 4 added, 0 changed, 0 destroyed.\n",
         "exit_code": 0
+      },
+      {
+        "command": "kubectl --kubeconfig /tmp/codepop-site-kind.kubeconfig --context kind-codepop-site-20261013 -n codepop-clusterforge rollout status deployment/codepop-demo --timeout=90s",
+        "output": "deployment \"codepop-demo\" successfully rolled out\n",
+        "exit_code": 0
+      },
+      {
+        "command": "kubectl --kubeconfig /tmp/codepop-site-kind.kubeconfig --context kind-codepop-site-20261013 -n codepop-clusterforge get deployments,pods,services",
+        "output": "NAME                           READY   UP-TO-DATE   AVAILABLE   AGE\ndeployment.apps/codepop-demo   1/1     1            1           0s\n\nNAME                               READY   STATUS    RESTARTS   AGE\npod/codepop-demo-9c4b986c4-56tb8   1/1     Running   0          0s\n\nNAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE\nservice/codepop-demo   ClusterIP   10.96.239.242   <none>        80/TCP    0s\n",
+        "exit_code": 0
+      },
+      {
+        "command": "kubectl --kubeconfig /tmp/codepop-site-kind.kubeconfig --context kind-codepop-site-20261013 -n codepop-clusterforge exec deployment/codepop-demo -- wget -qO- http://127.0.0.1/",
+        "output": "E1013 01:12:44.053749  402847 websocket.go:296] Unknown stream id 1, discarding message\n<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style>\n</head>\n<body>\n<h1>Welcome to nginx!</h1>\n<p>If you see this page, the nginx web server is successfully installed and\nworking. Further configuration is required.</p>\n\n<p>For online documentation and support please refer to\n<a href=\"http://nginx.org/\">nginx.org</a>.<br/>\nCommercial support is available at\n<a href=\"http://nginx.com/\">nginx.com</a>.</p>\n\n<p><em>Thank you for using nginx.</em></p>\n</body>\n</html>\n",
+        "exit_code": 0
+      },
+      {
+        "command": "terraform -chdir=/tmp/codepop-clusterforge-live destroy -auto-approve -no-color",
+        "output": "\nPlan: 0 to add, 0 to change, 4 to destroy.\nmodule.app.kubernetes_service_account_v1.this[0]: Destroying... [id=codepop-clusterforge/codepop-demo]\nmodule.app.kubernetes_service_v1.this[0]: Destroying... [id=codepop-clusterforge/codepop-demo]\nmodule.app.kubernetes_deployment_v1.this: Destroying... [id=codepop-clusterforge/codepop-demo]\nmodule.app.kubernetes_service_account_v1.this[0]: Destruction complete after 0s\nmodule.app.kubernetes_service_v1.this[0]: Destruction complete after 0s\nmodule.app.kubernetes_deployment_v1.this: Destruction complete after 0s\nmodule.app.kubernetes_namespace_v1.this[0]: Destroying... [id=codepop-clusterforge]\nmodule.app.kubernetes_namespace_v1.this[0]: Destruction complete after 6s\n\nDestroy complete! Resources: 4 destroyed.\n",
+        "exit_code": 0,
+        "excerpt": "Destruction completion; preceding state refresh and plan omitted."
       }
-    ]
+    ],
+    "transcript": "/assets/projects/evidence/clusterforge-2026-10-13.json",
+    "transcript_sha256": "950be7b07c52495ab52a04d096ad928cb27299292fd7a7fe6aa11c32195862d1"
   },
   "cloudivision": {
-    "title": "Check webhook signatures, redaction, and admission policy",
-    "scope": "Actual local Go unit-test output for three components. Fixtures exercise signature verification, data redaction, and policy decisions; they do not demonstrate a running Kubernetes controller or a production build. The replay shows each package\u2019s output excerpt from one combined test command.",
-    "captured_at": "2026-10-12",
+    "title": "From a signed HTTP webhook to one persisted BuildRun",
+    "scope": "Actual loopback-only Cloudivision API connected to a disposable local Kubernetes cluster, using synthetic repository data and a synthetic webhook secret. The capture shows HTTP 401 for an invalid signature, HTTP 201 for a valid push, HTTP 200 for its duplicate, and exactly one persisted BuildRun. No controller, runner Job, image build, registry push, or GitOps deployment was started.",
+    "captured_at": "2026-10-13",
     "source_commit": "7eb7739da478c7e88cca99cc9e9a41e59e53d143",
     "video": "/assets/projects/demos/cloudivision.webm",
     "poster": "/assets/projects/demos/cloudivision.webp",
     "steps": [
       {
-        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
-        "output": "=== RUN   TestFilter\n=== RUN   TestFilter/included_branch\n=== RUN   TestFilter/excluded_branch\n=== RUN   TestFilter/tag\n=== RUN   TestFilter/pull_request\n=== RUN   TestFilter/fork_pull_request\n=== RUN   TestFilter/unknown\n--- PASS: TestFilter (0.00s)\n    --- PASS: TestFilter/included_branch (0.00s)\n    --- PASS: TestFilter/excluded_branch (0.00s)\n    --- PASS: TestFilter/tag (0.00s)\n    --- PASS: TestFilter/pull_request (0.00s)\n    --- PASS: TestFilter/fork_pull_request (0.00s)\n    --- PASS: TestFilter/unknown (0.00s)\n=== RUN   TestParseGitHubPullRequest\n--- PASS: TestParseGitHubPullRequest (0.00s)\n=== RUN   TestParseGitHubPing\n--- PASS: TestParseGitHubPing (0.00s)\n=== RUN   TestParseGitHubTag\n--- PASS: TestParseGitHubTag (0.00s)\n=== RUN   TestParseGitHubForkPullRequest\n--- PASS: TestParseGitHubForkPullRequest (0.00s)\n=== RUN   TestVerifyGitHubSignature\n--- PASS: TestVerifyGitHubSignature (0.00s)\n=== RUN   TestVerifyGitHubSignatureRejectsInvalidSignature\n--- PASS: TestVerifyGitHubSignatureRejectsInvalidSignature (0.00s)\n=== RUN   TestVerifyGitLabToken\n--- PASS: TestVerifyGitLabToken (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/webhook\t0.004s",
-        "exit_code": 0,
-        "excerpt": "internal/webhook"
+        "command": "Reject an invalid signature (HTTP POST with synthetic payload)",
+        "output": "HTTP 401\n{\n  \"code\": \"unauthorized\",\n  \"message\": \"webhook signature verification failed\",\n  \"requestId\": \"52a14eae81b0b5d42bf8cb388ca0f7b0\"\n}",
+        "exit_code": 0
       },
       {
-        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
-        "output": "=== RUN   TestRedactorMasksSecretValues\n=== RUN   TestRedactorMasksSecretValues/token\n=== RUN   TestRedactorMasksSecretValues/lower_token\n=== RUN   TestRedactorMasksSecretValues/password\n=== RUN   TestRedactorMasksSecretValues/secret\n=== RUN   TestRedactorMasksSecretValues/authorization\n=== RUN   TestRedactorMasksSecretValues/private_key\n=== RUN   TestRedactorMasksSecretValues/private_key_spaced\n=== RUN   TestRedactorMasksSecretValues/client_secret\n=== RUN   TestRedactorMasksSecretValues/hyphenated_client_secret\n=== RUN   TestRedactorMasksSecretValues/dotted_token\n--- PASS: TestRedactorMasksSecretValues (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/token (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/lower_token (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/password (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/authorization (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/private_key (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/private_key_spaced (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/client_secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/hyphenated_client_secret (0.00s)\n    --- PASS: TestRedactorMasksSecretValues/dotted_token (0.00s)\n=== RUN   TestMaskStringMasksInlineSecretKeyValues\n--- PASS: TestMaskStringMasksInlineSecretKeyValues (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/redact\t0.002s",
-        "exit_code": 0,
-        "excerpt": "internal/redact"
+        "command": "Accept a signed push (HTTP POST with synthetic payload)",
+        "output": "HTTP 201\n{\n  \"repository\": \"demo-repository\",\n  \"eventID\": \"codepop-local-event-1\",\n  \"event\": \"push\",\n  \"result\": \"created\",\n  \"message\": \"BuildRun created from webhook.\",\n  \"buildRun\": {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"spec\": {\n      \"projectRef\": \"demo-project\",\n      \"repositoryRef\": \"demo-repository\",\n      \"pipelineTemplateRef\": \"demo-template\",\n      \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"branch\": \"main\",\n      \"commitSHA\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"triggeredBy\": {\n        \"type\": \"webhook\",\n        \"actor\": \"synthetic-demo\",\n        \"eventID\": \"codepop-local-event-1\"\n      },\n      \"image\": {\n        \"repository\": \"example.invalid/codepop/demo\",\n        \"tag\": \"main-1234567890ab\"\n      },\n      \"executor\": \"job\",\n      \"gitOps\": {\n        \"enabled\": false,\n        \"valuesFile\": \"values.yaml\",\n        \"imageRepositoryField\": \"image.repository\",\n        \"imageTagField\": \"image.tag\",\n        \"imageDigestField\": \"image.digest\",\n        \"kustomize\": {\n          \"kustomizationFile\": \"kustomization.yaml\"\n        },\n        \"rawYaml\": {}\n      }\n    },\n    \"status\": {\n      \"jobRef\": {},\n      \"pipelineRunRef\": {},\n      \"supplyChain\": {},\n      \"policy\": {\n        \"allowed\": false\n      },\n      \"failure\": {},\n      \"log\": {}\n    }\n  },\n  \"created\": true\n}",
+        "exit_code": 0
       },
       {
-        "command": "go test -p 2 ./internal/webhook ./internal/redact ./internal/policy -v",
-        "output": "=== RUN   TestProductionReleaseRequiresApproval\n--- PASS: TestProductionReleaseRequiresApproval (0.00s)\n=== RUN   TestProductionReleaseRequiresDigestWhenConfigured\n--- PASS: TestProductionReleaseRequiresDigestWhenConfigured (0.00s)\n=== RUN   TestProductionReleaseBlocksLatestByDefault\n--- PASS: TestProductionReleaseBlocksLatestByDefault (0.00s)\n=== RUN   TestUnsignedImageDeniedWhenConfigured\n--- PASS: TestUnsignedImageDeniedWhenConfigured (0.00s)\n=== RUN   TestCriticalVulnerabilitiesDeniedWhenConfigured\n--- PASS: TestCriticalVulnerabilitiesDeniedWhenConfigured (0.00s)\n=== RUN   TestPrivilegedRunnerDeniedByDefault\n--- PASS: TestPrivilegedRunnerDeniedByDefault (0.00s)\n=== RUN   TestSafeBuildRunAllowed\n--- PASS: TestSafeBuildRunAllowed (0.00s)\nPASS\nok  \tgithub.com/cloudivision/cloudivision/internal/policy\t0.004s",
-        "exit_code": 0,
-        "excerpt": "internal/policy"
+        "command": "Replay the same signed delivery (HTTP POST with synthetic payload)",
+        "output": "HTTP 200\n{\n  \"repository\": \"demo-repository\",\n  \"eventID\": \"codepop-local-event-1\",\n  \"event\": \"push\",\n  \"result\": \"duplicate\",\n  \"message\": \"Webhook delivery was already processed.\",\n  \"buildRun\": {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"spec\": {\n      \"projectRef\": \"demo-project\",\n      \"repositoryRef\": \"demo-repository\",\n      \"pipelineTemplateRef\": \"demo-template\",\n      \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"branch\": \"main\",\n      \"commitSHA\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"triggeredBy\": {\n        \"type\": \"webhook\",\n        \"actor\": \"synthetic-demo\",\n        \"eventID\": \"codepop-local-event-1\"\n      },\n      \"image\": {\n        \"repository\": \"example.invalid/codepop/demo\",\n        \"tag\": \"main-1234567890ab\"\n      },\n      \"executor\": \"job\",\n      \"gitOps\": {\n        \"enabled\": false,\n        \"valuesFile\": \"values.yaml\",\n        \"imageRepositoryField\": \"image.repository\",\n        \"imageTagField\": \"image.tag\",\n        \"imageDigestField\": \"image.digest\",\n        \"kustomize\": {\n          \"kustomizationFile\": \"kustomization.yaml\"\n        },\n        \"rawYaml\": {}\n      }\n    },\n    \"status\": {\n      \"jobRef\": {},\n      \"pipelineRunRef\": {},\n      \"supplyChain\": {},\n      \"policy\": {\n        \"allowed\": false\n      },\n      \"failure\": {},\n      \"log\": {}\n    }\n  },\n  \"created\": false\n}",
+        "exit_code": 0
+      },
+      {
+        "command": "kubectl get buildruns -n codepop-cloudivision (selected non-secret fields)",
+        "output": "[\n  {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n    \"event_id\": \"codepop-local-event-1\"\n  }\n]",
+        "exit_code": 0
       }
-    ]
+    ],
+    "transcript": "/assets/projects/evidence/cloudivision-2026-10-13.json",
+    "transcript_sha256": "36ab05f5f8d60dc3a1f920ae2503787335a67f00276c127a1c5adb5586f1fed7"
   },
   "container-desk": {
     "title": "Explore the built-in browser demo",
-    "scope": "A recording of the actual browser build from the pinned source version using the project\u2019s clearly labeled synthetic demo fixtures. No native Tauri bridge, SSH connection, or remote Docker operation is involved.",
+    "scope": "A recording of the actual browser build from the pinned source version using the project’s clearly labeled synthetic demo fixtures. No native Tauri bridge, SSH connection, or remote Docker operation is involved.",
     "captured_at": "2026-10-12",
     "source_commit": "499545b5020b05cd10585ca4f9ac0650d314e726",
     "video": "/assets/projects/demos/container-desk.webm",
     "poster": "/assets/projects/demos/container-desk.webp",
-    "steps": []
+    "steps": [],
+    "native": {
+      "title": "Native SSH access to a real isolated Docker Engine",
+      "scope": "Native Rust backend integration checks against temporary direct and ProxyJump SSH targets with fresh lab keys and a real isolated Docker Engine 28.3.3. Read-only listing matched two metadata-only containers; stale sessions and in-flight cancellation were checked. The synthetic fault matrix is separate. This terminal replay does not show a connected desktop UI or a running application workload. Owned containers, network, keys, and SSH agent were cleaned.",
+      "captured_at": "2026-10-13",
+      "source_commit": "499545b5020b05cd10585ca4f9ac0650d314e726",
+      "video": "/assets/projects/demos/container-desk-native.webm",
+      "poster": "/assets/projects/demos/container-desk-native.webp",
+      "transcript": "/assets/projects/evidence/container-desk-native-2026-10-13.txt",
+      "steps": [
+        {
+          "command": "python3 tests/lab/ssh_auth.py --engine --listing --inventory",
+          "output": "PASS real Engine direct-known: native SSH, fresh daemon identity, version 28.3.3, empty docker ps JSONL, 5 s / 16 MiB bounds; PATH=/nonexistent\nPASS real Engine via-known: native SSH, fresh daemon identity, version 28.3.3, empty docker ps JSONL, 5 s / 16 MiB bounds; PATH=/nonexistent\ntest docker::probe::tests::checkpoint018_real_engine_version_and_bounded_empty_list_without_client_tools ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 1.63s\n\n\nrunning 1 test\nPASS real Docker listing direct-known: 2 complete IDs/count match independent native CLI and provisioning; wrong daemon rejected; client PATH=/nonexistent\nPASS real Docker listing via-known: 2 complete IDs/count match independent native CLI and provisioning; wrong daemon rejected; client PATH=/nonexistent\ntest docker::listing::tests::checkpoint019_real_listing_matches_engine_ids_through_direct_and_proxyjump ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 2.59s\n\n\nrunning 1 test\nPASS live resource sessions: direct/ProxyJump actual IDs, old/disconnected scopes rejected, inflight read cancelled below 3s, all permits released; controlled identity drift revokes the session\ntest backend::inventory::tests::checkpoint020_live_inventory_binds_reads_and_cancels_inflight_without_idle_mutex_deadlock ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 180 filtered out; finished in 3.88s\n\nPASS: 15 native SSH cases; config/trust hashes unchanged; no askpass invoked\nCleaned owned containers, network, agent and temporary key directory.\n",
+          "exit_code": 0,
+          "excerpt": "Real Engine, listing, resource-session checks, and cleanup; earlier synthetic fault cases omitted."
+        }
+      ],
+      "transcript_sha256": "0053c577feab6417b445427917ab5a864a30e6cda7244386109a051e8f8b6b63"
+    }
   }
 }

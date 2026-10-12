@@ -56,7 +56,7 @@ layout: default
         <div class="reader-meta"><p class="eyebrow">{{ chapter.label }}</p><p>{{ chapter.reading_minutes }} min read <span aria-hidden="true">·</span> Section {{ next_index }} of {{ book.chapters.size }}</p></div>
         <article class="book-article" lang="{{ book.language | escape }}">{{ content }}</article>
         {% include share-links.html label='Share this chapter' %}
-        {% include content-feedback.html %}
+        {% include content-feedback.html %}{% include related-videos.html key='reading_url' value=page.url %}
         <div class="reader-page-footer"><span>{{ book.author }}</span><span>{{ next_index }} / {{ book.chapters.size }}</span></div>
         </div>
         <nav class="reader-pager" aria-label="Chapter navigation">

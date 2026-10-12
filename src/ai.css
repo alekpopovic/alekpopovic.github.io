@@ -308,3 +308,15 @@
 
 .ai-workshop-hero { grid-template-columns: 1fr; min-height: auto; }
 .ai-workshop-hero .ai-hero-copy { max-width: 900px; }
+.workshop-stages { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; list-style: none; padding: 0; margin: 1.5rem 0; }
+.workshop-stages > li { background: #171a29; border: 1px solid #545b77; padding: 1rem; border-radius: 14px; }
+.workshop-stages h3 { color: #f1f3ff; font-size: 1.1rem; }
+.workshop-stages p, .workshop-stages summary { color: #d1d6ee; }
+.workshop-stages [data-stage-progress] { color: #9ee8d8; font-size: .85rem; }
+.workshop-stages details, .workshop-route-directory details { margin-block: .6rem; }
+.workshop-route-directory { margin-block: 2rem; padding: 1.5rem; background: #171a29; color: #d1d6ee; border: 1px solid #545b77; border-radius: 18px; }
+.workshop-route-directory h2, .workshop-route-directory h3 { color: #f1f3ff; }
+.workshop-route-directory a { color: #9ee8d8; }
+.workshop-route-directory summary { cursor: pointer; padding-block: .5rem; }
+.workshop-route-directory ol { padding-left: 1.5rem; }
+@media (max-width: 850px) { .workshop-stages { grid-template-columns: 1fr; } }

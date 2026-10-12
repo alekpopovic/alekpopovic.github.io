@@ -79,10 +79,15 @@
       ensure(object(prefs) && ['small', 'regular', 'large', 'extra'].includes(prefs.size) && ['paper', 'light', 'dark'].includes(prefs.theme), 'Reading preferences are invalid.');
       entries.set('codepop:reader-preferences', { size: prefs.size, theme: prefs.theme });
     }
-    return { entries, summary: `${Object.keys(input.books).length} books, ${sections} saved sections, ${notes} notes, ${checklists} learning checklists, ${quizAnswers} quiz answers, and ${drafts} workshop drafts.` };
+    if (input.plan !== null && input.plan !== undefined) {
+      const plan = input.plan;
+      ensure(object(plan) && paths.has(plan.path_id) && [20, 40, 60].includes(plan.session_minutes) && [2, 3, 5].includes(plan.sessions) && typeof plan.goal === 'string' && plan.goal.trim().length > 0 && plan.goal.length <= 300, 'The learning plan is invalid.');
+      entries.set('codepop:study-plan', { path_id: plan.path_id, session_minutes: plan.session_minutes, sessions: plan.sessions, goal: plan.goal });
+    }
+    return { entries, summary: `${Object.keys(input.books).length} books, ${sections} saved sections, ${notes} notes, ${checklists} learning checklists, ${quizAnswers} quiz answers, and ${drafts} workshop drafts${input.plan ? ", plus a learning plan" : ""}.` };
   };
   const snapshot = () => {
-    const data = { format: 'codepop-reading', version: 1, exported_at: new Date().toISOString(), books: {}, learning: {}, knowledge: {}, workshops: {}, preferences: read('codepop:reader-preferences') };
+    const data = { format: 'codepop-reading', version: 1, exported_at: new Date().toISOString(), books: {}, learning: {}, knowledge: {}, workshops: {}, preferences: read('codepop:reader-preferences'), plan: read('codepop:study-plan') };
     for (const [id] of books) {
       const records = read(`codepop:library:${id}`), resume = read(`codepop:reading:${id}`);
       if (records !== null || resume !== null) data.books[id] = { records: records || {}, resume };

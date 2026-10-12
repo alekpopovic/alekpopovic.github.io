@@ -1,0 +1,22 @@
+[
+  {
+    "command": "Reject an invalid signature (HTTP POST with synthetic payload)",
+    "output": "HTTP 401\n{\n  \"code\": \"unauthorized\",\n  \"message\": \"webhook signature verification failed\",\n  \"requestId\": \"52a14eae81b0b5d42bf8cb388ca0f7b0\"\n}",
+    "exit_code": 0
+  },
+  {
+    "command": "Accept a signed push (HTTP POST with synthetic payload)",
+    "output": "HTTP 201\n{\n  \"repository\": \"demo-repository\",\n  \"eventID\": \"codepop-local-event-1\",\n  \"event\": \"push\",\n  \"result\": \"created\",\n  \"message\": \"BuildRun created from webhook.\",\n  \"buildRun\": {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"spec\": {\n      \"projectRef\": \"demo-project\",\n      \"repositoryRef\": \"demo-repository\",\n      \"pipelineTemplateRef\": \"demo-template\",\n      \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"branch\": \"main\",\n      \"commitSHA\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"triggeredBy\": {\n        \"type\": \"webhook\",\n        \"actor\": \"synthetic-demo\",\n        \"eventID\": \"codepop-local-event-1\"\n      },\n      \"image\": {\n        \"repository\": \"example.invalid/codepop/demo\",\n        \"tag\": \"main-1234567890ab\"\n      },\n      \"executor\": \"job\",\n      \"gitOps\": {\n        \"enabled\": false,\n        \"valuesFile\": \"values.yaml\",\n        \"imageRepositoryField\": \"image.repository\",\n        \"imageTagField\": \"image.tag\",\n        \"imageDigestField\": \"image.digest\",\n        \"kustomize\": {\n          \"kustomizationFile\": \"kustomization.yaml\"\n        },\n        \"rawYaml\": {}\n      }\n    },\n    \"status\": {\n      \"jobRef\": {},\n      \"pipelineRunRef\": {},\n      \"supplyChain\": {},\n      \"policy\": {\n        \"allowed\": false\n      },\n      \"failure\": {},\n      \"log\": {}\n    }\n  },\n  \"created\": true\n}",
+    "exit_code": 0
+  },
+  {
+    "command": "Replay the same signed delivery (HTTP POST with synthetic payload)",
+    "output": "HTTP 200\n{\n  \"repository\": \"demo-repository\",\n  \"eventID\": \"codepop-local-event-1\",\n  \"event\": \"push\",\n  \"result\": \"duplicate\",\n  \"message\": \"Webhook delivery was already processed.\",\n  \"buildRun\": {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"spec\": {\n      \"projectRef\": \"demo-project\",\n      \"repositoryRef\": \"demo-repository\",\n      \"pipelineTemplateRef\": \"demo-template\",\n      \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"branch\": \"main\",\n      \"commitSHA\": \"1234567890abcdef1234567890abcdef12345678\",\n      \"triggeredBy\": {\n        \"type\": \"webhook\",\n        \"actor\": \"synthetic-demo\",\n        \"eventID\": \"codepop-local-event-1\"\n      },\n      \"image\": {\n        \"repository\": \"example.invalid/codepop/demo\",\n        \"tag\": \"main-1234567890ab\"\n      },\n      \"executor\": \"job\",\n      \"gitOps\": {\n        \"enabled\": false,\n        \"valuesFile\": \"values.yaml\",\n        \"imageRepositoryField\": \"image.repository\",\n        \"imageTagField\": \"image.tag\",\n        \"imageDigestField\": \"image.digest\",\n        \"kustomize\": {\n          \"kustomizationFile\": \"kustomization.yaml\"\n        },\n        \"rawYaml\": {}\n      }\n    },\n    \"status\": {\n      \"jobRef\": {},\n      \"pipelineRunRef\": {},\n      \"supplyChain\": {},\n      \"policy\": {\n        \"allowed\": false\n      },\n      \"failure\": {},\n      \"log\": {}\n    }\n  },\n  \"created\": false\n}",
+    "exit_code": 0
+  },
+  {
+    "command": "kubectl get buildruns -n codepop-cloudivision (selected non-secret fields)",
+    "output": "[\n  {\n    \"name\": \"demo-repository-4ffa58f17d73\",\n    \"namespace\": \"codepop-cloudivision\",\n    \"revision\": \"1234567890abcdef1234567890abcdef12345678\",\n    \"event_id\": \"codepop-local-event-1\"\n  }\n]",
+    "exit_code": 0
+  }
+]

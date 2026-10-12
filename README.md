@@ -287,7 +287,7 @@ transcripts and matching source pins. `/codepop/engineering-notes/` describes
 public engineering decisions without inventing client case studies. See
 [recording evidence](docs/project-demos.md) before updating those assets.
 
-`/ai/workshops/` offers four original exercises with local Node.js starters,
+`/ai/workshops/` offers six original exercises with local Node.js starters,
 acceptance tests, and separate reference solutions in `labs/ai-workshops/`.
 `npm run build:labs` packages the source reproducibly for download, and
 `npm run check:labs` confirms that starters fail assertions and solutions pass.

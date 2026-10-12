@@ -1,20 +1,193 @@
 - id: bugfix
   title: Fix a priority bug
-  contract: Sort finite numeric priorities from largest to smallest, preserve arrival order for ties, and return a new array without changing the input.
+  contract: Sort finite numeric priorities from largest to smallest, preserve arrival order for ties, and return
+    a new array without changing the input.
   hint: Array.sort changes its receiver. Compare numeric values and decide who owns the array before sorting it.
   guide: /posts/ai-workshop-fix-a-priority-bug/
+  stages:
+  - title: Reproduce order and ownership
+    task: Run the starter. Identify who observes the mutated input and what order equal priorities should keep.
+    hints:
+    - Compare the input before and after the call.
+    - Copy the array before sorting; retain arrival order when priorities tie.
+    tests:
+    - larger numeric priorities come first, including multiple digits
+    - input order stays intact
+  - title: Repair the numeric boundary
+    task: Handle finite numeric priorities and tie order without changing the acceptance tests.
+    hints:
+    - String comparison gives a different order for 2 and 10.
+    - Validate numbers before comparing them.
+    tests:
+    - equal priorities retain their arrival order
+    - negative, zero, and fractional priorities are numeric
+  - title: Review a counterexample
+    task: Read the final diff and describe one input outside the exercise contract.
+    hints:
+    - Correct order does not establish ownership.
+    - Use a frozen array to expose an accidental in-place sort.
+    tests:
+    - empty input produces a new empty array
 - id: review
   title: Review a logging change
-  contract: Return exactly event, method, path, status, and duration_ms. Strip query strings and fragments from the URL. Never retain headers, bodies, or future fields; preserve the input.
-  hint: An explicit field allowlist stays safe when a request acquires new properties. Synthetic credentials appear in the acceptance tests.
+  contract: Return exactly event, method, path, status, and duration_ms. Strip query strings and fragments from
+    the URL. Never retain headers, bodies, or future fields; preserve the input.
+  hint: An explicit field allowlist stays safe when a request acquires new properties. Synthetic credentials appear
+    in the acceptance tests.
   guide: /posts/ai-workshop-review-a-logging-change/
+  stages:
+  - title: Trace serialized output
+    task: Follow a synthetic request through the builder and identify which values reach JSON serialization.
+    hints:
+    - Inspect the field names, not just the dashboard.
+    - A spread copies current sensitive fields and unknown future fields.
+    tests:
+    - the event uses an explicit field contract
+    - only the route path is retained
+  - title: Make the contract explicit
+    task: Construct only the five allowed fields and strip query and fragment data from the path.
+    hints:
+    - Choose permitted fields before constructing the result.
+    - Split the local path at the first question mark or hash.
+    tests:
+    - credentials and body are absent from serialized output
+    - unknown future fields stay out of the event
+  - title: Challenge future changes
+    task: Explain why a new synthetic sensitive field stays outside the output.
+    hints:
+    - Deleting known fields requires continuing maintenance.
+    - Check input preservation as well as the absence of a token.
+    tests:
+    - building the event does not mutate the request
 - id: tests
   title: Design retry tests
-  contract: Accept whole nonnegative delay-seconds or a canonical HTTP date using the supplied finite clock. Clamp past dates to zero; return null for invalid, fractional, partial, negative, missing, or overflowing values.
-  hint: Parsing a prefix is different from validating a whole value. Check a parsed HTTP date by formatting it back to UTC.
+  contract: Accept whole nonnegative delay-seconds or a canonical HTTP date using the supplied finite clock. Clamp
+    past dates to zero; return null for invalid, fractional, partial, negative, missing, or overflowing values.
+  hint: Parsing a prefix is different from validating a whole value. Check a parsed HTTP date by formatting it back
+    to UTC.
   guide: /posts/ai-workshop-design-retry-tests/
+  stages:
+  - title: Classify accepted inputs
+    task: Separate whole nonnegative seconds, canonical HTTP dates, and invalid values.
+    hints:
+    - Parsing a numeric prefix is not validation.
+    - List a fraction, a negative string, and an overflowing number.
+    tests:
+    - delay-seconds supports zero and whitespace
+    - an HTTP date is relative to an injected clock
+  - title: Control the clock
+    task: Use the supplied clock to compare an HTTP date and clamp dates in the past.
+    hints:
+    - Never wait for wall-clock seconds in this fixture.
+    - Format a parsed date back to UTC to check its canonical form.
+    tests:
+    - a past HTTP date never creates negative waiting time
+    - negative, fractional, partial, missing, and overflowing values are rejected
+  - title: Inspect rejection evidence
+    task: Explain why a malformed value returns null rather than silently becoming a delay.
+    hints:
+    - A partially accepted string can change retry behavior.
+    - Keep the invalid-input table beside the passing result.
+    tests:
+    - an invalid clock is rejected
 - id: automation
   title: Automate release evidence
-  contract: Return a version-1 manifest with files sorted by name, lowercase 64-digit SHA-256 hashes, and positive safe-integer byte sizes. Reject duplicates and unsafe filenames; exclude clocks and unknown fields without mutating input.
-  hint: Validate each field, keep a set of names, and construct a new output object. Equivalent inputs should serialize identically.
+  contract: Return a version-1 manifest with files sorted by name, lowercase 64-digit SHA-256 hashes, and positive
+    safe-integer byte sizes. Reject duplicates and unsafe filenames; exclude clocks and unknown fields without mutating
+    input.
+  hint: Validate each field, keep a set of names, and construct a new output object. Equivalent inputs should serialize
+    identically.
   guide: /posts/ai-workshop-automate-release-evidence/
+  stages:
+  - title: Define artifact identity
+    task: Identify permitted fields, names, byte sizes, and hash representation.
+    hints:
+    - Unknown fields must not change the manifest.
+    - A clock value makes identical artifact lists serialize differently.
+    tests:
+    - manifest fields are fixed and output order is deterministic
+    - equivalent input orders produce byte-identical JSON
+  - title: Validate before publishing
+    task: Reject unsafe names, duplicates, invalid sizes, and invalid SHA-256 strings.
+    hints:
+    - Use a set for names and safe integers for sizes.
+    - A hexadecimal SHA-256 has exactly 64 digits; lowercase the output.
+    tests:
+    - duplicate names and paths are rejected
+    - invalid hashes and byte sizes are rejected
+  - title: Prove reproducibility
+    task: Compare equivalent inputs in a different order and verify input preservation.
+    hints:
+    - Sort by name before serialization.
+    - Stable output does not prove file bytes match the supplied hashes.
+    tests:
+    - input order and unknown input fields are not persisted
+- id: gate
+  title: Reject stale deployment evidence
+  contract: Permit a deployment only for a valid contract and an available, satisfied observation matching namespace,
+    Secret name, generation, and current resource version. Return only allowed and a static reason; preserve inputs.
+  hint: Identity and freshness come before a positive condition. Unknown observations cannot establish a new successful
+    decision.
+  guide: /posts/ai-workshop-reject-stale-evidence/
+  stages:
+  - title: Check identity and availability
+    task: Classify malformed contracts, absent observations, and evidence from another namespace or Secret.
+    hints:
+    - A true condition can describe the wrong object.
+    - Static reasons keep observation errors outside the output.
+    tests:
+    - invalid contract identity and generation are rejected
+    - missing and unavailable observations remain unknown
+    - evidence from a different namespace or secret is refused
+  - title: Reject stale evidence
+    task: Compare generation and resource version with the exact current contract and Secret.
+    hints:
+    - Rotation can change a Secret without changing contract generation.
+    - A missing version is not evidence of equality.
+    tests:
+    - an older generation is stale even when satisfied
+    - missing or changed resource versions invalidate old evidence
+  - title: Close the deployment decision
+    task: Require a current positive observation and preserve inputs. Explain the time-of-check boundary.
+    hints:
+    - A Kubernetes condition does not itself stop a deployment.
+    - The caller must enforce this decision; the function does not reconcile a cluster.
+    tests:
+    - fresh matching evidence permits the deployment
+    - fresh negative evidence is unsatisfied, never a bypass
+    - output is static and inputs are preserved
+- id: replay
+  title: Recover an ordered tenant stream
+  contract: Apply a contiguous tenant-scoped event buffer to an independent snapshot. Ignore already-covered events
+    and exact duplicate deliveries. A gap, conflicting delivery ID, invalid event, or cross-tenant message returns
+    the original snapshot with resync. Reject invalid snapshots.
+  hint: Keep the original snapshot until the entire buffer has been validated. Delivery identity and stream position
+    answer different questions.
+  guide: /posts/ai-workshop-recover-an-ordered-stream/
+  stages:
+  - title: Establish the snapshot boundary
+    task: Validate tenant identity, cursor, and position values before applying events.
+    hints:
+    - The snapshot covers every earlier stream position.
+    - Clone state so a failed replay can return the original snapshot.
+    tests:
+    - a contiguous replay advances an independent snapshot
+    - an empty buffer preserves the snapshot cursor
+  - title: Recover order and duplicate delivery
+    task: Require contiguous sequences and exact duplicate identity; request a snapshot on a gap.
+    hints:
+    - Sequence numbers order the stream; event IDs identify deliveries.
+    - An event ID reused with another payload is not an exact duplicate.
+    tests:
+    - the exact duplicate delivery is applied only once
+    - events already represented by the snapshot are ignored
+    - a gap or out of order buffer requests a fresh snapshot
+    - cross tenant data never reaches a partial result
+    - reused delivery identities and malformed events require resync
+  - title: Keep failure atomic
+    task: Refuse invalid or cross-tenant messages without exposing partial state. Check arbitrary subject keys.
+    hints:
+    - Keep the candidate result private until the buffer is validated.
+    - An own data property handles a subject named __proto__ without changing the prototype.
+    tests:
+    - inputs and object prototypes remain unchanged

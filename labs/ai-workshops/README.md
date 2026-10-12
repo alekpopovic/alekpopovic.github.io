@@ -23,3 +23,10 @@ maintainer check expects untouched starter files; it is not a score for your edi
 
 AI assistance is optional. A model's answer is not test evidence. Keep the
 command, exit status, changed code, and a short explanation of the boundary cases.
+
+## Further exercises
+
+Run `node verify.mjs gate` to reject stale deployment evidence, or
+`node verify.mjs replay` to recover an ordered tenant stream. Each has eight
+acceptance tests and three stages with progressive hints in the website.
+The examples use synthetic data and make no Kubernetes or socket connections.

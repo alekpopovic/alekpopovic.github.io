@@ -46,7 +46,7 @@ permalink: /videos/
             <span class="video-number" aria-hidden="true">{% if forloop.index < 10 %}0{% endif %}{{ forloop.index }}</span>
             <img src="https://i.ytimg.com/vi/{{ video.id }}/mqdefault.jpg" alt="" width="120" height="68" loading="lazy">
             <span class="video-title">{{ video.title | escape }}</span><span class="video-duration">{{ video.duration | escape }}</span>
-          </a></li>
+          </a>{% assign lesson = site.data.video_lessons | where: 'video_id', video.id | first %}{% if lesson %}<a class="video-lesson-link" href="{{ '/videos/' | append: lesson.slug | append: '/' | relative_url }}">Learning notes, chapter &amp; exercise →</a>{% endif %}</li>
           {% endfor %}
         </ol>
         <a class="playlist-youtube" href="https://www.youtube.com/playlist?list={{ playlist.id }}">Open playlist on YouTube <span aria-hidden="true">↗</span></a>

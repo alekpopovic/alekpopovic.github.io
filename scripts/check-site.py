@@ -227,6 +227,29 @@ def main():
         require((SITE / demo['video'].lstrip('/')).read_bytes().startswith(b'\x1a\x45\xdf\xa3'), f'Invalid WebM recording: {project_id}')
         require(image_size(SITE / demo['poster'].lstrip('/')) == (1280, 800), f'Invalid demo poster: {project_id}')
         require(all(step['exit_code'] == 0 and step['command'] and step['output'] for step in demo['steps']), f'Demo contains a failed or empty command: {project_id}')
+    for project_id, demo in json.loads((ROOT / '_data/project_demos.json').read_text()).items():
+        for proof in [demo] + ([demo['native']] if 'native' in demo else []):
+            if proof.get('transcript'):
+                transcript = SITE / proof['transcript'].lstrip('/')
+                require(hashlib.sha256(transcript.read_bytes()).hexdigest() == proof.get('transcript_sha256'), f'Verification capture changed: {project_id}')
+            if proof is not demo:
+                require(proof['source_commit'] == demo['source_commit'], f'Native evidence uses another source revision: {project_id}')
+                require((SITE / proof['video'].lstrip('/')).read_bytes().startswith(b'\x1a\x45\xdf\xa3'), f'Invalid native recording: {project_id}')
+                require(image_size(SITE / proof['poster'].lstrip('/')) == (1280, 800), f'Invalid native poster: {project_id}')
+                require(all(step['exit_code'] == 0 and step['output'] for step in proof['steps']), f'Invalid native capture: {project_id}')
+    starts = yaml.safe_load((ROOT / '_data/learning_starts.yml').read_text())
+    require(any(item['url'] == '/learn/start/' for item in index), 'Search omits Start here')
+    require(len({route['id'] for route in starts}) == len(starts), 'Starting-route IDs must be unique')
+    for route in starts:
+        require(route['path_id'] in quizzes and route['workshop'] in {workshop['id'] for workshop in workshops}, 'Starting route references unknown material')
+    lessons = yaml.safe_load((ROOT / '_data/video_lessons.yml').read_text())
+    video_ids = {video['id'] for playlist in json.loads((ROOT / '_data/video_playlists.json').read_text()) for video in playlist['videos']}
+    require({lesson['video_id'] for lesson in lessons} == video_ids and len(lessons) == len(video_ids), 'Every video needs one learning companion')
+    require(len({lesson['slug'] for lesson in lessons}) == len(lessons), 'Video lesson URLs must be unique')
+    for lesson in lessons:
+        require(all(lesson.get(key) for key in ['summary', 'exercise', 'evidence', 'reading_title']), 'Incomplete video learning companion')
+        require(lesson['path_id'] in quizzes and any(item['url'] == lesson['reading_url'] for item in index), 'Video references unknown learning material')
+        require(any(item['url'] == f'/videos/{lesson["slug"]}/' and item['type'] == 'videos' for item in index), 'Video companion is missing from search')
     for path in (ROOT / '_posts').glob('*.md'):
         metadata = yaml.safe_load(path.read_text().split('---', 2)[1])
         require(all(metadata.get(key) for key in ['layout', 'title', 'description', 'category', 'illustration', 'tags']), f'Incomplete post metadata: {path}')

@@ -47,5 +47,5 @@ test('dropdown Tab commits, outside clicks close, mobile popups fit, and native 
   await page.route('**/library/ai-select.js', route => route.abort()); await page.reload();
   await expect(page.locator('[data-ai-tool]')).toBeVisible();
   await page.locator('[data-ai-tool]').selectOption('codex');
-  await expect(page.locator('[data-ai-results]')).toContainText('5 of');
+  await expect(page.locator('[data-ai-results]')).toContainText('7 of 14 guides found');
 });

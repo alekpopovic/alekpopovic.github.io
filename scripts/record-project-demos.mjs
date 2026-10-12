@@ -12,7 +12,7 @@ const only = process.argv.find(arg => arg.startsWith('--only='))?.slice(7);
 if (preview && !['127.0.0.1', 'localhost'].includes(new URL(preview).hostname)) throw new Error('Use a local ContainerDesk preview URL.');
 const browser = await chromium.launch({ args: ['--no-sandbox'] });
 try {
-  for (const [id, demo] of Object.entries(demos)) {
+  for (const [id, demo] of Object.entries(demos).flatMap(([id, demo]) => [[id, demo], ...(demo.native ? [[`${id}-native`, demo.native]] : [])])) {
     if (only && id !== only) continue;
     if (id === 'container-desk' && !preview) continue;
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, recordVideo: { dir: '/tmp/codepop-project-video', size: { width: 1280, height: 800 } }, reducedMotion: 'reduce' });

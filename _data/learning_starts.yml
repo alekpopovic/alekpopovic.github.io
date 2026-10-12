@@ -1,0 +1,30 @@
+- id: ai
+  title: Use AI in development
+  path_id: ai-workflows
+  foundation: Start with one tool and one small change. You need basic JavaScript for the optional browser exercises.
+  experienced: Bring a real review question, then compare the evidence you would require before accepting an AI change.
+  workshop: bugfix
+- id: delivery
+  title: Understand CI/CD
+  path_id: reliable-delivery
+  foundation: Start by naming the source revision, artifact, and execution attempt in a pipeline you know. Git and basic containers help.
+  experienced: Focus on late results, uncertain deployments, and the boundary between build evidence and deployment intent.
+  workshop: automation
+- id: security
+  title: Improve logs and security
+  path_id: logs-and-security
+  foundation: Trace one HTTP request before changing a security rule. Basic HTTP and Nginx knowledge help.
+  experienced: Challenge the logging allowlist and proxy trust boundary with synthetic requests.
+  workshop: review
+- id: secrets
+  title: Design Kubernetes secret contracts
+  path_id: secret-contracts
+  foundation: This is an intermediate path. Review Kubernetes namespaces, resources, and RBAC before attempting the controller exercises.
+  experienced: Concentrate on stale observations and the deployment component that actually enforces the contract.
+  workshop: gate
+- id: tracking
+  title: Build reliable multi-tenant tracking
+  path_id: universal-tracking
+  foundation: This is an intermediate path. Review HTTP APIs, transactions, and WebSockets first; all examples use synthetic identities.
+  experienced: Work through tenant boundaries, duplicate events, and reconnect recovery before optimizing the live view.
+  workshop: replay

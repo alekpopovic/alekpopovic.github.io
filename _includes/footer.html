@@ -1,4 +1,4 @@
-<footer class="site-footer">
+<footer class="site-footer" id="footer">
   <div class="section-shell">
     <div class="footer-cta">
       <div><p class="eyebrow">{% include icon.html name='sparkles' %} Have something in mind?</p><h2 class="display">Let’s make<br><span>it work.</span></h2></div>
@@ -17,6 +17,10 @@
       <nav class="footer-links footer-column" aria-label="Footer explore">
         <h2 class="eyebrow">{% include icon.html name='compass' %} Explore</h2>
         <ul>{% for link in site.data.footer.explore %}<li><a href="{{ link.url | relative_url }}">{% include icon.html name=link.icon %}<span>{{ link.title }}</span></a></li>{% endfor %}</ul>
+      </nav>
+      <nav class="footer-links footer-column" aria-label="Footer learning">
+        <h2 class="eyebrow">{% include icon.html name='compass' %} Learn</h2>
+        <ul>{% for link in site.data.footer.learning %}<li><a href="{{ link.url | relative_url }}">{% include icon.html name=link.icon %}<span>{{ link.title }}</span></a></li>{% endfor %}</ul>
       </nav>
       <nav class="footer-links footer-column" aria-label="Footer library">
         <h2 class="eyebrow">{% include icon.html name='notes' %} Library</h2>

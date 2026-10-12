@@ -25,7 +25,7 @@ failure. A screenshot alone cannot establish announcement behavior.
    popup, arrow keys select options, and Tab leaves the control without trapping
    focus. Content outside code samples should reflow without horizontal scroll.
 2. Open `/learn/workspace/`. Navigate by headings and landmarks. All five books,
-   five paths and four workshops have usable links even with JavaScript disabled.
+   five paths and six workshops have usable links even with JavaScript disabled.
    With JavaScript, the progress status should announce local-device scope.
 3. Open `/learn/secret-contracts/`. Read each question legend and its options.
    Check incomplete answers, correct one answer, and activate Review mistakes.

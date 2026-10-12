@@ -136,6 +136,7 @@
       goal: Connect validation evidence to the component that actually decides whether deployment proceeds.
       exercise: Sketch a CI or GitOps gate. Describe stale generations, unavailable observations, and an explicit bypass policy without treating a condition as automatic admission control.
       evidence: A gate decision table and the exact point where the deployment is stopped.
+      workshops: [gate]
     - title: Diagnose a failed contract safely
       url: /books/secret-contract-operator/19-runbook.html
       kind: Book chapter
@@ -174,6 +175,7 @@
       goal: Build a live view from an authorized snapshot and recoverable durable deltas.
       exercise: Disconnect between the snapshot and subscription. Describe the cursor, replay, deduplication, and fresh-snapshot fallback.
       evidence: A reconnect sequence that does not treat an open socket as the source of truth.
+      workshops: [replay]
     - title: Minimize public tracking data
       url: /books/universal-tracking/24-public-tracking.html
       kind: Book chapter

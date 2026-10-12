@@ -19,6 +19,13 @@
     root.querySelector('[data-workshop-tests]').textContent = current.display_tests;
     root.querySelector('[data-workshop-reference]').textContent = current.solution;
     root.querySelector('[data-workshop-solution]').open = false;
+    const stages = root.querySelector('[data-workshop-stages]'); stages.replaceChildren();
+    for (const [index, stage] of current.stages.entries()) {
+      const item = document.createElement('li'), title = document.createElement('h3'), task = document.createElement('p'), progress = document.createElement('p');
+      title.textContent = `${index + 1}. ${stage.title}`; task.textContent = stage.task; progress.dataset.stageProgress = ''; progress.textContent = `${stage.tests.length} acceptance checks · not run for this draft`; item.append(title, task, progress);
+      stage.hints.forEach((hint, number) => { const details = document.createElement('details'), summary = document.createElement('summary'), text = document.createElement('p'); summary.textContent = `Hint ${number + 1}`; text.textContent = hint; details.append(summary, text); item.append(details); });
+      stages.append(item);
+    }
     results.replaceChildren(); status.textContent = 'The starter intentionally fails. Run the tests to see the behavior.';
     root.dispatchEvent(new CustomEvent('codepop:workshop-loaded'));
     if (updateUrl) { const url = new URL(location.href); url.searchParams.set('exercise', current.id); history.replaceState(null, '', url); }
@@ -51,6 +58,7 @@
       if (event.data?.type === 'error') { status.textContent = `Could not run: ${String(event.data.message).slice(0, 500)}`; end(); return; }
       if (event.data?.type !== 'result' || !Array.isArray(event.data.results)) return;
       const rows = event.data.results.slice(0, 20), passed = rows.filter(row => row.passed === true).length;
+      current.stages.forEach((stage, index) => { const successes = stage.tests.filter(name => rows.some(row => row.name === name && row.passed === true)).length; root.querySelectorAll('[data-stage-progress]')[index].textContent = `${successes} of ${stage.tests.length} stage checks passed for this draft`; });
       if (rows.length) try { localStorage.setItem(`codepop:workshop-check:${current.id}`, JSON.stringify({ source: editor.value, passed, total: rows.length, checked_at: Date.now() })); } catch {}
       for (const row of rows) { const item = document.createElement('li'); item.dataset.passed = String(row.passed === true); item.textContent = `${row.passed === true ? 'PASS' : 'FAIL'} · ${String(row.name).slice(0, 200)}${row.message ? ` — ${String(row.message).slice(0, 500)}` : ''}`; results.append(item); }
       status.textContent = `${passed} of ${rows.length} tests passed. ${passed === rows.length && rows.length ? 'The exercise contract passes. Review your change and explain what the tests do not cover.' : 'Read a failing case, make a focused change, and run again.'}`; end();
@@ -60,9 +68,9 @@
     document.body.append(frame);
   });
   stop.addEventListener('click', () => { end(); status.textContent = 'Stopped. Your code is still in the editor.'; });
-  editor.addEventListener('input', () => { save(); results.replaceChildren(); status.textContent = 'Code changed. Run tests to check this version.'; });
+  editor.addEventListener('input', () => { save(); results.replaceChildren(); status.textContent = 'Code changed. Run tests to check this version.'; root.querySelectorAll('[data-stage-progress]').forEach(node => { node.textContent = 'Code changed · run stage checks again'; }); });
   select.addEventListener('change', () => load(select.value));
-  root.querySelector('[data-workshop-reset]').addEventListener('click', () => { end(); editor.value = current.starter; save(); results.replaceChildren(); status.textContent = 'Starter restored. Run the tests before changing it.'; editor.focus(); });
+  root.querySelector('[data-workshop-reset]').addEventListener('click', () => { end(); editor.value = current.starter; save(); results.replaceChildren(); status.textContent = 'Starter restored. Run the tests before changing it.'; root.querySelectorAll('[data-stage-progress]').forEach(node => { node.textContent = 'Starter restored · run stage checks again'; }); editor.focus(); });
   root.querySelector('[data-workshop-download]').addEventListener('click', () => { const url = URL.createObjectURL(new Blob([editor.value], { type: 'text/javascript' })), link = document.createElement('a'); link.href = url; link.download = `${current.id}-app.mjs`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); });
   window.addEventListener('pagehide', end);
   window.addEventListener('popstate', () => { if (catalog) load(new URLSearchParams(location.search).get('exercise'), false); });

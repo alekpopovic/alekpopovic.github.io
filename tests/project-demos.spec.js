@@ -7,6 +7,7 @@ test('project recordings decode, play, and provide readable scoped evidence', as
     const region = page.locator('.project-demo');
     await expect(region).toContainText(demo.scope);
     const video = region.locator('video');
+    await video.scrollIntoViewIfNeeded();
     await expect(video).toHaveAttribute('preload', 'none');
     expect(await video.evaluate(element => element.autoplay)).toBe(false);
     await video.evaluate(async element => { element.muted = true; await element.play(); });
