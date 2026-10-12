@@ -1,0 +1,9 @@
+{% capture feedback_title %}Content feedback: {{ page.title | default: site.title }}{% endcapture %}
+{% capture feedback_body %}Page: {{ page.url | absolute_url }}
+
+What needs correcting?
+
+Expected explanation or behavior:
+
+Please use synthetic examples and omit credentials or private data.{% endcapture %}
+<aside class="content-feedback" aria-label="Content feedback"><p><strong>Found something to improve?</strong> Help keep these explanations accurate.</p><a href="https://github.com/alekpopovic/alekpopovic.github.io/issues/new?title={{ feedback_title | strip | url_encode }}&amp;body={{ feedback_body | strip | url_encode }}">Report a correction ↗</a><a href="{{ '/updates/' | relative_url }}">Site changelog →</a><a href="{{ '/subscribe/' | relative_url }}">Follow new writing →</a></aside>

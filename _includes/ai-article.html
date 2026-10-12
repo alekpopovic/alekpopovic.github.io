@@ -8,11 +8,12 @@
       <div class="ai-article-meta"><span class="ai-pill">{{ page.format }}</span><span>{{ page.surface }}</span><span>{{ reading_minutes }} min read</span></div>
       <h1>{{ page.title }}</h1><p class="ai-lead">{{ page.description }}</p>
       <div class="ai-article-byline"><span class="ai-tool-mark" data-tool="{{ page.tool }}">{{ ai_tool.mark | default: '✳' }}</span><div><strong>{{ site.author.name }}</strong><span>Checked {{ page.verified_at | date: '%b %-d, %Y' }} · {{ ai_tool.name | default: 'Across tools' }}</span></div></div>
+{% include article-revision.html %}
       {% include share-links.html label='Share this guide' %}
     </header>
     <div class="ai-article-layout section-shell">
       <aside class="ai-article-sidebar" aria-label="Guide companion"><div><details class="article-toc" data-article-toc hidden open><summary>In this guide <span aria-hidden="true">⌄</span></summary><nav aria-label="In this guide" data-article-toc-links></nav></details><div class="ai-source-list"><p class="ai-section-label">Official references</p><ul>{% for source in page.sources %}<li><a href="{{ source.url | escape }}">{{ source.title }} ↗</a></li>{% endfor %}</ul><p>Scope: {{ page.surface }}.<br>Availability depends on your version, account, and installed extensions.</p></div></div></aside>
-      <div class="ai-article-main"><div class="article-prose prose prose-lg ai-prose" data-post-content>{{ content }}</div><div class="ai-article-end"><a href="{{ '/ai/' | relative_url }}">← Back to AI Lab</a><a href="#main-content">Back to top ↑</a></div></div>
+      <div class="ai-article-main"><div class="article-prose prose prose-lg ai-prose" data-post-content>{{ content }}</div>{% include content-feedback.html %}<div class="ai-article-end"><a href="{{ '/ai/' | relative_url }}">← Back to AI Lab</a><a href="#main-content">Back to top ↑</a></div></div>
     </div>
   </article>
   <section class="ai-related section-shell" aria-label="More AI guides"><div class="ai-section-heading"><div><p class="ai-section-label">Keep exploring</p><h2>Your next useful read.</h2></div><a class="ai-subtle-link" href="{{ '/ai/' | relative_url }}">All AI guides ↗</a></div><div class="ai-posts">{% assign ai_related = site.posts | where: 'section', 'ai' %}{% assign related_count = 0 %}{% for related_post in ai_related %}{% unless related_post.url == page.url %}{% include post-card.html post=related_post heading='h3' %}{% assign related_count = related_count | plus: 1 %}{% if related_count == 3 %}{% break %}{% endif %}{% endunless %}{% endfor %}</div></section>

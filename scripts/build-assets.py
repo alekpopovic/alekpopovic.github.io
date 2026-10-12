@@ -5,6 +5,7 @@ import math
 import os
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 from tempfile import NamedTemporaryFile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,7 +67,8 @@ def card(name, title, label, purple=False, ai=False):
     flower(draw, 1067, 425, 88, '#8d75bf' if ai else '#fd4401')
     draw.line((55, 535, 1145, 535), fill=color, width=2)
     draw.text((55, 559), 'Aleksandar Popovic', font=regular, fill='#d9d5e7' if ai else '#20201e')
-    draw.text((785, 559), 'alekpopovic.github.io', font=regular, fill='#d9d5e7' if ai else '#20201e')
+    hostname = urlsplit(yaml.safe_load((ROOT / '_config.yml').read_text())['url']).netloc
+    draw.text((785, 559), hostname, font=regular, fill='#d9d5e7' if ai else '#20201e')
     save_image(image, ROOT / f'assets/social/{name}.png', 'PNG', optimize=True)
 
 

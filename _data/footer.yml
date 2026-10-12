@@ -7,10 +7,13 @@ explore:
   - { title: Search, url: /search/, icon: search }
   - { title: Contact, url: /contact/, icon: mail }
 library:
+  - { title: Learning paths, url: /learn/, icon: compass }
   - { title: Posts, url: /posts/, icon: notes }
   - { title: All books, url: /books/, icon: book }
   - { title: Videos, url: /videos/, icon: play }
-  - { title: RSS feed, url: /feed.xml, icon: rss }
+  - { title: Follow updates, url: /subscribe/, icon: rss }
+  - { title: Changelog, url: /updates/, icon: notes }
+  - { title: Offline reading, url: /offline/, icon: book }
 social:
   - { title: GitHub, url: 'https://github.com/alekpopovic', icon: github }
   - { title: LinkedIn, url: 'https://www.linkedin.com/in/alekpopovic', icon: linkedin }

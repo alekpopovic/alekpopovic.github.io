@@ -1,0 +1,7 @@
+---
+layout: default
+permalink: /updates/
+title: Site changelog — Aleksandar Popovic
+description: Changes to the library, learning paths, reading experience, and open-source project pages.
+---
+<main id="main-content"><section class="page-hero"><div class="section-shell"><p class="eyebrow tag">A working notebook</p><h1 class="display">What changed.</h1><p class="page-intro">Updates to this site and its reading tools. Publication dates and command verification dates remain visible on individual articles.</p><a class="button" href="{{ '/updates.xml' | relative_url }}">Follow the updates feed ↗</a></div></section><section class="section-shell learning-directory" aria-label="Site updates"><ol class="learning-steps">{% for update in site.data.updates %}<li class="learning-step" id="{{ update.id }}"><time datetime="{{ update.date | date: '%Y-%m-%d' }}">{{ update.date | date: '%B %-d, %Y' }}</time><h2>{{ update.title }}</h2><p>{{ update.description }}</p><a href="{{ update.url | relative_url }}">Explore the change →</a></li>{% endfor %}</ol></section></main>

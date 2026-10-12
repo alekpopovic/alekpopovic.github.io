@@ -1,0 +1,1 @@
+{% if page.last_modified_at %}<p class="learning-invitation">Updated <time datetime="{{ page.last_modified_at | date_to_xmlschema }}">{{ page.last_modified_at | date: '%B %-d, %Y' }}</time>{% if page.revision_note %} · {{ page.revision_note | escape }}{% endif %}</p>{% endif %}

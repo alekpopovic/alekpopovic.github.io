@@ -1,0 +1,7 @@
+---
+layout: default
+title: Learning paths — Aleksandar Popovic
+description: Guided routes through practical AI workflows, CI/CD foundations, and logs and security, with exercises and concrete outcomes.
+---
+<main id="main-content"><section class="page-hero"><div class="section-shell"><p class="eyebrow tag">Read → Try → Explain</p><h1 class="display">A path through<br>the ideas.</h1><p class="page-intro">Start with a question. Follow a short sequence of guides, chapters, and open-source examples. Leave with something you can demonstrate.</p></div></section>
+<section class="section-shell learning-directory" aria-label="Choose a learning path"><div class="learning-grid">{% for path in site.data.learning_paths %}{% include learning-card.html path=path %}{% endfor %}</div><p class="learning-invitation">No account required. Progress stays in this browser. Every reading link and exercise also works without JavaScript.</p></section></main>

@@ -20,6 +20,7 @@ layout: default
             <h1 class="display">{{ page.title }}</h1>
             <p class="page-intro">{{ page.description }}</p>
             <div class="article-byline"><span class="article-author-mark" aria-hidden="true">AP</span><div><strong>{{ site.author.name }}</strong><span>Notes from {{ book.brand | default: book.title }}</span></div></div>
+{% include article-revision.html %}
             {% include share-links.html label='Share this note' %}
           </div>
           <div class="article-visual" aria-hidden="true">{% include post-art.html kind=page.illustration %}<span class="article-visual-caption">One idea, put to work.</span></div>
@@ -34,7 +35,7 @@ layout: default
       <div class="article-main">
         <div class="article-prose prose prose-lg" data-post-content>{{ content }}</div>
         <aside class="article-chapter-callout" aria-label="Related book chapter"><span class="article-chapter-mark" aria-hidden="true">↗</span><div><p class="eyebrow">Take the idea further</p><h2>{{ chapter.title }}</h2><p>The complete explanation, exercises, and worked examples are in {{ book.title }}.</p><a class="button button-blue" href="{{ chapter.url | relative_url }}">Continue with the chapter <span class="arrow" aria-hidden="true">↗</span></a></div></aside>
-        <div class="article-end"><a href="{{ '/posts/' | relative_url }}">← Back to all notes</a><a href="#main-content">Back to top ↑</a></div>
+{% include content-feedback.html %}        <div class="article-end"><a href="{{ '/posts/' | relative_url }}">← Back to all notes</a><a href="#main-content">Back to top ↑</a></div>
       </div>
     </div>
   </article>

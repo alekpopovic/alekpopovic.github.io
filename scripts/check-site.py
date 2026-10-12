@@ -76,6 +76,8 @@ def main():
     checked = 0
     indexed = set()
     google_analytics = CONFIG.get('google_analytics', '')
+    newsletter = CONFIG.get('newsletter_url', '')
+    require(not newsletter or (urlsplit(newsletter).scheme == 'https' and urlsplit(newsletter).netloc), 'Newsletter signup must use the owner\'s HTTPS form URL')
     documentation = [urlsplit(project['documentation']) for project in json.loads((ROOT / '_data/projects.json').read_text())]
     external_roots = [url.path for url in documentation if url.netloc == urlsplit(ORIGIN).netloc and url.path not in ['', '/']]
     for path, page in pages.items():
@@ -120,6 +122,22 @@ def main():
     require(len(entries) == min(30, len(list((ROOT / '_posts').glob('*.md')))), 'Feed omits current posts')
     index = json.loads((SITE / 'search-index.json').read_text())
     books = json.loads((ROOT / '_data/books.json').read_text())
+    learning_paths = yaml.safe_load((ROOT / '_data/learning_paths.yml').read_text())
+    for learning in learning_paths:
+        require(all(learning.get(key) for key in ['id', 'title', 'description', 'prerequisites', 'outcome', 'steps']), f'Incomplete learning path: {learning.get("id")}')
+        require(len(learning['steps']) >= 3, f'Learning path needs at least three steps: {learning["id"]}')
+        require(any(item['url'] == f'/learn/{learning["id"]}/' for item in index), f'Search omits learning path: {learning["id"]}')
+        for step in learning['steps']:
+            require(all(step.get(key) for key in ['title', 'url', 'kind', 'goal', 'exercise', 'evidence']), f'Incomplete learning step in {learning["id"]}')
+            require(step['url'].startswith('/') and any(item['url'] == step['url'] for item in index), f'Learning step references missing indexed content: {step["url"]}')
+    updates = yaml.safe_load((ROOT / '_data/updates.yml').read_text())
+    require(len({item['id'] for item in updates}) == len(updates), 'Changelog IDs must be unique and stable')
+    ET.parse(SITE / 'updates.xml')
+    offline = json.loads((SITE / 'offline-manifest.json').read_text())
+    require({item['url'] for item in offline['chapters']} == {chapter['url'] for book in books for chapter in book['chapters']}, 'Offline manifest omits book sections')
+    for url in offline['assets'] + [url for chapter in offline['chapters'] for url in chapter['assets']]:
+        require(url.startswith('/assets/') and (SITE / url.lstrip('/')).is_file(), f'Broken offline reading asset: {url}')
+        require(not url.lower().endswith(('.pdf', '.epub')), 'Full downloads must never be precached')
     require(sum(item['type'] == 'chapters' for item in index) == sum(len(book['chapters']) for book in books), 'Search omits book chapters')
     require(sum(item['type'] == 'posts' for item in index) == len(list((ROOT / '_posts').glob('*.md'))), 'Search omits posts')
     for item in index:

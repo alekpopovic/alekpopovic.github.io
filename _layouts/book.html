@@ -5,12 +5,12 @@ layout: default
 {% assign chapter = book.chapters[page.chapter_index] %}
 {% assign previous_index = page.chapter_index | minus: 1 %}
 {% assign next_index = page.chapter_index | plus: 1 %}
-<main id="main-content" class="book-reader" data-reader-book="{{ book.id | escape }}" data-reader-root="{{ book.url | relative_url }}" data-reader-title="{{ chapter.title | escape }}">
+<main id="main-content" class="book-reader" data-reader-book="{{ book.id | escape }}" data-reader-root="{{ book.url | relative_url }}" data-reader-title="{{ chapter.title | escape }}" data-reader-chapter="{{ chapter.slug | escape }}">
   <div class="section-shell reader-shell">
     <nav class="book-breadcrumbs" aria-label="Breadcrumb"><a href="{{ '/books/' | relative_url }}">Books</a><span aria-hidden="true">/</span><a href="{{ book.url | relative_url }}">{{ book.title }}</a><span aria-hidden="true">/</span><span>{{ chapter.label }}</span></nav>
     <div class="reader-deskbar">
       <div class="reader-document-name"><span class="reader-document-icon">{% include icon.html name='book' %}</span><a href="{{ book.url | relative_url }}">{{ book.title }}<span>Online edition <span aria-hidden="true">·</span> {{ book.language_label }}</span></a></div>
-      <div class="reader-document-actions"><button class="reader-tool reader-navigation-toggle" type="button" data-reader-navigation aria-expanded="true" aria-controls="site-header" aria-label="Hide site navigation" title="Hide site navigation" hidden>{% include icon.html name='home' %}</button><a href="{{ book.pdf | relative_url }}" download>{% include icon.html name='download' %} PDF</a><a href="{{ book.epub | relative_url }}" download>EPUB</a></div>
+      <div class="reader-document-actions"><button class="reader-tool" type="button" data-reader-study-open aria-label="Open bookmarks and notes" title="Bookmarks and notes" hidden>{% include icon.html name='notes' %}</button><button class="reader-tool reader-navigation-toggle" type="button" data-reader-navigation aria-expanded="true" aria-controls="site-header" aria-label="Hide site navigation" title="Hide site navigation" hidden>{% include icon.html name='home' %}</button><a href="{{ book.pdf | relative_url }}" download>{% include icon.html name='download' %} PDF</a><a href="{{ book.epub | relative_url }}" download>EPUB</a></div>
       <div class="reader-toolbar" data-reader-toolbar hidden>
         <button class="reader-tool" type="button" data-reader-contents aria-expanded="true" aria-controls="reader-sidebar" aria-label="Toggle table of contents" title="Table of contents">{% include icon.html name='sidebar' %}<span>Contents</span></button>
         <div class="reader-section-control"><label class="sr-only" for="reader-chapter">Go to section</label><select id="reader-chapter">{% for item in book.chapters %}<option value="{{ item.url | relative_url }}" {% if item.url == page.url %}selected{% endif %}>{{ forloop.index }} / {{ book.chapters.size }} — {{ item.title }}</option>{% endfor %}</select></div>
@@ -34,6 +34,17 @@ layout: default
             <div class="reader-downloads"><a href="{{ book.pdf | relative_url }}" download>PDF ↓</a><a href="{{ book.epub | relative_url }}" download>EPUB ↓</a><a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing</a></div>
           </nav>
         </details>
+        <details class="reader-study" data-reader-study hidden><summary>My reading workspace</summary>
+          <p class="study-caption">Saved only in this browser. Your notes are never sent to analytics.</p>
+          <button class="study-button" type="button" data-reader-bookmark aria-pressed="false">Bookmark this place</button>
+          <label class="study-check"><input type="checkbox" data-reader-complete> I have completed this section</label>
+          <label for="reader-note">Notes for this section</label><textarea id="reader-note" rows="5" maxlength="10000" placeholder="Questions, explanations, or things to try…"></textarea>
+          <div class="study-actions"><button class="study-button" type="button" data-reader-note-save>Save note</button><button class="study-button" type="button" data-reader-export>Export notes</button></div>
+          <p data-study-status role="status"></p><p data-study-progress></p>
+          <h2>Bookmarked sections</h2><ul data-reader-bookmarks></ul>
+          <div data-offline-controls hidden><button class="study-button" type="button" data-offline-save>Save this section offline</button><button class="study-button" type="button" data-offline-remove hidden>Remove offline copy</button><p data-offline-status role="status"></p></div>
+          <a href="{{ '/offline/' | relative_url }}">Manage offline reading →</a>
+        </details>
         <details class="reader-outline" data-reader-outline hidden open><summary>In this section</summary><nav aria-label="On this page"><ol data-reader-headings></ol></nav></details>
       </aside>
       <div class="reader-stage" data-reader-scroll tabindex="0" role="region" aria-label="Chapter text">
@@ -43,6 +54,7 @@ layout: default
         <div class="reader-meta"><p class="eyebrow">{{ chapter.label }}</p><p>{{ chapter.reading_minutes }} min read <span aria-hidden="true">·</span> Section {{ next_index }} of {{ book.chapters.size }}</p></div>
         <article class="book-article" lang="{{ book.language | escape }}">{{ content }}</article>
         {% include share-links.html label='Share this chapter' %}
+        {% include content-feedback.html %}
         <div class="reader-page-footer"><span>{{ book.author }}</span><span>{{ next_index }} / {{ book.chapters.size }}</span></div>
         </div>
         <nav class="reader-pager" aria-label="Chapter navigation">
@@ -53,6 +65,7 @@ layout: default
         {% if chapter_posts.size > 0 %}
           <section class="book-related-notes" aria-label="Notes on this chapter"><p class="eyebrow">Notes on this chapter</p>{% for chapter_post in chapter_posts %}<a href="{{ chapter_post.url | relative_url }}"><strong>{{ chapter_post.title }}</strong><span>{{ chapter_post.description }}</span><span class="book-note-arrow" aria-hidden="true">↗</span></a>{% endfor %}</section>
         {% endif %}
+        {% for project in site.data.projects %}{% for related in project.related_chapters %}{% if related.url == page.url %}<p class="book-license-note"><a href="{{ '/projects/' | append: project.id | append: '/' | relative_url }}">Explore this boundary in {{ project.name }} →</a></p>{% endif %}{% endfor %}{% endfor %}
         <p class="book-license-note">{{ book.author }} · {{ book.license_note }}. <a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing and attribution</a></p>
       </div>
     </div>

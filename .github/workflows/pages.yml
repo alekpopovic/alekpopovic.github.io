@@ -71,6 +71,12 @@ jobs:
       - name: Check SEO, search, feeds, and local links
         run: npm run check:site
 
+      - name: Check editorial metadata
+        run: npm run check:content
+
+      - name: Test public deployment checks
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
       - name: Install browser for interface checks
         run: npx playwright install --with-deps chromium
 
@@ -105,8 +111,15 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify the public deployment
+        run: python scripts/check-publication.py --expected-sha "$GITHUB_SHA" --attempts 12 --retry-delay 10

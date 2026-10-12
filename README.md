@@ -245,5 +245,37 @@ The site includes a sitemap, canonical URLs, JSON-LD, social previews, favicon,
 RSS/Atom at `/feed.xml`, custom 404 and compatibility downloads. See
 [measurement setup](docs/measurement.md) for Search Console, Google Analytics,
 optional Plausible analytics, quality checks and Lighthouse reports. The owner's
-GA4 tag `G-QCGFECRJDS` is configured for all HTML pages. Search Console still
-needs a verification token.
+GA4 tag `G-QCGFECRJDS` is configured for all HTML pages. Search Console ownership still needs confirmation in the owner's account;
+the repository's HTML verification token is empty.
+
+
+## Learning and a personal reading workspace
+
+`/learn/` offers three data-driven learning paths. Edit `_data/learning_paths.yml`
+for their sequence, exercises and expected evidence; keep real internal links.
+Paths appear in search and the sitemap, and all reading and exercise text works
+without JavaScript. The local checklist does not require an account.
+
+The book toolbar's notes button opens the reading workspace: chapter bookmarks,
+completed sections, a note per section, and Markdown export. All values stay in
+browser storage and are never sent to analytics. Storage failure keeps controls
+usable for the current visit and offers export. Notes are saved explicitly and
+when leaving the page. There is no cross-device synchronization.
+
+Offline reading is opt-in per section. The service worker is registered only
+when Save offline is activated, caches at most 24 chosen sections and their
+reading assets, and preserves actual network 404s. `/offline/` lists and removes
+saved sections. Complete PDF/EPUB files are never precached. Browser storage may
+be cleared or evicted; downloaded editions and exported notes are the lasting
+copies. Builds produce the local manifest without network access.
+
+Project walkthroughs explain documented architecture without executing commands.
+`_data/projects.json` records pinned source revisions, prerequisites and related
+chapters. Native captures retain links to their original verification record;
+documentation previews and historical/disconnected states are labeled.
+
+`/subscribe/` makes article RSS and site-change updates discoverable. Optional
+email signup needs the owner's real `newsletter_url`. Add stable changelog IDs
+in `_data/updates.yml`; `last_modified_at` is an explicit editorial timestamp.
+See [measurement and maintenance](docs/measurement.md) for GA4 events, owner
+account setup, scheduled source reviews and post-deployment public checks.

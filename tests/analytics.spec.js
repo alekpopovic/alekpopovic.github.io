@@ -27,7 +27,7 @@ test('the Google tag initializes once across page layouts', async ({ page }) => 
     expect(events).toHaveLength(2);
     expect(events[0][0]).toBe('js');
     expect(events[0][1]).toBeInstanceOf(Date);
-    expect(events[1]).toEqual(['config', 'G-QCGFECRJDS']);
+    expect(events[1]).toEqual(['config', 'G-QCGFECRJDS', { page_location: 'http://127.0.0.1:4173' + path, page_referrer: expect.any(String) }]);
   }
 });
 

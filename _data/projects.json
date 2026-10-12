@@ -5,17 +5,50 @@
     "category": "Container orchestration",
     "illustration": "orchestration",
     "description": "A Go control plane and worker agents for operating small Docker clusters.",
-    "stack": ["Go", "Docker", "REST API", "PostgreSQL store"],
+    "stack": [
+      "Go",
+      "Docker",
+      "REST API",
+      "PostgreSQL store"
+    ],
     "repository": "https://github.com/alekpopovic/orch",
     "documentation": "https://alekpopovic.github.io/orch/",
     "status": "Development platform",
     "problem": "A small Docker fleet still needs scheduling, reconciliation, and a clear deployment history. Running containers by hand leaves those responsibilities scattered across scripts and individual machines.",
     "approach": "A CLI talks to the server API. The control plane schedules work and reconciles desired state; node agents poll for assignments and operate Docker. Logs, events, and rollout status expose what each component actually observed.",
     "result": "The repository provides a local development stack, operator commands, and a concrete separation between control-plane decisions and node execution. The README identifies restart-safe server state wiring as further work; a PostgreSQL store alone is not evidence of a durable runtime.",
-    "flow": ["Operator CLI", "Server API", "Scheduler + reconciler", "Node agent", "Docker Engine"],
+    "flow": [
+      "Operator CLI",
+      "Server API",
+      "Scheduler + reconciler",
+      "Node agent",
+      "Docker Engine"
+    ],
     "example": "./scripts/dev-up.sh\ngo run ./cmd/orch service ls\ngo run ./cmd/orch events --service http-api",
     "example_note": "Run from a repository checkout after following its quickstart. The event command assumes the demo service exists.",
-    "source_note": "Based on the repository README and its documented runtime boundaries."
+    "source_note": "Based on the repository README and its documented runtime boundaries.",
+    "source_commit": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "verified_at": "2026-10-12",
+    "prerequisites": [
+      "Go 1.25+",
+      "Docker with Compose",
+      "An available local development port"
+    ],
+    "walkthrough": [
+      "The CLI sends the desired service configuration to the server API.",
+      "The API accepts operator requests; inspect the runtime durability boundaries in the README.",
+      "Scheduling and reconciliation turn desired state into node assignments.",
+      "The agent polls for assignments and reports what happened.",
+      "Docker executes the container; logs and events expose the observed result."
+    ],
+    "related_chapters": [
+      {
+        "url": "/books/agentplane/02-architecture.html",
+        "title": "02. Separate the Control Plane from the Execution Plane",
+        "book": "AgentPlane"
+      }
+    ],
+    "verification_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/README.md"
   },
   {
     "id": "cloudivision",
@@ -23,17 +56,59 @@
     "category": "Kubernetes CI/CD",
     "illustration": "pipeline",
     "description": "Kubernetes-native builds and observable delivery through GitOps.",
-    "stack": ["Go", "Kubernetes CRDs", "Angular", "Helm", "GitOps"],
+    "stack": [
+      "Go",
+      "Kubernetes CRDs",
+      "Angular",
+      "Helm",
+      "GitOps"
+    ],
     "repository": "https://github.com/alekpopovic/cloudivision",
     "documentation": "https://alekpopovic.github.io/cloudivision/",
     "status": "Alpha release",
     "problem": "Build execution and environment deployment need distinct ownership. A CI runner with broad cluster permissions makes that boundary difficult to review and recover.",
     "approach": "Source events create build resources in Kubernetes. Controllers reconcile isolated runner Jobs, which produce image evidence. A deployment repository records the release intent, and Argo CD or Flux reconciles the environment.",
     "result": "The project documents a kind quickstart, an operations UI, and a credential-free example. Its published alpha has explicit readiness gates; development authentication settings require review before evaluating a production installation.",
-    "flow": ["Source event", "BuildRun resource", "Runner Job", "Image + GitOps commit", "Argo CD / Flux"],
+    "flow": [
+      "Source event",
+      "BuildRun resource",
+      "Runner Job",
+      "Image + GitOps commit",
+      "Argo CD / Flux"
+    ],
     "example": "./hack/kind-create.sh\n./hack/kind-load-images.sh\n./hack/install-dev.sh",
     "example_note": "Repository quickstart commands create a local kind environment. Docker, kind, kubectl, Helm, Go, and Node are prerequisites.",
-    "source_note": "Based on the repository README, quickstart, and documented alpha readiness scope."
+    "source_note": "Based on the repository README, quickstart, and documented alpha readiness scope.",
+    "source_commit": "7eb7739da478c7e88cca99cc9e9a41e59e53d143",
+    "verified_at": "2026-10-12",
+    "prerequisites": [
+      "Docker",
+      "kind",
+      "kubectl",
+      "Helm",
+      "Go 1.26+",
+      "Node.js 24 / npm"
+    ],
+    "walkthrough": [
+      "A source event starts the build workflow.",
+      "A BuildRun resource records the requested build in Kubernetes.",
+      "A runner Job performs the build within its configured permissions.",
+      "An image and a GitOps commit provide separate build evidence and release intent.",
+      "Argo CD or Flux reconciles the environment from the deployment repository."
+    ],
+    "related_chapters": [
+      {
+        "url": "/books/modern-ci/18-deployment.html",
+        "title": "18. Deploy an approved immutable release",
+        "book": "Modern CI"
+      },
+      {
+        "url": "/books/modern-ci/10-fences.html",
+        "title": "10. Fence attempts and preserve uncertainty",
+        "book": "Modern CI"
+      }
+    ],
+    "verification_url": "https://github.com/alekpopovic/cloudivision/blob/7eb7739da478c7e88cca99cc9e9a41e59e53d143/README.md"
   },
   {
     "id": "clusterforge",
@@ -41,17 +116,52 @@
     "category": "Platform infrastructure",
     "illustration": "platform",
     "description": "Readable Terraform/OpenTofu modules and a Go CLI for container platforms.",
-    "stack": ["Go", "Terraform", "OpenTofu", "Kubernetes", "ECS", "Nomad"],
+    "stack": [
+      "Go",
+      "Terraform",
+      "OpenTofu",
+      "Kubernetes",
+      "ECS",
+      "Nomad"
+    ],
     "repository": "https://github.com/alekpopovic/clusterforge",
     "documentation": "https://alekpopovic.github.io/clusterforge/",
     "status": "Published CLI and modules",
     "problem": "Repeated platform setup needs reusable conventions while preserving the infrastructure files an operator must inspect, change, and review.",
     "approach": "A Go CLI generates projects and environments from focused foundation, orchestrator, platform, and workload modules. Generated Terraform remains visible. Planning, policy checks, and operational evidence sit alongside explicit apply workflows.",
     "result": "The repository includes modules, examples, installation guidance, and a local Kubernetes workflow. Platform coverage has distinct maturity levels; each real cloud environment still needs its own network, IAM, deployment, and recovery evidence.",
-    "flow": ["Project + environment", "Go CLI", "Readable Terraform", "Saved plan + review", "Container platform"],
+    "flow": [
+      "Project + environment",
+      "Go CLI",
+      "Readable Terraform",
+      "Saved plan + review",
+      "Container platform"
+    ],
     "example": "cf --non-interactive wizard --defaults\ncf generate dev\ncf init dev\ncf plan dev --out .cf/plans/dev.tfplan --risk-summary",
     "example_note": "The credential-free quickstart targets an existing Kubernetes context. These commands generate and plan infrastructure; review the project documentation before applying it.",
-    "source_note": "Based on the repository README and its platform coverage and safety model."
+    "source_note": "Based on the repository README and its platform coverage and safety model.",
+    "source_commit": "79969212d6060d8261c4b058b36d7674a584e7d1",
+    "verified_at": "2026-10-12",
+    "prerequisites": [
+      "ClusterForge CLI",
+      "Terraform or OpenTofu",
+      "An existing Kubernetes context"
+    ],
+    "walkthrough": [
+      "A project and environment describe the intended platform.",
+      "The Go CLI generates configuration from modules and templates.",
+      "Readable Terraform files keep the infrastructure reviewable.",
+      "A saved plan and risk summary make the proposed change inspectable.",
+      "The platform is changed only through the explicit apply workflow described by the project."
+    ],
+    "related_chapters": [
+      {
+        "url": "/books/secret-contract-operator/14-gitops-i-deploy-gate.html",
+        "title": "14. CI, GitOps, and Actual Deployment Control",
+        "book": "Secret Contract Operator"
+      }
+    ],
+    "verification_url": "https://github.com/alekpopovic/clusterforge/blob/79969212d6060d8261c4b058b36d7674a584e7d1/README.md"
   },
   {
     "id": "container-desk",
@@ -59,16 +169,55 @@
     "category": "Docker over SSH",
     "illustration": "desktop",
     "description": "A native Linux and macOS workspace for remote Docker hosts over SSH.",
-    "stack": ["Tauri 2", "React", "TypeScript", "Rust", "OpenSSH"],
+    "stack": [
+      "Tauri 2",
+      "React",
+      "TypeScript",
+      "Rust",
+      "OpenSSH"
+    ],
     "repository": "https://github.com/alekpopovic/container-desk",
     "documentation": "https://alekpopovic.github.io/container-desk/",
     "status": "Public desktop preview",
     "problem": "Inspecting several remote Docker hosts means switching terminals and remembering each connection context. Management actions also need an unmistakable target and permission boundary.",
     "approach": "The desktop app reuses OpenSSH configuration, keys, agents, and host verification. React presents workloads and logs while the Rust backend enforces permissions. Recovered and new sessions begin with inspection access; management and terminals are granted explicitly.",
     "result": "The project publishes Linux and macOS preview packages and records native verification evidence. Containers, logs, and existing Compose groups share one workspace. Images, volumes, and networks remain read-only within the documented preview scope.",
-    "flow": ["Desktop workspace", "Rust permission boundary", "Existing OpenSSH", "Linux host", "Docker Engine"],
+    "flow": [
+      "Desktop workspace",
+      "Rust permission boundary",
+      "Existing OpenSSH",
+      "Linux host",
+      "Docker Engine"
+    ],
     "example": "ssh your-docker-host docker ps",
     "example_note": "First verify an existing SSH alias against a host you manage. Then add that alias in ContainerDesk using the repository's user guide.",
-    "source_note": "Based on the repository README and its preview distribution and permission model."
+    "source_note": "Based on the repository README and its preview distribution and permission model.",
+    "source_commit": "499545b5020b05cd10585ca4f9ac0650d314e726",
+    "verified_at": "2026-10-12",
+    "prerequisites": [
+      "Linux or macOS",
+      "OpenSSH configuration",
+      "Access to a Linux Docker host"
+    ],
+    "walkthrough": [
+      "The desktop workspace selects a host and presents its observed state.",
+      "Rust checks the session permission before dispatching an action.",
+      "Existing OpenSSH configuration supplies identity and host verification.",
+      "The connection reaches the selected Linux server.",
+      "Docker answers inspection or explicitly permitted management requests."
+    ],
+    "related_chapters": [
+      {
+        "url": "/books/agentplane/06-identity.html",
+        "title": "06. Keep Human, Service and Cluster Identities Distinct",
+        "book": "AgentPlane"
+      },
+      {
+        "url": "/books/agentplane/14-execution-files-git.html",
+        "title": "14. Execute Commands and Handle Files Without Hidden Privilege",
+        "book": "AgentPlane"
+      }
+    ],
+    "verification_url": "https://github.com/alekpopovic/container-desk/blob/499545b5020b05cd10585ca4f9ac0650d314e726/README.md"
   }
 ]

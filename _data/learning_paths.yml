@@ -1,0 +1,102 @@
+- id: ai-workflows
+  title: AI for developers
+  description: Turn an AI suggestion into a small, reviewable change with evidence.
+  level: Beginner to intermediate
+  prerequisites: Comfortable reading code and running a project's existing checks.
+  outcome: A bounded task, a useful handoff, and a verified change you can explain.
+  icon: sparkles
+  steps:
+    - title: Choose a surface and understand its commands
+      url: /posts/chatgpt-slash-commands/
+      kind: AI guide
+      goal: Separate an application's built-in controls from prompts and optional integrations.
+      exercise: Write down the application and surface you use. Verify one documented control in your own account; record unavailable features rather than guessing.
+      evidence: A short list of available controls, with the application, surface, and documentation link.
+    - title: Give the assistant a usable handoff
+      url: /posts/a-useful-ai-handoff/
+      kind: Worked workflow
+      goal: Describe the outcome, relevant files, constraints, and acceptance checks before asking for a change.
+      exercise: Pick a small issue in a repository you own. Write a handoff that names the permitted files and the command that will demonstrate success.
+      evidence: A task brief another developer can follow without the conversation history.
+    - title: Explore a coding tool deliberately
+      url: /posts/codex-slash-commands/
+      kind: AI guide
+      goal: Identify which controls belong to the CLI and which depend on a different Codex surface.
+      exercise: Compare the guide's stated surface with your installed tool. Use only a documented command that is available there and record what it changes.
+      evidence: One verified control and a note explaining its scope.
+    - title: Close the verification loop
+      url: /posts/ai-changes-need-a-verification-loop/
+      kind: Worked workflow
+      goal: Treat generated changes as a hypothesis that needs a diff, checks, and review.
+      exercise: Make one bounded change. Inspect the diff, run the stated checks, and record one remaining uncertainty before accepting it.
+      evidence: A small diff, check output, and a concise review note.
+    - title: Understand the execution boundary
+      url: /books/agentplane/18-approvals.html
+      kind: Book chapter
+      goal: Connect approval to an exact action rather than a vague intention.
+      exercise: Describe an automated action using its target, arguments, identity, and expiry. Change one field and explain why the original approval should no longer cover it.
+      evidence: An approval record and a worked example of an action it does not authorize.
+- id: reliable-delivery
+  title: CI/CD foundations
+  description: Follow a change from a bounded product through durable execution to observable delivery.
+  level: Intermediate
+  prerequisites: Git, basic containers, and familiarity with a CI pipeline.
+  outcome: A delivery design that names its failure boundaries and keeps evidence of what ran.
+  icon: package
+  steps:
+    - title: Model a run before writing a script
+      url: /books/modern-ci/01-runs-not-scripts.html
+      kind: Book chapter
+      goal: Give each CI run explicit inputs, identity, and an observable outcome.
+      exercise: Describe the source revision, pipeline snapshot, and artifact produced by one run. Distinguish the run from a worker's particular attempt to execute it.
+      evidence: A run record that makes its inputs and outcome inspectable.
+    - title: Make an attempt identifiable
+      url: /books/modern-ci/10-fences.html
+      kind: Book chapter
+      goal: Distinguish a job from a particular worker attempt so late results cannot silently win.
+      exercise: Draw a timeline with a timed-out attempt, a replacement, and a late result. Mark which writes each attempt may perform.
+      evidence: A timeline that identifies the ownership check at every state-changing write.
+    - title: Investigate a timeout
+      url: /posts/a-timeout-is-not-a-stopped-deployment/
+      kind: Worked scenario
+      goal: Preserve uncertainty when a remote action outlives the request waiting for it.
+      exercise: Write a recovery checklist that observes the actual target before deciding to retry a deployment.
+      evidence: A checklist that cannot accidentally assume a timeout means nothing happened.
+    - title: Inspect a concrete GitOps implementation
+      url: /projects/cloudivision/
+      kind: Open-source project
+      goal: Map build execution, image evidence, and deployment intent onto distinct components.
+      exercise: Read the pinned project sources. Map each architecture step to a resource or component and identify where credentials are needed.
+      evidence: An annotated architecture sketch and a list of prerequisites for a local trial.
+- id: logs-and-security
+  title: Logs and security
+  description: Build an explainable feedback loop without leaking secrets or trusting the wrong client address.
+  level: Beginner to intermediate
+  prerequisites: Basic HTTP and Nginx configuration; a local environment for optional labs.
+  outcome: A logging contract, a proxy trust model, and an incident checklist.
+  icon: shield
+  steps:
+    - title: Draw the feedback loop
+      url: /books/logbranik/01-the-feedback-loop.html
+      kind: Book chapter
+      goal: Separate collection, detection, policy, and local enforcement.
+      exercise: Draw the request path and policy path separately. Mark which part remains available when the central service is offline.
+      evidence: A diagram with one explicit failure scenario for each boundary.
+    - title: Design logs without secrets
+      url: /books/logbranik/05-logs-without-secrets.html
+      kind: Book chapter
+      goal: Keep useful operational evidence while excluding credentials and sensitive request data.
+      exercise: Create three synthetic requests containing a token, a query string, and a user identifier. Define the minimal fields your logs should retain.
+      evidence: A logging contract and redacted sample records using synthetic values.
+    - title: Identify the actual client
+      url: /books/logbranik/09-client-ip-and-proxy-trust.html
+      kind: Book chapter
+      goal: Make proxy trust explicit before using an address in a blocking decision.
+      exercise: Work through a direct request, a trusted proxy, and a forged forwarding header from an untrusted peer.
+      evidence: A table showing the accepted client address and trust decision for each case.
+    - title: Investigate in the right order
+      url: /books/logbranik/19-debugging-and-runbooks.html
+      kind: Book chapter
+      goal: Distinguish missing evidence, an incorrect decision, and failed enforcement.
+      exercise: Write an incident checklist that traces one synthetic request through the complete loop before changing a policy.
+      evidence: A runbook with observations, expected results, and a reversible next action.

@@ -70,3 +70,29 @@ JavaScript. Keep filter labels and reading controls accessible by keyboard.
 - Analytics and Search Console need the owner's account configuration. Never
   invent verification tokens or claim collection while settings are empty.
   See `docs/measurement.md`.
+
+## Learning, editorial maintenance, and publication
+
+- Keep learning paths in `_data/learning_paths.yml` and reuse the shared path
+  layout. Each step must link to real content and include an exercise and
+  observable evidence. Paths are searchable and must work without JavaScript.
+- Bookmarks, completed sections, and reader notes stay on the visitor's device.
+  Never send note text, selected text, search queries, or contact values to analytics.
+  Preserve note export and graceful behavior when storage is unavailable.
+- Offline saving is opt-in per section. Do not precache whole books or downloads.
+  Keep `/offline/`, the local asset manifest, and true server 404 responses intact.
+- Pin project source revisions and check prerequisites against that version.
+  Label conceptual walkthroughs and historical captures accurately. Never
+  fabricate terminal output, connected-host evidence, or product recordings.
+- Update `_data/updates.yml` for user-visible changes. Use stable entry IDs.
+  For revised editorial articles, set `last_modified_at` explicitly; builds must
+  never advance `verified_at` or modification dates automatically.
+- Run `npm run check:content`. The scheduled review checks official source links
+  and flags AI guides and project descriptions for review after 90 days. Perform
+  the review before updating its date; an automated link check is not verification
+  of command behavior.
+- Keep post-deploy checks for the expected revision, public canonical URLs,
+  representative pages, download signatures, feeds, sitemap and genuine 404s.
+- The production origin is `https://www.alekpopovic.com`. Keep absolute metadata
+  and social-card branding aligned with `_config.yml`. Newsletter links require
+  an owner-configured `newsletter_url`; RSS works independently.

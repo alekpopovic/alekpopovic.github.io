@@ -1,0 +1,28 @@
+name: Review editorial sources
+on:
+  schedule:
+    - cron: '30 7 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'PyYAML>=6.0,<7'
+      - name: Check review dates and source links
+        run: python scripts/check-content.py --links --strict-age
+      - name: Save editorial report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial-review
+          path: reports/content-review.md
+      - name: Summarize editorial review
+        if: always()
+        run: cat reports/content-review.md >> "$GITHUB_STEP_SUMMARY"

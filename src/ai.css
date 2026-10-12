@@ -26,6 +26,7 @@
 .ai-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 25px; margin-top: 32px; }
 .ai-button { display: inline-flex; justify-content: center; align-items: center; gap: 18px; border: 1px solid #d5c9ff; border-radius: 12px; background: #c4b5fd; color: #171126; padding: 15px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background .2s; }
 .ai-button:hover { background: #ded3ff; }
+.learning-invitation .ai-button { color: #171126; text-decoration: none; }
 .ai-button .ui-icon, .ai-subtle-link .ui-icon { width: 17px; height: 17px; }
 .ai-subtle-link { display: inline-flex; align-items: center; gap: 12px; color: #e2dcf9; font-size: 13px; }
 .ai-subtle-link:hover { text-decoration: underline; text-underline-offset: 5px; }

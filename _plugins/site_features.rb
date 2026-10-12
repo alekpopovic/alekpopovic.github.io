@@ -1,6 +1,7 @@
 require 'json'
 require 'cgi'
 require 'fileutils'
+require 'time'
 
 module SiteFeatures
   def self.absolute(site, path)
@@ -10,6 +11,10 @@ module SiteFeatures
   def self.text(value)
     html = value.to_s.sub(/\A\s*\{% raw %\}\s*/, '').sub(/\s*\{% endraw %\}\s*\z/, '')
     CGI.unescapeHTML(html.gsub(/<[^>]*>/, ' ')).gsub(/\s+/, ' ').strip
+  end
+
+  def self.modified_at(post)
+    Time.parse((post.data['last_modified_at'] || post.date).to_s)
   end
 
   class Generator < Jekyll::Generator
@@ -49,7 +54,7 @@ module SiteFeatures
                         'author' => { '@id' => person['@id'] },
                         'image' => SiteFeatures.absolute(site, page.data['social_image']),
                         'datePublished' => page.date.iso8601,
-                        'dateModified' => (page.data['last_modified_at'] || page.date).iso8601,
+                        'dateModified' => SiteFeatures.modified_at(page).iso8601,
                         'mainEntityOfPage' => url, 'articleSection' => page.data['category'])
         elsif page.data['layout'] == 'book-overview'
           book_author = book['schema_author'] || (book['author'] == person['name'] ? { '@id' => person['@id'] } : { '@type' => 'Organization', 'name' => book['author'] })
@@ -110,7 +115,7 @@ module SiteFeatures
         index << { title: project['name'], url: "/projects/#{project['id']}/", type: 'projects', label: project['category'],
           description: project['description'], text: [project['problem'], project['approach'], project['result'], project['stack'].join(' ')].join(' ') }
       end
-      %w[/about/ /contact/ /cv/ /codepop/ /ai/].each do |path|
+      %w[/about/ /contact/ /cv/ /codepop/ /ai/ /learn/ /subscribe/ /updates/ /offline/].each do |path|
         page = site.pages.find { |item| item.url == path }
         next unless page
         text = SiteFeatures.text(page.content)
@@ -123,16 +128,20 @@ module SiteFeatures
         end
         index << { title: page.data['title'], url: path, type: 'pages', label: 'Page', description: page.data['description'], text: text }
       end
+      site.data.fetch('learning_paths', []).each do |path|
+        index << { title: path['title'], url: "/learn/#{path['id']}/", type: 'pages', label: 'Learning path',
+          description: path['description'], text: [path['prerequisites'], path['outcome'], path['steps'].map { |step| step.values.join(' ') }].flatten.join(' ') }
+      end
       add_page(site, 'search-index.json', JSON.generate(index), 'noindex' => true, 'sitemap' => false)
       urls = documents.select { |page| page.data['layout'] && page.data['sitemap'] != false && !page.data['noindex'] }
       xml = urls.map { |page| "<url><loc>#{CGI.escapeHTML(SiteFeatures.absolute(site, page.url))}</loc></url>" }.join
       add_page(site, 'sitemap.xml', "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">#{xml}</urlset>")
       entries = site.posts.docs.reverse.first(30).map do |post|
         url = CGI.escapeHTML(SiteFeatures.absolute(site, post.url))
-        "<entry><title>#{CGI.escapeHTML(post.data['title'])}</title><id>#{url}</id><link href=\"#{url}\"/><updated>#{post.date.iso8601}</updated><summary>#{CGI.escapeHTML(post.data['description'])}</summary><author><name>#{CGI.escapeHTML(site.config['author']['name'])}</name></author></entry>"
+        "<entry><title>#{CGI.escapeHTML(post.data['title'])}</title><id>#{url}</id><link href=\"#{url}\"/><updated>#{SiteFeatures.modified_at(post).iso8601}</updated><summary>#{CGI.escapeHTML(post.data['description'])}</summary><author><name>#{CGI.escapeHTML(site.config['author']['name'])}</name></author></entry>"
       end.join
       root = CGI.escapeHTML(SiteFeatures.absolute(site, '/'))
-      updated = site.posts.docs.map(&:date).max || site.time
+      updated = site.posts.docs.map { |post| SiteFeatures.modified_at(post) }.max || site.time
       add_page(site, 'feed.xml', "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"><title>#{CGI.escapeHTML(site.config['title'])} — Field notes</title><id>#{root}feed.xml</id><link href=\"#{root}feed.xml\" rel=\"self\"/><link href=\"#{root}\"/><updated>#{updated.iso8601}</updated>#{entries}</feed>")
       site.data.fetch('redirects', {}).each do |old_path, target|
         page = Jekyll::PageWithoutAFile.new(site, site.source, '', File.basename(old_path))

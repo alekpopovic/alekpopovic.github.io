@@ -14,6 +14,7 @@ layout: default
         <p class="book-stats">{{ book.author }} · {{ book.chapter_count }} {{ book.chapter_unit }} · {{ book.appendix_count }} appendices · {{ book.language_label }}</p>
         {% include book-actions.html book=book %}
         <a class="book-contents-link" href="{{ '/posts/' | relative_url }}?book={{ book.id }}">Explore notes from this book <span aria-hidden="true">↗</span></a>
+        <a class="book-contents-link" href="{{ '/learn/' | relative_url }}">Find a guided learning path →</a>
         {% include share-links.html label='Share this book' %}
       </div>
       <div class="overview-cover">{% include book-cover.html book=book priority=true %}</div>
@@ -30,5 +31,6 @@ layout: default
       </ol></div>
     {% endfor %}
     <p class="book-license-note">{{ book.author }} · {{ book.license_note }}. <a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing and attribution</a></p>
+    {% include content-feedback.html %}
   </section>
 </main>

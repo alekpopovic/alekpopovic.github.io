@@ -9,6 +9,12 @@ ROOT = Path(__file__).resolve().parents[1] / '_site'
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def copyfile(self, source, outputfile):
+        try:
+            super().copyfile(source, outputfile)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # Signature checks deliberately stop after the first bytes.
+
     def log_message(self, format, *args):
         pass
 
