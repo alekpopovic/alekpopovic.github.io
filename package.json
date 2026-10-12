@@ -3,9 +3,9 @@
     "build": "npm run build:books && npm run build:labs && npm run build:assets && npm run build:css",
     "build:books": "python3 scripts/build-books.py",
     "build:assets": "python3 scripts/build-assets.py",
-    "build:css": "tailwindcss -i ./src/input.css -o ./assets/css/site.css --minify && tailwindcss -i ./src/ai.css -o ./assets/css/ai.css --minify && tailwindcss -i ./src/reader.css -o ./assets/css/reader.css --minify && tailwindcss -i ./src/input.css -o ./assets/css/reader-shell.css --minify --content '_layouts/default.html,_layouts/book.html,_includes/footer.html,_includes/icon.html,_includes/flower.html,_includes/share-links.html,_includes/content-feedback.html,_data/footer.yml,assets/js/site.js,assets/js/share.js,assets/js/reader.js,assets/js/reader-library.js'",
+    "build:css": "node scripts/build-css.mjs",
     "sync:videos": "python3 scripts/sync-videos.py",
-    "watch": "tailwindcss -i ./src/input.css -o ./assets/css/site.css --watch",
+    "watch": "node scripts/watch-css.mjs",
     "dev": "bundle exec jekyll serve --livereload --destination _site-dev",
     "check:site": "python3 scripts/check-site.py",
     "check:content": "python3 scripts/check-content.py",
@@ -16,13 +16,17 @@
     "check:labs": "node labs/ai-workshops/verify-all.mjs"
   },
   "overrides": {
-    "postcss-selector-parser": "^7.1.6"
+    "postcss-selector-parser": "$postcss-selector-parser"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.64.0",
-    "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/typography": "^0.5.20",
     "lighthouse": "^13.5.0",
-    "tailwindcss": "^3.4.17"
+    "postcss": "^8.5.30",
+    "postcss-selector-parser": "^7.1.6",
+    "tailwindcss": "^4.3.3",
+    "web-vitals": "^6.2.3"
   }
 }

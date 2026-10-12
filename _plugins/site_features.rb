@@ -115,7 +115,9 @@ module SiteFeatures
         index << { title: project['name'], url: "/projects/#{project['id']}/", type: 'projects', label: project['category'],
           description: project['description'], text: [project['problem'], project['approach'], project['result'], project['stack'].join(' ')].join(' ') }
       end
-      %w[/about/ /contact/ /cv/ /codepop/ /codepop/engineering-notes/ /ai/ /ai/workshops/ /learn/ /subscribe/ /newsletter/ /updates/ /offline/ /reading/].each do |path|
+      directory_pages = %w[/about/ /contact/ /cv/ /codepop/ /codepop/engineering-notes/ /ai/ /ai/workshops/ /learn/ /learn/workspace/ /subscribe/ /newsletter/ /updates/ /offline/ /reading/]
+      directory_pages += site.data.fetch('newsletters', []).map { |issue| issue['url'] }
+      directory_pages.each do |path|
         page = site.pages.find { |item| item.url == path }
         next unless page
         text = SiteFeatures.text(page.content)
@@ -143,6 +145,14 @@ module SiteFeatures
       root = CGI.escapeHTML(SiteFeatures.absolute(site, '/'))
       updated = site.posts.docs.map { |post| SiteFeatures.modified_at(post) }.max || site.time
       add_page(site, 'feed.xml', "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"><title>#{CGI.escapeHTML(site.config['title'])} — Field notes</title><id>#{root}feed.xml</id><link href=\"#{root}feed.xml\" rel=\"self\"/><link href=\"#{root}\"/><updated>#{updated.iso8601}</updated>#{entries}</feed>")
+      issues = site.data.fetch('newsletters', [])
+      letter_entries = issues.map do |issue|
+        url = CGI.escapeHTML(SiteFeatures.absolute(site, issue['url']))
+        date = Time.parse(issue['date'].to_s).utc.iso8601
+        "<entry><title>#{CGI.escapeHTML(issue['title'])}</title><id>#{url}</id><link href=\"#{url}\"/><updated>#{date}</updated><summary>#{CGI.escapeHTML(issue['description'])}</summary><author><name>#{CGI.escapeHTML(site.config['author']['name'])}</name></author></entry>"
+      end.join
+      letter_updated = issues.map { |issue| Time.parse(issue['date'].to_s).utc }.max || site.time
+      add_page(site, 'newsletter.xml', "<?xml version=\"1.0\" encoding=\"UTF-8\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"><title>The engineering letter</title><id>#{root}newsletter.xml</id><link href=\"#{root}newsletter.xml\" rel=\"self\"/><link href=\"#{root}newsletter/\"/><updated>#{letter_updated.iso8601}</updated>#{letter_entries}</feed>")
       site.data.fetch('redirects', {}).each do |old_path, target|
         page = Jekyll::PageWithoutAFile.new(site, site.source, '', File.basename(old_path))
         page.data = { 'layout' => 'redirect', 'redirect_to' => target, 'permalink' => old_path, 'sitemap' => false, 'noindex' => true }

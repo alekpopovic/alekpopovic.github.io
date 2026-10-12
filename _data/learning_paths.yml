@@ -104,3 +104,79 @@
       goal: Distinguish missing evidence, an incorrect decision, and failed enforcement.
       exercise: Write an incident checklist that traces one synthetic request through the complete loop before changing a policy.
       evidence: A runbook with observations, expected results, and a reversible next action.
+- id: secret-contracts
+  title: Kubernetes secret contracts
+  description: Design a secret-validation boundary, interpret controller status, and make deployment gates enforceable.
+  level: Intermediate
+  prerequisites: Kubernetes resources, namespaces, RBAC, and basic controller concepts. Use synthetic credentials for exercises.
+  outcome: A scoped contract, an authorization matrix, and a deployment gate that rejects stale evidence.
+  icon: shield
+  steps:
+    - title: Define who may observe secret properties
+      url: /books/secret-contract-operator/04-bezbednosni-model.html
+      kind: Book chapter
+      goal: Treat validation status and Secret access as separate information boundaries.
+      exercise: List a contract author, workload author, operator identity, and status reader. Explain which secret properties each may infer and which namespaces they may access.
+      evidence: An authorization matrix using synthetic resources and explicit namespace boundaries.
+    - title: Make contract semantics unambiguous
+      url: /books/secret-contract-operator/05-api-i-semantika.html
+      kind: Book chapter
+      goal: Separate required secret material, per-key validation, and optional mutation policy.
+      exercise: Draft a contract for two keys. Describe missing, empty, invalid, and valid inputs; distinguish omitted policy fields from explicit false values.
+      evidence: A decision table and a manifest labelled as a proposed API example.
+    - title: Interpret observations before trusting status
+      url: /books/secret-contract-operator/08-reconcile-i-status.html
+      kind: Book chapter
+      goal: Distinguish absence, denied access, and a failed observation without leaking raw errors.
+      exercise: Trace NotFound, Forbidden, and timeout responses. Decide which conditions can be reported and how old positive status should be treated.
+      evidence: A reconcile timeline with generation, observation outcome, and sanitized reasons.
+    - title: Place enforcement in the deployment path
+      url: /books/secret-contract-operator/14-gitops-i-deploy-gate.html
+      kind: Book chapter
+      goal: Connect validation evidence to the component that actually decides whether deployment proceeds.
+      exercise: Sketch a CI or GitOps gate. Describe stale generations, unavailable observations, and an explicit bypass policy without treating a condition as automatic admission control.
+      evidence: A gate decision table and the exact point where the deployment is stopped.
+    - title: Diagnose a failed contract safely
+      url: /books/secret-contract-operator/19-runbook.html
+      kind: Book chapter
+      goal: Investigate permissions, contract state, and consumer readiness without dumping credentials.
+      exercise: Write an incident sequence for a contract that becomes unsatisfied after rotation. Record observations before proposing a workload change.
+      evidence: A reversible runbook containing static reasons and synthetic examples only.
+- id: universal-tracking
+  title: Reliable multi-tenant tracking
+  description: Follow location data from an isolated ingestion boundary to an ordered live view and a scoped public link.
+  level: Intermediate
+  prerequisites: HTTP APIs, SQL transactions, and basic WebSocket concepts. Use synthetic locations and identities.
+  outcome: A tenant-isolation matrix, a retry-safe ingestion contract, and a reconnect scenario you can explain.
+  icon: network
+  steps:
+    - title: Establish the tenant boundary
+      url: /books/universal-tracking/06-tenancy-rls.html
+      kind: Book chapter
+      goal: Carry organization identity through access control and relational constraints.
+      exercise: Model two organizations with overlapping subject names. Trace tenant context and a cross-tenant child reference through one transaction.
+      evidence: An access matrix and a foreign-key example that rejects the cross-tenant reference.
+    - title: Make offline retries identifiable
+      url: /books/universal-tracking/12-idempotency-quality.html
+      kind: Book chapter
+      goal: Distinguish batch identity, point identity, and observation ordering.
+      exercise: Replay a batch after a lost response, then reuse its ID with a changed payload and restart a device sequence in a new epoch.
+      evidence: A table of accepted replays, idempotency conflicts, and distinct observations.
+    - title: Protect the latest-state projection
+      url: /books/universal-tracking/14-latest-state.html
+      kind: Book chapter
+      goal: Preserve useful history while preventing late data from moving the live marker backwards.
+      exercise: Process a newer observation followed by an older offline upload. State a deterministic winning comparison and separate movement from connection status.
+      evidence: A three-event timeline showing history and latest state independently.
+    - title: Recover a disconnected live client
+      url: /books/universal-tracking/16-realtime.html
+      kind: Book chapter
+      goal: Build a live view from an authorized snapshot and recoverable durable deltas.
+      exercise: Disconnect between the snapshot and subscription. Describe the cursor, replay, deduplication, and fresh-snapshot fallback.
+      evidence: A reconnect sequence that does not treat an open socket as the source of truth.
+    - title: Minimize public tracking data
+      url: /books/universal-tracking/24-public-tracking.html
+      kind: Book chapter
+      goal: Bind a share capability to purpose, scope, expiry, and server-enforced precision.
+      exercise: Design a temporary delivery link with delayed approximate location. Attempt to request extra history and exact coordinates through query parameters.
+      evidence: A capability record and response policy that cannot be broadened by the client.

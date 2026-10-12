@@ -22,14 +22,15 @@ are rendered as text and never sent to analytics. These are transparent teaching
 tests, not a tamper-proof grading or certification service.
 
 Drafts use `codepop:workshop:<id>` on the visitor's device. Storage failure leaves
-the editor and downloads usable. Drafts are intentionally separate from reading
-backups; download `app.mjs` to keep a portable copy. Reference solutions are
+the editor and downloads usable. Drafts and the last source-matched test result are optional fields in version-1
+reading backups. `codepop:workshop-check:<id>` records source, passed/total and
+check time; editing makes the displayed result stale. Downloads remain available. Reference solutions are
 explicitly available for comparison and never overwrite a draft automatically.
 
 ## Knowledge checks and AI discovery
 
 Keep questions in `_data/knowledge_checks.yml`, keyed by learning path ID.
-Each scenario has stable question IDs, answer choices, an explanation, and a real
+Five paths provide ten scenarios each (50 total). Each scenario has stable question IDs, answer choices, an explanation, and a real
 reading link. Answers use `codepop:knowledge:<path-id>` and are optional in
 version-1 reading backups. Imports validate question IDs and option bounds before
 any write; old backups remain supported. Merge preserves local answer choices.
@@ -62,7 +63,7 @@ image resolution, and 100–300% zoom. Closing it preserves reader focus mode an
 returns focus to its trigger. Print output excludes assistive controls.
 
 The JavaScript performance ceiling remains 65 KB per page, including the
-workshop's deferred Worker. Separate feature bundles load only where used.
+workshop's deferred Worker and the optional vendored field-metrics core. Separate feature bundles load only where used.
 CSS keeps its existing 130 KB per-page ceiling.
 
 Reference for the browser boundary:
@@ -72,3 +73,29 @@ Reference for the browser boundary:
 Validation: build assets, build Jekyll, check books/site/content/labs, run UI
 tests in Chromium and critical interactions in Firefox and WebKit, then run
 the mobile Lighthouse performance checks.
+
+
+## My Learning and editor controls
+
+`/learn/workspace/` reads the existing local book, checklist, quiz and workshop
+keys without rewriting them. Only catalogued chapter URLs can become resume
+links. Counts of quiz choices do not imply correctness or practical completion.
+Unknown records are ignored, corrupt records are reported without deletion, and
+blocked storage leaves ordinary content links usable. The server renders all
+book/path/workshop links for no-JavaScript navigation.
+
+The editor's small lexical overlay and line gutter are hidden from assistive
+technology; the labelled native textarea remains the editing control. Tab keeps
+normal navigation; Ctrl/Cmd+Enter activates the existing sandboxed runner.
+Forced colors restore ordinary textarea text. `.js`/`.mjs` imports are bounded
+to 40 KB, require explicit replacement and never execute on import. Exercise
+changes discard pending imports. Reference comparison uses a bounded 240-line
+LCS preview, displays text only, and never marks an alternative solution wrong
+solely because it differs from the reference.
+
+Backups optionally include `workshops: { <id>: { draft, check } }`; drafts are
+raw strings in storage, check records are JSON. Imports validate known IDs,
+40,000-character limits, finite timestamps and passed/total bounds before writing.
+Merge keeps local drafts, replace affects included entries only, and partial
+writes roll back to their exact prior raw values. Backups can contain private
+notes and source code; the interface tells visitors before export/import.

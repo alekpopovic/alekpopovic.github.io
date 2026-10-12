@@ -1,4 +1,14 @@
-@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 100 1000; font-display: swap; src: url("../fonts/dm-sans.woff2") format("woff2"); }
+@import "tailwindcss" source(none);
+@config "../tailwind.config.js";
+@source "../*.html";
+@source "../_layouts";
+@source "../_includes";
+@source "../_posts";
+@source "../book-pages";
+@source "../learn";
+@source "../newsletter";
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 100 1000; font-display: swap; src: url("../fonts/dm-sans.woff2") format("woff2"); unicode-range: U+0100-02FF, U+0300-036F, U+0400-052F, U+1D00-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "DM Sans"; font-style: normal; font-weight: 100 1000; font-display: swap; src: url("../fonts/dm-sans-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-27FF, U+FEFF, U+FFFD; }
 .learning-workshops { display: grid; gap: 12px; margin-top: 24px; font-size: 14px; }
 .learning-workshops h3 { font-weight: 700; }
 .learning-workshops a { color: #214fc5; text-decoration: underline; text-underline-offset: 3px; }
@@ -14,6 +24,15 @@
 .knowledge-check fieldset[data-result='correct'] { border-color: #267048; background: #edf6ef; }
 .knowledge-check fieldset[data-result='retry'] { border-color: #89542f; background: #fff3df; }
 .knowledge-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.workspace-nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.workspace-section { margin-block: 60px; scroll-margin-top: 120px; }
+.workspace-section > h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 600; letter-spacing: -.035em; margin-bottom: 22px; }
+.workspace-section > p { max-width: 800px; line-height: 1.8; margin-bottom: 25px; }
+.workspace-section .learning-card a { overflow-wrap: anywhere; }
+.workspace-section .learning-card > a { display: block; margin-top: 16px; }
+.workspace-next h2 { font-size: clamp(22px, 4vw, 32px); font-weight: 600; margin-block: 16px; }
+.workspace-next h2 a { color: #214fc5; }
+.learning-step { scroll-margin-top: 120px; }
 .search-results mark { color: #20201e; background: #ffe289; padding-inline: 1px; border-radius: 2px; }
 @font-face {
   font-family: 'Passion One';
@@ -48,10 +67,6 @@
   src: url(../fonts/passion-one-bold.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @layer components {
   .search-hero, .not-found-hero { background: var(--yellow); }
   .search-hero h1, .not-found-hero h1 { max-width: 1050px; }
@@ -140,7 +155,7 @@
   .site-header a, .site-header button, .site-header nav { pointer-events: auto; }
   .brand { display: flex; align-items: center; gap: 10px; color: var(--blue); }
   .brand-mark { width: 38px; height: 38px; color: #c93800; flex-shrink: 0; }
-  .brand-name { display: flex; flex-direction: column; font: 700 25px/.83 "Passion One", sans-serif; text-transform: uppercase; letter-spacing: -.02em; }
+  .brand-name { display: flex; flex-direction: column; color: #214fc5; font: 700 25px/.83 "Passion One", sans-serif; text-transform: uppercase; letter-spacing: -.02em; }
   .site-header.is-on-blue .brand { color: var(--cream); }
   .site-header.is-on-blue .brand-mark { color: var(--yellow); }
   .nav-group { display: flex; align-items: center; gap: 6px; }
@@ -943,7 +958,7 @@
   .learning-mark { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 20px; border-radius: 14px; background: #e7ebff; color: #214fc5; }
   .learning-card h2, .learning-card h3, .learning-step h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 600; line-height: 1.25; margin-block: 12px; }
   .learning-card p, .learning-step p, .learning-brief p, .learning-exercise p { line-height: 1.8; margin-block: 14px; }
-  .learning-card > a:last-child, .learning-step h2 a, .learning-invitation a, .learning-exercise a { color: #214fc5; text-decoration: underline; text-underline-offset: 4px; }
+  .learning-card > a:last-child, .learning-step h2 a, .learning-invitation a:not(.button), .learning-exercise a:not(.button) { color: #214fc5; text-decoration: underline; text-underline-offset: 4px; }
   .learning-invitation { margin-block: 30px; font-size: 14px; line-height: 1.8; }
   .learning-brief { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; max-width: 900px; margin-top: 30px; }
   .learning-steps { display: grid; gap: 24px; max-width: 960px; list-style: none; padding: 0; }

@@ -1,6 +1,7 @@
 # Newsletter publication
 
-The first web issue is `/newsletter/`. Article and update feeds are live without
+The archive is `/newsletter/`; the first issue is `/newsletter/2026-10/`.
+`_data/newsletters.yml` drives the archive and `/newsletter.xml` Atom feed. Article and update feeds are live without
 an email provider. No visitor email addresses are collected by the Jekyll site.
 
 To enable email signup, the owner must supply an existing provider's public
@@ -13,8 +14,10 @@ Prepare one issue each month when there is substantive new work. Select a few
 articles, explain what changed, link the original material, and preview the
 message on a phone. Copy the reviewed web issue into the owner's email service
 and send from that account. This repository does not send messages or hold
-provider credentials. The web issue is currently a single editorial page;
-create dated archive pages when publishing subsequent issues.
+provider credentials. For each new issue, add a default-layout page under `newsletter/` and a stable
+ID, date, title, description and URL in `_data/newsletters.yml`. Search, sitemap,
+newsletter feed and publication checks include it automatically. Do not add
+placeholder issues or claim that a web issue was emailed.
 
 Never claim an active email subscription or a successful campaign until the
 owner has configured the service and checked receipt. Keep RSS available.

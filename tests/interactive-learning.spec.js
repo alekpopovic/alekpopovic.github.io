@@ -57,7 +57,7 @@ test('workshop drafts and quizzes still work when storage is blocked', async ({ 
   await expect(page.locator('[data-workshop-result]')).toContainText('5 of 5 tests passed');
   await page.goto('/learn/logs-and-security/');
   await page.locator('[data-question="fields"] input[value="2"]').check();
-  await expect(page.locator('[data-knowledge-status]')).toContainText('1 of 3 answered');
+  await expect(page.locator('[data-knowledge-status]')).toContainText('1 of 10 answered');
   await expect(page.locator('[data-knowledge-status]')).toContainText('Storage unavailable');
 });
 
@@ -168,7 +168,7 @@ test('new learning controls fit mobile, pass accessibility checks, and have read
   const context = await browser.newContext({ javaScriptEnabled: false }); const fallback = await context.newPage();
   try {
     await fallback.goto('http://127.0.0.1:4173/learn/ai-workflows/');
-    await expect(fallback.locator('[data-question]')).toHaveCount(3);
+    await expect(fallback.locator('[data-question]')).toHaveCount(10);
     await fallback.locator('.knowledge-explanation summary').first().click();
     await expect(fallback.locator('.knowledge-explanation p').first()).toBeVisible();
     await fallback.goto('http://127.0.0.1:4173/books/logbranik/05-logs-without-secrets.html');

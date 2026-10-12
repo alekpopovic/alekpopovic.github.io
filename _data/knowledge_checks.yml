@@ -1,63 +1,544 @@
 ai-workflows:
   title: Can you explain the boundary?
   questions:
-    - id: scope
-      prompt: A documented Codex CLI command is absent from another assistant's web menu. What should your guide say?
-      options: [Treat the command as universal, State the application and surface and check their documentation, Invent a similar slash command]
-      answer: 1
-      explanation: A command belongs to a particular application and surface. A natural-language request can express an intent without being a built-in command.
-      url: /posts/codex-slash-commands/
-    - id: evidence
-      prompt: An assistant's patch passes the priority workshop. What evidence should you retain before accepting it?
-      options: [Only the final green count, The initial failure and diff and final checks plus remaining uncertainty, The assistant's confidence score]
-      answer: 1
-      explanation: Tests check the stated contract. Reviewing the diff and recording what remains untested makes the change inspectable without overstating its coverage.
-      url: /posts/ai-changes-need-a-verification-loop/
-    - id: approval
-      prompt: An approved action changes its target resource before execution. Which response preserves the authorization boundary?
-      options: [Reuse the old approval because the intent sounds similar, Let the worker decide without a record, Re-evaluate authorization against the exact changed action]
-      answer: 2
-      explanation: Approval must be bound to the exact action and its scope. A different target is a different action even when the original goal is unchanged.
-      url: /books/agentplane/18-approvals.html
+  - id: scope
+    prompt: A documented Codex CLI command is absent from another assistant's web menu. What should your
+      guide say?
+    options:
+    - Treat the command as universal
+    - State the application and surface and check their documentation
+    - Invent a similar slash command
+    answer: 1
+    explanation: A command belongs to a particular application and surface. A natural-language request
+      can express an intent without being a built-in command.
+    url: /posts/codex-slash-commands/
+  - id: evidence
+    prompt: An assistant's patch passes the priority workshop. What evidence should you retain before
+      accepting it?
+    options:
+    - Only the final green count
+    - The initial failure and diff and final checks plus remaining uncertainty
+    - The assistant's confidence score
+    answer: 1
+    explanation: Tests check the stated contract. Reviewing the diff and recording what remains untested
+      makes the change inspectable without overstating its coverage.
+    url: /posts/ai-changes-need-a-verification-loop/
+  - id: approval
+    prompt: An approved action changes its target resource before execution. Which response preserves
+      the authorization boundary?
+    options:
+    - Reuse the old approval because the intent sounds similar
+    - Let the worker decide without a record
+    - Re-evaluate authorization against the exact changed action
+    answer: 2
+    explanation: Approval must be bound to the exact action and its scope. A different target is a different
+      action even when the original goal is unchanged.
+    url: /books/agentplane/18-approvals.html
+  - id: handoff
+    prompt: An assistant cannot reproduce an issue from a long conversation. What should the handoff contain?
+    options:
+    - The conversation length and confidence score
+    - The intended result, relevant files, constraints, and acceptance command
+    - Only a request to make the code better
+    answer: 1
+    explanation: A reusable handoff makes the work inspectable outside the original conversation. Name
+      the result and the evidence that will demonstrate it.
+    url: /posts/a-useful-ai-handoff/
+  - id: scope-change
+    prompt: A small fix appears to require editing an unrelated deployment policy. What is the useful
+      next step?
+    options:
+    - Expand the edit silently
+    - Remove the acceptance test
+    - Explain the dependency and reassess the permitted scope
+    answer: 2
+    explanation: An unexpected dependency changes the task boundary. Make that change explicit before
+      proceeding with a broader modification.
+    url: /posts/a-useful-ai-handoff/
+  - id: input-ownership
+    prompt: A priority sorter returns the right order but changes the caller's array. Has it satisfied
+      the workshop contract?
+    options:
+    - Yes, because the visible order is right
+    - No, input ownership is part of the contract
+    - Only if the assistant says mutation is faster
+    answer: 1
+    explanation: The priority exercise checks both ordering and preservation of the input. A correct output
+      alone does not demonstrate the complete contract.
+    url: /posts/ai-workshop-fix-a-priority-bug/
+  - id: secret-review
+    prompt: A logging patch spreads the whole request into an event. Which review question is most useful?
+    options:
+    - Which fields are explicitly permitted by the event contract?
+    - Does the event contain as many fields as possible?
+    - Can the error message include the token for debugging?
+    answer: 0
+    explanation: A field allowlist keeps future request properties outside the log by default. Useful
+      evidence should not include arbitrary request data.
+    url: /posts/ai-workshop-review-a-logging-change/
+  - id: clock-control
+    prompt: A retry test sleeps for real seconds and sometimes fails on a busy machine. How can it become
+      more deterministic?
+    options:
+    - Increase every delay indefinitely
+    - Inject the clock and waiting function and assert their calls
+    - Ignore timing assertions
+    answer: 1
+    explanation: The retry workshop controls time through injected collaborators. It can inspect the intended
+      delay sequence without relying on the wall clock.
+    url: /posts/ai-workshop-design-retry-tests/
+  - id: reference-limit
+    prompt: Your code matches the reference solution. What does that establish?
+    options:
+    - A production security certification
+    - That every possible input has been tested
+    - A useful comparison against a teaching example, with coverage limits still present
+    answer: 2
+    explanation: A reference solution explains the exercise contract. Neither matching it nor passing
+      its finite tests proves correctness for every deployment.
+    url: /posts/ai-changes-need-a-verification-loop/
+  - id: manifest-order
+    prompt: The same files produce release manifests in different orders. Which change helps reproducibility?
+    options:
+    - Sort normalized entries deterministically before serializing
+    - Add a random identifier to every build
+    - Use whichever filesystem order arrives first
+    answer: 0
+    explanation: A content-derived manifest needs stable ordering as well as stable values. The automation
+      exercise checks equivalent inputs in different arrival orders.
+    url: /posts/ai-workshop-automate-release-evidence/
 reliable-delivery:
   title: Follow the evidence through a failure
   questions:
-    - id: timeout
-      prompt: The deployment request times out. What can you conclude about the remote side effect?
-      options: [It definitely did not happen, It definitely completed, Its outcome is unknown until you observe the target]
-      answer: 2
-      explanation: A timeout describes how long the caller waited. Recovery must inspect the target and preserve uncertainty before deciding whether to retry.
-      url: /posts/a-timeout-is-not-a-stopped-deployment/
-    - id: fencing
-      prompt: An old worker finishes after a replacement has acquired ownership. Where must ownership be checked?
-      options: [At every state-changing write that needs the current attempt, Only when the old worker starts, Only in a dashboard]
-      answer: 0
-      explanation: An expired attempt can still be running. A fencing check at the write boundary prevents a stale attempt from publishing an authoritative result.
-      url: /books/modern-ci/10-fences.html
-    - id: release
-      prompt: Which field would make a content-only release manifest differ on every rebuild?
-      options: [A deterministic filename order, The current wall-clock timestamp, A normalized artifact hash]
-      answer: 1
-      explanation: A current timestamp changes even when artifact evidence does not. Fixed fields and deterministic ordering allow equivalent inputs to serialize identically.
-      url: /posts/ai-workshop-automate-release-evidence/
+  - id: timeout
+    prompt: The deployment request times out. What can you conclude about the remote side effect?
+    options:
+    - It definitely did not happen
+    - It definitely completed
+    - Its outcome is unknown until you observe the target
+    answer: 2
+    explanation: A timeout describes how long the caller waited. Recovery must inspect the target and
+      preserve uncertainty before deciding whether to retry.
+    url: /posts/a-timeout-is-not-a-stopped-deployment/
+  - id: fencing
+    prompt: An old worker finishes after a replacement has acquired ownership. Where must ownership be
+      checked?
+    options:
+    - At every state-changing write that needs the current attempt
+    - Only when the old worker starts
+    - Only in a dashboard
+    answer: 0
+    explanation: An expired attempt can still be running. A fencing check at the write boundary prevents
+      a stale attempt from publishing an authoritative result.
+    url: /books/modern-ci/10-fences.html
+  - id: release
+    prompt: Which field would make a content-only release manifest differ on every rebuild?
+    options:
+    - A deterministic filename order
+    - The current wall-clock timestamp
+    - A normalized artifact hash
+    answer: 1
+    explanation: A current timestamp changes even when artifact evidence does not. Fixed fields and deterministic
+      ordering allow equivalent inputs to serialize identically.
+    url: /posts/ai-workshop-automate-release-evidence/
+  - id: run-inputs
+    prompt: A pipeline definition changes while a run is queued. What should identify the original work?
+    options:
+    - Only the latest branch name
+    - The run's source revision and pipeline snapshot
+    - The current worker hostname
+    answer: 1
+    explanation: A run record binds work to explicit inputs. A mutable branch or pipeline name cannot
+      by itself explain what a queued run was supposed to execute.
+    url: /books/modern-ci/01-runs-not-scripts.html
+  - id: attempt-identity
+    prompt: A worker retries a job after losing its lease. Should it reuse the previous attempt's authority?
+    options:
+    - Yes, because the job name is unchanged
+    - Yes, if the old worker is probably stopped
+    - No, the new attempt needs its own current ownership
+    answer: 2
+    explanation: The job and its execution attempt are different identities. Fencing protects writes when
+      an older attempt continues after replacement.
+    url: /books/modern-ci/10-fences.html
+  - id: late-result
+    prompt: A stale worker reports success after a replacement has failed. Which result may become authoritative?
+    options:
+    - The result permitted by the current ownership check
+    - Whichever result sounds more positive
+    - Whichever HTTP response arrived last
+    answer: 0
+    explanation: Arrival order is not ownership. The state-changing boundary must reject results from
+      an attempt that no longer owns the write.
+    url: /books/modern-ci/10-fences.html
+  - id: retry-observe
+    prompt: A deployment timed out and a retry could duplicate the side effect. What should recovery do
+      first?
+    options:
+    - Always retry immediately
+    - Observe the actual target and relate it to the original operation
+    - Delete the run record
+    answer: 1
+    explanation: Inspecting the target preserves uncertainty and avoids equating a lost response with
+      a missing side effect.
+    url: /posts/a-timeout-is-not-a-stopped-deployment/
+  - id: artifact-hash
+    prompt: Two releases use the same filename but different file contents. What distinguishes the published
+      evidence?
+    options:
+    - The filename alone
+    - The color of the build badge
+    - Content identity such as a checksum, connected to the source revision
+    answer: 2
+    explanation: Artifact names can be reused. Content evidence and source identity let a reviewer distinguish
+      what was actually produced.
+    url: /books/modern-ci/24-release.html
+  - id: gitops-target
+    prompt: An image builds successfully, but the deployment target has not converged. Which statement
+      is accurate?
+    options:
+    - Build evidence and observed deployment state are separate outcomes
+    - A successful image build proves every target is healthy
+    - The dashboard should mark deployment complete immediately
+    answer: 0
+    explanation: Cloudivision separates build execution, image evidence, and deployment intent. Inspect
+      the target observation instead of inferring it from a build result.
+    url: /projects/cloudivision/
+  - id: cancel-proof
+    prompt: A caller cancels a deployment request. What evidence would establish that the remote action
+      also stopped?
+    options:
+    - The cancellation button changed color
+    - An observation from the execution target or its authoritative control path
+    - The local HTTP request ended
+    answer: 1
+    explanation: Ending the caller's wait does not establish the remote outcome. Recovery needs evidence
+      at the boundary where the side effect runs.
+    url: /posts/a-timeout-is-not-a-stopped-deployment/
 logs-and-security:
   title: Keep the useful evidence, protect the boundary
   questions:
-    - id: fields
-      prompt: A request object gains a new secret-bearing property. Which logging design excludes it by default?
-      options: [Spread every request field into the event, Delete only today's known sensitive fields, Construct a new event from an explicit allowlist]
-      answer: 2
-      explanation: An allowlist limits the event to its operational contract. A denylist can silently include a newly introduced credential or personal field.
-      url: /books/logbranik/05-logs-without-secrets.html
-    - id: proxy
-      prompt: An untrusted direct client sends X-Forwarded-For. Which address should you trust for a blocking decision?
-      options: [The first forwarded value regardless of the peer, The observed peer according to an explicit proxy trust policy, The last value because it looks recent]
-      answer: 1
-      explanation: A forwarding header is input. The peer and the configured trusted proxy chain determine whether it can describe the actual client.
-      url: /books/logbranik/09-client-ip-and-proxy-trust.html
-    - id: diagnose
-      prompt: A request was not blocked as expected. What is the most useful first investigation?
-      options: [Trace collection and decision and enforcement for that request, Tighten all blocking rules immediately, Assume the policy service is the only possible cause]
-      answer: 0
-      explanation: Missing evidence, an incorrect decision, and failed local enforcement are different failures. Following the complete loop identifies the boundary that needs attention.
-      url: /books/logbranik/19-debugging-and-runbooks.html
+  - id: fields
+    prompt: A request object gains a new secret-bearing property. Which logging design excludes it by
+      default?
+    options:
+    - Spread every request field into the event
+    - Delete only today's known sensitive fields
+    - Construct a new event from an explicit allowlist
+    answer: 2
+    explanation: An allowlist limits the event to its operational contract. A denylist can silently include
+      a newly introduced credential or personal field.
+    url: /books/logbranik/05-logs-without-secrets.html
+  - id: proxy
+    prompt: An untrusted direct client sends X-Forwarded-For. Which address should you trust for a blocking
+      decision?
+    options:
+    - The first forwarded value regardless of the peer
+    - The observed peer according to an explicit proxy trust policy
+    - The last value because it looks recent
+    answer: 1
+    explanation: A forwarding header is input. The peer and the configured trusted proxy chain determine
+      whether it can describe the actual client.
+    url: /books/logbranik/09-client-ip-and-proxy-trust.html
+  - id: diagnose
+    prompt: A request was not blocked as expected. What is the most useful first investigation?
+    options:
+    - Trace collection and decision and enforcement for that request
+    - Tighten all blocking rules immediately
+    - Assume the policy service is the only possible cause
+    answer: 0
+    explanation: Missing evidence, an incorrect decision, and failed local enforcement are different failures.
+      Following the complete loop identifies the boundary that needs attention.
+    url: /books/logbranik/19-debugging-and-runbooks.html
+  - id: new-field
+    prompt: A request gains an API credential field next month. Which existing log policy needs no new
+      denylist entry to exclude it?
+    options:
+    - An explicit operational-field allowlist
+    - Serialize the entire request
+    - Remove only the password field
+    answer: 0
+    explanation: The event contract should construct permitted fields. A newly introduced secret should
+      not silently expand what gets logged.
+    url: /books/logbranik/05-logs-without-secrets.html
+  - id: bounded-queue
+    prompt: A collector produces events faster than the consumer can process them. What must the overload
+      policy state?
+    options:
+    - That memory is unlimited
+    - A queue limit and an explicit overflow or backpressure behavior
+    - Only the normal throughput
+    answer: 1
+    explanation: Bounded queues make overload behavior observable. An explicit policy explains which evidence
+      can be delayed or lost.
+    url: /books/logbranik/06-collection-and-backpressure.html
+  - id: proxy-chain
+    prompt: A trusted proxy forwards a header originally supplied by an untrusted client. What must determine
+      the accepted address?
+    options:
+    - The first address-shaped string
+    - The shortest value
+    - The explicit trust policy across the observed peer and forwarding chain
+    answer: 2
+    explanation: Trust does not come from the header's appearance. Apply the configured proxy boundary
+      to the complete request path.
+    url: /books/logbranik/09-client-ip-and-proxy-trust.html
+  - id: offline-policy
+    prompt: The central policy service is unavailable. Which question should the architecture answer?
+    options:
+    - What the local enforcement component does with its existing policy
+    - How to pretend the service is still online
+    - How to discard every local observation
+    answer: 0
+    explanation: The feedback-loop design names collection, decisions, and local enforcement separately,
+      including behavior when a dependency is unavailable.
+    url: /books/logbranik/01-the-feedback-loop.html
+  - id: raw-error
+    prompt: An error contains an authorization header. What should a diagnostic event retain?
+    options:
+    - The full error and header
+    - A sanitized reason and permitted correlation fields
+    - A copy of every request property
+    answer: 1
+    explanation: Troubleshooting needs a bounded operational contract. Raw request-bearing errors can
+      cross the same secret boundary as ordinary logs.
+    url: /books/logbranik/05-logs-without-secrets.html
+  - id: enforcement-evidence
+    prompt: A policy decision says block, but the request still succeeds. Which boundary needs inspection
+      next?
+    options:
+    - Assume collection failed without checking
+    - Increase unrelated detector thresholds
+    - Trace delivery and application of the decision at local enforcement
+    answer: 2
+    explanation: A correct decision does not prove enforcement. Follow the event through the complete
+      loop to locate the failed boundary.
+    url: /books/logbranik/19-debugging-and-runbooks.html
+  - id: incident-change
+    prompt: Before changing a blocking rule during an incident, what should the runbook preserve?
+    options:
+    - The observed request path, expected behavior, and a reversible next action
+    - Only a statement that the rule is wrong
+    - Production credentials copied into the ticket
+    answer: 0
+    explanation: Recording observations and a reversible action makes the diagnosis reviewable without
+      introducing sensitive material into incident records.
+    url: /books/logbranik/19-debugging-and-runbooks.html
+secret-contracts:
+  title: Explain the secret and deployment boundaries
+  questions:
+  - id: status-oracle
+    prompt: A user cannot read a Secret but can repeatedly change contracts and inspect validation status.
+      What risk remains?
+    options:
+    - None, because raw values are hidden
+    - They may infer secret properties through validation outcomes
+    - Every contract automatically grants Secret access
+    answer: 1
+    explanation: Validation can be an information oracle. Contract authorship and status visibility need
+      authorization even when the operator never prints a value.
+    url: /books/secret-contract-operator/04-bezbednosni-model.html
+  - id: rbac-read
+    prompt: An operator has list and watch permission on Secrets. How should that access be treated?
+    options:
+    - As potentially exposing Secret contents within its permitted scope
+    - As metadata-only by definition
+    - As harmless because the README says read-only
+    answer: 0
+    explanation: Read-only is still privileged access to secret material. Namespace scope and identity
+      permissions belong in the threat model.
+    url: /books/secret-contract-operator/04-bezbednosni-model.html
+  - id: missing-secret
+    prompt: In the book's canonical contract semantics, a required Secret is absent. Can per-key nonEmpty
+      settings make the contract satisfied?
+    options:
+    - Yes, if all nonEmpty fields are false
+    - Yes, if injection is disabled
+    - No, the required Secret must exist
+    answer: 2
+    explanation: Secret existence is distinct from per-key rules. Optional mutation policy does not waive
+      the requirement that the declared material exists.
+    url: /books/secret-contract-operator/05-api-i-semantika.html
+  - id: explicit-false
+    prompt: A policy defaults to true but must accept an explicit false. What must the API representation
+      preserve?
+    options:
+    - Only a boolean without presence information
+    - The difference between omission and an explicit false
+    - The order of YAML fields
+    answer: 1
+    explanation: Defaulting must not erase a caller's explicit choice. The proposed API uses presence-aware
+      fields where these meanings differ.
+    url: /books/secret-contract-operator/05-api-i-semantika.html
+  - id: forbidden
+    prompt: Reading a Secret returns Forbidden. Which status interpretation is appropriate?
+    options:
+    - The Secret definitely does not exist
+    - The contract definitely passed
+    - Access was denied; report a separate sanitized reason
+    answer: 2
+    explanation: Forbidden and NotFound indicate different observations. Conflating them hides an authorization
+      or installation problem.
+    url: /books/secret-contract-operator/08-reconcile-i-status.html
+  - id: stale-positive
+    prompt: The last observation was positive, but the current API read timed out. What should a gate
+      avoid?
+    options:
+    - Treating the old positive result as a fresh successful observation
+    - Recording that observation failed
+    - Checking the contract generation
+    answer: 0
+    explanation: A failed observation must not silently refresh old evidence. A deployment gate needs
+      status freshness and the relevant generation.
+    url: /books/secret-contract-operator/08-reconcile-i-status.html
+  - id: repeat-reconcile
+    prompt: The controller evaluates identical observed inputs twice. What should the second pass avoid?
+    options:
+    - Reporting the same logical result
+    - Unnecessary status writes and repeated workload mutations
+    - Checking current authorization
+    answer: 1
+    explanation: Reconciliation should be idempotent. Calculate the intended result and publish actual
+      changes instead of assuming each event requires a mutation.
+    url: /books/secret-contract-operator/08-reconcile-i-status.html
+  - id: metadata-rotation
+    prompt: A Secret receives a label update without a value change. What can its new resourceVersion
+      alone establish?
+    options:
+    - The credential definitely rotated
+    - Every consuming process loaded a new password
+    - The Kubernetes object changed; credential rotation is a separate observation
+    answer: 2
+    explanation: Object changes, synchronization, and business credential rotation are different events.
+      Keep their evidence separate.
+    url: /books/secret-contract-operator/13-rotacija-i-rollout.html
+  - id: status-gate
+    prompt: A contract reports a positive condition. Does that condition alone stop an unrelated deployment
+      when it becomes false?
+    options:
+    - No, enforcement must be placed in the actual deployment path
+    - Yes, every custom-resource condition is admission control
+    - Yes, any controller status automatically blocks CI
+    answer: 0
+    explanation: Status is evidence, not automatic enforcement. Identify the CI, GitOps, or admission
+      component that makes the deployment decision.
+    url: /books/secret-contract-operator/14-gitops-i-deploy-gate.html
+  - id: safe-incident
+    prompt: A rotation incident needs investigation. Which evidence belongs in a shared incident report?
+    options:
+    - Raw Secret YAML including values
+    - Sanitized reasons, resource identities, generations, and observed consumer state
+    - A live password to help reviewers reproduce it
+    answer: 1
+    explanation: An operational runbook should preserve useful observations without turning reports into
+      another secret distribution channel.
+    url: /books/secret-contract-operator/19-runbook.html
+universal-tracking:
+  title: Follow identity, ordering, and recovery
+  questions:
+  - id: tenant-parent
+    prompt: A child row carries organization A but refers to a subject in organization B. What relational
+      boundary can reject it?
+    options:
+    - A subject name displayed in the UI
+    - A composite foreign key that includes organization identity
+    - A map marker color
+    answer: 1
+    explanation: Tenant identity belongs in relationships as well as row filters. A composite reference
+      can enforce that the child and parent share an organization.
+    url: /books/universal-tracking/06-tenancy-rls.html
+  - id: tenant-context
+    prompt: A reused database connection serves a different organization. What must the request design
+      establish?
+    options:
+    - Correct transaction-scoped tenant context and the intended database role
+    - That the previous request probably used the same tenant
+    - Only a tenant label in the browser
+    answer: 0
+    explanation: Isolation depends on the active role and request context at every access path. A browser
+      label does not constrain a database query.
+    url: /books/universal-tracking/06-tenancy-rls.html
+  - id: batch-conflict
+    prompt: A device reuses a batch ID with a different payload hash. How should the ingestion contract
+      treat it?
+    options:
+    - As an ordinary identical retry
+    - Overwrite the previous evidence silently
+    - As an idempotency conflict
+    answer: 2
+    explanation: Batch identity binds a request payload. Reusing it for different content must not be
+      confused with replaying the same accepted request.
+    url: /books/universal-tracking/12-idempotency-quality.html
+  - id: point-identity
+    prompt: A persisted point appears in a new batch after a partial response. Which identifier preserves
+      its identity?
+    options:
+    - The new batch ID alone
+    - The stable point ID
+    - The current WebSocket connection ID
+    answer: 1
+    explanation: Batch IDs identify request payloads. Stable point IDs identify individual observations
+      even when delivery groups change.
+    url: /books/universal-tracking/12-idempotency-quality.html
+  - id: sequence-epoch
+    prompt: A device resets its sequence after reinstall. What distinguishes the new stream from the old
+      counter values?
+    options:
+    - An explicit sequence epoch or credential generation
+    - Sorting only by arrival time
+    - Assuming counters never reset
+    answer: 0
+    explanation: A device and counter alone can repeat after a reset. An epoch makes the intended ordering
+      domain explicit.
+    url: /books/universal-tracking/12-idempotency-quality.html
+  - id: late-location
+    prompt: An old offline observation arrives after a newer point. What should happen to the live projection?
+    options:
+    - Always move the live marker to the last received point
+    - Delete all older history
+    - Retain permitted history but update latest state only if the new observation wins the defined comparison
+    answer: 2
+    explanation: History and latest state serve different purposes. A deterministic conditional update
+      prevents late delivery from moving the current view backwards.
+    url: /books/universal-tracking/14-latest-state.html
+  - id: socket-gap
+    prompt: A client disconnects between its snapshot and subscription. What supports recovery?
+    options:
+    - Assume the socket will eventually contain every event
+    - An authorized snapshot, durable event cursor, and replay or fresh-snapshot fallback
+    - Treat the browser's old marker as authoritative
+    answer: 1
+    explanation: The connection is a transport, not the source of truth. Durable evidence and versioned
+      recovery close snapshot/subscription gaps.
+    url: /books/universal-tracking/16-realtime.html
+  - id: realtime-authority
+    prompt: A client requests another organization's live channel. Where must the scope be enforced?
+    options:
+    - At the server's authenticated subscription boundary
+    - Only by hiding the channel in the UI
+    - Only in the map legend
+    answer: 0
+    explanation: Client-provided channel names are input. Authorization must constrain the subscriptions
+      and data the server actually delivers.
+    url: /books/universal-tracking/16-realtime.html
+  - id: public-precision
+    prompt: A public link allows delayed approximate location. A query parameter requests exact coordinates.
+      Which policy wins?
+    options:
+    - The query parameter because it is more specific
+    - The browser's display setting
+    - The server-side capability scope and precision policy
+    answer: 2
+    explanation: A bearer capability cannot be broadened by client parameters. Response minimization and
+      precision reduction belong at the server boundary.
+    url: /books/universal-tracking/24-public-tracking.html
+  - id: bearer-storage
+    prompt: How does the book's public-link design store its bearer credential?
+    options:
+    - As the complete token in public logs
+    - As a token hash in a scoped capability record
+    - Only as a CSS class on the public page
+    answer: 1
+    explanation: The URL carries the random bearer token. The stored capability binds its hash to purpose,
+      resources, expiry, revocation, and allowed response fields.
+    url: /books/universal-tracking/24-public-tracking.html

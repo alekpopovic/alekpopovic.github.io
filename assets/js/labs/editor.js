@@ -20,6 +20,7 @@
     root.querySelector('[data-workshop-reference]').textContent = current.solution;
     root.querySelector('[data-workshop-solution]').open = false;
     results.replaceChildren(); status.textContent = 'The starter intentionally fails. Run the tests to see the behavior.';
+    root.dispatchEvent(new CustomEvent('codepop:workshop-loaded'));
     if (updateUrl) { const url = new URL(location.href); url.searchParams.set('exercise', current.id); history.replaceState(null, '', url); }
   }
   // The opaque-origin frame's Blob worker inherits its connection-denying CSP.
@@ -50,6 +51,7 @@
       if (event.data?.type === 'error') { status.textContent = `Could not run: ${String(event.data.message).slice(0, 500)}`; end(); return; }
       if (event.data?.type !== 'result' || !Array.isArray(event.data.results)) return;
       const rows = event.data.results.slice(0, 20), passed = rows.filter(row => row.passed === true).length;
+      if (rows.length) try { localStorage.setItem(`codepop:workshop-check:${current.id}`, JSON.stringify({ source: editor.value, passed, total: rows.length, checked_at: Date.now() })); } catch {}
       for (const row of rows) { const item = document.createElement('li'); item.dataset.passed = String(row.passed === true); item.textContent = `${row.passed === true ? 'PASS' : 'FAIL'} · ${String(row.name).slice(0, 200)}${row.message ? ` — ${String(row.message).slice(0, 500)}` : ''}`; results.append(item); }
       status.textContent = `${passed} of ${rows.length} tests passed. ${passed === rows.length && rows.length ? 'The exercise contract passes. Review your change and explain what the tests do not cover.' : 'Read a failing case, make a focused change, and run again.'}`; end();
     };

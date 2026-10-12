@@ -177,7 +177,8 @@ and distinguish web, desktop, CLI, IDE, custom, and retired commands. See
 render AI guides without requiring artificial book/chapter links.
 
 Edit `src/ai.css` and run `npm run build:css` to rebuild the AI theme. The usual
-Tailwind watch command watches `src/input.css`; AI stylesheet edits need a rebuild.
+The native watch command rebuilds all CSS bundles when templates, scripts or
+styles change. Tailwind 4 uses the local PostCSS build, without a CLI watcher.
 
 The homepage offers visual learning paths into books, notes, and videos, with
 counts taken from the existing catalogs. `assets/js/effects.js` adds one-time
@@ -253,7 +254,8 @@ the owner's HTML token and raw verification file are configured and checked.
 
 ## Learning and a personal reading workspace
 
-`/learn/` offers three data-driven learning paths. Edit `_data/learning_paths.yml`
+`/learn/` offers five data-driven learning paths and 50 explained quiz scenarios.
+`/learn/workspace/` combines local book, checklist, quiz and workshop progress. Edit `_data/learning_paths.yml`
 for their sequence, exercises and expected evidence; keep real internal links.
 Paths appear in search and the sitemap, and all reading and exercise text works
 without JavaScript. The local checklist does not require an account.
@@ -264,7 +266,8 @@ browser storage and are never sent to analytics. Storage failure keeps controls
 usable for the current visit and offers export. Notes are saved explicitly and
 when leaving the page. `/reading/` exports a versioned JSON backup and previews
 imports before writing. Merge keeps local entries; replacement affects included
-entries only. It carries learning checklists and reading preferences too. There
+entries only. It carries learning checklists, quiz choices, workshop drafts/test records and
+reading preferences too. There
 is no automatic cross-device synchronization or upload.
 
 Offline reading is opt-in per section. The service worker is registered only
@@ -292,11 +295,12 @@ Ordinary builds need no network access for these exercises.
 
 `/subscribe/` makes article RSS and site-change updates discoverable. Optional
 email signup needs the owner's real `newsletter_url`. The first web issue lives
-at `/newsletter/`; [newsletter setup](docs/newsletter.md) explains the owner steps
+at `/newsletter/2026-10/`, with its archive at `/newsletter/` and feed at
+`/newsletter.xml`; [newsletter setup](docs/newsletter.md) explains the owner steps
 needed for email signup and delivery. Add stable changelog IDs
 in `_data/updates.yml`; `last_modified_at` is an explicit editorial timestamp.
 See [measurement and maintenance](docs/measurement.md) for GA4 events, owner
 account setup, scheduled source reviews and post-deployment public checks.
 See [browser review](docs/browser-review.md) for tested coverage and the remaining
 manual checks, and [dependency maintenance](docs/dependencies.md) for the
-reviewed parser override and outstanding upstream finding.
+reviewed parser override, Tailwind migration and current audit result.

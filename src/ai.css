@@ -1,4 +1,30 @@
 /* The AI theme loads only on the hub, guides, post directory, and homepage. */
+.ai-site .brand-name { color: #c4b5fd; }
+.code-editor-shell { min-width: 0; }
+.code-editor-shell.is-highlighted { display: grid; grid-template-columns: 42px minmax(0, 1fr); border: 1px solid #59556f; border-radius: 10px; overflow: hidden; background: #0b0d14; }
+.code-editor-gutter { position: relative; overflow: hidden; color: #a5a2b9; background: #171622; border-right: 1px solid #353147; }
+.workshop-lab .code-editor-gutter pre { position: absolute; inset: 0; padding: 14px 8px; border: 0; border-radius: 0; background: none; text-align: right; white-space: pre; font: 14px/1.75 ui-monospace, monospace; margin: 0; }
+.code-editor-pane { position: relative; min-width: 0; }
+.workshop-lab .code-editor-highlight { position: absolute; inset: 0; overflow: hidden; padding: 14px; border: 0; border-radius: 0; background: none; pointer-events: none; margin: 0; white-space: pre; font: 14px/1.75 ui-monospace, monospace; }
+.code-editor-highlight code { font: inherit; }
+.workshop-lab .is-highlighted textarea { display: block; position: relative; z-index: 1; margin: 0; padding: 14px; border: 0; border-radius: 0; background: transparent; color: transparent; caret-color: #fff; -webkit-text-fill-color: transparent; font: 14px/1.75 ui-monospace, monospace; }
+.workshop-lab .is-highlighted textarea::selection { background: #72559b99; }
+.code-token-keyword { color: #cfb9ff; }
+.code-token-string { color: #b5e5b5; }
+.code-token-comment { color: #a8aabd; }
+.code-token-number { color: #ffd197; }
+.workshop-import, .workshop-diff { margin-top: 25px; border-top: 1px solid #454057; padding-top: 22px; font-size: 13px; line-height: 1.8; }
+.workshop-import summary, .workshop-diff summary { padding-block: 10px; cursor: pointer; color: #d5c9ff; }
+.workshop-import label, .workshop-import input { display: block; margin-block: 15px; }
+.workshop-import input { max-width: 100%; }
+.workshop-diff .editor-diff { max-height: 400px; white-space: pre; overflow: auto; padding: 18px; }
+.editor-diff span { display: inline; }
+.diff-added { background: #19382d; color: #b5f5ca; }
+.diff-removed { background: #41232d; color: #ffd0d9; }
+@media (forced-colors: active) {
+  .workshop-lab .is-highlighted textarea { background: Canvas; color: CanvasText; -webkit-text-fill-color: CanvasText; caret-color: CanvasText; }
+  .code-editor-highlight { visibility: hidden; }
+}
 .ai-extra-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 .ai-extra-filters label > span { display: block; margin-bottom: 8px; color: #c4c6d6; font-size: 11px; }
 .ai-select { position: relative; min-width: 0; }
@@ -89,6 +115,8 @@
 .ai-button .ui-icon, .ai-subtle-link .ui-icon { width: 17px; height: 17px; }
 .ai-subtle-link { display: inline-flex; align-items: center; gap: 12px; color: #e2dcf9; font-size: 13px; }
 .ai-subtle-link:hover { text-decoration: underline; text-underline-offset: 5px; }
+.ai-page .learning-exercise { background: #181621; color: #ded9eb; border: 1px solid #514360; }
+.ai-page .learning-exercise a { color: #d8c8ff; }
 .ai-stats { display: flex; flex-wrap: wrap; gap: 36px; margin-top: 45px; }
 .ai-stats > div { display: flex; flex-direction: column-reverse; gap: 7px; }
 .ai-stats dt { font-size: 11px; color: #adb0c5; }

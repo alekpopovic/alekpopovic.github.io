@@ -15,6 +15,26 @@ if (venv / 'bin/python').exists() and Path(sys.prefix).resolve() != venv.resolve
 
 import yaml
 from PIL import Image, ImageDraw, ImageFont
+from fontTools import subset
+from fontTools.varLib.instancer import instantiateVariableFont
+import shutil
+
+# Keep the complete local font as a language fallback; the English interface
+# preloads a smaller deterministic subset from the same licensed source.
+font_options = subset.Options()
+font_options.flavor = 'woff2'
+font_options.recalc_timestamp = False
+font = subset.load_font(str(ROOT / 'assets/fonts/dm-sans.ttf'), font_options)
+subsetter = subset.Subsetter(options=font_options)
+subsetter.populate(unicodes=list(range(0x100)) + list(range(0x2000, 0x2800)) + [0x131, 0x152, 0x153, 0x2BB, 0x2BC, 0x2C6, 0x2DA, 0x2DC, 0x304, 0x308, 0x329, 0xFEFF, 0xFFFD])
+subsetter.subset(font)
+if 'fvar' in font and any(axis.axisTag == 'opsz' for axis in font['fvar'].axes):
+    font = instantiateVariableFont(font, {'opsz': 14}, inplace=True)
+subset.save_font(font, str(ROOT / 'assets/fonts/dm-sans-latin.woff2'), font_options)
+vendor = ROOT / 'assets/vendor'
+vendor.mkdir(exist_ok=True)
+shutil.copyfile(ROOT / 'node_modules/web-vitals/dist/web-vitals.js', vendor / 'web-vitals.js')
+shutil.copyfile(ROOT / 'node_modules/web-vitals/LICENSE', vendor / 'web-vitals-LICENSE.txt')
 
 
 def save_image(image, destination, image_format, **options):

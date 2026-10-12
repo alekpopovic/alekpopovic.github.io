@@ -102,7 +102,8 @@ manual keyboard/screen-reader testing; they do not certify full conformance.
 Lighthouse reports go to ignored `reports/`. CI requires mobile performance >= 85,
 accessibility = 100 and CLS <= 0.1 on the homepage, AI Lab, AI guide, CV, CodePop,
 book overview, chapter reader, engineering post, learning path and project page.
-The workshop directory and reading backup page are included too.
+The workshop directory, reading backup, My Learning, both new book paths and
+newsletter archive are included too (16 routes).
 Each generated HTML page has a 130 KB CSS budget for its linked stylesheets;
 the reader uses a smaller shared-shell bundle, and reader and AI styles load only
 where used. Total JS has a 65 KB budget. These assets
@@ -189,3 +190,31 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 A public check runs only after publication; local success does not mean changes
 have been pushed or deployed. Preserve GitHub Pages' custom domain and use
 GitHub Actions as its build source.
+
+## Field performance reporting
+
+`performance_monitoring: true` enables the local `web-vitals` adapter only when
+`google_analytics` also has an owner-supplied ID. It executes only on the configured
+HTTPS production hostname and respects Do Not Track and Global Privacy Control.
+An empty measurement ID removes both the adapter and Google tag from rendered
+pages. `false` disables only the performance adapter.
+
+The vendored upstream core observes LCP, INP and CLS without the attribution
+build. Event `web_vital` contains only `metric_name`, numeric `metric_value`,
+`metric_rating` and `non_interaction`. LCP/INP values are milliseconds; CLS is
+unitless. No DOM selector, target element, metric ID, note, source code, query or
+selected text is sent. The existing GA4 page configuration strips query and hash.
+The core reports final lifecycle values according to the upstream implementation;
+missing interactions can mean no INP sample. Repeated page visits are separate
+observations, not unique visitors.
+
+In GA4 create event-scoped dimensions `metric_name` and `metric_rating`, and a
+custom metric `metric_value` (standard unit). Filter by metric name before
+aggregating: do not combine milliseconds and unitless CLS. Use the 75th percentile
+of real visits per metric and device class when assessing the usual good targets
+(LCP ≤2.5 seconds, INP ≤200 ms, CLS ≤0.1). An average or the count of good ratings
+is not the same statistic. Review Search Console's field report when traffic is
+sufficient. No real-visitor result or account receipt has been verified locally.
+
+Sources: [web-vitals core](https://github.com/GoogleChrome/web-vitals),
+[Core Web Vitals](https://web.dev/articles/vitals).

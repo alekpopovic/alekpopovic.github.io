@@ -4,7 +4,7 @@ const fs = require('node:fs');
 
 test('learning paths save a checklist and preserve meaningful exercises', async ({ page }) => {
   await page.goto('/learn/');
-  await expect(page.locator('.learning-card')).toHaveCount(3);
+  await expect(page.locator('.learning-card')).toHaveCount(5);
   await page.getByRole('link', { name: 'AI for developers', exact: true }).click();
   await expect(page.locator('.learning-step')).toHaveCount(5);
   await expect(page.locator('[data-learning-status]')).toContainText('0 of 5');

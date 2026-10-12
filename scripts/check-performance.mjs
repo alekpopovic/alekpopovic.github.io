@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test';
 
 const external = process.argv[2]?.startsWith('https://') ? process.argv[2] : null;
 const origin = 'http://127.0.0.1:4174';
-const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/ai-workflows/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
+const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/workspace/', '/learn/ai-workflows/', '/learn/secret-contracts/', '/learn/universal-tracking/', '/newsletter/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
 let server, chrome;
 fs.mkdirSync('reports', { recursive: true });
 try {
@@ -33,6 +33,7 @@ try {
       // The workshop fetches its worker only on its own page. Keep the same
       // 65 KB ceiling on each page's actual JS, including this deferred asset.
       if (scripts.some(url => url.endsWith('/labs/editor.js'))) js += fs.statSync('assets/js/labs/worker.js').size;
+      if (scripts.some(url => url.endsWith('/web-vitals.js'))) js += fs.statSync('assets/vendor/web-vitals.js').size;
       if (js > 65000) throw new Error(`JS budget exceeded on ${file}: ${js} bytes.`);
       largestCSS = Math.max(largestCSS, css); largestJS = Math.max(largestJS, js);
     }

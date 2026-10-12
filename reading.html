@@ -2,16 +2,17 @@
 layout: default
 permalink: /reading/
 title: My reading — backups and progress
-description: Back up and restore your book notes, bookmarks, reading position, preferences, and learning checklists and quiz answers between browsers.
+description: Back up and restore your book notes, bookmarks, reading position, preferences, and learning checklists, quiz answers, and workshop drafts between browsers.
 ---
 <main id="main-content" data-reading-library>
-  <section class="page-hero"><div class="section-shell"><p class="eyebrow tag">Your personal library</p><h1 class="display">Keep your place.</h1><p class="page-intro">Move your notes, bookmarks, completed sections, reading position, and learning checklists and quiz answers to another browser with a backup file.</p></div></section>
+  <section class="page-hero"><div class="section-shell"><p class="eyebrow tag">Your personal library</p><h1 class="display">Keep your place.</h1><p class="page-intro">Move your notes, bookmarks, completed sections, reading position, learning checklists, quiz answers, and workshop drafts to another browser with a backup file.</p></div></section>
   <div class="section-shell learning-directory">
     <noscript><div class="learning-exercise"><h2>Reading without JavaScript</h2><p>All <a href="{{ '/books/' | relative_url }}">books</a> and <a href="{{ '/learn/' | relative_url }}">learning materials</a> remain available. Browser storage and backup controls need JavaScript. PDF and EPUB downloads provide a portable copy of each book.</p></div></noscript>
+    <p class="learning-invitation"><a href="{{ '/learn/workspace/' | relative_url }}">See all your progress in My Learning →</a></p>
     <div data-backup-controls>
       <p role="status" data-backup-status aria-live="polite">Your reading data stays in this browser. Download a backup to keep a separate copy.</p>
       <div class="learning-grid">
-        <section class="learning-card"><h2>Save a backup</h2><p>A JSON file contains your reading workspace and learning checklists and quiz answers. Keep it somewhere you trust: it includes the full text of your notes.</p><button class="button button-blue" type="button" data-backup-export>Download reading backup</button></section>
+        <section class="learning-card"><h2>Save a backup</h2><p>A JSON file contains your reading workspace and learning checklists, quiz answers, and workshop drafts. Keep it somewhere you trust: it includes the full text of your notes and workshop code.</p><button class="button button-blue" type="button" data-backup-export>Download reading backup</button></section>
         <section class="learning-card"><h2>Restore on this device</h2><label for="reading-backup-file">Choose a reading backup (.json)</label><input class="backup-file" id="reading-backup-file" type="file" accept=".json,application/json" data-backup-file><p>Choose a file to preview its contents before anything is saved.</p></section>
       </div>
       <section class="learning-exercise" data-backup-preview hidden aria-labelledby="backup-preview-title">
@@ -23,5 +24,5 @@ description: Back up and restore your book notes, bookmarks, reading position, p
     </div>
     <div class="learning-exercise"><h2>What travels with you</h2><p>The backup contains data saved by this site's reading controls. It stays on your device; this page never uploads it. Offline chapter copies are stored separately by the browser: <a href="{{ '/offline/' | relative_url }}">save those sections again</a> on your new device.</p><p><a href="{{ '/books/' | relative_url }}">Browse the books →</a> · <a href="{{ '/learn/' | relative_url }}">Continue learning →</a></p></div>
   </div>
-  <script type="application/json" data-reading-catalog>{"books":[{% for book in site.data.books %}{"id":{{ book.id | jsonify }},"title":{{ book.title | jsonify }},"url":{{ book.url | jsonify }},"chapters":[{% for chapter in book.chapters %}{"url":{{ chapter.url | jsonify }},"title":{{ chapter.title | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]}{% unless forloop.last %},{% endunless %}{% endfor %}],"paths":[{% for path in site.data.learning_paths %}{"id":{{ path.id | jsonify }},"steps":{{ path.steps.size }},"questions":[{% for question in site.data.knowledge_checks[path.id].questions %}{"id":{{ question.id | jsonify }},"options":{{ question.options.size }}}{% unless forloop.last %},{% endunless %}{% endfor %}]}{% unless forloop.last %},{% endunless %}{% endfor %}]}</script>
+  {% include learning-catalog.html %}
 </main>

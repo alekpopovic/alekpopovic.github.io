@@ -35,7 +35,7 @@ class PublicationTests(unittest.TestCase):
                     kind = 'application/pdf'; body = b'<html>Missing</html>' if broken_pdf else b'%PDF-1.7'
                 elif self.path == '/sitemap.xml':
                     kind = 'application/xml'; body = f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>{ORIGIN}/</loc></url></urlset>'.encode()
-                elif self.path in ['/feed.xml', '/updates.xml']:
+                elif self.path in ['/feed.xml', '/updates.xml', '/newsletter.xml']:
                     kind = 'application/atom+xml'; body = f'<feed xmlns="http://www.w3.org/2005/Atom"><link href="{ORIGIN}/"/></feed>'.encode()
                 elif self.path == '/robots.txt':
                     kind = 'text/plain'; body = f'Sitemap: {ORIGIN}/sitemap.xml'.encode()

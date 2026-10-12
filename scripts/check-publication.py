@@ -79,7 +79,7 @@ def verify(base, origin, measurement='', revision=None, verification='', verific
     assert status == 200, f'Sitemap HTTP {status}'
     urls = [element.text for element in ElementTree.fromstring(body).iter() if element.tag.endswith('}loc')]
     assert urls and all(url.startswith(origin.rstrip('/') + '/') for url in urls), 'Sitemap contains another origin'
-    for path in ['/feed.xml', '/updates.xml']:
+    for path in ['/feed.xml', '/updates.xml', '/newsletter.xml']:
         status, _, body, _ = read(base, path)
         assert status == 200, f'{path}: HTTP {status}'
         feed = ElementTree.fromstring(body)

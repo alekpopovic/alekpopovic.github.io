@@ -21,7 +21,7 @@
 .reader-figure-viewport { overflow: auto; max-height: 65dvh; padding: 12px; background: #fff; }
 .reader-figure-viewport img { max-width: none; height: auto; display: block; }
 @media print { .reader-assist, .reader-learning-link, .reader-figure-open, .reader-figure-dialog { display: none !important; } .book-article mark { color: inherit; background: transparent; outline: none; } }
-.js [data-reader-study-open][hidden] { display: inline-flex !important; visibility: hidden; }
+@layer base { .js [data-reader-study-open][hidden] { display: inline-flex !important; visibility: hidden; } }
 .reader-document-actions [data-reader-study-open] .ui-icon { display: block; }
 .reader-study { margin-block: 12px; padding: 18px 14px; border: 1px solid #d5d9de; border-radius: 14px; background: #f6f7f9; color: #20201e; font-size: 12px; line-height: 1.7; }
 .reader-study summary { font-weight: 700; cursor: pointer; }
@@ -84,8 +84,12 @@
   .reader-document-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 13px; border-radius: 10px; background: #edf0f8; color: #214fc5; font-size: 11px; font-weight: 700; }
   .reader-document-actions .ui-icon { width: 16px; height: 16px; }
   .reader-toolbar { grid-column: 1/-1; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid #e4e7eb; }
-  .js :is([data-reader-toolbar], [data-reader-progress-bar], [data-reader-session], [data-reader-filter])[hidden] { visibility: hidden; display: flex !important; }
-  .js [data-reader-filter][hidden] { display: block !important; }
+  /* Tailwind 4's base hidden rule is important. Reserve reader controls in the
+     same layer so initializing JavaScript cannot move the document. */
+  @layer base {
+    .js :is([data-reader-toolbar], [data-reader-progress-bar], [data-reader-session], [data-reader-filter])[hidden] { visibility: hidden; display: flex !important; }
+    .js [data-reader-filter][hidden] { display: block !important; }
+  }
   .reader-tool { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; min-width: 40px; height: 40px; gap: 8px; padding: 8px; border-radius: 9px; color: #3e485a; font-size: 11px; font-weight: 600; cursor: pointer; }
   .reader-tool .ui-icon { width: 19px; height: 19px; }
   .reader-tool:hover, .reader-tool[aria-pressed="true"] { background: #e7ebff; color: #214fc5; }
@@ -194,7 +198,7 @@
     .reader-document-actions a { min-height: 36px; padding: 7px; font-size: 10px; }
     .reader-document-actions .ui-icon { display: none; }
     .reader-toolbar { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; padding: 9px 10px; }
-    .js [data-reader-toolbar][hidden] { display: grid !important; }
+    @layer base { .js [data-reader-toolbar][hidden] { display: grid !important; } }
     .reader-display-controls { grid-column: 1/-1; grid-row: 2; padding-right: 139px; gap: 6px; }
     .reader-display-controls > div:first-child { width: 55%; }
     .reader-display-controls > div:last-child { width: 45%; }
@@ -235,7 +239,7 @@
     .js .book-reading-page:is(.reader-scrolled, .reader-focused), .js.reader-navigation-hidden .book-reading-page { --reader-header-height: 0px; }
     .js .book-reading-page.reader-scrolled .site-header, .js.reader-navigation-hidden .book-reading-page .site-header { visibility: hidden; transform: translateY(-100%); }
     .js .book-reading-page:is(.reader-scrolled, .reader-focused) .book-breadcrumbs, .js.reader-navigation-hidden .book-reading-page .book-breadcrumbs { display: none; }
-    .js .reader-navigation-toggle[hidden] { display: inline-flex !important; visibility: hidden; }
+    @layer base { .js .reader-navigation-toggle[hidden] { display: inline-flex !important; visibility: hidden; } }
     .js .book-reading-page .reader-document-actions .reader-navigation-toggle .ui-icon { display: block; }
     @media (max-width: 980px) {
       .js .book-reading-page { --reader-header-height: 82px; }

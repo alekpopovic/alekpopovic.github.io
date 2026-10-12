@@ -30,6 +30,7 @@ class Page(HTMLParser):
         self.links, self.ids, self.meta, self.canonicals = [], [], {}, []
         self.schema, self.script = [], None
         self.google_tags = []
+        self.ga4_adapters, self.vitals_adapters = [], []
         self.verification = []
         self.feed(path.read_text())
 
@@ -52,6 +53,10 @@ class Page(HTMLParser):
             self.script = ''
         if tag == 'script' and attrs.get('src', '').startswith('https://www.googletagmanager.com/gtag/js'):
             self.google_tags.append(attrs)
+        if tag == 'script' and 'data-ga4-host' in attrs:
+            self.ga4_adapters.append(attrs)
+        if tag == 'script' and 'data-vitals-host' in attrs:
+            self.vitals_adapters.append(attrs)
 
     def handle_data(self, data):
         if self.script is not None:
@@ -100,6 +105,13 @@ def main():
         require(len(page.canonicals) == 1, f'Missing or duplicate canonical: {relative}')
         require(page.canonicals[0].startswith(ORIGIN + '/'), f'Non-production canonical: {relative}')
         require(len(page.google_tags) == int(bool(google_analytics)), f'Missing, duplicate or unconfigured Google tag: {relative}')
+        # Redirect layouts include the shared Google tag but no interactive adapters.
+        configured_ga4 = int(bool(google_analytics))
+        configured_vitals = int(bool(google_analytics) and bool(CONFIG.get('performance_monitoring')))
+        require(len(page.ga4_adapters) <= configured_ga4, f'Incorrect GA4 adapter configuration: {relative}')
+        require(len(page.vitals_adapters) <= configured_vitals, f'Incorrect field metrics configuration: {relative}')
+        if 'noindex' not in (page.meta.get('robots') or ''):
+            require(len(page.ga4_adapters) == configured_ga4 and len(page.vitals_adapters) == configured_vitals, f'Missing configured analytics adapter: {relative}')
         if CONFIG.get('google_site_verification'):
             require(page.verification == [CONFIG['google_site_verification']], f'Missing or duplicate Search Console verification tag: {relative}')
         if google_analytics:
@@ -158,7 +170,7 @@ def main():
     require(set(quizzes) == {path['id'] for path in learning_paths}, 'Every learning path needs its knowledge check')
     for quiz_id, quiz in quizzes.items():
         questions = quiz.get('questions', [])
-        require(len(questions) >= 3 and len({question['id'] for question in questions}) == len(questions), f'Incomplete knowledge check: {quiz_id}')
+        require(len(questions) >= 10 and len({question['id'] for question in questions}) == len(questions), f'Incomplete knowledge check: {quiz_id}')
         for question in questions:
             require(question.get('prompt') and question.get('explanation') and len(question.get('options', [])) >= 2, f'Incomplete quiz scenario: {quiz_id}')
             require(type(question.get('answer')) is int and 0 <= question['answer'] < len(question['options']), f'Invalid quiz answer: {quiz_id}')
@@ -172,6 +184,13 @@ def main():
             require(step['url'].startswith('/') and any(item['url'] == step['url'] for item in index), f'Learning step references missing indexed content: {step["url"]}')
             require(all(id in {item['id'] for item in workshops} for id in step.get('workshops', [])), f'Learning step references an unknown workshop: {learning["id"]}')
     updates = yaml.safe_load((ROOT / '_data/updates.yml').read_text())
+    require(any(item['url'] == '/learn/workspace/' for item in index), 'Search omits My Learning')
+    letters = yaml.safe_load((ROOT / '_data/newsletters.yml').read_text())
+    require(len({issue['id'] for issue in letters}) == len(letters), 'Newsletter IDs must be unique')
+    letter_entries = ET.parse(SITE / 'newsletter.xml').findall('{http://www.w3.org/2005/Atom}entry')
+    require({entry.find('{http://www.w3.org/2005/Atom}id').text for entry in letter_entries} == {ORIGIN + issue['url'] for issue in letters}, 'Newsletter feed must match its archive')
+    for issue in letters:
+        require(any(item['url'] == issue['url'] for item in index), f'Search omits newsletter issue: {issue["id"]}')
     require(len({item['id'] for item in updates}) == len(updates), 'Changelog IDs must be unique and stable')
     ET.parse(SITE / 'updates.xml')
     offline = json.loads((SITE / 'offline-manifest.json').read_text())

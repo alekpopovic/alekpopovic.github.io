@@ -5,6 +5,7 @@
   const books = new Map(catalog.books.map(book => [book.id, { ...book, sections: new Map(book.chapters.map(chapter => [chapter.url, chapter.title])) }]));
   const paths = new Map(catalog.paths.map(path => [path.id, path.steps]));
   const quizzes = new Map(catalog.paths.map(path => [path.id, new Map((path.questions || []).map(question => [question.id, question.options]))]));
+  const workshops = new Set((catalog.workshops || []).map(workshop => workshop.id));
   const status = root.querySelector('[data-backup-status]');
   const preview = root.querySelector('[data-backup-preview]');
   const fileInput = root.querySelector('[data-backup-file]');
@@ -17,7 +18,7 @@
   const validate = input => {
     ensure(object(input) && input.format === 'codepop-reading' && input.version === 1, 'Choose a supported CodePop reading backup (version 1).');
     ensure(object(input.books) && object(input.learning), 'The backup is missing its books or learning checklists.');
-    const entries = new Map(); let sections = 0, notes = 0, checklists = 0, quizAnswers = 0;
+    const entries = new Map(); let sections = 0, notes = 0, checklists = 0, quizAnswers = 0, drafts = 0;
     for (const [id, value] of Object.entries(input.books)) {
       const book = books.get(id);
       ensure(book && object(value) && object(value.records), 'The backup references an unknown book or invalid section data.');
@@ -58,21 +59,37 @@
         entries.set(`codepop:knowledge:${id}`, validated);
       }
     }
+    if (input.workshops !== undefined) {
+      ensure(object(input.workshops), 'Workshop drafts must be an object.');
+      for (const [id, value] of Object.entries(input.workshops)) {
+        ensure(workshops.has(id) && object(value), 'The backup references an unknown workshop.');
+        if (value.draft !== null && value.draft !== undefined) {
+          ensure(typeof value.draft === 'string' && value.draft.length <= 40000, 'A workshop draft is invalid or too large.');
+          entries.set(`codepop:workshop:${id}`, value.draft); drafts++;
+        }
+        if (value.check !== null && value.check !== undefined) {
+          const check = value.check;
+          ensure(object(check) && typeof check.source === 'string' && check.source.length <= 40000 && Number.isInteger(check.total) && check.total >= 1 && check.total <= 20 && Number.isInteger(check.passed) && check.passed >= 0 && check.passed <= check.total && Number.isFinite(check.checked_at) && check.checked_at >= 0, 'A workshop test record is invalid.');
+          entries.set(`codepop:workshop-check:${id}`, { source: check.source, total: check.total, passed: check.passed, checked_at: check.checked_at });
+        }
+      }
+    }
     if (input.preferences !== null && input.preferences !== undefined) {
       const prefs = input.preferences;
       ensure(object(prefs) && ['small', 'regular', 'large', 'extra'].includes(prefs.size) && ['paper', 'light', 'dark'].includes(prefs.theme), 'Reading preferences are invalid.');
       entries.set('codepop:reader-preferences', { size: prefs.size, theme: prefs.theme });
     }
-    return { entries, summary: `${Object.keys(input.books).length} books, ${sections} saved sections, ${notes} notes, ${checklists} learning checklists, and ${quizAnswers} quiz answers.` };
+    return { entries, summary: `${Object.keys(input.books).length} books, ${sections} saved sections, ${notes} notes, ${checklists} learning checklists, ${quizAnswers} quiz answers, and ${drafts} workshop drafts.` };
   };
   const snapshot = () => {
-    const data = { format: 'codepop-reading', version: 1, exported_at: new Date().toISOString(), books: {}, learning: {}, knowledge: {}, preferences: read('codepop:reader-preferences') };
+    const data = { format: 'codepop-reading', version: 1, exported_at: new Date().toISOString(), books: {}, learning: {}, knowledge: {}, workshops: {}, preferences: read('codepop:reader-preferences') };
     for (const [id] of books) {
       const records = read(`codepop:library:${id}`), resume = read(`codepop:reading:${id}`);
       if (records !== null || resume !== null) data.books[id] = { records: records || {}, resume };
     }
     for (const [id] of paths) { const steps = read(`codepop:learning:${id}`); if (steps !== null) data.learning[id] = steps; }
     for (const [id] of quizzes) { const answers = read(`codepop:knowledge:${id}`); if (answers !== null) data.knowledge[id] = answers; }
+    for (const id of workshops) { const draft = localStorage.getItem(`codepop:workshop:${id}`), check = read(`codepop:workshop-check:${id}`); if (draft !== null || check !== null) data.workshops[id] = { draft, check }; }
     validate(data); return data;
   };
   const render = () => {
@@ -97,7 +114,7 @@
       const data = snapshot(), blob = new Blob([JSON.stringify(data, null, 2) + '\n'], { type: 'application/json' });
       const url = URL.createObjectURL(blob), link = document.createElement('a');
       link.href = url; link.download = `codepop-reading-${new Date().toISOString().slice(0, 10)}.json`; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000); tell('Reading backup downloaded. It includes the text of your saved notes.');
+      setTimeout(() => URL.revokeObjectURL(url), 1000); tell('Reading backup downloaded. It includes your saved note text and workshop code.');
     } catch { tell('Could not export: storage is unavailable or saved data is invalid. Your existing data has not been changed.'); }
   });
   fileInput.addEventListener('change', async () => {
@@ -121,11 +138,12 @@
       const changes = [...pending.entries].map(([key, value]) => {
         const previous = localStorage.getItem(key); old.set(key, previous);
         if (merge && previous !== null) {
+          if (key.startsWith('codepop:workshop:')) return [key, previous];
           const existing = JSON.parse(previous);
           ensure(object(existing), 'Existing data is unreadable; save a copy before replacing it.');
           value = key.startsWith('codepop:library:') || key.startsWith('codepop:learning:') || key.startsWith('codepop:knowledge:') ? { ...value, ...existing } : existing;
         }
-        return [key, JSON.stringify(value)];
+        return [key, key.startsWith('codepop:workshop:') ? value : JSON.stringify(value)];
       });
       for (const [key, value] of changes) { localStorage.setItem(key, value); written.push(key); }
       pending = null; preview.hidden = true; fileInput.value = ''; render();
