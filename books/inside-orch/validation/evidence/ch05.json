@@ -1,0 +1,108 @@
+{
+  "chapter": "05",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch05.strict-parser",
+      "statement": "Deployment parser uses strict known-field YAML decoding and maps resources into both requests and limits.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/deploy.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 139,
+      "line_end": 170,
+      "associated_commits": [
+        "6f7954b8d31b52a7909ebe20d1e22b384af19530"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch05/parser-manifests.json",
+      "limitations": [
+        "Actual CLI accepted good input and rejected four invalid fixtures; mapping/defaults additionally source-inspected.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch05.quantities",
+      "statement": "CPU quantities convert to millicores and memory suffixes convert integer amounts to bytes.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/types.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 898,
+      "line_end": 947,
+      "associated_commits": [
+        "44b60a210c5a17e444b02d622b6af0c1c11375e2"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual CLI parser fixtures passed validation/labs/ch05/parser-manifests.json; real Docker limits contrast in validation/intake/docker-resource-boundary-corrected.json. No live fixed-port collision performed."
+      ]
+    },
+    {
+      "claim_id": "ch05.defaults",
+      "statement": "Default requests and limits are 100 millicores and 128Mi; normalization validates requests against limits.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/types.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 565,
+      "line_end": 602,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual CLI parser fixtures passed validation/labs/ch05/parser-manifests.json; real Docker limits contrast in validation/intake/docker-resource-boundary-corrected.json. No live fixed-port collision performed."
+      ]
+    },
+    {
+      "claim_id": "ch05.planner-ports",
+      "statement": "Scheduler rejects explicitly reserved node/protocol ports and allocates bounded dynamic ports.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 511,
+      "line_end": 549,
+      "associated_commits": [
+        "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual CLI parser fixtures passed validation/labs/ch05/parser-manifests.json; real Docker limits contrast in validation/intake/docker-resource-boundary-corrected.json. No live fixed-port collision performed."
+      ]
+    },
+    {
+      "claim_id": "ch05.memory-ports",
+      "statement": "Immediate memory assignment does not reject already-reserved explicit public ports.",
+      "classification": "partial integration",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2552,
+      "line_end": 2573,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual CLI parser fixtures passed validation/labs/ch05/parser-manifests.json; real Docker limits contrast in validation/intake/docker-resource-boundary-corrected.json. No live fixed-port collision performed."
+      ]
+    },
+    {
+      "claim_id": "ch05.resource-gap",
+      "statement": "AgentTask has no resource field and agent ContainerSpec construction omits resources.",
+      "classification": "partial integration",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 253,
+      "line_end": 265,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/intake/docker-resource-boundary-corrected.json",
+      "limitations": [
+        "Real ordinary-path inspected limits zero versus direct-adapter supplied limits; cached-image/owned-ID wrapper, no host workload ports.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    }
+  ]
+}

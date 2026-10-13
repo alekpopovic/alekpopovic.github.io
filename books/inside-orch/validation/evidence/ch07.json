@@ -1,0 +1,122 @@
+{
+  "chapter": "07",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch07.middleware",
+      "statement": "RequestID/version/access-log wrap recovery/timeout/user-auth and dispatch.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1255,
+      "line_end": 1257,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual public-handler/client smoke and synthetic additive/renamed fixtures passed public-contract-loopback.json; static comparison openapi-routes.json. Initial socket-denied run retained."
+      ]
+    },
+    {
+      "claim_id": "ch07.errors",
+      "statement": "Domain errors map to stable public codes; unexpected failures mask their internal message.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/apperrors/errors.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 78,
+      "line_end": 111,
+      "associated_commits": [
+        "b5d4573f8fa5d56a5dcfde609e3794e93644a39d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual public-handler/client smoke and synthetic additive/renamed fixtures passed public-contract-loopback.json; static comparison openapi-routes.json. Initial socket-denied run retained."
+      ]
+    },
+    {
+      "claim_id": "ch07.client",
+      "statement": "Public Go client is hand-written and decodes structured errors into APIError.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/client/client.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 461,
+      "line_end": 475,
+      "associated_commits": [
+        "f94414db486b96e7088fccc8c4c502a1fa616d38"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch07/public-contract-final.json",
+      "limitations": [
+        "Actual real-handler public-client invalid-UUID response plus synthetic compatibility fixtures; not generated-client validation.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch07.version",
+      "statement": "v1 middleware emits API-Version header; no v2 registration exists.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/versioning.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 14,
+      "line_end": 21,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch07/public-contract-final.json",
+      "limitations": [
+        "Selected v1 response header and v2 absence checks only.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch07.openapi-gaps",
+      "statement": "Three public discovery/Traefik GET routes lack OpenAPI operations; internal agent exclusion is deliberate.",
+      "classification": "partial integration",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 199,
+      "line_end": 201,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch07/openapi-routes.json",
+      "limitations": [
+        "Static parsed method/path comparison, not OpenAPI semantic/schema validation.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch07.schema-test",
+      "statement": "OpenAPI test parses shape and selected paths, not full semantic schema conformance.",
+      "classification": "implemented package",
+      "source_path": "api/openapi_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 11,
+      "line_end": 38,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual public-handler/client smoke and synthetic additive/renamed fixtures passed public-contract-loopback.json; static comparison openapi-routes.json. Initial socket-denied run retained."
+      ]
+    },
+    {
+      "claim_id": "ch07.raw-zero-vs-client",
+      "statement": "Raw numeric zero resource serialization is rejected while public CreateService normalizes the same original Go value before sending.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/client/client.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 211,
+      "line_end": 220,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch07/public-contract-final.json",
+      "limitations": [
+        "Observed raw HTTP400 versus normalized-client successful creation on the real pinned handler.",
+        "Omitted resource fields and explicit zeros are distinct; no upstream DTO fix."
+      ]
+    }
+  ]
+}

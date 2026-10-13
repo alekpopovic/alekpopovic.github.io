@@ -1,0 +1,96 @@
+{
+  "chapter_id": "09",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch09.contract",
+      "statement": "Composite Store omits separately declared job, cron, volume and notification interfaces.",
+      "classification": "implemented package",
+      "source_path": "internal/store/store.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 111,
+      "line_end": 126,
+      "associated_commits": [
+        "72fd9baff0bbfde49574257380bcd8f747cc2070",
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "This interface inventory does not establish application persistence or complete API parity."
+      ]
+    },
+    {
+      "claim_id": "ch09.transaction",
+      "statement": "postgresStore.withTx supplies a transaction-scoped db, defers rollback and commits only after callback success.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 69,
+      "line_end": 83,
+      "associated_commits": [
+        "72fd9baff0bbfde49574257380bcd8f747cc2070",
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "All relevant effects must use the scoped store; generic WithTx can fall back to direct execution."
+      ]
+    },
+    {
+      "claim_id": "ch09.assignment",
+      "statement": "All-schema disposable two-writer fixture observed one AssignTask success and one conflict for the same pending task snapshot.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 892,
+      "line_end": 936,
+      "associated_commits": [
+        "72fd9baff0bbfde49574257380bcd8f747cc2070",
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/intake/full-schema-recovery-corrected.json",
+      "limitations": [
+        "Separate teaching fixture applies all16 migrations; this does not repair the failing upstream fixture or serialize shared capacity."
+      ]
+    },
+    {
+      "claim_id": "ch09.composition",
+      "statement": "Default server constructs MemoryService rather than wiring PostgresStore as authoritative API state.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 140,
+      "line_end": 167,
+      "associated_commits": [
+        "72fd9baff0bbfde49574257380bcd8f747cc2070",
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "A durable database package does not make the default executable durable."
+      ]
+    },
+    {
+      "claim_id": "ch09.fixture-schema",
+      "statement": "Untouched guarded PostgreSQL suite passed rollback but two other tests failed before assignment with missing agent_version; fixture applies1\u201314, column arrives16.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 535,
+      "line_end": 590,
+      "associated_commits": [
+        "72fd9baff0bbfde49574257380bcd8f747cc2070",
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/intake/postgres-store-owned.json",
+      "limitations": [
+        "Failure attribution also inspected migrations/000016_operations_safety.up.sql line6; no conclusion that assignment itself failed."
+      ]
+    }
+  ]
+}

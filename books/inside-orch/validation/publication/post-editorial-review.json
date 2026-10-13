@@ -1,0 +1,123 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:27:24.279639+00:00",
+  "reviewer_scope": "Independent review of root-authored three original site companion posts. Narrative/source/actual-evidence fidelity and standalone explanatory value; not a new network or runtime experiment.",
+  "posts": [
+    {
+      "path": "_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md",
+      "sha256": "30c8fc06d0b5f416800188b4a0ed94f854c1e18165564169d70382ead051be91",
+      "chapter_slug": "06-follow-one-request-through-the-control-plane",
+      "word_count_including_source_labels": 644,
+      "source_anchors": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "line_start": 142,
+          "line_end": 149,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/api/api.go",
+          "line_start": 440,
+          "line_end": 442,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        }
+      ],
+      "standalone_value": "Contrasts process readiness, workload survival and state-owner recovery with observed two-process identity loss and scoped container survival.",
+      "result": "accepted",
+      "changes": "none",
+      "prepared_seed_matches_current_editorial_post": false
+    },
+    {
+      "path": "_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md",
+      "sha256": "32b9ca3c7c1e612a530f2f58840d70288b2f56044963068bd4bf341a09bbe8f0",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "word_count_including_source_labels": 619,
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 670,
+          "line_end": 712,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2073,
+          "line_end": 2093,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 994,
+          "line_end": 1022,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "line_start": 155,
+          "line_end": 175,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        }
+      ],
+      "standalone_value": "Separates heartbeat suspicion, stateful exception, drain, partitions and final write-authority fencing; experiment explicitly proposed.",
+      "result": "accepted",
+      "changes": "none",
+      "prepared_seed_matches_current_editorial_post": true
+    },
+    {
+      "path": "_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md",
+      "sha256": "8934cadf4d6ffb7bfb0086a91c68020a192cf6e820bb1b379ceacd489f495426",
+      "chapter_slug": "05-service-specifications-resources-and-ports",
+      "word_count_including_source_labels": 649,
+      "source_anchors": [
+        {
+          "path": "pkg/types/types.go",
+          "line_start": 516,
+          "line_end": 519,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "line_start": 412,
+          "line_end": 451,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "line_start": 253,
+          "line_end": 266,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 130,
+          "line_end": 137,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2249,
+          "line_end": 2311,
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+        }
+      ],
+      "standalone_value": "Three resource questions, numerical request accounting, missing transport/runtime field path and dual-layer acceptance tests.",
+      "result": "accepted",
+      "changes": "none",
+      "prepared_seed_matches_current_editorial_post": false
+    }
+  ],
+  "actual_evidence_inspected": [
+    "validation/intake/docker-resource-boundary-corrected.json",
+    "validation/intake/fresh-server-restart-authenticated.json",
+    "validation/labs/ch06/combined-restart.json",
+    "labs/01-initialization-restart/README.md"
+  ],
+  "findings": [],
+  "overall_status": "passed",
+  "limitations": [
+    "Post node-partition experiment is explicitly proposed, not claimed executed.",
+    "Root site/navigation validator separately verifies generated companion URLs; actual generated Lab01 destination exists.",
+    "Prepared-post seed copies predate final evidence paragraphs in two editorial posts; _posts is the canonical site source and ordinary book builds must not overwrite it.",
+    "Posts describe pinned behavior and known integration gaps, not production certification."
+  ]
+}

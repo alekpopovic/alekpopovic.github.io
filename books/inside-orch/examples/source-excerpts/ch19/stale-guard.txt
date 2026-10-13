@@ -1,0 +1,10 @@
+	cutoff := now.Add(-timeout)
+	offline := make([]types.Node, 0)
+	for id, node := range s.nodes {
+		if node.Status != types.NodeReady && node.Status != types.NodeDraining {
+			continue
+		}
+		if node.LastHeartbeatAt.IsZero() || !node.LastHeartbeatAt.Before(cutoff) {
+			continue
+		}
+		if err := types.ValidateNodeTransition(node.Status, types.NodeOffline); err != nil {

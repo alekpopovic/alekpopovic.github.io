@@ -1,0 +1,366 @@
+# API
+
+`orch-server` exposes a JSON REST API for operators and agents. User-facing routes are under `/v1/*`; agent routes are under `/v1/agent/*`.
+
+All responses use UTC timestamps.
+
+Workload routes select a namespace with `X-Orch-Namespace` and default to `default`. See [MULTI_TENANCY.md](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md). API compatibility and deprecation rules are defined in [API_VERSIONING.md](https://alekpopovic.github.io/orch/#API_VERSIONING.md).
+
+The canonical public API contract is `api/openapi.yaml`. It is also published in the GitHub Pages documentation portal as `openapi.yaml`. It documents the user-facing health, namespace, quota, GitOps, node, service, task, event, log, rollout, secret, registry credential, and audit log endpoints. Agent-only routes are intentionally excluded from that public spec.
+
+Validate the OpenAPI document with:
+
+```sh
+go test ./api
+```
+
+Generated or hand-written integrations should prefer the shared Go client in `pkg/client`.
+
+## Errors
+
+Errors use a stable envelope:
+
+```json
+{
+  "error": {
+    "code": "invalid_argument",
+    "message": "invalid state: image is required",
+    "request_id": "9f95d3c2-9a78-4b11-a11f-8991d45db5e1",
+    "details": {
+      "field": "image"
+    }
+  }
+}
+```
+
+`details` is optional and secret-like fields are redacted before they are returned. Stable error codes are:
+
+- `not_found`
+- `invalid_argument`
+- `conflict`
+- `quota_exceeded`
+- `unauthorized`
+- `forbidden`
+- `failed_precondition`
+- `unavailable`
+- `internal`
+
+Clients may send `X-Request-ID`. If absent, the server generates one and includes it in errors and access logs. Error logs include `error_code` plus related object identifiers such as `service_id`, `task_id`, or `node_id` when the request supplies them. Controllers emit `controller.error` events for important reconciliation failures with `details.error_code`.
+
+## Authentication
+
+User API:
+
+- If `ORCH_JWT_SECRET` is empty, user auth is disabled. This is the local-development default.
+- If `ORCH_JWT_SECRET` is set, user-facing `/v1/*` endpoints require `Authorization: Bearer <jwt>`.
+- Roles are `viewer`, `operator`, and `admin`.
+
+Agent API:
+
+- `POST /v1/agent/register` uses `Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>`.
+- Registration returns a short-lived agent credential.
+- Heartbeat, task polling, and task status updates use the issued credential.
+
+See [SECURITY.md](https://alekpopovic.github.io/orch/#SECURITY.md).
+
+## Health And Metrics
+
+```sh
+curl http://localhost:8080/healthz
+curl http://localhost:8080/readyz
+curl http://localhost:8080/metrics
+```
+
+`readyz` currently reports readiness for the in-process server. It does not yet validate PostgreSQL connectivity because the shipped server is not wired to the PostgreSQL store.
+
+## Nodes
+
+```sh
+curl http://localhost:8080/v1/nodes
+curl http://localhost:8080/v1/nodes/{node_id}
+curl -X POST http://localhost:8080/v1/nodes/{node_id}/drain
+curl -X POST http://localhost:8080/v1/nodes/{node_id}/uncordon
+```
+
+Node operations:
+
+- `drain` marks a node draining, excluding it from new scheduler placements.
+- `uncordon` marks a node ready.
+- Abrupt heartbeat expiry marks stale ready/draining nodes `offline` through the server node monitor.
+
+## Services
+
+Create:
+
+```sh
+curl -X POST http://localhost:8080/v1/services \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "spec": {
+      "name": "web",
+      "image": "nginx:1.27",
+      "image_pull_secret": "ghcr-prod",
+      "stateful": false,
+      "replicas": 2,
+      "env": {"APP_ENV": "local"},
+      "secret_refs": [{"name": "prod/database-url", "env": "DATABASE_URL"}],
+      "ports": [{"protocol": "tcp", "container_port": 8080, "published_port": 18080}],
+      "routes": [{"host": "web.localhost", "path_prefix": "/", "port": 8080, "tls": false}],
+      "resource_requirements": {
+        "requests": {"cpu": 100, "memory": 134217728},
+        "limits": {"cpu": 500, "memory": 536870912}
+      },
+      "healthcheck": {
+        "type": "http",
+        "path": "/healthz",
+        "port": 8080,
+        "interval": 10000000000,
+        "timeout": 2000000000,
+        "healthy_threshold": 1,
+        "unhealthy_threshold": 3
+      },
+      "restart_policy": {"condition": "on_failure", "max_attempts": 3},
+      "placement_constraints": [{"key": "role", "operator": "equals", "value": "worker"}]
+    }
+  }'
+```
+
+Read and delete:
+
+```sh
+curl http://localhost:8080/v1/services
+curl http://localhost:8080/v1/services/{service_id}
+curl -X DELETE http://localhost:8080/v1/services/{service_id}
+```
+
+Delete is soft. It marks the service `deleting`, directs tasks to stop/remove, and marks the service `deleted` only after all tasks report `removed`.
+
+Scale:
+
+```sh
+curl -X POST http://localhost:8080/v1/services/{service_id}/scale \
+  -H 'Content-Type: application/json' \
+  -d '{"replicas": 4}'
+```
+
+Rollout:
+
+```sh
+curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
+  -H 'Content-Type: application/json' \
+  -d '{"image": "nginx:1.28", "maxUnavailable": 1, "maxSurge": 1}'
+
+curl http://localhost:8080/v1/services/{service_id}/rollout
+curl http://localhost:8080/v1/rollouts/{rollout_id}
+```
+
+Rollback:
+
+```sh
+curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+```
+
+Concurrent service operations are guarded per service. Active rollout/rollback blocks scale, rollout, and rollback with `409 conflict` and a message containing `operation already in progress`. Repeating the same in-flight rollout with the same image and limits returns the existing deployment. Delete wins over rollout/rollback/scale by moving the service to `deleting` and cancelling active deployments.
+
+Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+
+Resolved image metadata is stored as `image_metadata` on the service spec and as `requested_image`, `resolved_image_digest`, `image_registry`, `image_name`, and `image_tag` on tasks. When digest pinning policy is enabled, task `image` is the immutable pull reference.
+
+## Resource Quotas
+
+```sh
+curl http://localhost:8080/v1/quota -H 'X-Orch-Namespace: payments'
+curl -X PUT http://localhost:8080/v1/quota \
+  -H 'X-Orch-Namespace: payments' -H 'Content-Type: application/json' \
+  -d '{"max_services":20,"max_replicas":100,"max_cpu_millicores":20000,"max_memory_bytes":68719476736,"max_public_ports":10,"max_secrets":50,"max_registry_credentials":10}'
+```
+
+GET returns both configured limits and live usage. Zero limits are unlimited. Exceeding a limit returns `409 quota_exceeded` with structured resource/usage details.
+
+## GitOps Sources
+
+```sh
+curl -X POST http://localhost:8080/v1/gitops/sources \
+  -H 'Content-Type: application/json' \
+  -d '{"repository_url":"https://github.com/acme/orch-config.git","branch":"main","path":"services","sync_interval":"1m","prune":true}'
+curl http://localhost:8080/v1/gitops/sources
+curl -X POST http://localhost:8080/v1/gitops/sources/{id}/sync
+curl -X DELETE http://localhost:8080/v1/gitops/sources/{id}
+```
+
+Sources and applied workloads are namespace-scoped. See [GITOPS.md](https://alekpopovic.github.io/orch/#GITOPS.md).
+
+The canonical YAML deployment format is documented in [SERVICE_SPEC.md](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), with JSON Schema at `schemas/service.schema.json`.
+
+## Secrets
+
+```sh
+curl -X POST http://localhost:8080/v1/secrets \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"prod/database-url","value":"postgres://user:pass@db/app"}'
+
+curl http://localhost:8080/v1/secrets
+curl http://localhost:8080/v1/secrets/prod%2Fdatabase-url
+curl -X DELETE http://localhost:8080/v1/secrets/prod%2Fdatabase-url
+```
+
+Secret GET responses include metadata only and never return plaintext. Services can reference secrets with `secret_refs`, and agents receive decrypted values only in assigned task payloads. See [SECRETS.md](https://alekpopovic.github.io/orch/#SECRETS.md).
+
+## Registry Credentials
+
+```sh
+curl -X POST http://localhost:8080/v1/registry-credentials \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"ghcr-prod","registry":"ghcr.io","username":"robot","password":"token"}'
+
+curl http://localhost:8080/v1/registry-credentials
+curl -X DELETE http://localhost:8080/v1/registry-credentials/ghcr-prod
+```
+
+Registry credential responses include metadata only. Services can reference credentials with `image_pull_secret`; agents receive decrypted pull auth only for assigned tasks. See [REGISTRIES.md](https://alekpopovic.github.io/orch/#REGISTRIES.md).
+
+## Service Discovery
+
+```sh
+curl http://localhost:8080/v1/services/{service_id}/endpoints
+curl http://localhost:8080/v1/discovery/services
+curl http://localhost:8080/v1/discovery/services/{service_name}
+curl 'http://localhost:8080/v1/discovery/services/{service_name}?include_unhealthy=true'
+```
+
+Discovery endpoints include active services and assigned task ports. By default, only tasks whose desired state is `running` and whose actual state is `running` or `healthy` are returned.
+
+## Traefik
+
+```sh
+curl http://localhost:8080/v1/integrations/traefik/config
+```
+
+The Traefik endpoint returns optional HTTP-provider dynamic config for services with `routes`. It omits unhealthy, stopped, unassigned, non-TCP, and non-matching-port task endpoints. See [TRAEFIK.md](https://alekpopovic.github.io/orch/#TRAEFIK.md).
+
+## Tasks
+
+```sh
+curl http://localhost:8080/v1/tasks
+curl 'http://localhost:8080/v1/tasks?service_id={service_id}'
+curl 'http://localhost:8080/v1/tasks?node_id={node_id}'
+curl 'http://localhost:8080/v1/tasks?status=running'
+curl http://localhost:8080/v1/tasks/{task_id}
+```
+
+Valid task statuses include:
+
+- `pending`
+- `assigned`
+- `pulling`
+- `created`
+- `starting`
+- `running`
+- `healthy`
+- `unhealthy`
+- `stopping`
+- `stopped`
+- `removed`
+- `failed`
+
+Lifecycle transition rules are documented in [STATE_MACHINES.md](https://alekpopovic.github.io/orch/#STATE_MACHINES.md).
+
+Tasks can include `conditions`; `node_lost` means the server detected a stale node heartbeat. Stateless lost tasks are failed/removed so replacements can be created on ready nodes. Stateful lost tasks keep the condition for operator-directed recovery.
+
+## Agent Registration And Heartbeat
+
+Register:
+
+```sh
+curl -X POST http://localhost:8080/v1/agent/register \
+  -H 'Authorization: Bearer <registration-token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "node_name": "node-a",
+    "advertise_address": "http://node-a:8081",
+    "labels": {"role": "worker"},
+    "capacity": {"cpu": 4000, "memory": 8589934592},
+    "allocatable": {"cpu": 3500, "memory": 7516192768}
+  }'
+```
+
+Heartbeat:
+
+```sh
+curl -X POST http://localhost:8080/v1/agent/heartbeat \
+  -H 'Authorization: Bearer <agent-credential>' \
+  -H 'Content-Type: application/json' \
+  -d '{"node_id": "{node_id}"}'
+```
+
+Heartbeat responses may include a rotated credential.
+
+## Agent Tasks
+
+Poll assigned tasks:
+
+```sh
+curl -H 'Authorization: Bearer <agent-credential>' \
+  'http://localhost:8080/v1/agent/tasks?node_id={node_id}'
+```
+
+Report task status:
+
+```sh
+curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
+  -H 'Authorization: Bearer <agent-credential>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "node_id": "{node_id}",
+    "status": "running",
+    "container_id": "container-id"
+  }'
+```
+
+Agents may report:
+
+- `pulling`
+- `created`
+- `running`
+- `healthy`
+- `unhealthy`
+- `failed`
+- `stopped`
+- `removed`
+
+The server rejects status reports from the wrong node and rejects stale active reports for tasks that are stopping, removed, or terminal.
+
+## Events
+
+```sh
+curl http://localhost:8080/v1/events
+curl 'http://localhost:8080/v1/events?service_id={service_id}&limit=50'
+curl 'http://localhost:8080/v1/events?task_id={task_id}&type=task.failed'
+curl 'http://localhost:8080/v1/events?node_id={node_id}&severity=warning'
+curl 'http://localhost:8080/v1/events?since=2026-06-11T10:00:00Z'
+```
+
+Events support filtering by service, task, node, event type, severity, and `since`.
+
+## Audit Logs
+
+```sh
+curl http://localhost:8080/v1/audit
+curl 'http://localhost:8080/v1/audit?action=service.rollout&outcome=failure'
+curl 'http://localhost:8080/v1/audit?actor_type=user&actor_id=alice'
+curl 'http://localhost:8080/v1/audit?target_type=service&target_id={service_id}'
+```
+
+Audit logs are separate from orchestration events and require the `admin` role when JWT auth is enabled. Records include actor type, actor ID, action, target type, target ID, request ID, source IP, outcome, timestamp, and redacted metadata.
+
+Filters: `actor_type`, `actor_id`, `action`, `target_type`, `target_id`, `outcome`, `since`, and `limit`.
+
+## Logs
+
+```sh
+curl 'http://localhost:8080/v1/logs?service_id={service_id}&tail=100'
+curl 'http://localhost:8080/v1/logs?service_id={service_id}&follow=true'
+curl 'http://localhost:8080/v1/logs?service_id={service_id}&task_id={task_id}'
+```
+
+Logs are proxied from the agent that owns the task. The MVP uses newline-delimited text/chunked streaming and does not persist logs centrally.

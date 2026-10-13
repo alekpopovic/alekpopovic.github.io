@@ -1,0 +1,5 @@
+# Atlas parser validation fixture
+
+Teaching fixture, not original Orch code. Copyright2026 Aleksandar Popovic; manuscript rights decision applies. It invokes the pinned CLI ParseDeployFile and domain JobSpec.Validate; the job envelope mirrors the inspected job CLI at internal/cli/workloads.go. It starts no services and needs no Docker or database.
+
+To execute, copy main.go into `book-case-parser/` beneath a disposable source copy of Orch at cbfc94ade5b57e449d6b73bf1485b1c5b1647022. Run `go run ./book-case-parser <absolute-book-labs-specs-path>` there with Go1.25, chosen GOROOT and run-owned caches, and GOFLAGS=-buildvcs=false for exported source. Internal package rules require compiling within the disposable Orch module; never run this in immutable evidence. Actual output: validation/intake/case-study-parse.json and matching stdout. Three valid service manifests and one JobSpec pass; unknown service field rejects. These assertions prove parsing/domain validation only, not finite command execution or remote admission.

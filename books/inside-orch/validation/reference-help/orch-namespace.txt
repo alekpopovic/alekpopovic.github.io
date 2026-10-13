@@ -1,0 +1,21 @@
+Manage namespaces
+
+Usage:
+  orch namespace [command]
+
+Available Commands:
+  create      Create a namespace
+  delete      Delete an empty namespace
+  ls          List namespaces
+
+Flags:
+  -h, --help   help for namespace
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch namespace [command] --help" for more information about a command.

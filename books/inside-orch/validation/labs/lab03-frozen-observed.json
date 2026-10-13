@@ -1,0 +1,2409 @@
+{
+  "status": "passed",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "runtime_mode": "FakeRuntime and in-process MemoryService lifecycle; separate store-backed reconciler test double; no Docker, HTTP or PostgreSQL",
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "go_command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "-count=1",
+    "-v",
+    "-run",
+    "^TestBook",
+    "./.book-labs/lab03agent",
+    "./.book-labs/lab03reconciler"
+  ],
+  "input_sha256": {
+    "labs/03-reconciler-drift/fixtures/cases.json": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517",
+    "evidence/orch/internal/agent/logs.go": "3687e0832034e0ccf99ee5063f6146f0aa62bc74e864cbe3e92965881ef6d33a",
+    "evidence/orch/internal/agent/agent_test.go": "50676049697569becabc0dc0623a596fb08d2f4d3e909500d207e621a057d841",
+    "evidence/orch/internal/agent/agent.go": "29f8b5a18c060fa16fdc4120edb1ca0744204d841bff9466a1220387f42ce949",
+    "examples/teaching-extensions/lab03/agent_contract_test.go": "cc3108e2229218d8ffcd91d41be62b4aa1ea1e0671a903e7abdf798a9a9bdf32",
+    "evidence/orch/internal/reconciler/reconciler.go": "031830dcdb83a27f87b671bbc3e9bb24ebaf7d7375fc6358413debbb6bcda323",
+    "evidence/orch/internal/reconciler/reconciler_test.go": "8b95d471af5f1604f606951b1e1ed04e8f68079ca13efad49a208f4dc3504981",
+    "examples/teaching-extensions/lab03/reconciler_contract_test.go": "3df35a9d352261daf74e451e2a5c8e3db5cce1d17ee3b50bd62bafc97df2b69d"
+  },
+  "cases": [
+    {
+      "created_count": 1,
+      "drift": null,
+      "event_count_first_pass": 5,
+      "event_count_initial": 2,
+      "event_count_second_pass": 5,
+      "exact_error": "",
+      "expected_directive": {
+        "create_count": 1,
+        "reject_pulling": false,
+        "remove_owned_before": false
+      },
+      "final_service": {
+        "id": "b8099dc5-7c83-44b4-a55f-06c7a98673f1",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.466588798Z",
+        "updated_at": "2026-10-13T01:56:30.466588798Z"
+      },
+      "final_task": {
+        "id": "7890e6f9-6cb2-4ad9-b403-4adc51ffaa94",
+        "namespace": "default",
+        "service_id": "b8099dc5-7c83-44b4-a55f-06c7a98673f1",
+        "node_id": "31d5f0a3-76ef-4ac4-8a95-ff1f0a1adabe",
+        "container_id": "replacement",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.466588798Z",
+        "updated_at": "2026-10-13T01:56:30.466693773Z",
+        "started_at": "2026-10-13T01:56:30.466693773Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "missing-assigned",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "b8099dc5-7c83-44b4-a55f-06c7a98673f1",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.466606957Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "b8099dc5-7c83-44b4-a55f-06c7a98673f1",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.466588798Z",
+        "updated_at": "2026-10-13T01:56:30.466588798Z"
+      },
+      "initial_task": {
+        "id": "7890e6f9-6cb2-4ad9-b403-4adc51ffaa94",
+        "namespace": "default",
+        "service_id": "b8099dc5-7c83-44b4-a55f-06c7a98673f1",
+        "node_id": "31d5f0a3-76ef-4ac4-8a95-ff1f0a1adabe",
+        "desired_status": "running",
+        "actual_status": "assigned",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.466588798Z",
+        "updated_at": "2026-10-13T01:56:30.466588798Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "list",
+        "pull:nginx:1.27",
+        "create:7890e6f9-6cb2-4ad9-b403-4adc51ffaa94",
+        "start:replacement",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:replacement",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "31d5f0a3-76ef-4ac4-8a95-ff1f0a1adabe",
+          "status": "pulling"
+        },
+        {
+          "node_id": "31d5f0a3-76ef-4ac4-8a95-ff1f0a1adabe",
+          "status": "created",
+          "container_id": "replacement"
+        },
+        {
+          "node_id": "31d5f0a3-76ef-4ac4-8a95-ff1f0a1adabe",
+          "status": "running",
+          "container_id": "replacement"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "33f57d73-ffa7-47c6-8d84-b7ed9e929d61",
+          "TaskID": "c04ba66f-8b39-4922-956d-7662542865e3",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "33f57d73-ffa7-47c6-8d84-b7ed9e929d61",
+          "TaskID": "c04ba66f-8b39-4922-956d-7662542865e3",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        }
+      ],
+      "event_count_first_pass": 3,
+      "event_count_initial": 3,
+      "event_count_second_pass": 3,
+      "exact_error": "invalid state: task c04ba66f-8b39-4922-956d-7662542865e3 with desired=\"running\" actual=\"running\" cannot accept agent status \"pulling\"",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": true,
+        "remove_owned_before": false
+      },
+      "final_service": {
+        "id": "25bff9cf-230c-4acd-8cde-c83fc8bbd3e6",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.466773813Z",
+        "updated_at": "2026-10-13T01:56:30.466773813Z"
+      },
+      "final_task": {
+        "id": "c04ba66f-8b39-4922-956d-7662542865e3",
+        "namespace": "default",
+        "service_id": "25bff9cf-230c-4acd-8cde-c83fc8bbd3e6",
+        "node_id": "33f57d73-ffa7-47c6-8d84-b7ed9e929d61",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.466773813Z",
+        "updated_at": "2026-10-13T01:56:30.466780518Z",
+        "started_at": "2026-10-13T01:56:30.466780518Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "missing-running",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "25bff9cf-230c-4acd-8cde-c83fc8bbd3e6",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.4667882Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "25bff9cf-230c-4acd-8cde-c83fc8bbd3e6",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.466773813Z",
+        "updated_at": "2026-10-13T01:56:30.466773813Z"
+      },
+      "initial_task": {
+        "id": "c04ba66f-8b39-4922-956d-7662542865e3",
+        "namespace": "default",
+        "service_id": "25bff9cf-230c-4acd-8cde-c83fc8bbd3e6",
+        "node_id": "33f57d73-ffa7-47c6-8d84-b7ed9e929d61",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.466773813Z",
+        "updated_at": "2026-10-13T01:56:30.466780518Z",
+        "started_at": "2026-10-13T01:56:30.466780518Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "33f57d73-ffa7-47c6-8d84-b7ed9e929d61",
+          "status": "pulling"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "adc570b9-2d01-4c93-bea4-901e8fb0b1e0",
+          "TaskID": "cd656bde-5ebd-4305-8de3-bfcb4fa938fd",
+          "ContainerID": "owned-before",
+          "Message": "managed container is stopped but task should be running"
+        }
+      ],
+      "event_count_first_pass": 4,
+      "event_count_initial": 3,
+      "event_count_second_pass": 4,
+      "exact_error": "",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": false,
+        "remove_owned_before": false
+      },
+      "final_service": {
+        "id": "468d86e7-8778-4295-acbf-be37948f5410",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.46697545Z",
+        "updated_at": "2026-10-13T01:56:30.46697545Z"
+      },
+      "final_task": {
+        "id": "cd656bde-5ebd-4305-8de3-bfcb4fa938fd",
+        "namespace": "default",
+        "service_id": "468d86e7-8778-4295-acbf-be37948f5410",
+        "node_id": "adc570b9-2d01-4c93-bea4-901e8fb0b1e0",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.46697545Z",
+        "updated_at": "2026-10-13T01:56:30.467084335Z",
+        "started_at": "2026-10-13T01:56:30.466985088Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "stopped-owned",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "468d86e7-8778-4295-acbf-be37948f5410",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.46699787Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "exited",
+          "Status": "exited",
+          "Running": false,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "adc570b9-2d01-4c93-bea4-901e8fb0b1e0",
+            "orch.service_id": "468d86e7-8778-4295-acbf-be37948f5410",
+            "orch.task_id": "cd656bde-5ebd-4305-8de3-bfcb4fa938fd",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467009743Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "468d86e7-8778-4295-acbf-be37948f5410",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.46697545Z",
+        "updated_at": "2026-10-13T01:56:30.46697545Z"
+      },
+      "initial_task": {
+        "id": "cd656bde-5ebd-4305-8de3-bfcb4fa938fd",
+        "namespace": "default",
+        "service_id": "468d86e7-8778-4295-acbf-be37948f5410",
+        "node_id": "adc570b9-2d01-4c93-bea4-901e8fb0b1e0",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.46697545Z",
+        "updated_at": "2026-10-13T01:56:30.466985088Z",
+        "started_at": "2026-10-13T01:56:30.466985088Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "start:owned-before",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "adc570b9-2d01-4c93-bea4-901e8fb0b1e0",
+          "status": "running",
+          "container_id": "owned-before"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+          "TaskID": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+          "TaskID": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+          "TaskID": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        }
+      ],
+      "event_count_first_pass": 3,
+      "event_count_initial": 3,
+      "event_count_second_pass": 3,
+      "exact_error": "invalid state: task 28c3c9af-67ea-43a5-b040-76f1560bb110 with desired=\"running\" actual=\"running\" cannot accept agent status \"pulling\"",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": true,
+        "remove_owned_before": true
+      },
+      "final_service": {
+        "id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467151594Z",
+        "updated_at": "2026-10-13T01:56:30.467151594Z"
+      },
+      "final_task": {
+        "id": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+        "namespace": "default",
+        "service_id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+        "node_id": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467151594Z",
+        "updated_at": "2026-10-13T01:56:30.467167239Z",
+        "started_at": "2026-10-13T01:56:30.467167239Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "image-mismatch-running",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467179741Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.26",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+            "orch.service_id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+            "orch.task_id": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467183094Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467151594Z",
+        "updated_at": "2026-10-13T01:56:30.467151594Z"
+      },
+      "initial_task": {
+        "id": "28c3c9af-67ea-43a5-b040-76f1560bb110",
+        "namespace": "default",
+        "service_id": "6d5e05a7-4937-4d36-945c-74a2d629d36b",
+        "node_id": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467151594Z",
+        "updated_at": "2026-10-13T01:56:30.467167239Z",
+        "started_at": "2026-10-13T01:56:30.467167239Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "stop:owned-before",
+        "remove:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "4c968b98-b0b8-450a-98fc-42c1a61ce9cf",
+          "status": "pulling"
+        }
+      ]
+    },
+    {
+      "created_count": 1,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "ab230add-d272-4110-bb08-7448151947e6",
+          "TaskID": "4a58410b-7388-41e2-8e61-323486310d28",
+          "ContainerID": "owned-before",
+          "Message": "managed container labels, image, or version do not match assigned task"
+        }
+      ],
+      "event_count_first_pass": 5,
+      "event_count_initial": 2,
+      "event_count_second_pass": 5,
+      "exact_error": "",
+      "expected_directive": {
+        "create_count": 1,
+        "reject_pulling": false,
+        "remove_owned_before": true
+      },
+      "final_service": {
+        "id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467334723Z",
+        "updated_at": "2026-10-13T01:56:30.467334723Z"
+      },
+      "final_task": {
+        "id": "4a58410b-7388-41e2-8e61-323486310d28",
+        "namespace": "default",
+        "service_id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+        "node_id": "ab230add-d272-4110-bb08-7448151947e6",
+        "container_id": "replacement",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467334723Z",
+        "updated_at": "2026-10-13T01:56:30.467436415Z",
+        "started_at": "2026-10-13T01:56:30.467436415Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "version-mismatch-assigned",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467368388Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "ab230add-d272-4110-bb08-7448151947e6",
+            "orch.service_id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+            "orch.task_id": "4a58410b-7388-41e2-8e61-323486310d28",
+            "orch.version": "999"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467372229Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467334723Z",
+        "updated_at": "2026-10-13T01:56:30.467334723Z"
+      },
+      "initial_task": {
+        "id": "4a58410b-7388-41e2-8e61-323486310d28",
+        "namespace": "default",
+        "service_id": "9e29c97a-33d7-40dc-9451-ee2b68042885",
+        "node_id": "ab230add-d272-4110-bb08-7448151947e6",
+        "desired_status": "running",
+        "actual_status": "assigned",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467334723Z",
+        "updated_at": "2026-10-13T01:56:30.467334723Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "list",
+        "stop:owned-before",
+        "remove:owned-before",
+        "pull:nginx:1.27",
+        "create:4a58410b-7388-41e2-8e61-323486310d28",
+        "start:replacement",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:replacement",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "ab230add-d272-4110-bb08-7448151947e6",
+          "status": "pulling"
+        },
+        {
+          "node_id": "ab230add-d272-4110-bb08-7448151947e6",
+          "status": "created",
+          "container_id": "replacement"
+        },
+        {
+          "node_id": "ab230add-d272-4110-bb08-7448151947e6",
+          "status": "running",
+          "container_id": "replacement"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+          "TaskID": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+          "TaskID": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+          "TaskID": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        }
+      ],
+      "event_count_first_pass": 3,
+      "event_count_initial": 3,
+      "event_count_second_pass": 3,
+      "exact_error": "invalid state: task daeb68cf-94e5-47a4-aced-2b5495c5f601 with desired=\"running\" actual=\"running\" cannot accept agent status \"pulling\"",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": true,
+        "remove_owned_before": true
+      },
+      "final_service": {
+        "id": "10a17f2d-9f92-4469-82a1-2755fe8f99e7",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467499413Z",
+        "updated_at": "2026-10-13T01:56:30.467499413Z"
+      },
+      "final_task": {
+        "id": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+        "namespace": "default",
+        "service_id": "10a17f2d-9f92-4469-82a1-2755fe8f99e7",
+        "node_id": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467499413Z",
+        "updated_at": "2026-10-13T01:56:30.467506048Z",
+        "started_at": "2026-10-13T01:56:30.467506048Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "service-label-mismatch-running",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "10a17f2d-9f92-4469-82a1-2755fe8f99e7",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467528957Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+            "orch.service_id": "different-service",
+            "orch.task_id": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467532798Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "10a17f2d-9f92-4469-82a1-2755fe8f99e7",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467499413Z",
+        "updated_at": "2026-10-13T01:56:30.467499413Z"
+      },
+      "initial_task": {
+        "id": "daeb68cf-94e5-47a4-aced-2b5495c5f601",
+        "namespace": "default",
+        "service_id": "10a17f2d-9f92-4469-82a1-2755fe8f99e7",
+        "node_id": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467499413Z",
+        "updated_at": "2026-10-13T01:56:30.467506048Z",
+        "started_at": "2026-10-13T01:56:30.467506048Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "stop:owned-before",
+        "remove:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "790e1460-49d6-4dbd-9394-a4a42e4ceb53",
+          "status": "pulling"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "aaf683af-797d-4575-850f-542b03dc40dd",
+          "TaskID": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "aaf683af-797d-4575-850f-542b03dc40dd",
+          "TaskID": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        },
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "aaf683af-797d-4575-850f-542b03dc40dd",
+          "TaskID": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "aaf683af-797d-4575-850f-542b03dc40dd",
+          "TaskID": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        }
+      ],
+      "event_count_first_pass": 3,
+      "event_count_initial": 3,
+      "event_count_second_pass": 3,
+      "exact_error": "invalid state: task 54698860-d5b1-4cc5-b121-e7fa4047530e with desired=\"running\" actual=\"running\" cannot accept agent status \"pulling\"",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": true,
+        "remove_owned_before": false
+      },
+      "final_service": {
+        "id": "8f815591-3978-452f-9b08-1d26f92961cc",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467697838Z",
+        "updated_at": "2026-10-13T01:56:30.467697838Z"
+      },
+      "final_task": {
+        "id": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+        "namespace": "default",
+        "service_id": "8f815591-3978-452f-9b08-1d26f92961cc",
+        "node_id": "aaf683af-797d-4575-850f-542b03dc40dd",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467697838Z",
+        "updated_at": "2026-10-13T01:56:30.467712994Z",
+        "started_at": "2026-10-13T01:56:30.467712994Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "foreign-node-reference",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "8f815591-3978-452f-9b08-1d26f92961cc",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467724588Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "8f815591-3978-452f-9b08-1d26f92961cc",
+            "orch.task_id": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467728359Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "8f815591-3978-452f-9b08-1d26f92961cc",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467697838Z",
+        "updated_at": "2026-10-13T01:56:30.467697838Z"
+      },
+      "initial_task": {
+        "id": "54698860-d5b1-4cc5-b121-e7fa4047530e",
+        "namespace": "default",
+        "service_id": "8f815591-3978-452f-9b08-1d26f92961cc",
+        "node_id": "aaf683af-797d-4575-850f-542b03dc40dd",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467697838Z",
+        "updated_at": "2026-10-13T01:56:30.467712994Z",
+        "started_at": "2026-10-13T01:56:30.467712994Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "aaf683af-797d-4575-850f-542b03dc40dd",
+          "status": "pulling"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "unexpected_managed_container",
+          "NodeID": "df4bd052-de32-40c2-9bf7-51037fdfcc77",
+          "TaskID": "orphan-task",
+          "ContainerID": "owned-before",
+          "Message": "managed container is not assigned to this node"
+        }
+      ],
+      "event_count_first_pass": 5,
+      "event_count_initial": 5,
+      "event_count_second_pass": 5,
+      "exact_error": "",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": false,
+        "remove_owned_before": true
+      },
+      "final_service": {
+        "id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "deleted",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467858547Z",
+        "updated_at": "2026-10-13T01:56:30.467887672Z"
+      },
+      "final_task": {
+        "id": "c09fd540-e6fb-42e8-80f0-2ea1c3862fd7",
+        "namespace": "default",
+        "service_id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+        "node_id": "df4bd052-de32-40c2-9bf7-51037fdfcc77",
+        "desired_status": "stopped",
+        "actual_status": "removed",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467858547Z",
+        "updated_at": "2026-10-13T01:56:30.467887672Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "2026-10-13T01:56:30.467887672Z"
+      },
+      "id": "unexpected-owned",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467880059Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "df4bd052-de32-40c2-9bf7-51037fdfcc77",
+            "orch.service_id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+            "orch.task_id": "orphan-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.467896123Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "deleted",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467858547Z",
+        "updated_at": "2026-10-13T01:56:30.467887672Z"
+      },
+      "initial_task": {
+        "id": "c09fd540-e6fb-42e8-80f0-2ea1c3862fd7",
+        "namespace": "default",
+        "service_id": "c1f0e806-5d25-4f89-a9b8-6d5f19b9c850",
+        "node_id": "df4bd052-de32-40c2-9bf7-51037fdfcc77",
+        "desired_status": "stopped",
+        "actual_status": "removed",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467858547Z",
+        "updated_at": "2026-10-13T01:56:30.467887672Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "2026-10-13T01:56:30.467887672Z"
+      },
+      "observed_operations": [
+        "list",
+        "list",
+        "stop:owned-before",
+        "remove:owned-before",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "df4bd052-de32-40c2-9bf7-51037fdfcc77",
+          "status": "removed",
+          "container_id": "owned-before"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": [
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "67c743ba-98f0-4170-984d-6b44d107c584",
+          "TaskID": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "67c743ba-98f0-4170-984d-6b44d107c584",
+          "TaskID": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        },
+        {
+          "Type": "managed_container_state_mismatch",
+          "NodeID": "67c743ba-98f0-4170-984d-6b44d107c584",
+          "TaskID": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+          "ContainerID": "owned-before",
+          "Message": "container metadata does not match assigned task"
+        },
+        {
+          "Type": "managed_container_missing",
+          "NodeID": "67c743ba-98f0-4170-984d-6b44d107c584",
+          "TaskID": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+          "ContainerID": "",
+          "Message": "assigned task container is missing"
+        }
+      ],
+      "event_count_first_pass": 3,
+      "event_count_initial": 3,
+      "event_count_second_pass": 3,
+      "exact_error": "invalid state: task 4a068ca2-29a1-48a9-ba87-8bbe954e564c with desired=\"running\" actual=\"running\" cannot accept agent status \"pulling\"",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": true,
+        "remove_owned_before": false
+      },
+      "final_service": {
+        "id": "31f54ef6-ddd7-44b1-a955-e160d37c6f31",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467982938Z",
+        "updated_at": "2026-10-13T01:56:30.467982938Z"
+      },
+      "final_task": {
+        "id": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+        "namespace": "default",
+        "service_id": "31f54ef6-ddd7-44b1-a955-e160d37c6f31",
+        "node_id": "67c743ba-98f0-4170-984d-6b44d107c584",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467982938Z",
+        "updated_at": "2026-10-13T01:56:30.467993344Z",
+        "started_at": "2026-10-13T01:56:30.467993344Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "id": "unmanaged-name-similarity",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "31f54ef6-ddd7-44b1-a955-e160d37c6f31",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.468005706Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "31f54ef6-ddd7-44b1-a955-e160d37c6f31",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.467982938Z",
+        "updated_at": "2026-10-13T01:56:30.467982938Z"
+      },
+      "initial_task": {
+        "id": "4a068ca2-29a1-48a9-ba87-8bbe954e564c",
+        "namespace": "default",
+        "service_id": "31f54ef6-ddd7-44b1-a955-e160d37c6f31",
+        "node_id": "67c743ba-98f0-4170-984d-6b44d107c584",
+        "container_id": "owned-before",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.467982938Z",
+        "updated_at": "2026-10-13T01:56:30.467993344Z",
+        "started_at": "2026-10-13T01:56:30.467993344Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "inspect:owned-before",
+        "list",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "67c743ba-98f0-4170-984d-6b44d107c584",
+          "status": "pulling"
+        }
+      ]
+    },
+    {
+      "created_count": 0,
+      "drift": null,
+      "event_count_first_pass": 6,
+      "event_count_initial": 4,
+      "event_count_second_pass": 6,
+      "exact_error": "",
+      "expected_directive": {
+        "create_count": 0,
+        "reject_pulling": false,
+        "remove_owned_before": true
+      },
+      "final_service": {
+        "id": "cc715358-b975-4874-ae91-79c670cf62c9",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "deleted",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.468157755Z",
+        "updated_at": "2026-10-13T01:56:30.468233814Z"
+      },
+      "final_task": {
+        "id": "6a30d03e-72f3-4109-beaa-f473220f9f53",
+        "namespace": "default",
+        "service_id": "cc715358-b975-4874-ae91-79c670cf62c9",
+        "node_id": "27f7fc6c-51e6-4046-9766-e0e73cfdc524",
+        "container_id": "owned-before",
+        "desired_status": "stopped",
+        "actual_status": "removed",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.468157755Z",
+        "updated_at": "2026-10-13T01:56:30.468233814Z",
+        "started_at": "2026-10-13T01:56:30.468169209Z",
+        "finished_at": "2026-10-13T01:56:30.468233814Z"
+      },
+      "id": "soft-delete-owned",
+      "initial_managed_containers": [
+        {
+          "ID": "other-node-sentinel",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "other-node",
+            "orch.service_id": "cc715358-b975-4874-ae91-79c670cf62c9",
+            "orch.task_id": "other-task",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.468194632Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        {
+          "ID": "owned-before",
+          "Name": "",
+          "Image": "nginx:1.27",
+          "State": "running",
+          "Status": "running",
+          "Running": true,
+          "ExitCode": 0,
+          "Labels": {
+            "orch.managed": "true",
+            "orch.node_id": "27f7fc6c-51e6-4046-9766-e0e73cfdc524",
+            "orch.service_id": "cc715358-b975-4874-ae91-79c670cf62c9",
+            "orch.task_id": "6a30d03e-72f3-4109-beaa-f473220f9f53",
+            "orch.version": "1"
+          },
+          "CreatedAt": "2026-10-13T01:56:30.468197985Z",
+          "StartedAt": "0001-01-01T00:00:00Z",
+          "FinishedAt": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "initial_service": {
+        "id": "cc715358-b975-4874-ae91-79c670cf62c9",
+        "namespace": "default",
+        "spec": {
+          "name": "atlas-api",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "nginx:1.27",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "deleting",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:56:30.468157755Z",
+        "updated_at": "2026-10-13T01:56:30.468201407Z"
+      },
+      "initial_task": {
+        "id": "6a30d03e-72f3-4109-beaa-f473220f9f53",
+        "namespace": "default",
+        "service_id": "cc715358-b975-4874-ae91-79c670cf62c9",
+        "node_id": "27f7fc6c-51e6-4046-9766-e0e73cfdc524",
+        "container_id": "owned-before",
+        "desired_status": "stopped",
+        "actual_status": "running",
+        "image": "nginx:1.27",
+        "requested_image": "nginx:1.27",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:56:30.468157755Z",
+        "updated_at": "2026-10-13T01:56:30.468201407Z",
+        "started_at": "2026-10-13T01:56:30.468169209Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      "observed_operations": [
+        "list",
+        "inspect:owned-before",
+        "stop:owned-before",
+        "remove:owned-before",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel",
+        "inspect:owned-before",
+        "list",
+        "inspect:unmanaged-sentinel",
+        "inspect:other-node-sentinel"
+      ],
+      "ownership_conclusion": "Both protected sentinels survived; only matching node/task managed containers eligible for cleanup",
+      "passed": true,
+      "protected_foreign_container_id": "other-node-sentinel",
+      "protected_unmanaged_container_id": "unmanaged-sentinel",
+      "status_reports_first_pass": [
+        {
+          "node_id": "27f7fc6c-51e6-4046-9766-e0e73cfdc524",
+          "status": "removed",
+          "container_id": "owned-before"
+        }
+      ]
+    },
+    {
+      "event_count_first_pass": 2,
+      "event_count_second_pass": 2,
+      "expected_created": 2,
+      "expected_stop_order": null,
+      "final_service_status": "active",
+      "id": "below-target",
+      "initial_service": {
+        "id": "svc",
+        "namespace": "",
+        "spec": {
+          "name": "svc",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 3,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 0,
+              "memory": 0
+            },
+            "limits": {
+              "cpu": 0,
+              "memory": 0
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "initial_tasks": [
+        {
+          "id": "running",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_created": [
+        {
+          "id": "created-task-1",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "pending",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:56:30.464879247Z",
+          "updated_at": "2026-10-13T01:56:30.464879247Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "created-task-2",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "pending",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:56:30.46488672Z",
+          "updated_at": "2026-10-13T01:56:30.46488672Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_stop_order": null,
+      "ownership_conclusion": "Store intent only; no runtime calls",
+      "passed": true,
+      "service_before_removed_ack": "active"
+    },
+    {
+      "event_count_first_pass": 1,
+      "event_count_second_pass": 1,
+      "expected_created": 1,
+      "expected_stop_order": null,
+      "final_service_status": "active",
+      "id": "failed-always",
+      "initial_service": {
+        "id": "svc",
+        "namespace": "",
+        "spec": {
+          "name": "svc",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 0,
+              "memory": 0
+            },
+            "limits": {
+              "cpu": 0,
+              "memory": 0
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "always"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "initial_tasks": [
+        {
+          "id": "failed",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "failed",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_created": [
+        {
+          "id": "created-task-1",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "pending",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:56:30.464975072Z",
+          "updated_at": "2026-10-13T01:56:30.464975072Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_stop_order": null,
+      "ownership_conclusion": "Store intent only; no runtime calls",
+      "passed": true,
+      "service_before_removed_ack": "active"
+    },
+    {
+      "event_count_first_pass": 0,
+      "event_count_second_pass": 0,
+      "expected_created": 0,
+      "expected_stop_order": null,
+      "final_service_status": "active",
+      "id": "failed-never",
+      "initial_service": {
+        "id": "svc",
+        "namespace": "",
+        "spec": {
+          "name": "svc",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 0,
+              "memory": 0
+            },
+            "limits": {
+              "cpu": 0,
+              "memory": 0
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": "never"
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "initial_tasks": [
+        {
+          "id": "failed",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "failed",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_created": null,
+      "observed_stop_order": null,
+      "ownership_conclusion": "Store intent only; no runtime calls",
+      "passed": true,
+      "service_before_removed_ack": "active"
+    },
+    {
+      "event_count_first_pass": 3,
+      "event_count_second_pass": 3,
+      "expected_created": 0,
+      "expected_stop_order": [
+        "pending-z",
+        "pending-a",
+        "assigned"
+      ],
+      "final_service_status": "active",
+      "id": "scale-order",
+      "initial_service": {
+        "id": "svc",
+        "namespace": "",
+        "spec": {
+          "name": "svc",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 0,
+              "memory": 0
+            },
+            "limits": {
+              "cpu": 0,
+              "memory": 0
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "initial_tasks": [
+        {
+          "id": "running",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "pending-a",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "pending",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "pending-z",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "pending",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "assigned",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "assigned",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_created": null,
+      "observed_stop_order": [
+        "pending-z",
+        "pending-a",
+        "assigned"
+      ],
+      "ownership_conclusion": "Store intent only; no runtime calls",
+      "passed": true,
+      "service_before_removed_ack": "active"
+    },
+    {
+      "event_count_first_pass": 1,
+      "event_count_second_pass": 1,
+      "expected_created": 0,
+      "expected_stop_order": [
+        "running"
+      ],
+      "final_service_status": "deleted",
+      "id": "soft-delete",
+      "initial_service": {
+        "id": "svc",
+        "namespace": "",
+        "spec": {
+          "name": "svc",
+          "image": "nginx:1.27",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 0,
+              "memory": 0
+            },
+            "limits": {
+              "cpu": 0,
+              "memory": 0
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          }
+        },
+        "status": "deleting",
+        "deployment_version": 1,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "initial_tasks": [
+        {
+          "id": "running",
+          "namespace": "",
+          "service_id": "svc",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "0001-01-01T00:00:00Z",
+          "updated_at": "2026-06-11T10:00:00Z",
+          "started_at": "0001-01-01T00:00:00Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ],
+      "observed_created": null,
+      "observed_stop_order": [
+        "running"
+      ],
+      "ownership_conclusion": "Store intent only; no runtime calls",
+      "passed": true,
+      "service_before_removed_ack": "deleting"
+    }
+  ],
+  "limitations": [
+    "Copied private package access, no behavior changes to baseline sources.",
+    "FakeRuntime does not establish Docker daemon behavior.",
+    "Store-backed reconciler is not the shipped server MemoryService loop.",
+    "Expected lifecycle rejection is a passing assertion, not successful recreation."
+  ]
+}

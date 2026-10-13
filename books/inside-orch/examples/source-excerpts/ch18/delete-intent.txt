@@ -1,0 +1,10 @@
+	s.cancelActiveDeploymentsLocked(id, now, "service deletion requested")
+	service.Status = types.ServiceDeleting
+	service.UpdatedAt = now
+	s.services[id] = service
+	for taskID, task := range s.tasks {
+		if task.ServiceID == id {
+			if task.DesiredStatus != types.TaskRemoved && task.ActualStatus != types.TaskRemoved {
+				if err := types.ValidateTaskDesiredTransition(task.DesiredStatus, types.TaskStopped); err != nil {
+					return fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+				}

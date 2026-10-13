@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+"""Run offline inventory in a fresh disposable orch module, never in evidence."""
+from pathlib import Path
+import argparse,datetime,json,os,shutil,subprocess
+P=argparse.ArgumentParser();P.add_argument('--go-root',required=True);P.add_argument('--module-cache',required=True);P.add_argument('--workdir',default='/tmp/inside-orch-reference-cbfc94ade5b5');a=P.parse_args()
+B=Path(__file__).resolve().parents[1];lock=json.loads((B/'evidence/source-lock.json').read_text());dest=Path(a.workdir).resolve();src=dest/'orch';assert not src.is_relative_to(B/'evidence')
+if not src.exists():shutil.copytree(B/'evidence/orch',src)
+(src/'book-reference').mkdir(exist_ok=True);shutil.copy2(B/'examples/reference/inventory/main.go',src/'book-reference/main.go');config=dest/'cli.yml';config.write_text('server_url: http://127.0.0.1:18079\nnamespace: atlas-reference\n')
+env={k:v for k,v in os.environ.items() if not k.startswith(('ORCH_','DOCKER_','DATABASE_URL'))};env.update(GOROOT=a.go_root,GOTOOLCHAIN='local',GOPATH=str(dest/'gopath'),GOMODCACHE=a.module_cache,GOCACHE=str(dest/'gocache'),GOENV='off',GOPROXY='off',GOFLAGS='-mod=readonly',REFERENCE_CONFIG=str(config))
+cmd=[a.go_root+'/bin/go','run','./book-reference'];start=datetime.datetime.now(datetime.timezone.utc).isoformat();r=subprocess.run(cmd,cwd=src,env=env,capture_output=True,text=True);version=subprocess.run([a.go_root+'/bin/go','version'],env=env,capture_output=True,text=True,check=True).stdout.strip();log={'command':cmd,'cwd':str(src),'source_sha':lock['baseline_sha'],'go_version':version,'started_at_utc':start,'finished_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'exit_code':r.returncode,'scope':'Offline command constructors/config/lifecycle validators only; no server/runtime/DB.','stdout_path':'validation/reference-offline-inventory.stdout.json','stderr_path':'validation/reference-offline-inventory.stderr.txt'};(B/log['stdout_path']).write_text(r.stdout);(B/log['stderr_path']).write_text(r.stderr);(B/'validation/reference-offline-inventory.json').write_text(json.dumps(log,indent=2)+'\n');print(json.dumps(log));raise SystemExit(r.returncode)

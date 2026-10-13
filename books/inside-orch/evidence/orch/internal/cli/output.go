@@ -1,0 +1,250 @@
+package cli
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"strings"
+	"text/tabwriter"
+
+	"github.com/alekpopovic/orch/internal/audit"
+	"github.com/alekpopovic/orch/internal/controlplane"
+	"github.com/alekpopovic/orch/internal/discovery"
+	"github.com/alekpopovic/orch/pkg/types"
+)
+
+func writeValue(w io.Writer, output string, value any) error {
+	if output == "json" {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(value)
+	}
+	return fmt.Errorf("table output for %T is not implemented", value)
+}
+
+func writeNodes(w io.Writer, output string, nodes []types.Node) error {
+	if output == "json" {
+		return writeValue(w, output, nodes)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tHOSTNAME\tADDRESS\tSTATUS\tCPU\tMEMORY")
+	for _, node := range nodes {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%d\t%d\n", node.ID, node.Hostname, node.AdvertiseAddress, node.Status, node.Capacity.CPU, node.Capacity.Memory)
+	}
+	return tw.Flush()
+}
+
+func writeNamespaces(w io.Writer, output string, namespaces []types.Namespace) error {
+	if output == "json" {
+		return writeValue(w, output, namespaces)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "NAME\tCREATED")
+	for _, item := range namespaces {
+		fmt.Fprintf(tw, "%s\t%s\n", item.Name, item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	}
+	return tw.Flush()
+}
+
+func writeQuota(w io.Writer, output string, value types.ResourceQuota, usage types.ResourceUsage) error {
+	if output == "json" {
+		return writeValue(w, output, map[string]any{"quota": value, "usage": usage})
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "NAMESPACE\tRESOURCE\tUSED\tLIMIT")
+	rows := []struct {
+		name  string
+		used  int64
+		limit int64
+	}{
+		{"services", int64(usage.Services), int64(value.MaxServices)},
+		{"replicas", int64(usage.Replicas), int64(value.MaxReplicas)},
+		{"cpu_millicores", usage.CPUMillicores, value.MaxCPUMillicores},
+		{"memory_bytes", usage.MemoryBytes, value.MaxMemoryBytes},
+		{"public_ports", int64(usage.PublicPorts), int64(value.MaxPublicPorts)},
+		{"secrets", int64(usage.Secrets), int64(value.MaxSecrets)},
+		{"registry_credentials", int64(usage.RegistryCredentials), int64(value.MaxRegistryCredentials)},
+	}
+	for _, row := range rows {
+		limit := fmt.Sprint(row.limit)
+		if row.limit == 0 {
+			limit = "unlimited"
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%d\t%s\n", value.Namespace, row.name, row.used, limit)
+	}
+	return tw.Flush()
+}
+
+func writeGitOpsSources(w io.Writer, output string, sources []types.GitOpsSource) error {
+	if output == "json" {
+		return writeValue(w, output, sources)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tNAMESPACE\tREPOSITORY\tBRANCH\tPATH\tINTERVAL\tPRUNE\tREVISION\tLAST_ERROR")
+	for _, source := range sources {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\t%t\t%s\t%s\n", source.ID, source.Namespace, source.RepositoryURL, source.Branch, source.Path, source.SyncInterval, source.Prune, source.LastRevision, source.LastError)
+	}
+	return tw.Flush()
+}
+
+func writeGitOpsStatus(w io.Writer, output string, services []types.Service) error {
+	if output == "json" {
+		return writeValue(w, output, services)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "SERVICE\tSTATUS\tSOURCE\tCOMMIT\tPATH")
+	for _, v := range services {
+		if v.GitOps != nil {
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", v.Spec.Name, v.GitOps.Status, v.GitOps.SourceID, v.GitOps.SourceCommit, v.GitOps.SourcePath)
+		}
+	}
+	return tw.Flush()
+}
+func writeJobs(w io.Writer, output string, items []types.Job) error {
+	if output == "json" {
+		return writeValue(w, output, items)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tNAME\tSTATUS\tATTEMPTS\tIMAGE")
+	for _, v := range items {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%s\n", v.ID, v.Spec.Name, v.Status, v.Attempts, v.Spec.Image)
+	}
+	return tw.Flush()
+}
+func writeCronJobs(w io.Writer, output string, items []types.CronJob) error {
+	if output == "json" {
+		return writeValue(w, output, items)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tNAME\tSCHEDULE\tTIMEZONE\tSUSPENDED")
+	for _, v := range items {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%t\n", v.ID, v.Spec.Name, v.Spec.Schedule, v.Spec.Timezone, v.Spec.Suspended)
+	}
+	return tw.Flush()
+}
+func writeVolumes(w io.Writer, output string, items []types.Volume) error {
+	if output == "json" {
+		return writeValue(w, output, items)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tNAME\tDRIVER\tNODE")
+	for _, v := range items {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", v.ID, v.Name, v.Driver, v.NodeID)
+	}
+	return tw.Flush()
+}
+
+func writeNode(w io.Writer, output string, node types.Node) error {
+	if output == "json" {
+		return writeValue(w, output, node)
+	}
+	return writeNodes(w, output, []types.Node{node})
+}
+
+func writeNodeDrainStatus(w io.Writer, output string, status controlplane.NodeDrainStatus) error {
+	if output == "json" {
+		return writeValue(w, output, status)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "NODE\tNODE_STATUS\tPHASE\tREMAINING\tREPLACEMENTS\tREADY\tMESSAGE")
+	fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
+		status.NodeID,
+		status.NodeStatus,
+		status.Phase,
+		status.RemainingTasks,
+		status.ReplacementTasks,
+		status.ReplacementReady,
+		status.Message,
+	)
+	return tw.Flush()
+}
+
+func writeServices(w io.Writer, output string, services []types.Service) error {
+	if output == "json" {
+		return writeValue(w, output, services)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tNAME\tIMAGE\tREPLICAS\tVERSION")
+	for _, service := range services {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%d\n", service.ID, service.Spec.Name, service.Spec.Image, service.Spec.Replicas, service.DeploymentVersion)
+	}
+	return tw.Flush()
+}
+
+func writeService(w io.Writer, output string, service types.Service) error {
+	if output == "json" {
+		return writeValue(w, output, service)
+	}
+	return writeServices(w, output, []types.Service{service})
+}
+
+func writeDeployment(w io.Writer, output string, deployment types.Deployment) error {
+	if output == "json" {
+		return writeValue(w, output, deployment)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tSERVICE\tFROM\tTO\tSTRATEGY\tSTATUS")
+	fmt.Fprintf(tw, "%s\t%s\t%d\t%d\t%s\t%s\n", deployment.ID, deployment.ServiceID, deployment.FromVersion, deployment.ToVersion, deployment.Strategy, deployment.Status)
+	return tw.Flush()
+}
+
+func writeTasks(w io.Writer, output string, tasks []types.Task) error {
+	if output == "json" {
+		return writeValue(w, output, tasks)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tSERVICE\tNODE\tDESIRED\tACTUAL\tIMAGE\tRESTARTS")
+	for _, task := range tasks {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\t%d\n", task.ID, task.ServiceID, task.NodeID, task.DesiredStatus, task.ActualStatus, task.Image, task.RestartCount)
+	}
+	return tw.Flush()
+}
+
+func writeEndpoints(w io.Writer, output string, endpoints discovery.ServiceEndpoints) error {
+	if output == "json" {
+		return writeValue(w, output, endpoints)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "SERVICE\tTASK\tNODE\tADDRESS\tHOST_PORT\tCONTAINER_PORT\tPROTO\tHEALTH\tVERSION")
+	for _, endpoint := range endpoints.Endpoints {
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%d\n",
+			endpoint.ServiceName,
+			endpoint.TaskID,
+			endpoint.NodeID,
+			endpoint.NodeAddress,
+			endpoint.PublicHostPort,
+			endpoint.ContainerPort,
+			endpoint.Protocol,
+			endpoint.HealthStatus,
+			endpoint.ServiceVersion,
+		)
+	}
+	return tw.Flush()
+}
+
+func writeEvents(w io.Writer, output string, events []types.Event) error {
+	if output == "json" {
+		return writeValue(w, output, events)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "TIME\tSEVERITY\tTYPE\tSOURCE\tOBJECT\tMESSAGE")
+	for _, event := range events {
+		object := strings.Trim(event.RelatedObjectType+"/"+event.RelatedObjectID, "/")
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n", event.Timestamp.Format("2006-01-02T15:04:05Z07:00"), event.Severity, event.Type, event.Source, object, event.Message)
+	}
+	return tw.Flush()
+}
+
+func writeAuditLogs(w io.Writer, output string, logs []audit.Log) error {
+	if output == "json" {
+		return writeValue(w, output, logs)
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "TIME\tOUTCOME\tACTOR\tACTION\tTARGET\tREQUEST_ID")
+	for _, log := range logs {
+		actor := strings.Trim(string(log.ActorType)+"/"+log.ActorID, "/")
+		target := strings.Trim(log.TargetType+"/"+log.TargetID, "/")
+		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n", log.Timestamp.Format("2006-01-02T15:04:05Z07:00"), log.Outcome, actor, log.Action, target, log.RequestID)
+	}
+	return tw.Flush()
+}

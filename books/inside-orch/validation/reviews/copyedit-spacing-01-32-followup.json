@@ -1,0 +1,111 @@
+{
+  "status": "applied",
+  "at_utc": "2026-10-13T01:36:01.613271+00:00",
+  "scope": "Narrow spacing copyedit only; no semantic or source-listing changes. Final whole-book copyedit remains separate.",
+  "changes": [
+    {
+      "path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "line": 76,
+      "before": "The HTTP resource decoder also distinguishes JSON numbers from strings: numeric CPU is already millicores, while a CPU string such as \"1\" passes through ParseCPU and means 1,000 millicores. A raw numeric0 is rejected, whereas an absent field represents omission. Therefore copying a Go zero-valued struct into raw JSON is not equivalent to omitting resource fields.",
+      "after": "The HTTP resource decoder also distinguishes JSON numbers from strings: numeric CPU is already millicores, while a CPU string such as \"1\" passes through ParseCPU and means 1,000 millicores. A raw numeric 0 is rejected, whereas an absent field represents omission. Therefore copying a Go zero-valued struct into raw JSON is not equivalent to omitting resource fields."
+    },
+    {
+      "path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "line": 106,
+      "before": "Our local parser lab is independently reproducible without Docker. With the disposable baseline's built CLI and Python3 available, run:",
+      "after": "Our local parser lab is independently reproducible without Docker. With the disposable baseline's built CLI and Python 3 available, run:"
+    },
+    {
+      "path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "line": 63,
+      "before": "The book-side harness is `examples/teaching-extensions/ch06/observe_container_restart.py`. It verifies every locked source file in the disposable working copy before launching the binary. Prerequisites are the already built baseline server, Python3, access to Docker, and a cached `nginx:1.27-alpine` image. It refuses an existing evidence output and uses a newly selected loopback port. No pre-existing server endpoint is contacted.",
+      "after": "The book-side harness is `examples/teaching-extensions/ch06/observe_container_restart.py`. It verifies every locked source file in the disposable working copy before launching the binary. Prerequisites are the already built baseline server, Python 3, access to Docker, and a cached `nginx:1.27-alpine` image. It refuses an existing evidence output and uses a newly selected loopback port. No pre-existing server endpoint is contacted."
+    },
+    {
+      "path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "line": 92,
+      "before": "The real-handler test creates Atlas, checks its returned identity/name, requests a non-UUID service ID, and verifies a 400 invalid_argument APIError with a request ID. It submits an unknown top-level request field and expects 400 with the v1 header. It also verifies absent credentials produce 401 when JWT enforcement is configured, and v2 remains404. The additive/renamed fixtures test a different, explicitly controlled decoding boundary.",
+      "after": "The real-handler test creates Atlas, checks its returned identity/name, requests a non-UUID service ID, and verifies a 400 invalid_argument APIError with a request ID. It submits an unknown top-level request field and expects 400 with the v1 header. It also verifies absent credentials produce 401 when JWT enforcement is configured, and v2 remains 404. The additive/renamed fixtures test a different, explicitly controlled decoding boundary."
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "line": 66,
+      "before": "The implementation calls LoadCLI for server, token, and namespace separately. A malformed file can fail server selection before any request is made. That is different from successful configuration followed by401. Report the failing boundary and preserve the command exit code, rather than telling the operator every problem is a bad token.",
+      "after": "The implementation calls LoadCLI for server, token, and namespace separately. A malformed file can fail server selection before any request is made. That is different from successful configuration followed by 401. Report the failing boundary and preserve the command exit code, rather than telling the operator every problem is a bad token."
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "line": 99,
+      "before": "The integration harness `examples/teaching-extensions/ch08/exercise_cli.py` verifies baseline hashes, starts one actual server on a newly selected loopback port, creates temporary config files, and executes the illustrated CLI/status procedures. Prerequisites are Python3, the built pinned CLI/server, and local listener permission. No Docker daemon, database, or external endpoint is needed.",
+      "after": "The integration harness `examples/teaching-extensions/ch08/exercise_cli.py` verifies baseline hashes, starts one actual server on a newly selected loopback port, creates temporary config files, and executes the illustrated CLI/status procedures. Prerequisites are Python 3, the built pinned CLI/server, and local listener permission. No Docker daemon, database, or external endpoint is needed."
+    }
+  ],
+  "reviewed_paths": [
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md"
+  ],
+  "final_hashes": {
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "cc801f3e4f6ae20012c7c5780a8fc994291360d4db70ed490b559fa7fb036ee9",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "7b147a5bf08133bc2901c915763241bb6244534f233cad7c4b8c026365ed7dbe",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "9d368fc40bee976c9cbe7a7e6c07a3ab426ee21ce12865cdce431ad70cec3779",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "797d343ff6123da6acac69205b1c02df797b943011f03dba79aada1d1ffae50d",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "fde6ef7a6e713cda32b83450da91cbc35d7cc8e2616dfd72cd24a24e3a42a076",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "756fef9731ed42822eec94a588969feacbb568470b061ca7cdb39346a862197f",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "ab4ce4c90a62f7142952f4e7fefbfa3558aab8dd87facf94f6df89db8ef6ec6b",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "c6435e873dd06b8521a6a79297c934ba799c4917b302e16ac0e1964f22d9d6a0",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "3c1850bd28d43d706a6bb73176f7471a5f625aceb61ce8211c170898d17f6f72",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "bfbb43d143000cfb888d9912ddbc6dc435603c4800d931a1361de5564359578e",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a38ccfada3e80477fdf5661de7a47f9cdf17e0ba04da4fbeb200584ef70aa5af",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "01962fcbdafb7c714cf8a318887101a04353173222c6956d9749cd434d8ff567",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "5bf7469bd19acbe022f439b785e730eb30b5755bff73919c4b4b1eb2c65f9da6",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "8cd5845ec7ec1ac643cc3b45fefa026cd65ef39d5de38bca49095fa327ec4c37",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "a52de677f9b33c50baaedb4604fae80fc65329d779838c0920d17b333aae6662",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md": "4d16dfa95c68d6a2471ac514a6218514fc5e3c8474f47f6a6a6bc432d4ef5e9d",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md": "206a9ec016a9748710cd3cf5a1c9fb8ec44e4f6783a5ec8b01d253371094db12",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md": "8676577ad3a5bfb4a48566fccbfb21ab664ff3dcc8f2292fb770786533c34367",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md": "8701625187ca2c56cee26d16aa640aa55719bfeb42bbd19f35821ce01795b30a",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c"
+  }
+}

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch40/verify_dossier.py", line 20, in <module>
+    p=B/path;d=json.loads(p.read_text());assert d['source_sha']==SHA;assert d['status']=='passed',(path,d.get('status'))
+                                                                            ^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('validation/intake/orch-build-export.json', 'failed')

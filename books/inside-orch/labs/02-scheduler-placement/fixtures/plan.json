@@ -1,0 +1,411 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "input": {
+    "PendingTasks": [
+      {
+        "id": "atlas-01",
+        "namespace": "",
+        "service_id": "fixed",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "atlas-02",
+        "namespace": "",
+        "service_id": "dynamic",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "atlas-03",
+        "namespace": "",
+        "service_id": "dynamic",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "atlas-04",
+        "namespace": "",
+        "service_id": "label-miss",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "atlas-05",
+        "namespace": "",
+        "service_id": "too-large",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "atlas-06",
+        "namespace": "",
+        "service_id": "fixed",
+        "desired_status": "running",
+        "actual_status": "pending",
+        "image": "",
+        "version": 0,
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      }
+    ],
+    "Nodes": [
+      {
+        "id": "a",
+        "hostname": "",
+        "advertise_address": "",
+        "labels": {
+          "zone": "green"
+        },
+        "capacity": {
+          "cpu": 8000,
+          "memory": 8589934592
+        },
+        "allocatable": {
+          "cpu": 4000,
+          "memory": 4294967296
+        },
+        "status": "offline",
+        "last_heartbeat_at": "0001-01-01T00:00:00Z",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "b",
+        "hostname": "",
+        "advertise_address": "",
+        "labels": {
+          "zone": "blue"
+        },
+        "capacity": {
+          "cpu": 2000,
+          "memory": 1073741824
+        },
+        "allocatable": {
+          "cpu": 1000,
+          "memory": 536870912
+        },
+        "status": "ready",
+        "last_heartbeat_at": "0001-01-01T00:00:00Z",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      {
+        "id": "c",
+        "hostname": "",
+        "advertise_address": "",
+        "labels": {
+          "zone": "blue"
+        },
+        "capacity": {
+          "cpu": 2000,
+          "memory": 1073741824
+        },
+        "allocatable": {
+          "cpu": 1000,
+          "memory": 536870912
+        },
+        "status": "ready",
+        "last_heartbeat_at": "0001-01-01T00:00:00Z",
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    ],
+    "RunningTasks": [
+      {
+        "id": "occupied-b",
+        "namespace": "",
+        "service_id": "existing",
+        "node_id": "b",
+        "desired_status": "running",
+        "actual_status": "stopping",
+        "image": "",
+        "version": 0,
+        "ports": [
+          {
+            "protocol": "tcp",
+            "container_port": 80,
+            "published_port": 31080
+          }
+        ],
+        "restart_count": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "2026-10-13T00:00:00Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      }
+    ],
+    "Services": {
+      "dynamic": {
+        "id": "dynamic",
+        "namespace": "",
+        "spec": {
+          "name": "dynamic",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "ports": [
+            {
+              "protocol": "tcp",
+              "container_port": 80
+            }
+          ],
+          "resource_requirements": {
+            "requests": {
+              "cpu": 400,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 800,
+              "memory": 268435456
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          },
+          "placement_constraints": [
+            {
+              "key": "zone",
+              "operator": "equals",
+              "value": "blue"
+            }
+          ]
+        },
+        "status": "",
+        "deployment_version": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "existing": {
+        "id": "existing",
+        "namespace": "",
+        "spec": {
+          "name": "existing",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "ports": [
+            {
+              "protocol": "tcp",
+              "container_port": 80,
+              "published_port": 31080
+            }
+          ],
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 67108864
+            },
+            "limits": {
+              "cpu": 200,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          },
+          "placement_constraints": [
+            {
+              "key": "zone",
+              "operator": "equals",
+              "value": "blue"
+            }
+          ]
+        },
+        "status": "",
+        "deployment_version": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "fixed": {
+        "id": "fixed",
+        "namespace": "",
+        "spec": {
+          "name": "fixed",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "ports": [
+            {
+              "protocol": "tcp",
+              "container_port": 80,
+              "published_port": 31080
+            }
+          ],
+          "resource_requirements": {
+            "requests": {
+              "cpu": 400,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 800,
+              "memory": 268435456
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          },
+          "placement_constraints": [
+            {
+              "key": "zone",
+              "operator": "equals",
+              "value": "blue"
+            }
+          ]
+        },
+        "status": "",
+        "deployment_version": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "label-miss": {
+        "id": "label-miss",
+        "namespace": "",
+        "spec": {
+          "name": "label-miss",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "ports": [
+            {
+              "protocol": "tcp",
+              "container_port": 80
+            }
+          ],
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 67108864
+            },
+            "limits": {
+              "cpu": 200,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          },
+          "placement_constraints": [
+            {
+              "key": "zone",
+              "operator": "equals",
+              "value": "green"
+            }
+          ]
+        },
+        "status": "",
+        "deployment_version": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "too-large": {
+        "id": "too-large",
+        "namespace": "",
+        "spec": {
+          "name": "too-large",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "",
+            "registry": "",
+            "name": ""
+          },
+          "replicas": 1,
+          "ports": [
+            {
+              "protocol": "tcp",
+              "container_port": 80
+            }
+          ],
+          "resource_requirements": {
+            "requests": {
+              "cpu": 2000,
+              "memory": 1073741824
+            },
+            "limits": {
+              "cpu": 4000,
+              "memory": 2147483648
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          },
+          "placement_constraints": [
+            {
+              "key": "zone",
+              "operator": "equals",
+              "value": "blue"
+            }
+          ]
+        },
+        "status": "",
+        "deployment_version": 0,
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    }
+  }
+}

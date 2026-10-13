@@ -1,0 +1,66 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+  "machine": "x86_64",
+  "captured_at_utc": "2026-10-13T01:54:03.974651+00:00",
+  "commands": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "version"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T01:54:03.901757+00:00",
+      "finished_at_utc": "2026-10-13T01:54:03.905670+00:00",
+      "exit_code": 0,
+      "stdout": "go version go1.25.0 linux/amd64",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "--version"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T01:54:03.905704+00:00",
+      "finished_at_utc": "2026-10-13T01:54:03.920000+00:00",
+      "exit_code": 0,
+      "stdout": "Docker version 29.8.2, build 7fc2dff",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "compose",
+        "version"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T01:54:03.920050+00:00",
+      "finished_at_utc": "2026-10-13T01:54:03.956506+00:00",
+      "exit_code": 0,
+      "stdout": "Docker Compose version v5.6.0",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "context",
+        "show"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T01:54:03.956542+00:00",
+      "finished_at_utc": "2026-10-13T01:54:03.971181+00:00",
+      "exit_code": 0,
+      "stdout": "default",
+      "stderr": ""
+    }
+  ],
+  "scope": "Read-onlyOS/tool/context-name probes. Does not accessdaemon/database or certifytheir versions/readiness.",
+  "daemon_version_evidence": "validation/intake/docker-daemon-authorized.stdout.txt",
+  "database_ownership": "Root solewriter; actual lab08guarded record required",
+  "actual_docker_context": {
+    "context_name": "default",
+    "host": "unix:///var/run/docker.sock",
+    "authority": "Root executor verified this selection for actual01Docker/08Postgres drills; not inferred from generictoolenvdump."
+  }
+}

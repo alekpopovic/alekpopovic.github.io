@@ -1,0 +1,391 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "contracts": [
+    {
+      "id": "placement-success",
+      "unit": "ratio",
+      "numerator": "Assigned tasks in a fixed pending-task cohort",
+      "denominator": "Eligible pending-task cohort observed at experiment start",
+      "start_stop_events": "Cohort snapshot to first assigned observation",
+      "timestamp_source": "Observer monotonic elapsed clock; server UpdatedAt retained for ordering",
+      "sampling": "1second snapshot of the same IDs",
+      "missing_data": "Missing assignment remains pending/censored, not successful",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Ordinary immediate placement bypasses Plan; scheduler_tasks_claimed_total covers its instrumented claim path only."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "task-convergence",
+      "unit": "seconds",
+      "numerator": "Elapsed interval for matching intent/version to required healthy replicas",
+      "denominator": "Not a ratio; one accepted-intent cohort per sample",
+      "start_stop_events": "Accepted service version to first complete matching healthy population",
+      "timestamp_source": "Single observer monotonic elapsed clock; server UTC event timestamps retained",
+      "sampling": "1second state sampling",
+      "missing_data": "Timeout/right-censor missing completion; exclude no lost records silently",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Gateway reachability and physical cleanup are separate outcomes."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "replacement-latency",
+      "unit": "seconds",
+      "numerator": "Elapsed interval from node-loss decision to distinct replacement healthy",
+      "denominator": "Not a ratio; one affected stateless task per sample",
+      "start_stop_events": "Server node_lost/failed decision to replacement actual healthy",
+      "timestamp_source": "Observer monotonic clock around both witnessed states; server UTC decision metadata",
+      "sampling": "1second node/task snapshots",
+      "missing_data": "No replacement is censored failure; stateful retained work is out of cohort",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "No fencing proof and no promised bound under capacity shortage."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "rollout-health-budget",
+      "unit": "tasks",
+      "numerator": "Available old running/healthy plus explicitly healthy new tasks",
+      "denominator": "Desired replica target minus MaxUnavailable (minimum availability), with active bound target+MaxSurge",
+      "start_stop_events": "Every controller snapshot until terminal deployment",
+      "timestamp_source": "Server snapshot time; observer receipt time recorded separately",
+      "sampling": "Per captured controller tick in a deterministic harness",
+      "missing_data": "Missing/stale report is unknown; do not substitute running for newHealthy",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Model accounting does not continuously enforce client availability or cleanup."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "heartbeat-age",
+      "unit": "seconds",
+      "numerator": "Server now minus stored LastHeartbeat",
+      "denominator": "Not a ratio; one registered node per observation",
+      "start_stop_events": "Heartbeat update to each monitor observation",
+      "timestamp_source": "Server UTC wall clock only; never subtract worker-local monotonic time",
+      "sampling": "At NodeMonitorInterval;30second timeout only default configuration",
+      "missing_data": "Zero heartbeat is explicitly unknown and handled differently by monitor",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Clock jumps and partitions affect suspicion; offline is not physical shutdown."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "drift-recovery",
+      "unit": "seconds",
+      "numerator": "Elapsed interval from recorded drift to matching source-managed content",
+      "denominator": "Not a ratio; one source revision/service pair per sample",
+      "start_stop_events": "Observed drift state to successful matching apply/version",
+      "timestamp_source": "Single observer elapsed clock; source revision and server timestamps retained",
+      "sampling": "At configured source SyncInterval, plus explicit before/after diff",
+      "missing_data": "Failed fetch/parse is a failed/censored sync, not zero drift duration",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Warn policy intentionally does not auto-revert; prune remains source-managed scope."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "quota-usage",
+      "unit": "millicores and bytes",
+      "numerator": "Sum of requested per-replica resources across scoped desired services",
+      "denominator": "Corresponding namespace quota; zero denominator denotes unlimited, not division by zero",
+      "start_stop_events": "Same namespace mutation/snapshot boundary",
+      "timestamp_source": "Server accounting snapshot UTC time",
+      "sampling": "Before and after each captured mutation",
+      "missing_data": "Unknown existing services invalidate the complete total",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Reservations are not measured usage, enforced Docker limits or billing."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "cron-occurrence-uniqueness",
+      "unit": "count per scheduled instant",
+      "numerator": "Jobs admitted for one cron ID and scheduled UTC instant",
+      "denominator": "One eligible occurrence; policy/catch-up bounds recorded separately",
+      "start_stop_events": "Occurrence selection to persisted LastScheduleAt/created job identity",
+      "timestamp_source": "Injected UTC clock in isolated fixture; wall-clock/timezone conversion stated",
+      "sampling": "Every controller RunOnce in fake-clock fixture",
+      "missing_data": "Lost process-local records remain unknown; do not infer exactly-once business effects",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Allow/Forbid/Replace and missed limits differ; parser search is bounded."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    },
+    {
+      "id": "backup-recovery-completeness",
+      "unit": "ratio and seconds",
+      "numerator": "Restored synthetic records matching identity+content digest",
+      "denominator": "Expected canary record inventory in the source database",
+      "start_stop_events": "Confirmed canary backup boundary to successful restore+verification",
+      "timestamp_source": "One operator observer monotonic clock; backup/restore UTC metadata retained",
+      "sampling": "Exact full inventory/digest comparison after restore",
+      "missing_data": "Missing record/key/schema yields failure, not partial success hidden in average",
+      "workload_size": "Defined Atlas fixture:3owned nodes,12services,2replicas; alter explicitly per experiment.",
+      "warmup": "Retain initialization separately; settle five observation ticks before steady-state samples, unless measuring initial convergence.",
+      "limitations": [
+        "Future durable extension only; default memory intent is not in this dump."
+      ],
+      "evidence_class": "proposed measurement contract, not an already configured metric or SLO"
+    }
+  ],
+  "registered_metrics": [
+    {
+      "name": "api_requests_total",
+      "collector": "CounterVec",
+      "labels": [
+        "method",
+        "route",
+        "status"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L45",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "api_request_duration_seconds",
+      "collector": "HistogramVec",
+      "labels": [
+        "method",
+        "route",
+        "status"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L49",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_runs_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L54",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_errors_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L58",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_scheduling_attempts_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L62",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_scheduling_failures_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L66",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_tasks_claimed_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L70",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_assignment_conflicts_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L74",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "scheduler_duration_seconds",
+      "collector": "Histogram",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L78",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "reconciler_runs_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L83",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "reconciler_errors_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L87",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "reconciler_duration_seconds",
+      "collector": "Histogram",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L91",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "tasks_created_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L96",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "tasks_failed_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L100",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "rollouts_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L104",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "rollout_failures_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L108",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "autoscaler_decisions_total",
+      "collector": "CounterVec",
+      "labels": [
+        "decision"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L112",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "autoscaler_errors_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L116",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "autoscaler_recommendation_replicas",
+      "collector": "GaugeVec",
+      "labels": [
+        "service_id"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L120",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "controller_leader_status",
+      "collector": "GaugeVec",
+      "labels": [
+        "controller"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L124",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "controller_leader_acquisition_failures_total",
+      "collector": "CounterVec",
+      "labels": [
+        "controller"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L128",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "dns_queries_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L131",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "dns_errors_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L132",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "heartbeat_success_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L280",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "heartbeat_failure_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L284",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "docker_operations_total",
+      "collector": "CounterVec",
+      "labels": [
+        "operation"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L288",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "docker_operation_errors_total",
+      "collector": "CounterVec",
+      "labels": [
+        "operation"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L292",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "task_state_changes_total",
+      "collector": "CounterVec",
+      "labels": [
+        "status"
+      ],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L296",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "healthcheck_success_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L300",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    },
+    {
+      "name": "healthcheck_failure_total",
+      "collector": "Counter",
+      "labels": [],
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L304",
+      "classification": "registered collector; wiring scope must be checked per caller"
+    }
+  ],
+  "fake_load_actual": "validation/ops-fake-load.json",
+  "future_durable_plan": {
+    "status": "unexecuted design",
+    "required_composition": "Explicit durable live service, all16schema, controller/leadership wiring, separate runtime observation",
+    "workload": "3owned nodes,12services\u00d72replicas synthetic Atlas with recorded image digest",
+    "failure": "Kill only captured extension process after intent commit, restart, restore synthetic database in separate target",
+    "outcome": "Identity/version reconstruction, no duplicate accepted claims, canary digest and key-backed decryption; no SLO promised"
+  }
+}

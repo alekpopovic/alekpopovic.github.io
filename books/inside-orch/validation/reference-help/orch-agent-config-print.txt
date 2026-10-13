@@ -1,0 +1,10 @@
+advertise_address: http://127.0.0.1:8081
+agent_addr: :8081
+bootstrap_token: '[REDACTED]'
+docker_socket_path: /var/run/docker.sock
+graceful_shutdown_ttl: 10s
+heartbeat_interval: 5s
+labels: {}
+log_level: info
+node_name: local-node
+server_url: http://localhost:8080

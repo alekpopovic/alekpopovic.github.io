@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/inside-orch-verify-final-release.py", line 65, in <module>
+    data=archive.read(PREFIX+name).decode();assert '_test'in data,'database erratum workaround absent';assert '5eb338' in data or 'range' in data.lower(),'report history limitation absent'
+                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: report history limitation absent

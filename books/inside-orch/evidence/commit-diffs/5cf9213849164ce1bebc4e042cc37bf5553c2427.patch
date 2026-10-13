@@ -1,0 +1,1025 @@
+commit 5cf9213849164ce1bebc4e042cc37bf5553c2427
+Date: 2026-06-11T15:46:08+02:00
+Subject: Add agent registration and heartbeat flow
+
+
+---
+ .env.example                            |   6 +-
+ cmd/orch-agent/main.go                  |  28 +---
+ cmd/orch-server/main.go                 |   2 +-
+ deployments/examples/.env.local.example |   6 +-
+ docker-compose.yml                      |   6 +-
+ docs/AGENT.md                           |  44 ++++++
+ internal/agent/agent.go                 | 250 ++++++++++++++++++++++++++++++++
+ internal/api/api.go                     | 116 ++++++++++++++-
+ internal/api/api_test.go                |  57 ++++++++
+ internal/config/config.go               |  48 +++++-
+ internal/config/config_test.go          |   5 +
+ internal/controlplane/agent_test.go     |  61 ++++++++
+ internal/controlplane/controlplane.go   | 135 +++++++++++++++++
+ 13 files changed, 728 insertions(+), 36 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 6f9f2c2..1a7de1d 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,7 +1,11 @@
+ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+-ORCH_NODE_ID=local-node
++ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
++ORCH_NODE_NAME=local-node
++ORCH_ADVERTISE_ADDRESS=127.0.0.1
++ORCH_NODE_LABELS=role=worker
++ORCH_DOCKER_SOCKET=/var/run/docker.sock
+ ORCH_LOG_LEVEL=info
+ ORCH_AGENT_HEARTBEAT_INTERVAL=5s
+ ORCH_SHUTDOWN_TIMEOUT=10s
+diff --git a/cmd/orch-agent/main.go b/cmd/orch-agent/main.go
+index aac04b4..d33df3d 100644
+--- a/cmd/orch-agent/main.go
++++ b/cmd/orch-agent/main.go
+@@ -6,8 +6,8 @@ import (
+ 	"os"
+ 	"os/signal"
+ 	"syscall"
+-	"time"
+ 
++	"github.com/alekpopovic/orch/internal/agent"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ )
+@@ -25,28 +25,6 @@ func main() {
+ }
+ 
+ func run(ctx context.Context, logger *slog.Logger, cfg config.AgentConfig) error {
+-	if err := cfg.Validate(); err != nil {
+-		return err
+-	}
+-
+-	logger.Info("starting agent", "node_id", cfg.NodeID, "server_url", cfg.ServerURL)
+-
+-	ticker := time.NewTicker(cfg.HeartbeatInterval)
+-	defer ticker.Stop()
+-
+-	for {
+-		select {
+-		case <-ctx.Done():
+-			logger.Info("shutting down agent", "node_id", cfg.NodeID)
+-			shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
+-			defer cancel()
+-			return shutdown(shutdownCtx)
+-		case checkedAt := <-ticker.C:
+-			logger.Info("agent heartbeat", "node_id", cfg.NodeID, "checked_at", checkedAt.UTC())
+-		}
+-	}
+-}
+-
+-func shutdown(ctx context.Context) error {
+-	return ctx.Err()
++	runner := agent.NewRunner(cfg, nil, logger)
++	return runner.Run(ctx)
+ }
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index ff99ade..3e73a5d 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -35,7 +35,7 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+-		Handler:           api.NewHandler(logger, controlplane.NewMemoryService()),
++		Handler:           api.NewHandler(logger, controlplane.NewMemoryService(), api.WithBootstrapToken(cfg.BootstrapToken)),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/deployments/examples/.env.local.example b/deployments/examples/.env.local.example
+index 81ab1cf..582e25c 100644
+--- a/deployments/examples/.env.local.example
++++ b/deployments/examples/.env.local.example
+@@ -1,5 +1,9 @@
+ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+-ORCH_NODE_ID=local-node
++ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
++ORCH_NODE_NAME=local-node
++ORCH_ADVERTISE_ADDRESS=127.0.0.1
++ORCH_NODE_LABELS=role=worker
++ORCH_DOCKER_SOCKET=/var/run/docker.sock
+ ORCH_LOG_LEVEL=debug
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 0e092ab..23b0495 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -44,7 +44,11 @@ services:
+       - .env
+     environment:
+       ORCH_SERVER_URL: http://orch-server:8080
+-      ORCH_NODE_ID: local-agent-1
++      ORCH_BOOTSTRAP_TOKEN: dev-bootstrap-token
++      ORCH_NODE_NAME: local-agent-1
++      ORCH_ADVERTISE_ADDRESS: local-agent-1
++      ORCH_NODE_LABELS: role=worker
++      ORCH_DOCKER_SOCKET: /var/run/docker.sock
+     depends_on:
+       - orch-server
+ 
+diff --git a/docs/AGENT.md b/docs/AGENT.md
+new file mode 100644
+index 0000000..71b2e73
+--- /dev/null
++++ b/docs/AGENT.md
+@@ -0,0 +1,44 @@
++# Agent Lifecycle
++
++`orch-agent` is the worker process that represents one node to the control plane.
++
++## Startup
++
++On startup the agent loads:
++
++- `ORCH_SERVER_URL`: control-plane API URL.
++- `ORCH_NODE_NAME`: stable node name.
++- `ORCH_ADVERTISE_ADDRESS`: address the control plane and operators should use for the node.
++- `ORCH_NODE_LABELS`: comma-separated labels such as `role=app,zone=a`.
++- `ORCH_AGENT_HEARTBEAT_INTERVAL`: heartbeat period.
++- `ORCH_DOCKER_SOCKET`: Docker Engine socket path.
++- `ORCH_BOOTSTRAP_TOKEN`: static bootstrap token used until stronger node identity is added.
++
++The agent detects local capacity from the host:
++
++- CPU as millicores from `runtime.NumCPU()`.
++- Memory from `/proc/meminfo` when available.
++
++It then calls `POST /v1/agent/register`. The control plane creates or updates the node record and returns the authoritative node status plus any directives.
++
++## Heartbeats
++
++After registration, the agent sends `POST /v1/agent/heartbeat` every configured interval. The loop uses context cancellation, exponential backoff, and jitter so reconnecting agents do not all retry at the same instant.
++
++The agent does not choose to become draining on its own. Draining is controlled by the server response, usually after an operator calls `orch node drain`. The agent records and logs the returned status and directives.
++
++## Shutdown
++
++On graceful shutdown, the agent sends a final heartbeat with `shutdown=true`. If the notification succeeds, the control plane marks the node offline. If it fails, the agent logs a warning and continues shutdown.
++
++## Security
++
++The first version uses a static bootstrap token:
++
++```text
++Authorization: Bearer <ORCH_BOOTSTRAP_TOKEN>
++```
++
++This is intentionally isolated to the agent endpoint boundary so mTLS-based node identity can replace it later. Treat the token as a secret. Do not commit it, print it, or expose it through logs.
++
++Access to the Docker socket is highly privileged. A compromised agent can control containers on the node and may be able to affect the host. See `docs/DEVELOPMENT.md` for Docker daemon permission risks.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+new file mode 100644
+index 0000000..777aff9
+--- /dev/null
++++ b/internal/agent/agent.go
+@@ -0,0 +1,250 @@
++package agent
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"fmt"
++	"log/slog"
++	"math/rand"
++	"net/http"
++	"os"
++	"runtime"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/config"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Client interface {
++	Register(ctx context.Context, req api.AgentRegisterRequest) (api.AgentResponse, error)
++	Heartbeat(ctx context.Context, req api.AgentHeartbeatRequest) (api.AgentResponse, error)
++}
++
++type Runner struct {
++	cfg    config.AgentConfig
++	client Client
++	logger *slog.Logger
++	rand   *rand.Rand
++}
++
++func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runner {
++	if logger == nil {
++		logger = slog.Default()
++	}
++	return &Runner{
++		cfg:    cfg,
++		client: client,
++		logger: logger,
++		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
++	}
++}
++
++func (r *Runner) Run(ctx context.Context) error {
++	if err := r.cfg.Validate(); err != nil {
++		return err
++	}
++	if r.client == nil {
++		client, err := NewHTTPClient(r.cfg.ServerURL, r.cfg.BootstrapToken)
++		if err != nil {
++			return err
++		}
++		r.client = client
++	}
++
++	capacity := DetectCapacity()
++	registerResp, err := r.registerWithRetry(ctx, capacity)
++	if err != nil {
++		return err
++	}
++	node := registerResp.Node
++	r.logger.Info("agent registered", "node_id", node.ID, "status", node.Status)
++
++	timer := time.NewTimer(r.nextHeartbeatDelay())
++	defer timer.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			return r.notifyShutdown(node.ID, capacity)
++		case <-timer.C:
++			resp, err := r.heartbeatWithRetry(ctx, node.ID, capacity, false)
++			if err != nil {
++				return err
++			}
++			node = resp.Node
++			r.logger.Info("agent heartbeat acknowledged", "node_id", node.ID, "status", node.Status)
++			timer.Reset(r.nextHeartbeatDelay())
++		}
++	}
++}
++
++func (r *Runner) registerWithRetry(ctx context.Context, capacity types.Resources) (api.AgentResponse, error) {
++	var response api.AgentResponse
++	err := retry(ctx, r.rand, func() error {
++		var err error
++		response, err = r.client.Register(ctx, api.AgentRegisterRequest{
++			NodeName:         r.cfg.NodeName,
++			AdvertiseAddress: r.cfg.AdvertiseAddress,
++			Labels:           r.cfg.Labels,
++			Capacity:         capacity,
++			Allocatable:      capacity,
++			DockerSocketPath: r.cfg.DockerSocketPath,
++		})
++		return err
++	})
++	return response, err
++}
++
++func (r *Runner) heartbeatWithRetry(ctx context.Context, nodeID types.NodeID, capacity types.Resources, shutdown bool) (api.AgentResponse, error) {
++	var response api.AgentResponse
++	err := retry(ctx, r.rand, func() error {
++		var err error
++		response, err = r.client.Heartbeat(ctx, api.AgentHeartbeatRequest{
++			NodeID:      nodeID,
++			Capacity:    capacity,
++			Allocatable: capacity,
++			Labels:      r.cfg.Labels,
++			Shutdown:    shutdown,
++		})
++		return err
++	})
++	return response, err
++}
++
++func (r *Runner) notifyShutdown(nodeID types.NodeID, capacity types.Resources) error {
++	shutdownCtx, cancel := context.WithTimeout(context.Background(), r.cfg.GracefulShutdownTTL)
++	defer cancel()
++	_, err := r.heartbeatWithRetry(shutdownCtx, nodeID, capacity, true)
++	if err != nil {
++		r.logger.Warn("failed to notify shutdown", "node_id", nodeID, "error", err)
++		return nil
++	}
++	r.logger.Info("agent shutdown notified", "node_id", nodeID)
++	return nil
++}
++
++func (r *Runner) nextHeartbeatDelay() time.Duration {
++	interval := r.cfg.HeartbeatInterval
++	jitterRange := interval / 5
++	if jitterRange <= 0 {
++		return interval
++	}
++	jitter := time.Duration(r.rand.Int63n(int64(jitterRange)))
++	return interval - jitterRange/2 + jitter
++}
++
++func retry(ctx context.Context, rng *rand.Rand, operation func() error) error {
++	backoff := 250 * time.Millisecond
++	for {
++		err := operation()
++		if err == nil {
++			return nil
++		}
++		delay := backoff + time.Duration(rng.Int63n(int64(backoff)))
++		timer := time.NewTimer(delay)
++		select {
++		case <-ctx.Done():
++			timer.Stop()
++			return ctx.Err()
++		case <-timer.C:
++		}
++		if backoff < 5*time.Second {
++			backoff *= 2
++		}
++	}
++}
++
++func DetectCapacity() types.Resources {
++	return types.Resources{
++		CPU:    int64(runtime.NumCPU() * 1000),
++		Memory: detectMemory(),
++	}
++}
++
++func detectMemory() int64 {
++	data, err := os.ReadFile("/proc/meminfo")
++	if err != nil {
++		return 0
++	}
++	for _, line := range strings.Split(string(data), "\n") {
++		if !strings.HasPrefix(line, "MemTotal:") {
++			continue
++		}
++		fields := strings.Fields(line)
++		if len(fields) < 2 {
++			return 0
++		}
++		kib, err := strconv.ParseInt(fields[1], 10, 64)
++		if err != nil {
++			return 0
++		}
++		return kib * 1024
++	}
++	return 0
++}
++
++type HTTPClient struct {
++	baseURL string
++	token   string
++	client  *http.Client
++}
++
++func NewHTTPClient(serverURL string, token string) (*HTTPClient, error) {
++	serverURL = strings.TrimRight(strings.TrimSpace(serverURL), "/")
++	if serverURL == "" {
++		return nil, fmt.Errorf("server URL is required")
++	}
++	return &HTTPClient{
++		baseURL: serverURL,
++		token:   token,
++		client:  &http.Client{Timeout: 15 * time.Second},
++	}, nil
++}
++
++func (c *HTTPClient) Register(ctx context.Context, req api.AgentRegisterRequest) (api.AgentResponse, error) {
++	var out api.AgentResponse
++	if err := c.do(ctx, "/v1/agent/register", req, &out); err != nil {
++		return api.AgentResponse{}, err
++	}
++	return out, nil
++}
++
++func (c *HTTPClient) Heartbeat(ctx context.Context, req api.AgentHeartbeatRequest) (api.AgentResponse, error) {
++	var out api.AgentResponse
++	if err := c.do(ctx, "/v1/agent/heartbeat", req, &out); err != nil {
++		return api.AgentResponse{}, err
++	}
++	return out, nil
++}
++
++func (c *HTTPClient) do(ctx context.Context, path string, body any, out any) error {
++	data, err := json.Marshal(body)
++	if err != nil {
++		return fmt.Errorf("encode request: %w", err)
++	}
++	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, bytes.NewReader(data))
++	if err != nil {
++		return fmt.Errorf("create request: %w", err)
++	}
++	req.Header.Set("Content-Type", "application/json")
++	req.Header.Set("Authorization", "Bearer "+c.token)
++
++	resp, err := c.client.Do(req)
++	if err != nil {
++		return err
++	}
++	defer resp.Body.Close()
++
++	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
++		var apiErr api.ErrorResponse
++		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
++			return fmt.Errorf("%s", apiErr.Error.Message)
++		}
++		return fmt.Errorf("server returned %s", resp.Status)
++	}
++	return json.NewDecoder(resp.Body).Decode(out)
++}
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 388229b..96656ba 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -20,9 +20,10 @@ import (
+ )
+ 
+ type Server struct {
+-	controlPlane controlplane.Service
+-	logger       *slog.Logger
+-	timeout      time.Duration
++	controlPlane   controlplane.Service
++	logger         *slog.Logger
++	timeout        time.Duration
++	bootstrapToken string
+ }
+ 
+ type Option func(*Server)
+@@ -33,6 +34,12 @@ func WithTimeout(timeout time.Duration) Option {
+ 	}
+ }
+ 
++func WithBootstrapToken(token string) Option {
++	return func(server *Server) {
++		server.bootstrapToken = token
++	}
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -49,6 +56,8 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux := http.NewServeMux()
+ 	mux.HandleFunc("GET /healthz", server.healthz)
+ 	mux.HandleFunc("GET /readyz", server.readyz)
++	mux.HandleFunc("POST /v1/agent/register", server.agentRegister)
++	mux.HandleFunc("POST /v1/agent/heartbeat", server.agentHeartbeat)
+ 	mux.HandleFunc("GET /v1/nodes", server.listNodes)
+ 	mux.HandleFunc("GET /v1/nodes/{id}", server.getNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/drain", server.drainNode)
+@@ -86,6 +95,29 @@ type ListNodesResponse struct {
+ 	Nodes []types.Node `json:"nodes"`
+ }
+ 
++type AgentRegisterRequest struct {
++	NodeName         string            `json:"node_name"`
++	AdvertiseAddress string            `json:"advertise_address"`
++	Labels           map[string]string `json:"labels,omitempty"`
++	Capacity         types.Resources   `json:"capacity"`
++	Allocatable      types.Resources   `json:"allocatable"`
++	DockerSocketPath string            `json:"docker_socket_path,omitempty"`
++}
++
++type AgentHeartbeatRequest struct {
++	NodeID      types.NodeID      `json:"node_id"`
++	Capacity    types.Resources   `json:"capacity"`
++	Allocatable types.Resources   `json:"allocatable"`
++	Labels      map[string]string `json:"labels,omitempty"`
++	Shutdown    bool              `json:"shutdown,omitempty"`
++}
++
++type AgentResponse struct {
++	Node       types.Node                    `json:"node"`
++	Status     types.NodeStatus              `json:"status"`
++	Directives []controlplane.AgentDirective `json:"directives,omitempty"`
++}
++
+ type NodeResponse struct {
+ 	Node types.Node `json:"node"`
+ }
+@@ -136,6 +168,62 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {
+ 	writeJSON(w, http.StatusOK, HealthResponse{Status: "ready", Time: time.Now().UTC()})
+ }
+ 
++func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
++	if !s.authorizeAgent(w, r) {
++		return
++	}
++	var req AgentRegisterRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	if strings.TrimSpace(req.NodeName) == "" {
++		s.writeError(w, r, fmt.Errorf("%w: node_name is required", store.ErrInvalidState))
++		return
++	}
++	if strings.TrimSpace(req.AdvertiseAddress) == "" {
++		s.writeError(w, r, fmt.Errorf("%w: advertise_address is required", store.ErrInvalidState))
++		return
++	}
++	command, err := s.controlPlane.RegisterNode(r.Context(), controlplane.NodeRegistration{
++		Name:             req.NodeName,
++		AdvertiseAddress: req.AdvertiseAddress,
++		Labels:           req.Labels,
++		Capacity:         req.Capacity,
++		Allocatable:      req.Allocatable,
++	})
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusCreated, AgentResponse{Node: command.Node, Status: command.Node.Status, Directives: command.Directives})
++}
++
++func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
++	if !s.authorizeAgent(w, r) {
++		return
++	}
++	var req AgentHeartbeatRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	if req.NodeID == "" {
++		s.writeError(w, r, fmt.Errorf("%w: node_id is required", store.ErrInvalidState))
++		return
++	}
++	command, err := s.controlPlane.HeartbeatNode(r.Context(), controlplane.NodeHeartbeat{
++		NodeID:      req.NodeID,
++		Capacity:    req.Capacity,
++		Allocatable: req.Allocatable,
++		Labels:      req.Labels,
++		Shutdown:    req.Shutdown,
++	})
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, AgentResponse{Node: command.Node, Status: command.Node.Status, Directives: command.Directives})
++}
++
+ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
+ 	nodes, err := s.controlPlane.ListNodes(r.Context())
+ 	if err != nil {
+@@ -415,6 +503,28 @@ func (s *Server) decodeJSON(w http.ResponseWriter, r *http.Request, target any)
+ 	return true
+ }
+ 
++func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {
++	if s.bootstrapToken == "" {
++		return true
++	}
++	token := strings.TrimSpace(r.Header.Get("X-Orch-Bootstrap-Token"))
++	if token == "" {
++		auth := strings.TrimSpace(r.Header.Get("Authorization"))
++		token = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
++	}
++	if token != s.bootstrapToken {
++		writeJSON(w, http.StatusUnauthorized, ErrorResponse{
++			Error: RequestError{
++				Code:      "unauthorized",
++				Message:   "invalid agent bootstrap token",
++				RequestID: requestID(r.Context()),
++			},
++		})
++		return false
++	}
++	return true
++}
++
+ func (s *Server) pathNodeID(w http.ResponseWriter, r *http.Request) (types.NodeID, bool) {
+ 	id := r.PathValue("id")
+ 	if !validUUID(id) {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index def832a..33150ae 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -37,6 +37,53 @@ func TestListNodes(t *testing.T) {
+ 	}
+ }
+ 
++func TestAgentRegisterRequiresBootstrapToken(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	rec := doRequest(t, handler, http.MethodPost, "/v1/agent/register", `{
++		"node_name": "node-a",
++		"advertise_address": "10.0.0.10",
++		"capacity": {"cpu": 4000, "memory": 1024},
++		"allocatable": {"cpu": 4000, "memory": 1024}
++	}`)
++
++	if rec.Code != http.StatusUnauthorized {
++		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
++	}
++}
++
++func TestAgentRegisterAndHeartbeat(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	rec := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/register", `{
++		"node_name": "node-a",
++		"advertise_address": "10.0.0.10",
++		"labels": {"role": "app"},
++		"capacity": {"cpu": 4000, "memory": 1024},
++		"allocatable": {"cpu": 3000, "memory": 512}
++	}`)
++	if rec.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, rec.Code, rec.Body.String())
++	}
++	var registered AgentResponse
++	decodeResponse(t, rec, &registered)
++	if registered.Node.ID == "" || registered.Status != "ready" {
++		t.Fatalf("unexpected register response %#v", registered)
++	}
++
++	heartbeat := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
++		"node_id": "`+string(registered.Node.ID)+`",
++		"capacity": {"cpu": 4000, "memory": 1024},
++		"allocatable": {"cpu": 3000, "memory": 512}
++	}`)
++	if heartbeat.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, heartbeat.Code, heartbeat.Body.String())
++	}
++	var acknowledged AgentResponse
++	decodeResponse(t, heartbeat, &acknowledged)
++	if acknowledged.Node.LastHeartbeatAt.IsZero() {
++		t.Fatalf("expected heartbeat timestamp")
++	}
++}
++
+ func TestDrainNode(t *testing.T) {
+ 	handler := newTestHandler()
+ 	rec := doRequest(t, handler, http.MethodPost, "/v1/nodes/00000000-0000-4000-8000-000000000001/drain", nil)
+@@ -204,6 +251,16 @@ func doRequest(t *testing.T, handler http.Handler, method string, path string, b
+ 	return rec
+ }
+ 
++func doAgentRequest(t *testing.T, handler http.Handler, method string, path string, body any) *httptest.ResponseRecorder {
++	t.Helper()
++	req := httptest.NewRequest(method, path, strings.NewReader(body.(string)))
++	req.Header.Set("Content-Type", "application/json")
++	req.Header.Set("Authorization", "Bearer secret")
++	rec := httptest.NewRecorder()
++	handler.ServeHTTP(rec, req)
++	return rec
++}
++
+ func decodeResponse(t *testing.T, rec *httptest.ResponseRecorder, target any) {
+ 	t.Helper()
+ 	if err := json.Unmarshal(rec.Body.Bytes(), target); err != nil {
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 0e895f2..8059dc0 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -4,6 +4,7 @@ import (
+ 	"fmt"
+ 	"os"
+ 	"strconv"
++	"strings"
+ 	"time"
+ )
+ 
+@@ -11,12 +12,17 @@ type ServerConfig struct {
+ 	Addr                string
+ 	DatabaseURL         string
+ 	LogLevel            string
++	BootstrapToken      string
+ 	GracefulShutdownTTL time.Duration
+ }
+ 
+ type AgentConfig struct {
+-	NodeID              string
++	NodeName            string
++	AdvertiseAddress    string
++	Labels              map[string]string
+ 	ServerURL           string
++	BootstrapToken      string
++	DockerSocketPath    string
+ 	LogLevel            string
+ 	HeartbeatInterval   time.Duration
+ 	GracefulShutdownTTL time.Duration
+@@ -27,14 +33,19 @@ func LoadServer() ServerConfig {
+ 		Addr:                getenv("ORCH_SERVER_ADDR", ":8080"),
+ 		DatabaseURL:         getenv("DATABASE_URL", "postgres://orch:orch@localhost:5432/orch?sslmode=disable"),
+ 		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
++		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+ 	}
+ }
+ 
+ func LoadAgent() AgentConfig {
+ 	return AgentConfig{
+-		NodeID:              getenv("ORCH_NODE_ID", "local-node"),
++		NodeName:            getenv("ORCH_NODE_NAME", getenv("ORCH_NODE_ID", "local-node")),
++		AdvertiseAddress:    getenv("ORCH_ADVERTISE_ADDRESS", "127.0.0.1"),
++		Labels:              labelsFromEnv("ORCH_NODE_LABELS"),
+ 		ServerURL:           getenv("ORCH_SERVER_URL", "http://localhost:8080"),
++		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
++		DockerSocketPath:    getenv("ORCH_DOCKER_SOCKET", "/var/run/docker.sock"),
+ 		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+ 		HeartbeatInterval:   durationFromEnv("ORCH_AGENT_HEARTBEAT_INTERVAL", 5*time.Second),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+@@ -49,6 +60,26 @@ func getenv(key, fallback string) string {
+ 	return value
+ }
+ 
++func labelsFromEnv(key string) map[string]string {
++	raw := os.Getenv(key)
++	labels := map[string]string{}
++	if raw == "" {
++		return labels
++	}
++	for _, part := range strings.Split(raw, ",") {
++		pair := strings.SplitN(part, "=", 2)
++		if len(pair) != 2 {
++			continue
++		}
++		labelKey := strings.TrimSpace(pair[0])
++		labelValue := strings.TrimSpace(pair[1])
++		if labelKey != "" {
++			labels[labelKey] = labelValue
++		}
++	}
++	return labels
++}
++
+ func durationFromEnv(key string, fallback time.Duration) time.Duration {
+ 	value := os.Getenv(key)
+ 	if value == "" {
+@@ -81,12 +112,21 @@ func (cfg ServerConfig) Validate() error {
+ }
+ 
+ func (cfg AgentConfig) Validate() error {
+-	if cfg.NodeID == "" {
+-		return fmt.Errorf("node ID is required")
++	if cfg.NodeName == "" {
++		return fmt.Errorf("node name is required")
++	}
++	if cfg.AdvertiseAddress == "" {
++		return fmt.Errorf("advertise address is required")
+ 	}
+ 	if cfg.ServerURL == "" {
+ 		return fmt.Errorf("server URL is required")
+ 	}
++	if cfg.BootstrapToken == "" {
++		return fmt.Errorf("bootstrap token is required")
++	}
++	if cfg.DockerSocketPath == "" {
++		return fmt.Errorf("Docker socket path is required")
++	}
+ 	if cfg.HeartbeatInterval <= 0 {
+ 		return fmt.Errorf("heartbeat interval must be positive")
+ 	}
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 1c6fa54..c4fbc30 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -15,7 +15,12 @@ func TestLoadServerDefaultsAreValid(t *testing.T) {
+ 
+ func TestLoadAgentDefaultsAreValid(t *testing.T) {
+ 	t.Setenv("ORCH_NODE_ID", "")
++	t.Setenv("ORCH_NODE_NAME", "")
++	t.Setenv("ORCH_ADVERTISE_ADDRESS", "")
++	t.Setenv("ORCH_NODE_LABELS", "")
+ 	t.Setenv("ORCH_SERVER_URL", "")
++	t.Setenv("ORCH_BOOTSTRAP_TOKEN", "")
++	t.Setenv("ORCH_DOCKER_SOCKET", "")
+ 	t.Setenv("ORCH_AGENT_HEARTBEAT_INTERVAL", "")
+ 	t.Setenv("ORCH_SHUTDOWN_TIMEOUT", "")
+ 
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+new file mode 100644
+index 0000000..ef1b94c
+--- /dev/null
++++ b/internal/controlplane/agent_test.go
+@@ -0,0 +1,61 @@
++package controlplane
++
++import (
++	"context"
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestAgentHeartbeatStateTransitions(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Labels:           map[string]string{"role": "app"},
++		Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++		Allocatable:      types.Resources{CPU: 3500, Memory: 7 * 1024 * 1024 * 1024},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	if registered.Node.Status != types.NodeReady {
++		t.Fatalf("expected ready after register, got %q", registered.Node.Status)
++	}
++
++	drained, err := service.DrainNode(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("drain node: %v", err)
++	}
++	if drained.Status != types.NodeDraining {
++		t.Fatalf("expected draining after drain, got %q", drained.Status)
++	}
++
++	heartbeat, err := service.HeartbeatNode(ctx, NodeHeartbeat{
++		NodeID:      registered.Node.ID,
++		Capacity:    registered.Node.Capacity,
++		Allocatable: registered.Node.Allocatable,
++	})
++	if err != nil {
++		t.Fatalf("heartbeat node: %v", err)
++	}
++	if heartbeat.Node.Status != types.NodeDraining {
++		t.Fatalf("heartbeat should preserve server draining status, got %q", heartbeat.Node.Status)
++	}
++	if len(heartbeat.Directives) != 1 || heartbeat.Directives[0].Type != "drain" {
++		t.Fatalf("expected drain directive, got %#v", heartbeat.Directives)
++	}
++
++	offline, err := service.HeartbeatNode(ctx, NodeHeartbeat{
++		NodeID:   registered.Node.ID,
++		Shutdown: true,
++	})
++	if err != nil {
++		t.Fatalf("shutdown heartbeat: %v", err)
++	}
++	if offline.Node.Status != types.NodeOffline {
++		t.Fatalf("expected offline after shutdown heartbeat, got %q", offline.Node.Status)
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index c804020..759e3bd 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -14,6 +14,8 @@ import (
+ )
+ 
+ type Service interface {
++	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
++	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+ 	ListNodes(ctx context.Context) ([]types.Node, error)
+ 	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	DrainNode(ctx context.Context, id types.NodeID) (types.Node, error)
+@@ -30,6 +32,32 @@ type Service interface {
+ 	ListEvents(ctx context.Context, filter EventFilter) ([]types.Event, error)
+ }
+ 
++type NodeRegistration struct {
++	Name             string
++	AdvertiseAddress string
++	Labels           map[string]string
++	Capacity         types.Resources
++	Allocatable      types.Resources
++}
++
++type NodeHeartbeat struct {
++	NodeID      types.NodeID
++	Capacity    types.Resources
++	Allocatable types.Resources
++	Labels      map[string]string
++	Shutdown    bool
++}
++
++type NodeCommand struct {
++	Node       types.Node
++	Directives []AgentDirective
++}
++
++type AgentDirective struct {
++	Type    string `json:"type"`
++	Message string `json:"message,omitempty"`
++}
++
+ type TaskFilter struct {
+ 	ServiceID types.ServiceID
+ 	NodeID    types.NodeID
+@@ -63,6 +91,102 @@ func NewMemoryService() *MemoryService {
+ 	}
+ }
+ 
++func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error) {
++	if err := ctx.Err(); err != nil {
++		return NodeCommand{}, err
++	}
++	spec := types.NodeSpec{
++		Hostname:         registration.Name,
++		AdvertiseAddress: registration.AdvertiseAddress,
++		Labels:           registration.Labels,
++		Capacity:         registration.Capacity,
++		Allocatable:      registration.Allocatable,
++	}
++	if err := spec.Validate(); err != nil {
++		return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	now := s.now()
++	for id, node := range s.nodes {
++		if node.Hostname == registration.Name {
++			node.AdvertiseAddress = registration.AdvertiseAddress
++			node.Labels = registration.Labels
++			node.Capacity = registration.Capacity
++			node.Allocatable = registration.Allocatable
++			if node.Status == types.NodeUnknown || node.Status == types.NodeOffline {
++				node.Status = types.NodeReady
++			}
++			node.LastHeartbeatAt = now
++			node.UpdatedAt = now
++			s.nodes[id] = node
++			s.appendEventLocked("node.registered", types.EventInfo, "controlplane", "node registered", "node", string(id), now)
++			return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++		}
++	}
++
++	id := types.NodeID(newUUID())
++	node := types.Node{
++		ID:               id,
++		Hostname:         registration.Name,
++		AdvertiseAddress: registration.AdvertiseAddress,
++		Labels:           registration.Labels,
++		Capacity:         registration.Capacity,
++		Allocatable:      registration.Allocatable,
++		Status:           types.NodeReady,
++		LastHeartbeatAt:  now,
++		CreatedAt:        now,
++		UpdatedAt:        now,
++	}
++	s.nodes[id] = node
++	s.appendEventLocked("node.registered", types.EventInfo, "controlplane", "node registered", "node", string(id), now)
++	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++}
++
++func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error) {
++	if err := ctx.Err(); err != nil {
++		return NodeCommand{}, err
++	}
++	if heartbeat.NodeID == "" {
++		return NodeCommand{}, fmt.Errorf("%w: node id is required", store.ErrInvalidState)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	node, ok := s.nodes[heartbeat.NodeID]
++	if !ok {
++		return NodeCommand{}, store.ErrNotFound
++	}
++	now := s.now()
++	if heartbeat.Capacity.CPU > 0 || heartbeat.Capacity.Memory > 0 {
++		node.Capacity = heartbeat.Capacity
++	}
++	if heartbeat.Allocatable.CPU > 0 || heartbeat.Allocatable.Memory > 0 {
++		node.Allocatable = heartbeat.Allocatable
++	}
++	if heartbeat.Labels != nil {
++		node.Labels = heartbeat.Labels
++	}
++	if heartbeat.Shutdown {
++		node.Status = types.NodeOffline
++	}
++	node.LastHeartbeatAt = now
++	node.UpdatedAt = now
++	s.nodes[node.ID] = node
++
++	eventType := "node.heartbeat"
++	message := "node heartbeat"
++	if heartbeat.Shutdown {
++		eventType = "node.shutdown"
++		message = "node graceful shutdown"
++	}
++	s.appendEventLocked(eventType, types.EventInfo, "controlplane", message, "node", string(node.ID), now)
++	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++}
++
+ func (s *MemoryService) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+@@ -412,6 +536,17 @@ func seedNodes(now func() time.Time) map[types.NodeID]types.Node {
+ 	}
+ }
+ 
++func directivesForNode(node types.Node) []AgentDirective {
++	switch node.Status {
++	case types.NodeDraining:
++		return []AgentDirective{{Type: "drain", Message: "node is marked draining"}}
++	case types.NodeOffline:
++		return []AgentDirective{{Type: "offline", Message: "node is marked offline"}}
++	default:
++		return nil
++	}
++}
++
+ func newUUID() string {
+ 	var b [16]byte
+ 	if _, err := rand.Read(b[:]); err != nil {

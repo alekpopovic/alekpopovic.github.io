@@ -1,0 +1,18 @@
+{
+  "id": "099-local-git-inventory",
+  "command": [
+    "python3",
+    "/tmp/inside-orch-stage-inventory.py"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T04:54:03.177230+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T04:54:03.487115+00:00",
+  "duration_seconds": 0.31,
+  "stdout": "validation/publication/099-local-git-inventory-command.stdout.txt",
+  "stderr": "validation/publication/099-local-git-inventory-command.stderr.txt"
+}

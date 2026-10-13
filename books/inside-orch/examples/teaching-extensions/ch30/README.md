@@ -1,0 +1,3 @@
+# Local committed Atlas GitOps fixture
+
+Copy `main.go` to `book-gitops/main.go` in the disposable locked Orch module. Run with the pinned Go1.25 toolchain, export-aware GOFLAGS and run caches. It creates only an owned temporary local Git repository with real commits and MemoryService state. It uses CommandFetcher for actual local checkout, asserts warn/manual scale and status-triggered auto_revert, prunes the previously managed Atlas name and preserves one unrelated name. It does not test ownership replacement under the same prior name, repository-wide atomicity or Docker execution. `defer` removes its exact temporary repository; CommandFetcher removes its checkout. No external URL or credentials are used.

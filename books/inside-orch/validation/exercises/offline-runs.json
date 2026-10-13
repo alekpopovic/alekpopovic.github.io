@@ -1,0 +1,192 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "go_version": "go version go1.25.0 linux/amd64",
+  "runs": [
+    {
+      "id": "DEV-01",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/scheduler",
+        "-run",
+        "^(TestConcurrentSchedulerAttemptsAssignTaskOnce)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:43.005530+00:00",
+      "finished_at_utc": "2026-10-13T01:18:44.511461+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestConcurrentSchedulerAttemptsAssignTaskOnce"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-01.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-02",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestUnhealthyRestartableTaskIsMarkedFailed)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:44.511553+00:00",
+      "finished_at_utc": "2026-10-13T01:18:45.253045+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestUnhealthyRestartableTaskIsMarkedFailed"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-02.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-03",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:45.253143+00:00",
+      "finished_at_utc": "2026-10-13T01:18:45.530350+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-03.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-04",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/rollout",
+        "-run",
+        "^(TestControllerSuccessfulRollout)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:45.530403+00:00",
+      "finished_at_utc": "2026-10-13T01:18:45.875728+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestControllerSuccessfulRollout"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-04.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-05",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestNamespaceIsolationAndDuplicateNames)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:45.875786+00:00",
+      "finished_at_utc": "2026-10-13T01:18:46.159925+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestNamespaceIsolationAndDuplicateNames"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-05.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-06",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestConcurrentScaleCannotExceedQuota)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:46.159983+00:00",
+      "finished_at_utc": "2026-10-13T01:18:46.438146+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestConcurrentScaleCannotExceedQuota"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-06.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-07",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/gitops",
+        "-run",
+        "^(TestControllerSyncsLocalFixtureRepositoryAndPrunes)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:46.438202+00:00",
+      "finished_at_utc": "2026-10-13T01:18:47.066538+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestControllerSyncsLocalFixtureRepositoryAndPrunes"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-07.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    },
+    {
+      "id": "DEV-08",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/cronjobs",
+        "-run",
+        "^(TestParseAndRunWithFakeClock|TestConcurrencyForbidAndReplace)$"
+      ],
+      "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "started_at_utc": "2026-10-13T01:18:47.066594+00:00",
+      "finished_at_utc": "2026-10-13T01:18:47.277922+00:00",
+      "exit_code": 0,
+      "passed_tests": [
+        "TestParseAndRunWithFakeClock",
+        "TestConcurrencyForbidAndReplace"
+      ],
+      "exact_requested_tests_ran": true,
+      "stdout": "validation/exercises/dev-08.stdout.jsonl",
+      "scope": "Actual pinned package tests with fakes/local temporary Git only; not Docker/DB/remote-host execution."
+    }
+  ],
+  "all_passed": true
+}

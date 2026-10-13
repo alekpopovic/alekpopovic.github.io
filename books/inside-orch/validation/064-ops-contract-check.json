@@ -1,0 +1,14 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T02:01:15.587105+00:00",
+  "command": "python3 books/inside-orch/scripts/check_appendix_references.py",
+  "playbooks": 10,
+  "measurement_contracts": 9,
+  "registered_metrics": 30,
+  "command_paths_resolve": true,
+  "verification_and_stop_complete": true,
+  "actual_fake_load": "validation/ops-fake-load.json",
+  "metrics_and_labels": "Exact constructor names, types and label keys re-parsed from immutable source.",
+  "errors": [],
+  "passed": true
+}

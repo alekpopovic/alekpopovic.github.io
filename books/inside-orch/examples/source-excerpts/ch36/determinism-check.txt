@@ -1,0 +1,6 @@
+			first := Plan(input)
+			second := Plan(input)
+			if !reflect.DeepEqual(first, second) {
+				t.Fatalf("seed %d: nondeterministic", seed)
+			}
+			nodeByID := map[types.NodeID]types.Node{}

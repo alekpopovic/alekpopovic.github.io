@@ -1,0 +1,10 @@
+name: atlas-report-schedule
+schedule: "0 9 * * 1-5"
+timezone: UTC
+concurrencyPolicy: Forbid
+jobTemplate:
+  image: busybox:1.36
+  command: ["sh", "-c", "printf 'atlas report\\n'"]
+  resources:
+    cpu: 100m
+    memory: 1Mi

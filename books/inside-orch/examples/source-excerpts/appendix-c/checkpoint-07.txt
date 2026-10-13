@@ -1,0 +1,6 @@
+func (c *Controller) RunOnce(ctx context.Context) error {
+	if c.store == nil {
+		return fmt.Errorf("rollout store is required")
+	}
+	deployments, err := c.activeDeployments(ctx)
+	if err != nil {

@@ -1,0 +1,45 @@
+{
+  "id": "08",
+  "title": "recovery-boundaries",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "author": "Aleksandar Popovic",
+  "prepared_at_utc": "2026-10-13T00:57:48.788049+00:00",
+  "execution_phase": "actual author-run book production, distinct from original pack-authoring phase",
+  "inputs": {
+    "examples/teaching-extensions/full-schema/main.go": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+    "scripts/observe_database_recovery.py": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+    "tests/test_recovery_targets.py": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d"
+  },
+  "records": [
+    "validation/labs/08-check.json",
+    "validation/intake/full-schema-recovery-corrected.json",
+    "validation/labs/lab08-fixed-seed-fake-load.json"
+  ],
+  "machine_assertions": [
+    "16migrationpairs",
+    "schema16accepted15to16",
+    "upupIdempotence",
+    "downrequiresallow",
+    "distinctfreshrestoretarget",
+    "matchingcanarydigestandwrongkeyrefusal",
+    "per-taskonewinneroneconflict",
+    "fake-loadscope",
+    "ownedchilddatabasecleanup"
+  ],
+  "modes": [
+    "inspection",
+    "recorded author-run evidence",
+    "explicit new disposable execution"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_lab_records.py",
+    "--lab",
+    "08",
+    "--mode",
+    "recorded"
+  ],
+  "release_status": "lab evidence prepared; final book integration/review pending",
+  "cleanup": "Only captured process/container IDs and newly created lab database names; never global prune",
+  "input_revision_note": "Canonical teaching-code formatting or verifier updates; repeat-execution gate076 will freeze current hashes."
+}

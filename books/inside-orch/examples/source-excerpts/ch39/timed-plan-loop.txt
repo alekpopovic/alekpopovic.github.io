@@ -1,0 +1,6 @@
+	input := PlanInput{PendingTasks: tasks, Nodes: nodes, Services: services}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = Plan(input)
+	}
+}

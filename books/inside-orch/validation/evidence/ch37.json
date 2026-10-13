@@ -1,0 +1,106 @@
+{
+  "chapter": "37",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch37.report",
+      "statement": "Agent restart chaos case directly repeats a status report against retained memory.",
+      "classification": "implemented package",
+      "source_path": "internal/e2e/chaos_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 38,
+      "associated_commits": [
+        "fe385251b7a2051b10af3dd6caaad8bb4821fa21"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch37/fault-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    },
+    {
+      "claim_id": "ch37.controller",
+      "statement": "Server restart chaos case constructs a controller over the same MemoryService, not a fresh server.",
+      "classification": "implemented package",
+      "source_path": "internal/e2e/chaos_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 41,
+      "line_end": 61,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch37/fault-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    },
+    {
+      "claim_id": "ch37.runtime-unknown",
+      "statement": "Agent does not recreate or report while injected inspect and list errors make runtime state unknown.",
+      "classification": "implemented package",
+      "source_path": "internal/agent/agent_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 177,
+      "line_end": 207,
+      "associated_commits": [
+        "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch37/fault-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    },
+    {
+      "claim_id": "ch37.return-cleanup",
+      "statement": "Returned-node fake test stops/removes a managed unassigned container and reports removed.",
+      "classification": "implemented package",
+      "source_path": "internal/agent/agent_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 446,
+      "line_end": 472,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch37/fault-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    },
+    {
+      "claim_id": "ch37.write-failure",
+      "statement": "Injected assignment failure leaves no false assignment event.",
+      "classification": "implemented package",
+      "source_path": "internal/e2e/chaos_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 139,
+      "line_end": 148,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch37/fault-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    },
+    {
+      "claim_id": "ch37.memory-restart",
+      "statement": "Default server owns MemoryService; actual process experiment loses records while separately captured container survives.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 142,
+      "line_end": 148,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch06/combined-restart.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual selected deterministic faults passed; separate ch06 actual process+Docker evidence is explicitly manual association, not Runner adoption or durable recovery."
+      ]
+    }
+  ]
+}

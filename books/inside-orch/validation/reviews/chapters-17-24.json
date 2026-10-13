@@ -1,0 +1,491 @@
+{
+  "checked_at_utc": "2026-10-13T02:00:08.344334+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "command": "python3 books/inside-orch/scripts/check_chapters_17_24.py",
+  "scope": "Local H1/word count/source/commit/claim/byte-excerpt/companion verification plus manual source review; not a test execution.",
+  "chapters": [
+    {
+      "chapter_id": "17",
+      "narrative_words_excluding_fences_and_destination_urls": 1908,
+      "source_refs": [
+        {
+          "path": "internal/rollout/rollout.go",
+          "start": "376",
+          "end": "384",
+          "valid": true
+        },
+        {
+          "path": "internal/rollout/rollout.go",
+          "start": "244",
+          "end": "252",
+          "valid": true
+        },
+        {
+          "path": "internal/rollout/rollout.go",
+          "start": "1",
+          "end": "414",
+          "valid": true
+        },
+        {
+          "path": "internal/rollout/rollout_test.go",
+          "start": "1",
+          "end": "343",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/rollback_test.go",
+          "start": "1",
+          "end": "107",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/operation_lock_test.go",
+          "start": "1",
+          "end": "126",
+          "valid": true
+        },
+        {
+          "path": "docs/ROLLOUTS.md",
+          "start": "1",
+          "end": "88",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 2,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "18",
+      "narrative_words_excluding_fences_and_destination_urls": 1846,
+      "source_refs": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "1454",
+          "end": "1463",
+          "valid": true
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start": "634",
+          "end": "639",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "2646",
+          "end": "2658",
+          "valid": true
+        },
+        {
+          "path": "internal/reconciler/reconciler.go",
+          "start": "1",
+          "end": "558",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "1",
+          "end": "2770",
+          "valid": true
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start": "1",
+          "end": "951",
+          "valid": true
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "start": "1",
+          "end": "623",
+          "valid": true
+        },
+        {
+          "path": "docs/RECONCILER.md",
+          "start": "1",
+          "end": "90",
+          "valid": true
+        },
+        {
+          "path": "docs/RELIABILITY.md",
+          "start": "1",
+          "end": "120",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 3,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "19",
+      "narrative_words_excluding_fences_and_destination_urls": 1837,
+      "source_refs": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "681",
+          "end": "690",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "2401",
+          "end": "2415",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "2078",
+          "end": "2092",
+          "valid": true
+        },
+        {
+          "path": "internal/node/monitor.go",
+          "start": "1",
+          "end": "72",
+          "valid": true
+        },
+        {
+          "path": "internal/node/monitor_test.go",
+          "start": "1",
+          "end": "59",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/drain_test.go",
+          "start": "1",
+          "end": "184",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/offline_test.go",
+          "start": "1",
+          "end": "193",
+          "valid": true
+        },
+        {
+          "path": "internal/controlplane/operations.go",
+          "start": "1",
+          "end": "195",
+          "valid": true
+        },
+        {
+          "path": "docs/OPERATIONS.md",
+          "start": "1",
+          "end": "301",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 3,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "20",
+      "narrative_words_excluding_fences_and_destination_urls": 1848,
+      "source_refs": [
+        {
+          "path": "internal/discovery/discovery.go",
+          "start": "98",
+          "end": "110",
+          "valid": true
+        },
+        {
+          "path": "internal/dns/server.go",
+          "start": "97",
+          "end": "121",
+          "valid": true
+        },
+        {
+          "path": "internal/discovery/discovery.go",
+          "start": "1",
+          "end": "117",
+          "valid": true
+        },
+        {
+          "path": "internal/discovery/discovery_test.go",
+          "start": "1",
+          "end": "68",
+          "valid": true
+        },
+        {
+          "path": "internal/dns/server.go",
+          "start": "1",
+          "end": "222",
+          "valid": true
+        },
+        {
+          "path": "internal/dns/server_test.go",
+          "start": "1",
+          "end": "79",
+          "valid": true
+        },
+        {
+          "path": "docs/SERVICE_DISCOVERY.md",
+          "start": "1",
+          "end": "50",
+          "valid": true
+        },
+        {
+          "path": "deployments/examples/internal-dns-compose.yaml",
+          "start": "1",
+          "end": "20",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 2,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "21",
+      "narrative_words_excluding_fences_and_destination_urls": 1839,
+      "source_refs": [
+        {
+          "path": "internal/traefik/config.go",
+          "start": "143",
+          "end": "156",
+          "valid": true
+        },
+        {
+          "path": "internal/traefik/config.go",
+          "start": "71",
+          "end": "85",
+          "valid": true
+        },
+        {
+          "path": "internal/traefik/config.go",
+          "start": "1",
+          "end": "197",
+          "valid": true
+        },
+        {
+          "path": "internal/traefik/config_test.go",
+          "start": "1",
+          "end": "147",
+          "valid": true
+        },
+        {
+          "path": "docs/TRAEFIK.md",
+          "start": "1",
+          "end": "75",
+          "valid": true
+        },
+        {
+          "path": "docs/NETWORKING.md",
+          "start": "1",
+          "end": "33",
+          "valid": true
+        },
+        {
+          "path": "docs/NETWORKING_DESIGN.md",
+          "start": "1",
+          "end": "11",
+          "valid": true
+        },
+        {
+          "path": "deployments/examples/routed-api.yaml",
+          "start": "1",
+          "end": "15",
+          "valid": true
+        },
+        {
+          "path": "deployments/examples/traefik-demo.yaml",
+          "start": "1",
+          "end": "19",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 2,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "22",
+      "narrative_words_excluding_fences_and_destination_urls": 1868,
+      "source_refs": [
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start": "213",
+          "end": "228",
+          "valid": true
+        },
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start": "148",
+          "end": "158",
+          "valid": true
+        },
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start": "1",
+          "end": "272",
+          "valid": true
+        },
+        {
+          "path": "internal/autoscaler/autoscaler_test.go",
+          "start": "1",
+          "end": "217",
+          "valid": true
+        },
+        {
+          "path": "docs/AUTOSCALING.md",
+          "start": "1",
+          "end": "57",
+          "valid": true
+        },
+        {
+          "path": "docs/AUTOSCALING_DESIGN.md",
+          "start": "1",
+          "end": "223",
+          "valid": true
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start": "1",
+          "end": "304",
+          "valid": true
+        }
+      ],
+      "claims": 4,
+      "excerpts": 2,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "23",
+      "narrative_words_excluding_fences_and_destination_urls": 1831,
+      "source_refs": [
+        {
+          "path": "internal/api/api.go",
+          "start": "1267",
+          "end": "1275",
+          "valid": true
+        },
+        {
+          "path": "internal/auth/agent.go",
+          "start": "56",
+          "end": "66",
+          "valid": true
+        },
+        {
+          "path": "internal/auth/auth.go",
+          "start": "1",
+          "end": "191",
+          "valid": true
+        },
+        {
+          "path": "internal/auth/agent.go",
+          "start": "1",
+          "end": "72",
+          "valid": true
+        },
+        {
+          "path": "internal/auth/agent_test.go",
+          "start": "1",
+          "end": "67",
+          "valid": true
+        },
+        {
+          "path": "internal/api/api.go",
+          "start": "1",
+          "end": "2036",
+          "valid": true
+        },
+        {
+          "path": "docs/SECURITY.md",
+          "start": "1",
+          "end": "170",
+          "valid": true
+        },
+        {
+          "path": "docs/SECURITY_REVIEW.md",
+          "start": "1",
+          "end": "150",
+          "valid": true
+        }
+      ],
+      "claims": 5,
+      "excerpts": 2,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    },
+    {
+      "chapter_id": "24",
+      "narrative_words_excluding_fences_and_destination_urls": 1941,
+      "source_refs": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start": "821",
+          "end": "837",
+          "valid": true
+        },
+        {
+          "path": "internal/secrets/envelope.go",
+          "start": "55",
+          "end": "61",
+          "valid": true
+        },
+        {
+          "path": "internal/config/config.go",
+          "start": "95",
+          "end": "107",
+          "valid": true
+        },
+        {
+          "path": "internal/secrets/envelope.go",
+          "start": "1",
+          "end": "108",
+          "valid": true
+        },
+        {
+          "path": "internal/secrets/envelope_test.go",
+          "start": "1",
+          "end": "45",
+          "valid": true
+        },
+        {
+          "path": "internal/config/config.go",
+          "start": "1",
+          "end": "780",
+          "valid": true
+        },
+        {
+          "path": "internal/config/config_test.go",
+          "start": "1",
+          "end": "176",
+          "valid": true
+        },
+        {
+          "path": "docs/SECRETS.md",
+          "start": "1",
+          "end": "65",
+          "valid": true
+        },
+        {
+          "path": "docs/CONFIGURATION.md",
+          "start": "1",
+          "end": "129",
+          "valid": true
+        },
+        {
+          "path": "deployments/examples/secrets-api.yaml",
+          "start": "1",
+          "end": "14",
+          "valid": true
+        }
+      ],
+      "claims": 5,
+      "excerpts": 3,
+      "worked_answers": true,
+      "execution_scope": "Source reviewed; named tests inspectable; no new runtime execution by this author."
+    }
+  ],
+  "errors": []
+}

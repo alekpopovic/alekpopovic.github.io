@@ -1,0 +1,7 @@
+goos: linux
+goarch: amd64
+pkg: github.com/alekpopovic/orch/internal/scheduler
+cpu: AMD Ryzen 5 5500                               
+BenchmarkSchedulerScoring-2   	       9	  12051049 ns/op
+PASS
+ok  	github.com/alekpopovic/orch/internal/scheduler	0.308s

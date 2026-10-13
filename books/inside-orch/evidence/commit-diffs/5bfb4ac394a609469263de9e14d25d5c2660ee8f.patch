@@ -1,0 +1,338 @@
+commit 5bfb4ac394a609469263de9e14d25d5c2660ee8f
+Date: 2026-07-14T16:05:56+02:00
+Subject: Add service operation locks
+
+
+---
+ docs/API.md                                  |   2 +
+ docs/ROLLOUTS.md                             |  13 +++
+ internal/controlplane/controlplane.go        |  76 ++++++++++++++--
+ internal/controlplane/operation_lock_test.go | 126 +++++++++++++++++++++++++++
+ prompts/EXECUTION_TRACKER.md                 |   8 +-
+ 5 files changed, 214 insertions(+), 11 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index ce30c56..977503b 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -133,6 +133,8 @@ Rollback:
+ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ ```
+ 
++Concurrent service operations are guarded per service. Active rollout/rollback blocks scale, rollout, and rollback with `409 conflict` and a message containing `operation already in progress`. Repeating the same in-flight rollout with the same image and limits returns the existing deployment. Delete wins over rollout/rollback/scale by moving the service to `deleting` and cancelling active deployments.
++
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
+ ## Secrets
+diff --git a/docs/ROLLOUTS.md b/docs/ROLLOUTS.md
+index 4ea4631..814ed9b 100644
+--- a/docs/ROLLOUTS.md
++++ b/docs/ROLLOUTS.md
+@@ -23,6 +23,18 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ 
+ `maxUnavailable` and `maxSurge` must not both be zero.
+ 
++## Operation Locking
++
++Rollout, rollback, scale, and delete are guarded by a service-level operation lock:
++
++- A second rollout conflicts while a different rollout is active.
++- Repeating the same active rollout returns the existing deployment.
++- Rollback conflicts while a rollout is active; forced rollback is not exposed yet.
++- Scale conflicts while rollout or rollback is active.
++- Delete wins and cancels active deployments before moving the service to `deleting`.
++
++Conflicts are returned as `409 conflict` with `operation already in progress`.
++
+ ## Deployment Statuses
+ 
+ - `pending`: accepted but not yet processed by the controller.
+@@ -71,5 +83,6 @@ Status-change events are emitted only when the deployment status actually change
+ 
+ - No manual pause/resume endpoint yet.
+ - No automatic rollback on failed rollout.
++- No forced rollback over an active rollout endpoint yet.
+ - No progress deadline.
+ - No transaction retry loop for serialization conflicts or deadlocks yet.
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 4cb2d30..a405e6b 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -935,6 +935,7 @@ func (s *MemoryService) DeleteService(ctx context.Context, id types.ServiceID) e
+ 		return fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
+ 	now := s.now()
++	s.cancelActiveDeploymentsLocked(id, now, "service deletion requested")
+ 	service.Status = types.ServiceDeleting
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
+@@ -971,7 +972,10 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 		return types.Service{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+-		return types.Service{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++		return types.Service{}, operationConflict("delete")
++	}
++	if active := s.activeDeploymentLocked(id); active.ID != "" {
++		return types.Service{}, operationConflict(string(operationForDeployment(active)))
+ 	}
+ 	service.Spec.Replicas = replicas
+ 	service.UpdatedAt = s.now()
+@@ -1007,7 +1011,16 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+-		return types.Deployment{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++		return types.Deployment{}, operationConflict("delete")
++	}
++	if active := s.activeDeploymentLocked(id); active.ID != "" {
++		if operationForDeployment(active) == serviceOperationRollout &&
++			service.Spec.Image == spec.Image &&
++			active.MaxUnavailable == spec.MaxUnavailable &&
++			active.MaxSurge == spec.MaxSurge {
++			return active, nil
++		}
++		return types.Deployment{}, operationConflict(string(operationForDeployment(active)))
+ 	}
+ 	now := s.now()
+ 	fromVersion := service.DeploymentVersion
+@@ -1086,11 +1099,14 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+-		return types.Deployment{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++		return types.Deployment{}, operationConflict("delete")
+ 	}
+ 	if active := s.activeRollbackLocked(id); active.ID != "" {
+ 		return active, nil
+ 	}
++	if active := s.activeDeploymentLocked(id); active.ID != "" {
++		return types.Deployment{}, operationConflict(string(operationForDeployment(active)))
++	}
+ 	targetVersion, targetSpec, ok := s.previousSuccessfulVersionLocked(service)
+ 	if !ok {
+ 		return types.Deployment{}, fmt.Errorf("%w: no previous successful deployment version", store.ErrInvalidState)
+@@ -1784,15 +1800,43 @@ type memoryPortKey struct {
+ }
+ 
+ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) bool {
++	return s.activeDeploymentLocked(serviceID).ID != ""
++}
++
++func (s *MemoryService) activeDeploymentLocked(serviceID types.ServiceID) types.Deployment {
++	var latest types.Deployment
+ 	for _, deployment := range s.deployments {
+-		if deployment.ServiceID != serviceID {
++		if deployment.ServiceID != serviceID || !isActiveDeploymentStatus(deployment.Status) {
+ 			continue
+ 		}
+-		if deployment.Status == types.DeploymentPending || deployment.Status == types.DeploymentRunning {
+-			return true
++		if latest.ID == "" || deployment.CreatedAt.After(latest.CreatedAt) || (deployment.CreatedAt.Equal(latest.CreatedAt) && deployment.ID > latest.ID) {
++			latest = deployment
++		}
++	}
++	return latest
++}
++
++func (s *MemoryService) cancelActiveDeploymentsLocked(serviceID types.ServiceID, timestamp time.Time, reason string) {
++	deploymentIDs := make([]types.DeploymentID, 0)
++	for _, deployment := range s.deployments {
++		if deployment.ServiceID != serviceID || !isActiveDeploymentStatus(deployment.Status) {
++			continue
+ 		}
++		deploymentIDs = append(deploymentIDs, deployment.ID)
++	}
++	slices.Sort(deploymentIDs)
++	for _, id := range deploymentIDs {
++		deployment := s.deployments[id]
++		deployment.Status = types.DeploymentFailed
++		deployment.UpdatedAt = timestamp
++		deployment.CompletedAt = timestamp
++		s.deployments[id] = deployment
++		s.appendEventLocked(events.TypeRolloutStatusChanged, types.EventWarning, "controlplane", reason, "service", string(serviceID), timestamp)
+ 	}
+-	return false
++}
++
++func isActiveDeploymentStatus(status types.DeploymentStatus) bool {
++	return status == types.DeploymentPending || status == types.DeploymentRunning || status == types.DeploymentRollingBack
+ }
+ 
+ func (s *MemoryService) maybeFinalizeServiceDeletionLocked(serviceID types.ServiceID, timestamp time.Time) {
+@@ -1833,6 +1877,24 @@ func (s *MemoryService) activeRollbackLocked(serviceID types.ServiceID) types.De
+ 	return latest
+ }
+ 
++type serviceOperation string
++
++const (
++	serviceOperationRollout  serviceOperation = "rollout"
++	serviceOperationRollback serviceOperation = "rollback"
++)
++
++func operationForDeployment(deployment types.Deployment) serviceOperation {
++	if deployment.ToVersion < deployment.FromVersion || deployment.Status == types.DeploymentRollingBack {
++		return serviceOperationRollback
++	}
++	return serviceOperationRollout
++}
++
++func operationConflict(operation string) error {
++	return fmt.Errorf("%w: operation already in progress: %s", store.ErrConflict, operation)
++}
++
+ func (s *MemoryService) previousSuccessfulVersionLocked(service types.Service) (int64, types.ServiceSpec, bool) {
+ 	version := int64(0)
+ 	if _, ok := s.versions[service.ID][1]; ok && service.DeploymentVersion > 1 {
+diff --git a/internal/controlplane/operation_lock_test.go b/internal/controlplane/operation_lock_test.go
+new file mode 100644
+index 0000000..6ffb16d
+--- /dev/null
++++ b/internal/controlplane/operation_lock_test.go
+@@ -0,0 +1,126 @@
++package controlplane
++
++import (
++	"context"
++	"errors"
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestRolloutWhileRolloutInProgress(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createOperationLockTestService(t, ctx, service)
++
++	first, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1})
++	if err != nil {
++		t.Fatalf("first rollout: %v", err)
++	}
++	repeated, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1})
++	if err != nil {
++		t.Fatalf("repeated rollout should be idempotent: %v", err)
++	}
++	if repeated.ID != first.ID {
++		t.Fatalf("expected repeated rollout to return %s, got %s", first.ID, repeated.ID)
++	}
++	if _, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.29", MaxUnavailable: 1, MaxSurge: 1}); !isOperationConflict(err, "rollout") {
++		t.Fatalf("expected rollout conflict, got %v", err)
++	}
++}
++
++func TestRollbackDuringActiveRolloutConflicts(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createOperationLockTestService(t, ctx, service)
++	if _, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1}); err != nil {
++		t.Fatalf("rollout: %v", err)
++	}
++
++	if _, err := service.RollbackService(ctx, created.ID); !isOperationConflict(err, "rollout") {
++		t.Fatalf("expected rollback conflict, got %v", err)
++	}
++}
++
++func TestDeleteWinsOverActiveRollout(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createOperationLockTestService(t, ctx, service)
++	deployment, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1})
++	if err != nil {
++		t.Fatalf("rollout: %v", err)
++	}
++
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete should win: %v", err)
++	}
++	updatedDeployment, err := service.GetDeployment(ctx, deployment.ID)
++	if err != nil {
++		t.Fatalf("get deployment: %v", err)
++	}
++	if updatedDeployment.Status != types.DeploymentFailed {
++		t.Fatalf("expected active deployment failed after delete, got %q", updatedDeployment.Status)
++	}
++	if _, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "nginx:1.29", MaxUnavailable: 1, MaxSurge: 1}); !isOperationConflict(err, "delete") {
++		t.Fatalf("expected rollout/delete conflict, got %v", err)
++	}
++}
++
++func TestScaleAndDeleteOperationOrdering(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createOperationLockTestService(t, ctx, service)
++
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete: %v", err)
++	}
++	if _, err := service.ScaleService(ctx, created.ID, 3); !isOperationConflict(err, "delete") {
++		t.Fatalf("expected scale/delete conflict, got %v", err)
++	}
++
++	other := createOperationLockTestServiceNamed(t, ctx, service, "worker")
++	if _, err := service.ScaleService(ctx, other.ID, 3); err != nil {
++		t.Fatalf("scale before delete: %v", err)
++	}
++	if err := service.DeleteService(ctx, other.ID); err != nil {
++		t.Fatalf("delete should win after scale: %v", err)
++	}
++}
++
++func TestRepeatedDeleteIsIdempotent(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createOperationLockTestService(t, ctx, service)
++
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("first delete: %v", err)
++	}
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("second delete should be idempotent: %v", err)
++	}
++}
++
++func createOperationLockTestService(t *testing.T, ctx context.Context, service *MemoryService) types.Service {
++	t.Helper()
++	return createOperationLockTestServiceNamed(t, ctx, service, "api")
++}
++
++func createOperationLockTestServiceNamed(t *testing.T, ctx context.Context, service *MemoryService, name string) types.Service {
++	t.Helper()
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 name,
++		Image:                "nginx:1.27",
++		Replicas:             2,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return created
++}
++
++func isOperationConflict(err error, operation string) bool {
++	return errors.Is(err, store.ErrConflict) && strings.Contains(err.Error(), "operation already in progress: "+operation)
++}
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 57aa9a2..8e3aba9 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `41-manual-docker-drift-reconciliation.md`
+-- Last matching commit: `same commit: Add Docker drift reconciliation`
+-- Completed prompt range: `00` through `41`
+-- Next prompt to execute: `42-deployment-lock-and-concurrent-user-operations.md`
++- Last executed prompt: `42-deployment-lock-and-concurrent-user-operations.md`
++- Last matching commit: `same commit: Add service operation locks`
++- Completed prompt range: `00` through `42`
++- Next prompt to execute: `43-deployment-yaml-schema-and-validation.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

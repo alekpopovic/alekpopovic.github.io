@@ -1,0 +1,207 @@
+{
+  "status": "applied",
+  "at_utc": "2026-10-13T01:28:46.351724+00:00",
+  "scope": "Narrow spacing copyedit only; no semantic or source-listing changes. Final whole-book copyedit remains separate.",
+  "changes": [
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 76,
+      "before": "Imagine schedulersA andB both read taskT at time tokenU. Both compute a valid placement. A's update succeeds and changes T's status and update timestamp. B's later conditional update no longer matches. The acceptable result is one owner and one conflict, not two success responses with different node IDs. Replanning after the conflict is different from blindly repeating B's old write: the new snapshot may show that T is no longer pending.",
+      "after": "Imagine schedulers A and B both read task T at time token U. Both compute a valid placement. A's update succeeds and changes T's status and update timestamp. B's later conditional update no longer matches. The acceptable result is one owner and one conflict, not two success responses with different node IDs. Replanning after the conflict is different from blindly repeating B's old write: the new snapshot may show that T is no longer pending."
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "line": 88,
+      "before": "The creation/reporting failure window is easy to describe. Docker creates containerC; the agent tries to report created with C's ID; the HTTP request fails or its response is lost. On a later pass the server can still present a task without that ID. The agent must search labels and adopt C before creating another. A retained task ID makes that recovery possible; a fresh default server that forgets the task entirely is a different process-durability problem.",
+      "after": "The creation/reporting failure window is easy to describe. Docker creates container C; the agent tries to report created with C's ID; the HTTP request fails or its response is lost. On a later pass the server can still present a task without that ID. The agent must search labels and adopt C before creating another. A retained task ID makes that recovery possible; a fresh default server that forgets the task entirely is a different process-durability problem."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 3,
+      "before": "The server has decided that Atlas taskT belongs on nodeN. Only the worker can observe whether Docker actually created its container. That split turns a simple deployment into a protocol: enroll the worker, maintain its identity, fetch assignments, apply local effects and report observations. Every network response can be delayed or lost, so the protocol must be read as a sequence of potentially ambiguous steps rather than one successful RPC.",
+      "after": "The server has decided that Atlas task T belongs on node N. Only the worker can observe whether Docker actually created its container. That split turns a simple deployment into a protocol: enroll the worker, maintain its identity, fetch assignments, apply local effects and report observations. Every network response can be delayed or lost, so the protocol must be read as a sequence of potentially ambiguous steps rather than one successful RPC."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 98,
+      "before": "Consider a concrete timeline. The agent starts containerC for taskT and sends running. The server accepts it, but the response disappears. The agent returns an error to the local reconciliation loop and logs a warning. On the next successful heartbeat/poll, it inspects C, compares task metadata and may recover without creating another container. This is repeated convergence under ambiguous acknowledgement, not exactly-once delivery.",
+      "after": "Consider a concrete timeline. The agent starts container C for task T and sends running. The server accepts it, but the response disappears. The agent returns an error to the local reconciliation loop and logs a warning. On the next successful heartbeat/poll, it inspects C, compares task metadata and may recover without creating another container. This is repeated convergence under ambiguous acknowledgement, not exactly-once delivery."
+    },
+    {
+      "path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "line": 60,
+      "before": "TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns is precise about the ordering: the old task starts on nodeA; nodeB is registered; drain creates a distinct replacement; reporting that replacement running changes the old desired status to stopped. The task ID is new even when service identity is stable. The test proves memory-state ordering, not packet-level availability or a physical worker shutdown.",
+      "after": "TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns is precise about the ordering: the old task starts on node A; node B is registered; drain creates a distinct replacement; reporting that replacement running changes the old desired status to stopped. The task ID is new even when service identity is stable. The test proves memory-state ordering, not packet-level availability or a physical worker shutdown."
+    },
+    {
+      "path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "line": 79,
+      "before": "Suppose Atlas taskA publishes container 80 as host 31081 on node 192.0.2.10, while taskB publishes the same container port as 31082 on 192.0.2.11. These documentation addresses are illustrative, not reachable lab targets. The HTTP endpoint records preserve both pairs. DNS can return the node IPs, but an A record carries no task's host port. Resolving the service name and blindly connecting to port 80 can therefore fail despite a perfectly valid answer.",
+      "after": "Suppose Atlas task A publishes container 80 as host 31081 on node 192.0.2.10, while task B publishes the same container port as 31082 on 192.0.2.11. These documentation addresses are illustrative, not reachable lab targets. The HTTP endpoint records preserve both pairs. DNS can return the node IPs, but an A record carries no task's host port. Resolving the service name and blindly connecting to port 80 can therefore fail despite a perfectly valid answer."
+    },
+    {
+      "path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "line": 95,
+      "before": "Consider a client caching nodeA at time zero with a thirty-second TTL. At second ten, the server replaces Atlas on nodeB and taskA becomes obsolete. A new query may already return B, but the earlier client can retain A until its cache expires. Even that expiry does not guarantee an open connection moves: connection pooling, application-level retries and each client's resolver behavior are separate layers.",
+      "after": "Consider a client caching node A at time zero with a thirty-second TTL. At second ten, the server replaces Atlas on node B and task A becomes obsolete. A new query may already return B, but the earlier client can retain A until its cache expires. Even that expiry does not guarantee an open connection moves: connection pooling, application-level retries and each client's resolver behavior are separate layers."
+    },
+    {
+      "path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "line": 74,
+      "before": "Consider Atlas on nodeA and nodeB while the gateway loses access to nodeA's public port. Both agents may still report healthy probes because probes originate locally on the workers. The gateway receives a route containing A but cannot connect to it. This is a data-plane reachability failure that a local health report does not disprove. Record the failed gateway-to-A connection independently rather than changing desired replicas before understanding the hop.",
+      "after": "Consider Atlas on node A and node B while the gateway loses access to node A's public port. Both agents may still report healthy probes because probes originate locally on the workers. The gateway receives a route containing A but cannot connect to it. This is a data-plane reachability failure that a local health report does not disprove. Record the failed gateway-to-A connection independently rather than changing desired replicas before understanding the hop."
+    },
+    {
+      "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "line": 65,
+      "before": "A malicious or mistaken node token for nodeA cannot legitimately report a task owned by nodeB merely because both nodes are registered. The server also rejects status spellings outside the allowed agent states. A late running report against desired stopped must satisfy lifecycle guards rather than overwrite current authority. These checks protect record mutation; they do not physically fence an already-running isolated container.",
+      "after": "A malicious or mistaken node token for node A cannot legitimately report a task owned by node B merely because both nodes are registered. The server also rejects status spellings outside the allowed agent states. A late running report against desired stopped must satisfy lifecycle guards rather than overwrite current authority. These checks protect record mutation; they do not physically fence an already-running isolated container."
+    },
+    {
+      "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "line": 101,
+      "before": "Include the empty-JWT-secret case explicitly so the test distinguishes disabled user auth from a valid identity. Test a nodeA credential on a nodeB task report and assert both rejection and unchanged task state. Add the rotation-response-loss case only as a labeled teaching extension, preserving the original implementation. Any stronger recovery proposal requires its own tested protocol rather than changing expected output to fit the story.",
+      "after": "Include the empty-JWT-secret case explicitly so the test distinguishes disabled user auth from a valid identity. Test a node A credential on a node B task report and assert both rejection and unchanged task state. Add the rotation-response-loss case only as a labeled teaching extension, preserving the original implementation. Any stronger recovery proposal requires its own tested protocol rather than changing expected output to fit the story."
+    },
+    {
+      "path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "line": 105,
+      "before": "For Atlas, imagine the server encrypts secret V1, the worker starts containerA, then the operator updates the stored value to secret V2. The current container can still use V1. Now imagine changing the envelope key without migrating stored records: a later assigned-task resolution can fail even though secret metadata remains visible. These timelines demonstrate why stored representation, current reference resolution and runtime environment must be observed separately.",
+      "after": "For Atlas, imagine the server encrypts secret V1, the worker starts container A, then the operator updates the stored value to secret V2. The current container can still use V1. Now imagine changing the envelope key without migrating stored records: a later assigned-task resolution can fail even though secret metadata remains visible. These timelines demonstrate why stored representation, current reference resolution and runtime environment must be observed separately."
+    },
+    {
+      "path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "line": 96,
+      "before": "History distinguishes implementation from proposal. [a140c4190af17969d207b5738cc7527e4ad96075](https://github.com/alekpopovic/orch/commit/a140c4190af17969d207b5738cc7527e4ad96075) adds container security policy and related runtime fields. [9e78fed31df03d7a985a9f4ceae4770739b05014](https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014) batches admission/API policy and namespaces. Their changed hunks explain actual evolution; the broader policy design remains classified separately.",
+      "after": "History distinguishes implementation from proposal. [a 140c4190af17969d207b5738cc7527e4ad96075](https://github.com/alekpopovic/orch/commit/a140c4190af17969d207b5738cc7527e4ad96075) adds container security policy and related runtime fields. [9e78fed31df03d7a985a9f4ceae4770739b05014](https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014) batches admission/API policy and namespaces. Their changed hunks explain actual evolution; the broader policy design remains classified separately."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 27,
+      "before": "Suppose Atlas has two replicas, each requesting250m CPU and128Mi memory, and its spec declares one positive published TCP port. The service contributes one service, two replicas,500 millicores,268435456 memory bytes and one public-port declaration. A dynamic declaration with published_port zero does not add that same positive-port count at this boundary. This is declared service usage, not the number of actual host socket bindings.",
+      "after": "Suppose Atlas has two replicas, each requesting 250m CPU and 128Mi memory, and its spec declares one positive published TCP port. The service contributes one service, two replicas,500 millicores,268435456 memory bytes and one public-port declaration. A dynamic declaration with published_port zero does not add that same positive-port count at this boundary. This is declared service usage, not the number of actual host socket bindings."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 29,
+      "before": "Resource limits are not the quantities summed by this helper. A service requesting250m with a larger limit contributes250m per replica to requested accounting. Likewise, an idle process and a busy process with the same declaration produce the same requested total. These distinctions are necessary when capacity planning, quota acceptance and observed utilization appear in one dashboard.",
+      "after": "Resource limits are not the quantities summed by this helper. A service requesting 250m with a larger limit contributes250m per replica to requested accounting. Likewise, an idle process and a busy process with the same declaration produce the same requested total. These distinctions are necessary when capacity planning, quota acceptance and observed utilization appear in one dashboard."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 79,
+      "before": "TaskRuntimeSeconds is particularly important. Each capture sums the lifetime-to-date duration of retained started tasks. It is not an incremental duration since the previous snapshot. A task started at12:00 and still running contributes60 seconds at12:01 and120 seconds at12:02. Summing those two snapshots produces180 in report totals even though only120 seconds elapsed since start. This is how the current aggregation behaves; it must not be labeled integrated task-seconds for that interval.",
+      "after": "TaskRuntimeSeconds is particularly important. Each capture sums the lifetime-to-date duration of retained started tasks. It is not an incremental duration since the previous snapshot. A task started at12:00 and still running contributes60 seconds at12:01 and 120 seconds at12:02. Summing those two snapshots produces180 in report totals even though only120 seconds elapsed since start. This is how the current aggregation behaves; it must not be labeled integrated task-seconds for that interval."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 93,
+      "before": "The actual snapshot aggregation test creates a two-replica service with250m requests and one claim. It checks500 millicores and one storage claim, then verifies report service/replica totals. That is executed evidence for those assertions. It does not validate every export consumer, arbitrary time intervals or a complete accounting model. Preserve the distinction between inspected CSV formatting and the specific test cases that ran.",
+      "after": "The actual snapshot aggregation test creates a two-replica service with 250m requests and one claim. It checks500 millicores and one storage claim, then verifies report service/replica totals. That is executed evidence for those assertions. It does not validate every export consumer, arbitrary time intervals or a complete accounting model. Preserve the distinction between inspected CSV formatting and the specific test cases that ran."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 107,
+      "before": "For the safe Atlas lab, use only the disposable module and Go 1.25. No Docker or database is needed for the selected MemoryService/API tests. Predict one winner and one denial for concurrent scale, a projected usage error at the bound, and500 millicores for the two-replica snapshot. Run:",
+      "after": "For the safe Atlas lab, use only the disposable module and Go 1.25. No Docker or database is needed for the selected MemoryService/API tests. Predict one winner and one denial for concurrent scale, a projected usage error at the bound, and 500 millicores for the two-replica snapshot. Run:"
+    },
+    {
+      "path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "line": 75,
+      "before": "History reinforces that boundary. [f2836eabfff8e442d38984433f3e1f5c642667d1](https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1) adds the relevant image pinning and design material in a batch with other work. Its actual changed paths do not demonstrate a deployed verifier, SBOM service or vulnerability scanner. Original prompts68 and69 request design, and their existence should not be promoted to execution evidence.",
+      "after": "History reinforces that boundary. [f2836eabfff8e442d38984433f3e1f5c642667d1](https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1) adds the relevant image pinning and design material in a batch with other work. Its actual changed paths do not demonstrate a deployed verifier, SBOM service or vulnerability scanner. Original prompts 68 and 69 request design, and their existence should not be promoted to execution evidence."
+    },
+    {
+      "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "line": 95,
+      "before": "The parser requires exactly five fields: minute, hour, day of month, month and weekday. Bounds are0\u201359,0\u201323,1\u201331,1\u201312 and0\u20136. It supports comma lists, ranges, wildcard and positive step syntax implemented by parseField. Do not add a seconds field, named weekdays/months or a seventh-field extension from another cron implementation. [Claim ch31.schedule](../../validation/evidence/ch31.json).",
+      "after": "The parser requires exactly five fields: minute, hour, day of month, month and weekday. Bounds are0\u201359,0\u201323,1\u201331,1\u201312 and 0\u20136. It supports comma lists, ranges, wildcard and positive step syntax implemented by parseField. Do not add a seconds field, named weekdays/months or a seventh-field extension from another cron implementation. [Claim ch31.schedule](../../validation/evidence/ch31.json)."
+    },
+    {
+      "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "line": 116,
+      "before": "RunOnce loads the explicit IANA location and evaluates the schedule in that location, storing schedule timestamps in UTC. Nine in the morning under UTC and nine under Europe/Belgrade are different instants on the fixture date. The book's [actual arithmetic fixture](../../validation/labs/ch31/teaching-fixture.json) observed09:00UTC for UTC and07:00UTC for Belgrade on2026-10-13, plus rejection of six fields. It uses injected dates, not wall-clock waiting.",
+      "after": "RunOnce loads the explicit IANA location and evaluates the schedule in that location, storing schedule timestamps in UTC. Nine in the morning under UTC and nine under Europe/Belgrade are different instants on the fixture date. The book's [actual arithmetic fixture](../../validation/labs/ch31/teaching-fixture.json) observed09:00UTC for UTC and 07:00UTC for Belgrade on2026-10-13, plus rejection of six fields. It uses injected dates, not wall-clock waiting."
+    },
+    {
+      "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "line": 140,
+      "before": "For the safe lab, use the disposable module and Go1.25. Run the focused tests, then copy examples/teaching-extensions/ch31/main.go to book-cron and run the arithmetic fixture. No Docker, database, server listener or external service is required.",
+      "after": "For the safe lab, use the disposable module and Go 1.25. Run the focused tests, then copy examples/teaching-extensions/ch31/main.go to book-cron and run the arithmetic fixture. No Docker, database, server listener or external service is required."
+    },
+    {
+      "path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "line": 114,
+      "before": "For the safe Atlas lab, use the disposable source module and pinned Go1.25 toolchain. Predict one writer for desired two, a refused conflicting scheduler assignment and detached metadata after the injected removal. Run:",
+      "after": "For the safe Atlas lab, use the disposable source module and pinned Go 1.25 toolchain. Predict one writer for desired two, a refused conflicting scheduler assignment and detached metadata after the injected removal. Run:"
+    }
+  ],
+  "reviewed_paths": [
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md"
+  ],
+  "final_hashes": {
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "1a3477156251cf8065c54bc578ae7472b0f7057fb72c7704c203c6561e9f2925",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "ab2e4930251d04fde033ec301efd6a9567699298071027138321df47bea148cb",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "fabce9e2fbb8cbc5d3f157c468e6ffe452a3d9d063bf21826aecb1f159443ee2",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "ff940756e0959d477792821afb37c580f00b2790f5e7ca79611f4930035b5a79",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "0a7b978a1477045528f9822c98d0ef3bc8ad0858a781b25f2206414719d116b1",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "cc801f3e4f6ae20012c7c5780a8fc994291360d4db70ed490b559fa7fb036ee9",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "7b147a5bf08133bc2901c915763241bb6244534f233cad7c4b8c026365ed7dbe",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "9d368fc40bee976c9cbe7a7e6c07a3ab426ee21ce12865cdce431ad70cec3779",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "797d343ff6123da6acac69205b1c02df797b943011f03dba79aada1d1ffae50d",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "fde6ef7a6e713cda32b83450da91cbc35d7cc8e2616dfd72cd24a24e3a42a076",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "756fef9731ed42822eec94a588969feacbb568470b061ca7cdb39346a862197f",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "ab4ce4c90a62f7142952f4e7fefbfa3558aab8dd87facf94f6df89db8ef6ec6b",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "c6435e873dd06b8521a6a79297c934ba799c4917b302e16ac0e1964f22d9d6a0",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "3c1850bd28d43d706a6bb73176f7471a5f625aceb61ce8211c170898d17f6f72",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "bfbb43d143000cfb888d9912ddbc6dc435603c4800d931a1361de5564359578e",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a38ccfada3e80477fdf5661de7a47f9cdf17e0ba04da4fbeb200584ef70aa5af",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "01962fcbdafb7c714cf8a318887101a04353173222c6956d9749cd434d8ff567",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "5bf7469bd19acbe022f439b785e730eb30b5755bff73919c4b4b1eb2c65f9da6",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "8cd5845ec7ec1ac643cc3b45fefa026cd65ef39d5de38bca49095fa327ec4c37",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "a52de677f9b33c50baaedb4604fae80fc65329d779838c0920d17b333aae6662",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md": "4d16dfa95c68d6a2471ac514a6218514fc5e3c8474f47f6a6a6bc432d4ef5e9d",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md": "206a9ec016a9748710cd3cf5a1c9fb8ec44e4f6783a5ec8b01d253371094db12",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md": "8676577ad3a5bfb4a48566fccbfb21ab664ff3dcc8f2292fb770786533c34367",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md": "8701625187ca2c56cee26d16aa640aa55719bfeb42bbd19f35821ce01795b30a",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c"
+  }
+}

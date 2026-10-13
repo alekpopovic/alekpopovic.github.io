@@ -1,0 +1,437 @@
+commit f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081
+Date: 2026-07-14T18:34:02+02:00
+Subject: Harden healthcheck SSRF protection
+
+
+---
+ docs/HEALTHCHECKS.md           |  5 ++-
+ docs/SECURITY.md               |  2 +
+ docs/SERVICE_SPEC.md           |  2 +
+ internal/agent/agent.go        |  6 ++-
+ internal/agent/agent_test.go   |  9 +++++
+ internal/cli/deploy.go         |  2 +
+ internal/cli/deploy_test.go    |  3 +-
+ internal/health/health.go      | 26 ++++++++++++-
+ internal/health/health_test.go | 88 ++++++++++++++++++++++++++++++++++++++++++
+ pkg/types/types.go             | 42 +++++++++++++++++++-
+ pkg/types/validation_test.go   | 18 +++++++++
+ prompts/EXECUTION_TRACKER.md   |  8 ++--
+ 12 files changed, 201 insertions(+), 10 deletions(-)
+
+diff --git a/docs/HEALTHCHECKS.md b/docs/HEALTHCHECKS.md
+index e1491af..4f6bf87 100644
+--- a/docs/HEALTHCHECKS.md
++++ b/docs/HEALTHCHECKS.md
+@@ -13,6 +13,7 @@ Example deploy YAML:
+ ```yaml
+ healthcheck:
+   type: http
++  scheme: http
+   path: /health
+   interval: 10s
+   timeout: 2s
+@@ -26,7 +27,7 @@ The server includes healthcheck metadata in task poll responses. For each runnin
+ 
+ 1. The agent waits for the configured interval plus jitter.
+ 2. It verifies that the healthcheck port matches one of the task's assigned published TCP container or host ports.
+-3. It performs the HTTP or TCP check against `127.0.0.1:<published-port>` with context cancellation and timeout.
++3. It performs the HTTP or TCP check against `<scheme>://127.0.0.1:<published-port><path>` with context cancellation and timeout.
+ 4. If the service specified a container port, the agent resolves it to the assigned published host port before probing.
+ 5. If the healthcheck port is not assigned, published, and TCP, the probe is skipped instead of probing an arbitrary host-local port.
+ 6. It tracks consecutive successes and failures in memory.
+@@ -35,6 +36,8 @@ The server includes healthcheck metadata in task poll responses. For each runnin
+ 
+ The agent does not restart containers because of health failures.
+ 
++HTTP healthchecks never accept arbitrary full URLs. `path` must begin with a single `/`; `scheme` may be `http` or `https` and defaults to `http`. The checker blocks redirects away from the originally constructed endpoint, including redirects to metadata services or external destinations, and reads at most 64 KiB of response body.
++
+ ## Server Behavior
+ 
+ The server accepts `healthy` and `unhealthy` task status reports.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index ff30507..e1d58f8 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -71,6 +71,8 @@ Recommended controls:
+ 
+ Agents run HTTP and TCP healthchecks from the node. To avoid service specs causing arbitrary host-local probes, healthchecks are only performed against published TCP ports assigned to the task. A configured container port is resolved to the assigned published host port before probing. Unassigned, unpublished, or UDP-only ports are skipped.
+ 
++HTTP healthchecks accept only a scheme and path, not arbitrary URLs. The agent constructs the target from task networking data, blocks redirects away from the original endpoint, and limits response body reads.
++
+ ## Container Security Policy
+ 
+ Services may set `security_context` / `securityContext` fields for runtime hardening, including an explicit non-root `user`, read-only root filesystem, Linux capability drops/additions, host network, host PID, and host path mounts.
+diff --git a/docs/SERVICE_SPEC.md b/docs/SERVICE_SPEC.md
+index 2530853..dc1a478 100644
+--- a/docs/SERVICE_SPEC.md
++++ b/docs/SERVICE_SPEC.md
+@@ -67,4 +67,6 @@ Validate locally without creating a service:
+ orch validate deployments/examples/http-api.yaml
+ ```
+ 
++Healthcheck `path` must start with a single `/` and must not be a full URL. Healthcheck `scheme` defaults to `http` and may be `http` or `https`.
++
+ The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, invalid security context paths or capabilities, and malformed secret references. The server additionally applies the cluster container security policy before creating a service.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index bf5bfcc..7bf89b5 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -550,7 +550,11 @@ func healthProbe(check types.Healthcheck, ports []types.Port) (health.Check, boo
+ 		if !strings.HasPrefix(path, "/") {
+ 			path = "/" + path
+ 		}
+-		return health.Check{Type: health.HTTPProbe, Target: "http://" + target + path, Timeout: timeout}, true
++		scheme := strings.ToLower(strings.TrimSpace(check.Scheme))
++		if scheme == "" {
++			scheme = "http"
++		}
++		return health.Check{Type: health.HTTPProbe, Target: scheme + "://" + target + path, Timeout: timeout}, true
+ 	case types.HealthcheckTCP:
+ 		return health.Check{Type: health.TCPProbe, Target: target, Timeout: timeout}, true
+ 	default:
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 6125f58..f5ac251 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -613,6 +613,15 @@ func TestHealthProbeRequiresAssignedPort(t *testing.T) {
+ 	if probe.Target != "http://127.0.0.1:18080/health" {
+ 		t.Fatalf("expected probe to use published port, got %q", probe.Target)
+ 	}
++
++	check.Scheme = "https"
++	probe, ok = healthProbe(check, ports)
++	if !ok {
++		t.Fatalf("expected https health probe for assigned container port")
++	}
++	if probe.Target != "https://127.0.0.1:18080/health" {
++		t.Fatalf("expected probe to use configured scheme, got %q", probe.Target)
++	}
+ }
+ 
+ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index 1ca5090..b72fea4 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -85,6 +85,7 @@ type DeployHostPathMount struct {
+ 
+ type DeployHealthcheck struct {
+ 	Type               string `yaml:"type"`
++	Scheme             string `yaml:"scheme"`
+ 	Path               string `yaml:"path"`
+ 	Interval           string `yaml:"interval"`
+ 	Timeout            string `yaml:"timeout"`
+@@ -303,6 +304,7 @@ func (h DeployHealthcheck) toDomain() (types.Healthcheck, error) {
+ 
+ 	check := types.Healthcheck{
+ 		Type:               types.HealthcheckType(strings.TrimSpace(h.Type)),
++		Scheme:             strings.TrimSpace(h.Scheme),
+ 		Path:               strings.TrimSpace(h.Path),
+ 		Interval:           interval,
+ 		Timeout:            timeout,
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index f9a45bc..7c5732c 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -35,6 +35,7 @@ securityContext:
+     - NET_RAW
+ healthcheck:
+   type: http
++  scheme: http
+   path: /health
+   interval: 10s
+   timeout: 2s
+@@ -74,7 +75,7 @@ placement:
+ 	if spec.SecurityContext.User != "1000:1000" || !spec.SecurityContext.ReadOnlyRootFilesystem || len(spec.SecurityContext.CapDrop) != 1 {
+ 		t.Fatalf("unexpected security context %#v", spec.SecurityContext)
+ 	}
+-	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" {
++	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" || spec.Healthcheck.Scheme != "http" {
+ 		t.Fatalf("unexpected healthcheck %#v", spec.Healthcheck)
+ 	}
+ 	if spec.Healthcheck.HealthyThreshold != 2 || spec.Healthcheck.UnhealthyThreshold != 4 {
+diff --git a/internal/health/health.go b/internal/health/health.go
+index ca2e920..22a87a1 100644
+--- a/internal/health/health.go
++++ b/internal/health/health.go
+@@ -3,8 +3,10 @@ package health
+ import (
+ 	"context"
+ 	"fmt"
++	"io"
+ 	"net"
+ 	"net/http"
++	"net/url"
+ 	"strings"
+ 	"time"
+ )
+@@ -15,6 +17,8 @@ const (
+ 	NoneProbe ProbeType = "none"
+ 	HTTPProbe ProbeType = "http"
+ 	TCPProbe  ProbeType = "tcp"
++
++	MaxHTTPResponseBodyBytes int64 = 64 * 1024
+ )
+ 
+ type Check struct {
+@@ -72,18 +76,38 @@ func (c *DefaultChecker) checkHTTP(ctx context.Context, target string, timeout t
+ 	if err != nil {
+ 		return Result{}, fmt.Errorf("create healthcheck request: %w", err)
+ 	}
+-	client := &http.Client{Timeout: timeout}
++	client := &http.Client{
++		Timeout:       timeout,
++		CheckRedirect: sameOriginRedirect(req.URL),
++	}
+ 	resp, err := client.Do(req)
+ 	if err != nil {
+ 		return Result{Healthy: false, CheckedAt: c.now(), Message: err.Error()}, nil
+ 	}
+ 	defer resp.Body.Close()
++	if _, err := io.Copy(io.Discard, io.LimitReader(resp.Body, MaxHTTPResponseBodyBytes)); err != nil {
++		return Result{Healthy: false, CheckedAt: c.now(), Message: err.Error()}, nil
++	}
+ 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+ 		return Result{Healthy: false, CheckedAt: c.now(), Message: resp.Status}, nil
+ 	}
+ 	return Result{Healthy: true, CheckedAt: c.now(), Message: resp.Status}, nil
+ }
+ 
++func sameOriginRedirect(origin *url.URL) func(*http.Request, []*http.Request) error {
++	originScheme := strings.ToLower(origin.Scheme)
++	originHost := strings.ToLower(origin.Host)
++	return func(req *http.Request, via []*http.Request) error {
++		if len(via) >= 10 {
++			return fmt.Errorf("stopped after 10 redirects")
++		}
++		if strings.ToLower(req.URL.Scheme) != originScheme || strings.ToLower(req.URL.Host) != originHost {
++			return fmt.Errorf("healthcheck redirect blocked: %s", req.URL.Redacted())
++		}
++		return nil
++	}
++}
++
+ func (c *DefaultChecker) checkTCP(ctx context.Context, target string, timeout time.Duration) (Result, error) {
+ 	if strings.TrimSpace(target) == "" {
+ 		return Result{}, fmt.Errorf("tcp healthcheck target is required")
+diff --git a/internal/health/health_test.go b/internal/health/health_test.go
+index a1bbb5d..11d9115 100644
+--- a/internal/health/health_test.go
++++ b/internal/health/health_test.go
+@@ -5,6 +5,7 @@ import (
+ 	"net"
+ 	"net/http"
+ 	"net/http/httptest"
++	"strings"
+ 	"testing"
+ 	"time"
+ )
+@@ -42,6 +43,93 @@ func TestHTTPHealthCheck(t *testing.T) {
+ 	}
+ }
+ 
++func TestHTTPHealthCheckBlocksExternalRedirect(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if r.URL.Path != "/health" {
++			t.Fatalf("expected /health path, got %q", r.URL.Path)
++		}
++		http.Redirect(w, r, "http://169.254.169.254/latest/meta-data", http.StatusFound)
++	}))
++	defer server.Close()
++
++	result, err := NewChecker().Check(context.Background(), Check{
++		Type:    HTTPProbe,
++		Target:  server.URL + "/health",
++		Timeout: time.Second,
++	})
++	if err != nil {
++		t.Fatalf("check redirect: %v", err)
++	}
++	if result.Healthy {
++		t.Fatalf("expected external redirect to be unhealthy")
++	}
++	if !strings.Contains(result.Message, "redirect blocked") {
++		t.Fatalf("expected redirect block message, got %q", result.Message)
++	}
++}
++
++func TestHTTPHealthCheckAllowsSameOriginRedirect(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if r.URL.Path == "/health" {
++			http.Redirect(w, r, "/ready", http.StatusFound)
++			return
++		}
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer server.Close()
++
++	result, err := NewChecker().Check(context.Background(), Check{
++		Type:    HTTPProbe,
++		Target:  server.URL + "/health",
++		Timeout: time.Second,
++	})
++	if err != nil {
++		t.Fatalf("check redirect: %v", err)
++	}
++	if !result.Healthy {
++		t.Fatalf("expected same-origin redirect to be healthy: %#v", result)
++	}
++}
++
++func TestHTTPHealthCheckLimitsHugeResponseBody(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++		_, _ = w.Write([]byte(strings.Repeat("x", int(MaxHTTPResponseBodyBytes*2))))
++	}))
++	defer server.Close()
++
++	result, err := NewChecker().Check(context.Background(), Check{
++		Type:    HTTPProbe,
++		Target:  server.URL + "/health",
++		Timeout: time.Second,
++	})
++	if err != nil {
++		t.Fatalf("check huge body: %v", err)
++	}
++	if !result.Healthy {
++		t.Fatalf("expected huge body with 200 status to remain healthy: %#v", result)
++	}
++}
++
++func TestHTTPHealthCheckTimeout(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++		time.Sleep(100 * time.Millisecond)
++		w.WriteHeader(http.StatusOK)
++	}))
++	defer server.Close()
++
++	result, err := NewChecker().Check(context.Background(), Check{
++		Type:    HTTPProbe,
++		Target:  server.URL + "/health",
++		Timeout: 10 * time.Millisecond,
++	})
++	if err != nil {
++		t.Fatalf("check timeout: %v", err)
++	}
++	if result.Healthy {
++		t.Fatalf("expected timeout to be unhealthy")
++	}
++}
++
+ func TestTCPHealthCheck(t *testing.T) {
+ 	listener, err := net.Listen("tcp", "127.0.0.1:0")
+ 	if err != nil {
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 16337f9..b0f9871 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -532,6 +532,7 @@ func NormalizeServiceSpec(spec ServiceSpec, defaults ResourceDefaults) (ServiceS
+ 
+ type Healthcheck struct {
+ 	Type               HealthcheckType `json:"type"`
++	Scheme             string          `json:"scheme,omitempty"`
+ 	Path               string          `json:"path,omitempty"`
+ 	Port               int             `json:"port"`
+ 	Interval           time.Duration   `json:"interval"`
+@@ -550,8 +551,18 @@ func (check Healthcheck) Validate() error {
+ 	if check.Port < 1 || check.Port > 65535 {
+ 		return fmt.Errorf("healthcheck port must be between 1 and 65535")
+ 	}
+-	if check.Type == HealthcheckHTTP && strings.TrimSpace(check.Path) == "" {
+-		return fmt.Errorf("healthcheck path is required for HTTP checks")
++	if check.Type == HealthcheckHTTP {
++		if err := validateHealthcheckScheme(check.Scheme); err != nil {
++			return err
++		}
++		if err := validateHealthcheckPath(check.Path); err != nil {
++			return err
++		}
++	} else if strings.TrimSpace(check.Scheme) != "" {
++		return fmt.Errorf("healthcheck scheme is only valid for HTTP checks")
++	}
++	if check.Type == HealthcheckTCP && strings.TrimSpace(check.Path) != "" {
++		return fmt.Errorf("healthcheck path is only valid for HTTP checks")
+ 	}
+ 	if check.Interval < 0 {
+ 		return fmt.Errorf("healthcheck interval cannot be negative")
+@@ -568,6 +579,33 @@ func (check Healthcheck) Validate() error {
+ 	return nil
+ }
+ 
++func validateHealthcheckScheme(scheme string) error {
++	scheme = strings.ToLower(strings.TrimSpace(scheme))
++	if scheme == "" || scheme == "http" || scheme == "https" {
++		return nil
++	}
++	return fmt.Errorf("healthcheck scheme must be http or https")
++}
++
++func validateHealthcheckPath(path string) error {
++	path = strings.TrimSpace(path)
++	if path == "" {
++		return fmt.Errorf("healthcheck path is required for HTTP checks")
++	}
++	if strings.Contains(path, "://") {
++		return fmt.Errorf("healthcheck path must not be a full URL")
++	}
++	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
++		return fmt.Errorf("healthcheck path must start with a single /")
++	}
++	for _, char := range path {
++		if char < ' ' || char == 0x7f {
++			return fmt.Errorf("healthcheck path contains invalid characters")
++		}
++	}
++	return nil
++}
++
+ type HealthcheckType string
+ 
+ const (
+diff --git a/pkg/types/validation_test.go b/pkg/types/validation_test.go
+index 0259fa7..ea48b2e 100644
+--- a/pkg/types/validation_test.go
++++ b/pkg/types/validation_test.go
+@@ -185,6 +185,24 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			}(),
+ 			wantErr: "healthcheck path is required for HTTP checks",
+ 		},
++		{
++			name: "http healthcheck full URL rejected",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Healthcheck.Path = "http://169.254.169.254/latest"
++				return spec
++			}(),
++			wantErr: "healthcheck path must not be a full URL",
++		},
++		{
++			name: "http healthcheck invalid scheme",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Healthcheck.Scheme = "ftp"
++				return spec
++			}(),
++			wantErr: "healthcheck scheme must be http or https",
++		},
+ 		{
+ 			name: "invalid restart policy",
+ 			spec: func() ServiceSpec {
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 504152a..78039c4 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `52-container-security-policy.md`
+-- Last matching commit: `same commit: Add container security policy`
+-- Completed prompt range: `00` through `52`
+-- Next prompt to execute: `53-healthcheck-ssrf-protection.md`
++- Last executed prompt: `53-healthcheck-ssrf-protection.md`
++- Last matching commit: `same commit: Harden healthcheck SSRF protection`
++- Completed prompt range: `00` through `53`
++- Next prompt to execute: `54-autoscaling-design-doc.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

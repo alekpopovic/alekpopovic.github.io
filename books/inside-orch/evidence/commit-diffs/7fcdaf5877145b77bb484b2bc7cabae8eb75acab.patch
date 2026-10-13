@@ -1,0 +1,335 @@
+commit 7fcdaf5877145b77bb484b2bc7cabae8eb75acab
+Date: 2026-07-14T18:45:07+02:00
+Subject: Add multi-agent load test
+
+
+---
+ cmd/orch-loadtest/main.go    | 244 +++++++++++++++++++++++++++++++++++++++++++
+ docs/LOAD_TESTING.md         |  49 +++++++++
+ prompts/EXECUTION_TRACKER.md |   8 +-
+ 3 files changed, 297 insertions(+), 4 deletions(-)
+
+diff --git a/cmd/orch-loadtest/main.go b/cmd/orch-loadtest/main.go
+new file mode 100644
+index 0000000..e2b7cff
+--- /dev/null
++++ b/cmd/orch-loadtest/main.go
+@@ -0,0 +1,244 @@
++package main
++
++import (
++	"context"
++	"flag"
++	"fmt"
++	"math/rand"
++	"os"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type config struct {
++	nodes       int
++	services    int
++	replicas    int
++	failureRate float64
++	duration    time.Duration
++	seed        int64
++}
++
++type summary struct {
++	TasksCreated           int
++	TasksRunning           int
++	TasksFailed            int
++	AverageConvergenceTime time.Duration
++	SchedulerErrors        int
++	ReconcilerErrors       int
++}
++
++func main() {
++	cfg := parseFlags(os.Args[1:])
++	if err := cfg.validate(); err != nil {
++		fmt.Fprintln(os.Stderr, err)
++		os.Exit(2)
++	}
++	result, err := run(context.Background(), cfg)
++	if err != nil {
++		fmt.Fprintln(os.Stderr, err)
++		os.Exit(1)
++	}
++	printSummary(result)
++}
++
++func parseFlags(args []string) config {
++	cfg := config{
++		nodes:       5,
++		services:    20,
++		replicas:    3,
++		failureRate: 0.05,
++		duration:    10 * time.Second,
++		seed:        time.Now().UnixNano(),
++	}
++	fs := flag.NewFlagSet("orch-loadtest", flag.ExitOnError)
++	fs.IntVar(&cfg.nodes, "nodes", cfg.nodes, "number of fake nodes")
++	fs.IntVar(&cfg.services, "services", cfg.services, "number of services to create")
++	fs.IntVar(&cfg.replicas, "replicas", cfg.replicas, "replicas per service")
++	fs.Float64Var(&cfg.failureRate, "failure-rate", cfg.failureRate, "probability of failing a task on each simulation tick")
++	fs.DurationVar(&cfg.duration, "duration", cfg.duration, "simulation duration")
++	fs.Int64Var(&cfg.seed, "seed", cfg.seed, "random seed")
++	_ = fs.Parse(args)
++	return cfg
++}
++
++func (cfg config) validate() error {
++	if cfg.nodes <= 0 {
++		return fmt.Errorf("nodes must be positive")
++	}
++	if cfg.services <= 0 {
++		return fmt.Errorf("services must be positive")
++	}
++	if cfg.replicas < 0 {
++		return fmt.Errorf("replicas cannot be negative")
++	}
++	if cfg.failureRate < 0 || cfg.failureRate > 1 {
++		return fmt.Errorf("failure-rate must be between 0 and 1")
++	}
++	if cfg.duration <= 0 {
++		return fmt.Errorf("duration must be positive")
++	}
++	return nil
++}
++
++func run(ctx context.Context, cfg config) (summary, error) {
++	cp := controlplane.NewMemoryService()
++	rng := rand.New(rand.NewSource(cfg.seed))
++	nodes, err := registerNodes(ctx, cp, cfg.nodes)
++	if err != nil {
++		return summary{}, err
++	}
++	var result summary
++	convergence := make([]time.Duration, 0, cfg.services)
++	for serviceIndex := 0; serviceIndex < cfg.services; serviceIndex++ {
++		start := time.Now()
++		service, err := cp.CreateService(ctx, types.ServiceSpec{
++			Name:     fmt.Sprintf("svc-%04d", serviceIndex),
++			Image:    "nginx:1.27",
++			Replicas: cfg.replicas,
++			ResourceRequirements: types.ResourceRequirements{
++				Requests: types.Resources{CPU: 50, Memory: 64 * 1024 * 1024},
++				Limits:   types.Resources{CPU: 50, Memory: 64 * 1024 * 1024},
++			},
++		})
++		if err != nil {
++			result.ReconcilerErrors++
++			return result, fmt.Errorf("create service %d: %w", serviceIndex, err)
++		}
++		if err := markServiceTasksRunning(ctx, cp, service.ID); err != nil {
++			result.ReconcilerErrors++
++			return result, err
++		}
++		convergence = append(convergence, time.Since(start))
++	}
++	deadline := time.Now().Add(cfg.duration)
++	for time.Now().Before(deadline) {
++		if err := simulateTick(ctx, cp, nodes, rng, cfg.failureRate, &result); err != nil {
++			result.ReconcilerErrors++
++			return result, err
++		}
++		time.Sleep(100 * time.Millisecond)
++	}
++	tasks, err := cp.ListTasks(ctx, controlplane.TaskFilter{})
++	if err != nil {
++		return result, err
++	}
++	result.TasksCreated = len(tasks)
++	for _, task := range tasks {
++		switch task.ActualStatus {
++		case types.TaskRunning, types.TaskHealthy:
++			result.TasksRunning++
++		case types.TaskFailed:
++			result.TasksFailed++
++		}
++	}
++	result.AverageConvergenceTime = averageDuration(convergence)
++	return result, nil
++}
++
++func registerNodes(ctx context.Context, cp *controlplane.MemoryService, count int) ([]types.NodeID, error) {
++	nodes := make([]types.NodeID, 0, count)
++	for i := 0; i < count; i++ {
++		registered, err := cp.RegisterNode(ctx, controlplane.NodeRegistration{
++			Name:             fmt.Sprintf("node-%03d", i),
++			AdvertiseAddress: fmt.Sprintf("10.0.0.%d", i+10),
++			Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++			Allocatable:      types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++		})
++		if err != nil {
++			return nil, err
++		}
++		nodes = append(nodes, registered.Node.ID)
++	}
++	return nodes, nil
++}
++
++func markServiceTasksRunning(ctx context.Context, cp *controlplane.MemoryService, serviceID types.ServiceID) error {
++	tasks, err := cp.ListTasks(ctx, controlplane.TaskFilter{ServiceID: serviceID})
++	if err != nil {
++		return err
++	}
++	for _, task := range tasks {
++		if task.NodeID == "" || task.ActualStatus == types.TaskRunning {
++			continue
++		}
++		if _, err := cp.ReportTaskStatus(ctx, controlplane.TaskStatusReport{
++			TaskID:      task.ID,
++			NodeID:      task.NodeID,
++			Status:      types.TaskRunning,
++			ContainerID: "fake-" + string(task.ID),
++		}); err != nil {
++			return fmt.Errorf("mark task %s running: %w", task.ID, err)
++		}
++	}
++	return nil
++}
++
++func simulateTick(ctx context.Context, cp *controlplane.MemoryService, nodes []types.NodeID, rng *rand.Rand, failureRate float64, result *summary) error {
++	if len(nodes) > 0 && rng.Float64() < 0.02 {
++		nodeID := nodes[rng.Intn(len(nodes))]
++		shutdown := rng.Intn(2) == 0
++		if _, err := cp.HeartbeatNode(ctx, controlplane.NodeHeartbeat{
++			NodeID:      nodeID,
++			Capacity:    types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++			Allocatable: types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++			Shutdown:    shutdown,
++		}); err != nil {
++			result.SchedulerErrors++
++		}
++	}
++	tasks, err := cp.ListTasks(ctx, controlplane.TaskFilter{})
++	if err != nil {
++		return err
++	}
++	for _, task := range tasks {
++		if task.NodeID == "" {
++			continue
++		}
++		if task.ActualStatus == types.TaskAssigned || task.ActualStatus == types.TaskPending {
++			if _, err := cp.ReportTaskStatus(ctx, controlplane.TaskStatusReport{
++				TaskID:      task.ID,
++				NodeID:      task.NodeID,
++				Status:      types.TaskRunning,
++				ContainerID: "fake-" + string(task.ID),
++			}); err != nil {
++				result.ReconcilerErrors++
++			}
++			continue
++		}
++		if task.ActualStatus == types.TaskRunning && rng.Float64() < failureRate {
++			if _, err := cp.ReportTaskStatus(ctx, controlplane.TaskStatusReport{
++				TaskID:        task.ID,
++				NodeID:        task.NodeID,
++				Status:        types.TaskFailed,
++				ContainerID:   task.ContainerID,
++				FailureReason: "loadtest random failure",
++			}); err != nil {
++				result.ReconcilerErrors++
++			}
++		}
++	}
++	return nil
++}
++
++func averageDuration(values []time.Duration) time.Duration {
++	if len(values) == 0 {
++		return 0
++	}
++	var total time.Duration
++	for _, value := range values {
++		total += value
++	}
++	return total / time.Duration(len(values))
++}
++
++func printSummary(result summary) {
++	fmt.Printf("tasks_created=%d\n", result.TasksCreated)
++	fmt.Printf("tasks_running=%d\n", result.TasksRunning)
++	fmt.Printf("tasks_failed=%d\n", result.TasksFailed)
++	fmt.Printf("average_convergence_time=%s\n", result.AverageConvergenceTime)
++	fmt.Printf("scheduler_errors=%d\n", result.SchedulerErrors)
++	fmt.Printf("reconciler_errors=%d\n", result.ReconcilerErrors)
++}
+diff --git a/docs/LOAD_TESTING.md b/docs/LOAD_TESTING.md
+new file mode 100644
+index 0000000..333c83e
+--- /dev/null
++++ b/docs/LOAD_TESTING.md
+@@ -0,0 +1,49 @@
++# Load Testing
++
++`orch-loadtest` simulates multi-node orchestration behavior with the in-memory control plane and fake agent transitions. It does not require Docker or PostgreSQL.
++
++## Scenario
++
++The tool:
++
++1. Creates configurable fake nodes.
++2. Deploys configurable services.
++3. Creates a fixed replica count per service.
++4. Simulates assigned tasks transitioning to `running`.
++5. Randomly fails running tasks.
++6. Randomly marks nodes offline or online through heartbeat updates.
++7. Prints a summary of convergence and error counters.
++
++## Usage
++
++```sh
++go run ./cmd/orch-loadtest \
++  --nodes 10 \
++  --services 100 \
++  --replicas 3 \
++  --failure-rate 0.02 \
++  --duration 30s \
++  --seed 1234
++```
++
++Parameters:
++
++- `--nodes`: number of fake nodes.
++- `--services`: number of services to create.
++- `--replicas`: replicas per service.
++- `--failure-rate`: probability of failing a running task during each simulation tick.
++- `--duration`: simulation duration after initial convergence.
++- `--seed`: random seed for reproducibility.
++
++## Output
++
++The summary includes:
++
++- `tasks_created`
++- `tasks_running`
++- `tasks_failed`
++- `average_convergence_time`
++- `scheduler_errors`
++- `reconciler_errors`
++
++This is a fast local smoke/load tool, not a replacement for PostgreSQL or Docker integration tests.
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 2ed4084..205480d 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `57-controller-leader-election-mvp.md`
+-- Last matching commit: `same commit: Add controller leader election MVP`
+-- Completed prompt range: `00` through `57`
+-- Next prompt to execute: `58-multi-agent-load-test.md`
++- Last executed prompt: `58-multi-agent-load-test.md`
++- Last matching commit: `same commit: Add multi-agent load test`
++- Completed prompt range: `00` through `58`
++- Next prompt to execute: `59-chaos-testing-scenarios.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

@@ -1,0 +1,13 @@
+Usage:
+  orch volume create <name> [flags]
+
+Flags:
+  -h, --help          help for create
+      --node string   pin local volume to node
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

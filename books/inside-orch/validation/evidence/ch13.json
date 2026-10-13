@@ -1,0 +1,63 @@
+{
+  "chapter_id": "13",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch13.enrollment",
+      "statement": "Runner enrolls before heartbeat/reconcile; issuer returns random short-lived bearer token with hashed validation record.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/auth/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 36,
+      "line_end": 70,
+      "associated_commits": [
+        "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+        "239eb6abab67773e20a18944ac38e2589802946a",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Bearer enrollment is not mTLS; default memory enrollment records are not durable."
+      ]
+    },
+    {
+      "claim_id": "ch13.retry",
+      "statement": "Registration and heartbeat use retry; reportTaskStatus invokes the client once and later passes can re-report state.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 720,
+      "line_end": 812,
+      "associated_commits": [
+        "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+        "239eb6abab67773e20a18944ac38e2589802946a",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Generic retry does not distinguish permanent authentication errors or guarantee all network activities end."
+      ]
+    },
+    {
+      "claim_id": "ch13.reports",
+      "statement": "Focused fixtures passed re-reporting of existing running state and rejection of stale terminal resurrection.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 877,
+      "line_end": 980,
+      "associated_commits": [
+        "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+        "239eb6abab67773e20a18944ac38e2589802946a",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch13/focused-tests.json",
+      "limitations": [
+        "Logical accepted-state protection does not physically fence a partitioned host or prove network reliability."
+      ]
+    }
+  ]
+}

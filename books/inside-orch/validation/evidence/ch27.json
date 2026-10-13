@@ -1,0 +1,74 @@
+{
+  "chapter_id": "27",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch27.context",
+      "statement": "Explicit namespace selection narrows Matches, while absent internal context permits broader matches.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/namespace/context.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 44,
+      "line_end": 55,
+      "associated_commits": [
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "API middleware supplies explicit selection; context.Background library calls are not authenticated API traffic."
+      ]
+    },
+    {
+      "claim_id": "ch27.visibility",
+      "statement": "Focused tests passed same-name namespace separation, invisible cross-scope IDs and namespace-local secret references.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/namespace_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 13,
+      "line_end": 62,
+      "associated_commits": [
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch27/focused-tests.json",
+      "limitations": [
+        "In-process zero-replica services; no physical tenant isolation or network certification."
+      ]
+    },
+    {
+      "claim_id": "ch27.roles",
+      "statement": "Valid global Role takes precedence over namespace role map; API has distinct cluster namespace-management check.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/auth/auth.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 132,
+      "line_end": 138,
+      "associated_commits": [
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Forbidden selection and not-found scoped lookup are distinct stages; role claims do not isolate shared hosts."
+      ]
+    },
+    {
+      "claim_id": "ch27.rollback",
+      "statement": "Namespace down migration explicitly deletes non-default data before removing namespace columns.",
+      "classification": "implemented package",
+      "source_path": "migrations/000011_namespaces.down.sql",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 31,
+      "associated_commits": [
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Destructive source inspected only; no down migration executed against user data."
+      ]
+    }
+  ]
+}

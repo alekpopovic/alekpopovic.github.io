@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:47.159100027+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/controlplane"}
+{"Time":"2026-10-13T03:38:47.162285296+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed"}
+{"Time":"2026-10-13T03:38:47.162304293+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Output":"=== RUN   TestUnhealthyRestartableTaskIsMarkedFailed\n"}
+{"Time":"2026-10-13T03:38:47.16238601+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Output":"    agent_test.go:568: expected unhealthy restartable task to become failed, got \"unhealthy\"\n"}
+{"Time":"2026-10-13T03:38:47.162398162+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Output":"--- FAIL: TestUnhealthyRestartableTaskIsMarkedFailed (0.00s)\n"}
+{"Time":"2026-10-13T03:38:47.162407172+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Elapsed":0}
+{"Time":"2026-10-13T03:38:47.162418627+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:47.16257298+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/controlplane\t0.003s\n"}
+{"Time":"2026-10-13T03:38:47.162588625+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Elapsed":0.003}

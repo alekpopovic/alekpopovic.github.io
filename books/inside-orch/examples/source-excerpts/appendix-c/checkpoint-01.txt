@@ -1,0 +1,6 @@
+func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) error {
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	server := &http.Server{

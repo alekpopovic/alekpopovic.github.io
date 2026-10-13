@@ -1,0 +1,1 @@
+First candidate --final invocation failed before writing JSON: TypeError: Object of type set is not JSON serializable; when serializing provenance.prompt_ids. Cause: EPUB anchor-set dictionary reused variable ids reserved for prompt ID list. Corrected checker uses epub_ids. The corrected run is recorded separately; no artifact or source evidence changed.

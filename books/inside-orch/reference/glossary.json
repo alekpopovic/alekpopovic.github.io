@@ -1,0 +1,1250 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "terms": [
+    {
+      "id": "trust-boundary",
+      "term": "Trust boundary",
+      "definition": "A crossing between differently authorized actors or data.",
+      "orch_interpretation": "User JWT, node credentials, authorized task secrets and Docker authority require separate checks.",
+      "related": [
+        "credential-enrollment",
+        "runtime-adapter"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "desired-state",
+      "term": "Desired state",
+      "definition": "The requested target of control.",
+      "orch_interpretation": "Server-owned Task.DesiredStatus constrains which worker reports remain acceptable.",
+      "related": [
+        "actual-state",
+        "reconciliation"
+      ],
+      "chapter_id": "04",
+      "chapter_slug": "04-domain-models-and-state-machines",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "actual-state",
+      "term": "Actual state",
+      "definition": "The latest accepted observation of execution.",
+      "orch_interpretation": "Assigned agents report task progress; policy and node-loss logic can transform stored results.",
+      "related": [
+        "desired-state",
+        "task-condition"
+      ],
+      "chapter_id": "13",
+      "chapter_slug": "13-agents-heartbeats-and-task-reports",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "reconciliation",
+      "term": "Reconciliation",
+      "definition": "Repeated comparison and action toward intent.",
+      "orch_interpretation": "The standalone reconciler exists, while MemoryService also owns integrated bookkeeping paths.",
+      "related": [
+        "convergence",
+        "idempotency"
+      ],
+      "chapter_id": "11",
+      "chapter_slug": "11-reconciliation-as-repeated-convergence",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/reconciler/reconciler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "convergence",
+      "term": "Convergence",
+      "definition": "An observed approach toward a stated target.",
+      "orch_interpretation": "Capacity, policy and successful worker actions are prerequisites, not guaranteed eventual outcomes.",
+      "related": [
+        "reconciliation",
+        "workload-health"
+      ],
+      "chapter_id": "11",
+      "chapter_slug": "11-reconciliation-as-repeated-convergence",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "idempotency",
+      "term": "Idempotency",
+      "definition": "Retrying an operation without duplicating its intended effect.",
+      "orch_interpretation": "Repeated task/container identity checks and duplicate-report rules provide scoped mechanisms.",
+      "related": [
+        "task-identity",
+        "duplicate-report"
+      ],
+      "chapter_id": "12",
+      "chapter_slug": "12-idempotent-docker-operations-and-drift",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "optimistic-concurrency",
+      "term": "Optimistic concurrency",
+      "definition": "Rejecting a write when its expected version is stale.",
+      "orch_interpretation": "Store operations compare expected UpdatedAt rather than trusting a prior read.",
+      "related": [
+        "task-claim",
+        "atomicity"
+      ],
+      "chapter_id": "09",
+      "chapter_slug": "09-persistence-transactions-and-optimistic-concurrency",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "task-claim",
+      "term": "Task claim",
+      "definition": "A conditional assignment of pending work.",
+      "orch_interpretation": "One scheduler/store write selects NodeID; it does not fence an isolated old process.",
+      "related": [
+        "optimistic-concurrency",
+        "fencing"
+      ],
+      "chapter_id": "10",
+      "chapter_slug": "10-a-deterministic-scheduler",
+      "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "advisory-lock",
+      "term": "Advisory lock",
+      "definition": "An application-coordinated database lock.",
+      "orch_interpretation": "The leadership package uses session-owned PostgreSQL locks; original-connection release matters.",
+      "related": [
+        "leader-lease",
+        "split-brain"
+      ],
+      "chapter_id": "34",
+      "chapter_slug": "34-leader-election-and-the-durable-ha-boundary",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "split-brain",
+      "term": "Split brain",
+      "definition": "Concurrent actors believing they may own the same responsibility.",
+      "orch_interpretation": "Heartbeat suspicion and package leadership do not establish enforced single-writer runtime authority.",
+      "related": [
+        "fencing",
+        "node-offline"
+      ],
+      "chapter_id": "34",
+      "chapter_slug": "34-leader-election-and-the-durable-ha-boundary",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/leadership.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "terminal-state",
+      "term": "Terminal state",
+      "definition": "A state that cannot resume ordinary execution.",
+      "orch_interpretation": "Failed/stopped tasks allow cleanup to removed; terminal deployments remain immutable histories.",
+      "related": [
+        "cleanup",
+        "duplicate-report"
+      ],
+      "chapter_id": "04",
+      "chapter_slug": "04-domain-models-and-state-machines",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "namespace",
+      "term": "Namespace",
+      "definition": "A named scope for resource selection and access.",
+      "orch_interpretation": "Context-scoped service lookups do not prove network isolation or every newer workload path.",
+      "related": [
+        "namespace-role",
+        "quota"
+      ],
+      "chapter_id": "27",
+      "chapter_slug": "27-namespaces-and-the-limits-of-multi-tenancy",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/namespace/context.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "admission",
+      "term": "Admission",
+      "definition": "Validation and policy before accepting intent.",
+      "orch_interpretation": "ClusterPolicy can restrict workload fields; acceptance still differs from runtime field propagation.",
+      "related": [
+        "resource-request",
+        "resource-limit"
+      ],
+      "chapter_id": "26",
+      "chapter_slug": "26-security-contexts-admission-and-policy",
+      "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/policy/policy.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "quota",
+      "term": "Quota",
+      "definition": "A bound on scoped requested resources or objects.",
+      "orch_interpretation": "MemoryService serializes namespace accounting; zero limits mean unlimited.",
+      "related": [
+        "namespace",
+        "resource-reservation"
+      ],
+      "chapter_id": "28",
+      "chapter_slug": "28-quotas-and-usage-accounting",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/quota/quota.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "credential-enrollment",
+      "term": "Credential enrollment",
+      "definition": "Exchanging initial authority for an identity credential.",
+      "orch_interpretation": "Bootstrap registration issues a hashed-record node token for subsequent authenticated calls.",
+      "related": [
+        "bootstrap-authority",
+        "credential-rotation"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "secret-envelope",
+      "term": "Secret envelope",
+      "definition": "Authenticated encryption wrapped with key metadata.",
+      "orch_interpretation": "LocalEnvelope uses AES-GCM; KeyID does not replace the required decrypting key.",
+      "related": [
+        "key-loss",
+        "redaction"
+      ],
+      "chapter_id": "24",
+      "chapter_slug": "24-encrypted-secrets-and-configuration-redaction",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "ssrf",
+      "term": "SSRF",
+      "definition": "Server-side requests redirected toward unintended destinations.",
+      "orch_interpretation": "Probe targets and redirect/dial behavior need policy checks beyond a friendly URL string.",
+      "related": [
+        "probe",
+        "trust-boundary"
+      ],
+      "chapter_id": "14",
+      "chapter_slug": "14-health-checks-that-respect-trust-boundaries",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/health/health.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "local-volume",
+      "term": "Local volume",
+      "definition": "Persistent data attached to one runtime locality.",
+      "orch_interpretation": "Node-pinned volume metadata does not replicate data or establish safe stateful failover.",
+      "related": [
+        "stateful-workload",
+        "fencing"
+      ],
+      "chapter_id": "32",
+      "chapter_slug": "32-local-volumes-claims-and-workload-topology",
+      "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/workloads.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "rollout-surge",
+      "term": "Rollout surge",
+      "definition": "Extra active work permitted during a version transition.",
+      "orch_interpretation": "MaxSurge bounds active task accounting above desired replicas, not physical cleanup completion.",
+      "related": [
+        "availability-budget",
+        "deployment-version"
+      ],
+      "chapter_id": "17",
+      "chapter_slug": "17-rolling-updates-and-rollback-invariants",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "process-readiness",
+      "term": "Process readiness",
+      "definition": "A process-reported ability to accept its expected traffic.",
+      "orch_interpretation": "The readyz handler does not validate durable orchestration or healthy workload replicas.",
+      "related": [
+        "workload-health",
+        "memory-server"
+      ],
+      "chapter_id": "07",
+      "chapter_slug": "07-http-contracts-and-compatible-apis",
+      "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "workload-health",
+      "term": "Workload health",
+      "definition": "A workload-specific observation of acceptable behavior.",
+      "orch_interpretation": "Probe thresholds affect healthy/unhealthy states; gateway reachability remains a separate observation.",
+      "related": [
+        "probe",
+        "availability-budget"
+      ],
+      "chapter_id": "14",
+      "chapter_slug": "14-health-checks-that-respect-trust-boundaries",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/health/health.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "resource-request",
+      "term": "Resource request",
+      "definition": "Declared capacity used to plan or admit work.",
+      "orch_interpretation": "CPU uses integer millicores and memory uses bytes after parser conversion.",
+      "related": [
+        "resource-reservation",
+        "resource-limit"
+      ],
+      "chapter_id": "05",
+      "chapter_slug": "05-service-specifications-resources-and-ports",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "resource-limit",
+      "term": "Resource limit",
+      "definition": "A runtime bound intended to constrain consumption.",
+      "orch_interpretation": "The Docker adapter supports limits, but the ordinary agent path omits their propagation.",
+      "related": [
+        "runtime-adapter",
+        "resource-request"
+      ],
+      "chapter_id": "05",
+      "chapter_slug": "05-service-specifications-resources-and-ports",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "resource-reservation",
+      "term": "Resource reservation",
+      "definition": "Accounted requested capacity rather than measured use.",
+      "orch_interpretation": "Quota and placement arithmetic must not be described as Docker usage or billing.",
+      "related": [
+        "quota",
+        "usage-snapshot"
+      ],
+      "chapter_id": "28",
+      "chapter_slug": "28-quotas-and-usage-accounting",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "memory-server",
+      "term": "Memory server",
+      "definition": "A control plane whose live maps belong to one process.",
+      "orch_interpretation": "The default server constructs MemoryService and loses intent/credentials on restart.",
+      "related": [
+        "durability",
+        "process-readiness"
+      ],
+      "chapter_id": "01",
+      "chapter_slug": "01-why-build-a-container-orchestrator",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "durability",
+      "term": "Durability",
+      "definition": "Retention of committed state across a defined failure.",
+      "orch_interpretation": "PostgreSQL store support is not default live-state wiring; identify the actual owner.",
+      "related": [
+        "memory-server",
+        "artifact-backup"
+      ],
+      "chapter_id": "09",
+      "chapter_slug": "09-persistence-transactions-and-optimistic-concurrency",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "replicated-availability",
+      "term": "Replicated availability",
+      "definition": "Continued service through failures using multiple coordinated copies.",
+      "orch_interpretation": "Local persistence and an unwired leader package do not supply this system property.",
+      "related": [
+        "durability",
+        "leader-lease"
+      ],
+      "chapter_id": "34",
+      "chapter_slug": "34-leader-election-and-the-durable-ha-boundary",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/leadership.go",
+      "classification": "future/design concept"
+    },
+    {
+      "id": "leader-lease",
+      "term": "Leader lease",
+      "definition": "A bounded authority claim with a loss signal.",
+      "orch_interpretation": "Lease.Done closing does not alone prove the original database session released its lock.",
+      "related": [
+        "advisory-lock",
+        "cancellation"
+      ],
+      "chapter_id": "34",
+      "chapter_slug": "34-leader-election-and-the-durable-ha-boundary",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "fencing",
+      "term": "Fencing",
+      "definition": "Preventing stale owners from performing side effects.",
+      "orch_interpretation": "Physical worker/storage fencing is future work, not an effect of marking a node offline.",
+      "related": [
+        "split-brain",
+        "node-offline"
+      ],
+      "chapter_id": "34",
+      "chapter_slug": "34-leader-election-and-the-durable-ha-boundary",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "future/design concept"
+    },
+    {
+      "id": "autoscaling",
+      "term": "Autoscaling",
+      "definition": "Changing replicas in response to a policy and measurement.",
+      "orch_interpretation": "The package computes recommendations but is not started by the default server.",
+      "related": [
+        "metrics-provider",
+        "stabilization-window"
+      ],
+      "chapter_id": "22",
+      "chapter_slug": "22-autoscaling-decisions-and-missing-integration",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "stabilization-window",
+      "term": "Stabilization window",
+      "definition": "A policy interval intended to damp rapid scaling decisions.",
+      "orch_interpretation": "The field is accepted and validated, but its declared window is not consumed by decisions.",
+      "related": [
+        "autoscaling",
+        "cooldown"
+      ],
+      "chapter_id": "22",
+      "chapter_slug": "22-autoscaling-decisions-and-missing-integration",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "metrics-provider",
+      "term": "Metrics provider",
+      "definition": "A component supplying a defined measurement to a policy.",
+      "orch_interpretation": "Autoscaler CPU input is an interface; a real provider is not wired into the binary.",
+      "related": [
+        "autoscaling",
+        "measurement-contract"
+      ],
+      "chapter_id": "22",
+      "chapter_slug": "22-autoscaling-decisions-and-missing-integration",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "cooldown",
+      "term": "Cooldown",
+      "definition": "A delay before another allowed scaling decision.",
+      "orch_interpretation": "The autoscaler remembers last scale time in a process-local map.",
+      "related": [
+        "autoscaling",
+        "stabilization-window"
+      ],
+      "chapter_id": "22",
+      "chapter_slug": "22-autoscaling-decisions-and-missing-integration",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "parser-resolver",
+      "term": "Parser resolver",
+      "definition": "A resolver that interprets an existing image reference.",
+      "orch_interpretation": "It accepts supplied digest syntax without fetching a registry\u2019s remote digest.",
+      "related": [
+        "digest-pinning",
+        "registry-credential"
+      ],
+      "chapter_id": "25",
+      "chapter_slug": "25-registry-credentials-and-immutable-image-identity",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "digest-pinning",
+      "term": "Digest pinning",
+      "definition": "Naming content with an immutable digest-form reference.",
+      "orch_interpretation": "Parser/admission support does not prove remote manifest retrieval or layer verification.",
+      "related": [
+        "parser-resolver",
+        "supply-chain"
+      ],
+      "chapter_id": "25",
+      "chapter_slug": "25-registry-credentials-and-immutable-image-identity",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "supply-chain",
+      "term": "Supply chain",
+      "definition": "The path from source/artifact origin to executed content.",
+      "orch_interpretation": "Signing, SBOM and remote provenance designs require separate implementation and evidence.",
+      "related": [
+        "digest-pinning",
+        "teaching-extension"
+      ],
+      "chapter_id": "29",
+      "chapter_slug": "29-supply-chain-designs-without-false-guarantees",
+      "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md",
+      "classification": "future/design concept"
+    },
+    {
+      "id": "registry-credential",
+      "term": "Registry credential",
+      "definition": "Authority for access to an image registry.",
+      "orch_interpretation": "Encrypted stored credentials are resolved for authorized task execution; metadata excludes secrets.",
+      "related": [
+        "secret-envelope",
+        "trust-boundary"
+      ],
+      "chapter_id": "25",
+      "chapter_slug": "25-registry-credentials-and-immutable-image-identity",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "task-identity",
+      "term": "Task identity",
+      "definition": "A stable ID for one execution attempt.",
+      "orch_interpretation": "Replacement creates another ID instead of resurrecting a failed attempt.",
+      "related": [
+        "terminal-state",
+        "task-claim"
+      ],
+      "chapter_id": "04",
+      "chapter_slug": "04-domain-models-and-state-machines",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "deployment-version",
+      "term": "Deployment version",
+      "definition": "A service intent generation used during rollout.",
+      "orch_interpretation": "Tasks are compared against target versions; rollback creates another deployment history record.",
+      "related": [
+        "task-identity",
+        "rollback"
+      ],
+      "chapter_id": "17",
+      "chapter_slug": "17-rolling-updates-and-rollback-invariants",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "restart-policy",
+      "term": "Restart policy",
+      "definition": "A rule determining recovery after workload failure.",
+      "orch_interpretation": "MemoryService can convert unhealthy to failed when service replacement is permitted.",
+      "related": [
+        "terminal-state",
+        "workload-health"
+      ],
+      "chapter_id": "14",
+      "chapter_slug": "14-health-checks-that-respect-trust-boundaries",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "probe",
+      "term": "Probe",
+      "definition": "A bounded health observation against a configured target.",
+      "orch_interpretation": "HTTP/TCP policy, timeout and thresholds belong to the actual health implementation.",
+      "related": [
+        "ssrf",
+        "workload-health"
+      ],
+      "chapter_id": "14",
+      "chapter_slug": "14-health-checks-that-respect-trust-boundaries",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/health/health.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "public-port",
+      "term": "Public port",
+      "definition": "A worker-level port forwarding traffic toward a container.",
+      "orch_interpretation": "Task-assigned public ports can differ from service requests and agent advertise ports.",
+      "related": [
+        "node-advertise-address",
+        "discovery"
+      ],
+      "chapter_id": "20",
+      "chapter_slug": "20-endpoint-discovery-and-internal-dns",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/discovery/discovery.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "node-advertise-address",
+      "term": "Node advertise address",
+      "definition": "The address a worker publishes for reaching its services.",
+      "orch_interpretation": "Traefik extracts its host and combines the task\u2019s published port.",
+      "related": [
+        "public-port",
+        "ingress"
+      ],
+      "chapter_id": "21",
+      "chapter_slug": "21-ingress-host-networking-and-the-overlay-roadmap",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "discovery",
+      "term": "Discovery",
+      "definition": "Returning endpoints describing presently eligible work.",
+      "orch_interpretation": "HTTP discovery filters desired-running tasks; its DNS path has a distinct filter.",
+      "related": [
+        "dns-answer",
+        "ingress"
+      ],
+      "chapter_id": "20",
+      "chapter_slug": "20-endpoint-discovery-and-internal-dns",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/discovery/discovery.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "dns-answer",
+      "term": "DNS answer",
+      "definition": "A cached name-to-address response.",
+      "orch_interpretation": "The local DNS implementation returns deduplicated node IPv4 addresses without task ports.",
+      "related": [
+        "discovery",
+        "cache-ttl"
+      ],
+      "chapter_id": "20",
+      "chapter_slug": "20-endpoint-discovery-and-internal-dns",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/dns/server.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "ingress",
+      "term": "Ingress",
+      "definition": "A gateway path from client routing to workload endpoints.",
+      "orch_interpretation": "Traefik uses node host/public-port HTTP backends; it does not create an overlay.",
+      "related": [
+        "public-port",
+        "tls-boundary"
+      ],
+      "chapter_id": "21",
+      "chapter_slug": "21-ingress-host-networking-and-the-overlay-roadmap",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "tls-boundary",
+      "term": "TLS boundary",
+      "definition": "The hop where encryption terminates or begins.",
+      "orch_interpretation": "A TLS router flag does not automatically encrypt the generated HTTP worker backend.",
+      "related": [
+        "ingress",
+        "trust-boundary"
+      ],
+      "chapter_id": "21",
+      "chapter_slug": "21-ingress-host-networking-and-the-overlay-roadmap",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "stateful-workload",
+      "term": "Stateful workload",
+      "definition": "Work whose data/identity constrains relocation.",
+      "orch_interpretation": "Offline stateful tasks retain assignment for manual recovery rather than assuming local data moved.",
+      "related": [
+        "local-volume",
+        "node-offline"
+      ],
+      "chapter_id": "19",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "task-condition",
+      "term": "Task condition",
+      "definition": "Additive metadata describing a task circumstance.",
+      "orch_interpretation": "node_lost remains separate from actual and desired lifecycle states.",
+      "related": [
+        "actual-state",
+        "node-offline"
+      ],
+      "chapter_id": "19",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "drain",
+      "term": "Drain",
+      "definition": "Moving desired work away from a selected worker.",
+      "orch_interpretation": "Completion counts desired work; actual owned-container removal can finish later.",
+      "related": [
+        "availability-budget",
+        "cleanup"
+      ],
+      "chapter_id": "19",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "node-offline",
+      "term": "Node offline",
+      "definition": "A control-plane status indicating loss of acceptable heartbeat presence.",
+      "orch_interpretation": "Expiry marks suspicion and recovery intent; it cannot stop a partitioned process.",
+      "related": [
+        "heartbeat-age",
+        "fencing"
+      ],
+      "chapter_id": "19",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/node/monitor.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "heartbeat-age",
+      "term": "Heartbeat age",
+      "definition": "Elapsed server time since a retained heartbeat observation.",
+      "orch_interpretation": "Zero LastHeartbeat is handled separately; wall-clock assumptions and cutoff strictness matter.",
+      "related": [
+        "node-offline",
+        "measurement-contract"
+      ],
+      "chapter_id": "19",
+      "chapter_slug": "19-offline-nodes-draining-and-rescheduling",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/node/monitor.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "cache-ttl",
+      "term": "Cache TTL",
+      "definition": "A time interval for retaining a cached response.",
+      "orch_interpretation": "DNS uses a configured TTL, creating a freshness boundary after task changes.",
+      "related": [
+        "dns-answer",
+        "convergence"
+      ],
+      "chapter_id": "20",
+      "chapter_slug": "20-endpoint-discovery-and-internal-dns",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/dns/server.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "credential-rotation",
+      "term": "Credential rotation",
+      "definition": "Replacing a credential while retaining an identity relationship.",
+      "orch_interpretation": "Lost heartbeat responses can leave the worker token behind the stored server hash.",
+      "related": [
+        "credential-enrollment",
+        "lost-response"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "credential-revocation",
+      "term": "Credential revocation",
+      "definition": "Rejecting an identity\u2019s previously issued credential.",
+      "orch_interpretation": "The stored flag participates in validation; new credential storage changes that record.",
+      "related": [
+        "credential-rotation",
+        "bootstrap-authority"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "bootstrap-authority",
+      "term": "Bootstrap authority",
+      "definition": "Initial authority used to admit a worker.",
+      "orch_interpretation": "Registration and the agent log listener use it differently from issued control-plane credentials.",
+      "related": [
+        "credential-enrollment",
+        "trust-boundary"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "jwt",
+      "term": "JWT",
+      "definition": "A signed token carrying claims validated by the receiver.",
+      "orch_interpretation": "User validation is conditional on signing-secret configuration; node tokens are a separate scheme.",
+      "related": [
+        "rbac",
+        "namespace-role"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/auth.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "rbac",
+      "term": "RBAC",
+      "definition": "Authorization based on an assigned role.",
+      "orch_interpretation": "Viewer/operator/admin checks depend on configured user JWT; newer routes can fall through to admin.",
+      "related": [
+        "jwt",
+        "namespace-role"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "namespace-role",
+      "term": "Namespace role",
+      "definition": "Role authority scoped to a selected namespace.",
+      "orch_interpretation": "Static user maps replace global role and clear namespace-role claims in the current middleware.",
+      "related": [
+        "namespace",
+        "rbac"
+      ],
+      "chapter_id": "27",
+      "chapter_slug": "27-namespaces-and-the-limits-of-multi-tenancy",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "configuration-precedence",
+      "term": "Configuration precedence",
+      "definition": "An ordered selection among configuration inputs.",
+      "orch_interpretation": "Nonempty flags override environment, YAML and defaults through the corresponding loader.",
+      "related": [
+        "redaction",
+        "runtime-adapter"
+      ],
+      "chapter_id": "24",
+      "chapter_slug": "24-encrypted-secrets-and-configuration-redaction",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/config/config.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "redaction",
+      "term": "Redaction",
+      "definition": "Removing sensitive content from an exposed representation.",
+      "orch_interpretation": "Config print replaces sensitive fields; it does not sanitize all logs or workload output.",
+      "related": [
+        "secret-envelope",
+        "registry-credential"
+      ],
+      "chapter_id": "24",
+      "chapter_slug": "24-encrypted-secrets-and-configuration-redaction",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/config/config.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "audit-record",
+      "term": "Audit record",
+      "definition": "An account of an attempted operation and its outcome.",
+      "orch_interpretation": "Best-effort append behavior must not be mistaken for transactional external audit delivery.",
+      "related": [
+        "event",
+        "atomicity"
+      ],
+      "chapter_id": "15",
+      "chapter_slug": "15-events-audits-and-notification-boundaries",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/audit/audit.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "event",
+      "term": "Event",
+      "definition": "A structured observation of a control-plane occurrence.",
+      "orch_interpretation": "State-change events and duplicate-report rules differ from a durable event-stream guarantee.",
+      "related": [
+        "audit-record",
+        "duplicate-report"
+      ],
+      "chapter_id": "15",
+      "chapter_slug": "15-events-audits-and-notification-boundaries",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/events/events.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "retention",
+      "term": "Retention",
+      "definition": "A rule for pruning older retained history.",
+      "orch_interpretation": "MemoryServer history pruning is separate from a durable backup and restore strategy.",
+      "related": [
+        "artifact-backup",
+        "usage-snapshot"
+      ],
+      "chapter_id": "35",
+      "chapter_slug": "35-upgrades-migrations-maintenance-and-retention",
+      "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "usage-snapshot",
+      "term": "Usage snapshot",
+      "definition": "A sampled accounting record over defined resources/time.",
+      "orch_interpretation": "Requested task resource accounting is not measured consumption or a validated billing engine.",
+      "related": [
+        "resource-reservation",
+        "measurement-contract"
+      ],
+      "chapter_id": "28",
+      "chapter_slug": "28-quotas-and-usage-accounting",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "log-stream",
+      "term": "Log stream",
+      "definition": "A bounded or followed flow of task output.",
+      "orch_interpretation": "API/agent stream cancellation, authorization and container ownership remain distinct checks.",
+      "related": [
+        "cancellation",
+        "trust-boundary"
+      ],
+      "chapter_id": "16",
+      "chapter_slug": "16-log-streaming-without-losing-control",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/logs.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "cancellation",
+      "term": "Cancellation",
+      "definition": "A signal that dependent work should stop.",
+      "orch_interpretation": "Context cancellation requires each loop/stream/lease consumer to release its own resources.",
+      "related": [
+        "leader-lease",
+        "log-stream"
+      ],
+      "chapter_id": "16",
+      "chapter_slug": "16-log-streaming-without-losing-control",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "lost-response",
+      "term": "Lost response",
+      "definition": "An operation result that the requester never receives.",
+      "orch_interpretation": "A heartbeat credential can rotate before its caller observes the new token.",
+      "related": [
+        "credential-rotation",
+        "idempotency"
+      ],
+      "chapter_id": "23",
+      "chapter_slug": "23-authentication-authorization-and-node-trust",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "cleanup",
+      "term": "Cleanup",
+      "definition": "Removing runtime objects after execution intent ends.",
+      "orch_interpretation": "Label checks protect ownership; service deleted waits for actual removed states.",
+      "related": [
+        "terminal-state",
+        "drain"
+      ],
+      "chapter_id": "18",
+      "chapter_slug": "18-safe-deletion-and-resource-cleanup",
+      "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "duplicate-report",
+      "term": "Duplicate report",
+      "definition": "A repeated observation of the same accepted state.",
+      "orch_interpretation": "Identity transitions are accepted without manufacturing another state-change event.",
+      "related": [
+        "idempotency",
+        "terminal-state"
+      ],
+      "chapter_id": "13",
+      "chapter_slug": "13-agents-heartbeats-and-task-reports",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "atomicity",
+      "term": "Atomicity",
+      "definition": "A defined set of effects that succeeds or fails together.",
+      "orch_interpretation": "Local mutex mutation and store transaction behavior have different process-failure boundaries.",
+      "related": [
+        "optimistic-concurrency",
+        "audit-record"
+      ],
+      "chapter_id": "09",
+      "chapter_slug": "09-persistence-transactions-and-optimistic-concurrency",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "availability-budget",
+      "term": "Availability budget",
+      "definition": "The minimum healthy/available population a controller protects.",
+      "orch_interpretation": "Old running/healthy and newHealthy predicates differ during rollout.",
+      "related": [
+        "rollout-surge",
+        "workload-health"
+      ],
+      "chapter_id": "17",
+      "chapter_slug": "17-rolling-updates-and-rollback-invariants",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "rollback",
+      "term": "Rollback",
+      "definition": "A new operation restoring an earlier service version.",
+      "orch_interpretation": "It preserves failed/succeeded terminal deployment records instead of rewriting history.",
+      "related": [
+        "deployment-version",
+        "availability-budget"
+      ],
+      "chapter_id": "17",
+      "chapter_slug": "17-rolling-updates-and-rollback-invariants",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "runtime-adapter",
+      "term": "Runtime adapter",
+      "definition": "The interface boundary translating intent into engine calls.",
+      "orch_interpretation": "Docker support in isolation does not prove ordinary agent field propagation.",
+      "related": [
+        "resource-limit",
+        "task-identity"
+      ],
+      "chapter_id": "12",
+      "chapter_slug": "12-idempotent-docker-operations-and-drift",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "fake-runtime",
+      "term": "Fake runtime",
+      "definition": "A controlled test double for runtime side effects.",
+      "orch_interpretation": "Passing fake-agent tests does not measure Docker startup or registry behavior.",
+      "related": [
+        "measurement-contract",
+        "teaching-extension"
+      ],
+      "chapter_id": "36",
+      "chapter_slug": "36-fakes-property-tests-fuzzing-and-contracts",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/orchestrator_test.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "measurement-contract",
+      "term": "Measurement contract",
+      "definition": "A definition of cohort, events, clocks and missing data.",
+      "orch_interpretation": "Fake-load timing and real runtime convergence require separate measurement scopes.",
+      "related": [
+        "resource-reservation",
+        "heartbeat-age"
+      ],
+      "chapter_id": "39",
+      "chapter_slug": "39-performance-and-scale-tests-that-say-what-they-measure",
+      "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-loadtest/main.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "artifact-backup",
+      "term": "Artifact backup",
+      "definition": "A retained copy of files or database records.",
+      "orch_interpretation": "A database dump excludes runtime volumes and the separate envelope key.",
+      "related": [
+        "key-loss",
+        "durability"
+      ],
+      "chapter_id": "40",
+      "chapter_slug": "40-release-a-system-you-can-honestly-operate",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/BACKUP_RESTORE.md",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "key-loss",
+      "term": "Key loss",
+      "definition": "Loss of the material required to decrypt retained ciphertext.",
+      "orch_interpretation": "Restored rows and KeyID alone cannot recover LocalEnvelope plaintext.",
+      "related": [
+        "secret-envelope",
+        "artifact-backup"
+      ],
+      "chapter_id": "24",
+      "chapter_slug": "24-encrypted-secrets-and-configuration-redaction",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "recovery-point-objective",
+      "term": "Recovery point objective",
+      "definition": "A chosen tolerance for lost committed changes.",
+      "orch_interpretation": "A future durable deployment must define it; the memory server supplies no durable checkpoint promise.",
+      "related": [
+        "recovery-time-objective",
+        "artifact-backup"
+      ],
+      "chapter_id": "40",
+      "chapter_slug": "40-release-a-system-you-can-honestly-operate",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/BACKUP_RESTORE.md",
+      "classification": "future/design concept"
+    },
+    {
+      "id": "recovery-time-objective",
+      "term": "Recovery time objective",
+      "definition": "A chosen target duration for restoring a defined service.",
+      "orch_interpretation": "Measure verified recovery, including schema/key/canary checks, rather than database exit alone.",
+      "related": [
+        "recovery-point-objective",
+        "measurement-contract"
+      ],
+      "chapter_id": "40",
+      "chapter_slug": "40-release-a-system-you-can-honestly-operate",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/BACKUP_RESTORE.md",
+      "classification": "future/design concept"
+    },
+    {
+      "id": "teaching-extension",
+      "term": "Teaching extension",
+      "definition": "Book-owned runnable work with separately stated changes.",
+      "orch_interpretation": "It must not silently repair or inherit unrun claims from the immutable baseline.",
+      "related": [
+        "source-pin",
+        "claim-classification"
+      ],
+      "chapter_id": "36",
+      "chapter_slug": "36-fakes-property-tests-fuzzing-and-contracts",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/AGENTS.md",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "source-pin",
+      "term": "Source pin",
+      "definition": "An exact revision and byte inventory defining an edition.",
+      "orch_interpretation": "Full-SHA citations distinguish current baseline code from historical implementation snippets.",
+      "related": [
+        "claim-classification",
+        "teaching-extension"
+      ],
+      "chapter_id": "02",
+      "chapter_slug": "02-a-repository-built-for-reasoning",
+      "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/go.mod",
+      "classification": "source-bounded terminology"
+    },
+    {
+      "id": "claim-classification",
+      "term": "Claim classification",
+      "definition": "A label describing a capability\u2019s actual integration status.",
+      "orch_interpretation": "Runtime-integrated, package, partial, design, teaching and future labels prevent compositional overclaims.",
+      "related": [
+        "source-pin",
+        "memory-server"
+      ],
+      "chapter_id": "01",
+      "chapter_slug": "01-why-build-a-container-orchestrator",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "source": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go",
+      "classification": "source-bounded terminology"
+    }
+  ]
+}

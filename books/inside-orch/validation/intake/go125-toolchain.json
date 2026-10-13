@@ -1,0 +1,24 @@
+{
+  "id": "go-1.25-toolchain",
+  "command": [
+    "go",
+    "version"
+  ],
+  "cwd": "/tmp",
+  "environment_keys": [
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOENV"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:25:27.318113+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T00:25:27.322900+00:00",
+  "duration_seconds": 0.005,
+  "stdout": "validation/intake/go125-toolchain.stdout.txt",
+  "stderr": "validation/intake/go125-toolchain.stderr.txt"
+}

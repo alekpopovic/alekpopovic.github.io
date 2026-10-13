@@ -1,0 +1,771 @@
+commit 42d4caa4451f4dea24113d48eb1e9e47f2cef558
+Date: 2026-07-14T15:43:40+02:00
+Subject: Add node drain rescheduling
+
+
+---
+ docs/OPERATIONS.md                    |  20 ++-
+ internal/api/api.go                   |  20 +++
+ internal/api/api_test.go              |  10 ++
+ internal/cli/client.go                |   9 ++
+ internal/cli/output.go                |  19 +++
+ internal/cli/root.go                  |  18 +++
+ internal/cli/root_test.go             |  12 ++
+ internal/controlplane/controlplane.go | 229 +++++++++++++++++++++++++++++++++-
+ internal/controlplane/drain_test.go   | 184 +++++++++++++++++++++++++++
+ internal/events/events.go             |   1 +
+ prompts/EXECUTION_TRACKER.md          |   8 +-
+ 11 files changed, 523 insertions(+), 7 deletions(-)
+
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index 621ee62..a27696c 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -142,10 +142,24 @@ Rollback requires a previous successful version.
+ 
+ ```sh
+ orch node drain <node-id>
+-orch node inspect <node-id>
++orch node drain-status <node-id>
++```
++
++Draining marks the node `draining`, excludes it from new placements, and creates replacement tasks on other ready nodes. Existing tasks on the drained node are stopped only after replacements become `running` or `healthy`.
++
++If there is no ready replacement capacity, drain remains pending and emits a warning event:
++
++```sh
++orch events --type node.drain.pending
++orch node drain-status <node-id> --output json
+ ```
+ 
+-Draining excludes the node from new scheduler placements. Existing task migration away from the node is limited in the current MVP; use service scale/rollout/delete flows to move work intentionally.
++If a node goes offline during drain, inspect status and events before force-removing workloads:
++
++```sh
++orch node inspect <node-id>
++orch events --type node.status.changed
++```
+ 
+ Uncordon:
+ 
+@@ -153,6 +167,8 @@ Uncordon:
+ orch node uncordon <node-id>
+ ```
+ 
++Uncordon returns the node to `ready` and allows new placements again. If replacements were already created, normal reconciliation may later remove excess tasks.
++
+ ### Investigate Task Failure
+ 
+ ```sh
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 5960830..b4489cd 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -138,6 +138,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/nodes/{id}", server.getNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/drain", server.drainNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/uncordon", server.uncordonNode)
++	mux.HandleFunc("GET /v1/nodes/{id}/drain-status", server.getNodeDrainStatus)
+ 	mux.HandleFunc("POST /v1/secrets", server.createSecret)
+ 	mux.HandleFunc("GET /v1/secrets", server.listSecrets)
+ 	mux.HandleFunc("GET /v1/secrets/{name...}", server.getSecret)
+@@ -226,6 +227,10 @@ type NodeResponse struct {
+ 	Node types.Node `json:"node"`
+ }
+ 
++type NodeDrainStatusResponse struct {
++	DrainStatus controlplane.NodeDrainStatus `json:"drain_status"`
++}
++
+ type CreateSecretRequest struct {
+ 	Name  string `json:"name"`
+ 	Value string `json:"value"`
+@@ -479,6 +484,19 @@ func (s *Server) uncordonNode(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusOK, NodeResponse{Node: node})
+ }
+ 
++func (s *Server) getNodeDrainStatus(w http.ResponseWriter, r *http.Request) {
++	id, ok := s.pathNodeID(w, r)
++	if !ok {
++		return
++	}
++	status, err := s.controlPlane.GetNodeDrainStatus(r.Context(), id)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, NodeDrainStatusResponse{DrainStatus: status})
++}
++
+ func (s *Server) createSecret(w http.ResponseWriter, r *http.Request) {
+ 	var req CreateSecretRequest
+ 	if !s.decodeJSON(w, r, &req) {
+@@ -1073,6 +1091,8 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/nodes/{id}/drain", true
+ 	case strings.HasPrefix(path, "/v1/nodes/") && strings.HasSuffix(path, "/uncordon"):
+ 		return "/v1/nodes/{id}/uncordon", true
++	case strings.HasPrefix(path, "/v1/nodes/") && strings.HasSuffix(path, "/drain-status"):
++		return "/v1/nodes/{id}/drain-status", true
+ 	case strings.HasPrefix(path, "/v1/nodes/"):
+ 		return "/v1/nodes/{id}", true
+ 	case path == "/v1/secrets":
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 573561c..bd85e88 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -143,6 +143,16 @@ func TestDrainNode(t *testing.T) {
+ 	if body.Node.Status != "draining" {
+ 		t.Fatalf("expected node to be draining, got %q", body.Node.Status)
+ 	}
++
++	statusRec := doRequest(t, handler, http.MethodGet, "/v1/nodes/"+string(registered.Node.ID)+"/drain-status", nil)
++	if statusRec.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, statusRec.Code, statusRec.Body.String())
++	}
++	var statusBody NodeDrainStatusResponse
++	decodeResponse(t, statusRec, &statusBody)
++	if statusBody.DrainStatus.NodeID != registered.Node.ID || statusBody.DrainStatus.Phase == "" {
++		t.Fatalf("unexpected drain status %#v", statusBody.DrainStatus)
++	}
+ }
+ 
+ func TestSecretsCreateRetrieveMetadataAndRedactPlaintext(t *testing.T) {
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 504f5ea..32d5969 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -13,6 +13,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -76,6 +77,14 @@ func (c *APIClient) UncordonNode(ctx context.Context, id string) (types.Node, er
+ 	return out.Node, nil
+ }
+ 
++func (c *APIClient) GetNodeDrainStatus(ctx context.Context, id string) (controlplane.NodeDrainStatus, error) {
++	var out api.NodeDrainStatusResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/nodes/"+id+"/drain-status", nil, &out); err != nil {
++		return controlplane.NodeDrainStatus{}, err
++	}
++	return out.DrainStatus, nil
++}
++
+ func (c *APIClient) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
+ 	var out api.ServiceResponse
+ 	if err := c.do(ctx, http.MethodPost, "/v1/services", api.CreateServiceRequest{Spec: spec}, &out); err != nil {
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+index df4fc4f..c97e60d 100644
+--- a/internal/cli/output.go
++++ b/internal/cli/output.go
+@@ -7,6 +7,7 @@ import (
+ 	"strings"
+ 	"text/tabwriter"
+ 
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -39,6 +40,24 @@ func writeNode(w io.Writer, output string, node types.Node) error {
+ 	return writeNodes(w, output, []types.Node{node})
+ }
+ 
++func writeNodeDrainStatus(w io.Writer, output string, status controlplane.NodeDrainStatus) error {
++	if output == "json" {
++		return writeValue(w, output, status)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "NODE\tNODE_STATUS\tPHASE\tREMAINING\tREPLACEMENTS\tREADY\tMESSAGE")
++	fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
++		status.NodeID,
++		status.NodeStatus,
++		status.Phase,
++		status.RemainingTasks,
++		status.ReplacementTasks,
++		status.ReplacementReady,
++		status.Message,
++	)
++	return tw.Flush()
++}
++
+ func writeServices(w io.Writer, output string, services []types.Service) error {
+ 	if output == "json" {
+ 		return writeValue(w, output, services)
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 64e531c..7e09f09 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -11,6 +11,7 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -25,6 +26,7 @@ type Client interface {
+ 	GetNode(ctx context.Context, id string) (types.Node, error)
+ 	DrainNode(ctx context.Context, id string) (types.Node, error)
+ 	UncordonNode(ctx context.Context, id string) (types.Node, error)
++	GetNodeDrainStatus(ctx context.Context, id string) (controlplane.NodeDrainStatus, error)
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	ListServices(ctx context.Context) ([]types.Service, error)
+ 	GetService(ctx context.Context, id string) (types.Service, error)
+@@ -176,6 +178,22 @@ func (a *app) nodeCommand() *cobra.Command {
+ 	cmd.AddCommand(a.nodeActionCommand("uncordon", "Uncordon a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
+ 		return client.UncordonNode(ctx, id)
+ 	}))
++	cmd.AddCommand(&cobra.Command{
++		Use:   "drain-status <node-id>",
++		Short: "Show node drain status",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			status, err := client.GetNodeDrainStatus(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			return writeNodeDrainStatus(a.out, a.output, status)
++		},
++	})
+ 	return cmd
+ }
+ 
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index a6b6f1b..28f9815 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -11,6 +11,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -25,6 +26,7 @@ func TestRootCommandConstruction(t *testing.T) {
+ 		"node inspect",
+ 		"node drain",
+ 		"node uncordon",
++		"node drain-status",
+ 		"deploy",
+ 		"service ls",
+ 		"service inspect",
+@@ -332,6 +334,16 @@ func (f *fakeClient) UncordonNode(_ context.Context, id string) (types.Node, err
+ 	return types.Node{ID: types.NodeID(id), Status: types.NodeReady}, nil
+ }
+ 
++func (f *fakeClient) GetNodeDrainStatus(_ context.Context, id string) (controlplane.NodeDrainStatus, error) {
++	return controlplane.NodeDrainStatus{
++		NodeID:         types.NodeID(id),
++		NodeStatus:     types.NodeDraining,
++		Phase:          controlplane.DrainPending,
++		RemainingTasks: 1,
++		Message:        "waiting",
++	}, nil
++}
++
+ func (f *fakeClient) CreateService(_ context.Context, spec types.ServiceSpec) (types.Service, error) {
+ 	f.created = types.Service{
+ 		ID:                "00000000-0000-4000-8000-000000000020",
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index d14843c..80ad293 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -27,6 +27,7 @@ type Service interface {
+ 	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	DrainNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	UncordonNode(ctx context.Context, id types.NodeID) (types.Node, error)
++	GetNodeDrainStatus(ctx context.Context, id types.NodeID) (NodeDrainStatus, error)
+ 	CreateSecret(ctx context.Context, name string, plaintext string) (types.SecretMetadata, error)
+ 	ListSecrets(ctx context.Context) ([]types.SecretMetadata, error)
+ 	GetSecret(ctx context.Context, name string) (types.SecretMetadata, error)
+@@ -95,6 +96,27 @@ type RegistryAuth struct {
+ 	ServerAddress string `json:"server_address,omitempty"`
+ }
+ 
++type DrainPhase string
++
++const (
++	DrainNotDraining DrainPhase = "not_draining"
++	DrainPending     DrainPhase = "pending"
++	DrainComplete    DrainPhase = "complete"
++	DrainOffline     DrainPhase = "offline"
++)
++
++type NodeDrainStatus struct {
++	NodeID               types.NodeID     `json:"node_id"`
++	NodeStatus           types.NodeStatus `json:"node_status"`
++	Phase                DrainPhase       `json:"phase"`
++	TotalTasks           int              `json:"total_tasks"`
++	RemainingTasks       int              `json:"remaining_tasks"`
++	ReplacementTasks     int              `json:"replacement_tasks"`
++	ReplacementReady     int              `json:"replacement_ready"`
++	InsufficientCapacity bool             `json:"insufficient_capacity,omitempty"`
++	Message              string           `json:"message,omitempty"`
++}
++
+ type TaskStatusReport struct {
+ 	TaskID        types.TaskID
+ 	NodeID        types.NodeID
+@@ -488,6 +510,7 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 	if status == types.TaskRemoved {
+ 		s.maybeFinalizeServiceDeletionLocked(task.ServiceID, task.UpdatedAt)
+ 	}
++	s.reconcileDrainingNodesLocked(task.UpdatedAt)
+ 	s.appendEventLocked(eventType, severity, "agent", message, "task", string(task.ID), task.UpdatedAt)
+ 	return task, nil
+ }
+@@ -530,13 +553,46 @@ func (s *MemoryService) GetNode(ctx context.Context, id types.NodeID) (types.Nod
+ }
+ 
+ func (s *MemoryService) DrainNode(ctx context.Context, id types.NodeID) (types.Node, error) {
+-	return s.setNodeStatus(ctx, id, types.NodeDraining)
++	if err := ctx.Err(); err != nil {
++		return types.Node{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	node, ok := s.nodes[id]
++	if !ok {
++		return types.Node{}, store.ErrNotFound
++	}
++	if err := types.ValidateNodeTransition(node.Status, types.NodeDraining); err != nil {
++		return types.Node{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	now := s.now()
++	node.Status = types.NodeDraining
++	node.UpdatedAt = now
++	s.nodes[id] = node
++	s.reconcileNodeDrainLocked(id, now)
++	s.appendEventLocked(events.TypeNodeStatusChanged, types.EventInfo, "controlplane", "node status changed", "node", string(id), node.UpdatedAt)
++	return node, nil
+ }
+ 
+ func (s *MemoryService) UncordonNode(ctx context.Context, id types.NodeID) (types.Node, error) {
+ 	return s.setNodeStatus(ctx, id, types.NodeReady)
+ }
+ 
++func (s *MemoryService) GetNodeDrainStatus(ctx context.Context, id types.NodeID) (NodeDrainStatus, error) {
++	if err := ctx.Err(); err != nil {
++		return NodeDrainStatus{}, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	node, ok := s.nodes[id]
++	if !ok {
++		return NodeDrainStatus{}, store.ErrNotFound
++	}
++	return s.nodeDrainStatusLocked(node), nil
++}
++
+ func (s *MemoryService) CreateSecret(ctx context.Context, name string, plaintext string) (types.SecretMetadata, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.SecretMetadata{}, err
+@@ -1403,6 +1459,177 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 	}
+ }
+ 
++func (s *MemoryService) reconcileDrainingNodesLocked(timestamp time.Time) {
++	nodes := make([]types.NodeID, 0)
++	for _, node := range s.nodes {
++		if node.Status == types.NodeDraining {
++			nodes = append(nodes, node.ID)
++		}
++	}
++	slices.Sort(nodes)
++	for _, nodeID := range nodes {
++		s.reconcileNodeDrainLocked(nodeID, timestamp)
++	}
++}
++
++func (s *MemoryService) reconcileNodeDrainLocked(nodeID types.NodeID, timestamp time.Time) {
++	node, ok := s.nodes[nodeID]
++	if !ok || node.Status != types.NodeDraining {
++		return
++	}
++	readyNodes := s.readyNodesLocked()
++	if len(readyNodes) == 0 {
++		if s.nodeDrainStatusLocked(node).RemainingTasks > 0 {
++			s.appendEventLocked(events.TypeNodeDrainPending, types.EventWarning, "controlplane", "node drain is waiting for ready replacement capacity", "node", string(nodeID), timestamp)
++		}
++		return
++	}
++	services := make([]types.Service, 0, len(s.services))
++	for _, service := range s.services {
++		if service.Status != "" && service.Status != types.ServiceActive {
++			continue
++		}
++		services = append(services, service)
++	}
++	slices.SortFunc(services, func(a, b types.Service) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++	for _, service := range services {
++		drainingTasks := s.activeServiceTasksOnNodeLocked(service.ID, nodeID)
++		if len(drainingTasks) == 0 {
++			continue
++		}
++		offNodeActive := s.activeServiceTasksOffNodeLocked(service.ID, nodeID)
++		for len(offNodeActive) < service.Spec.Replicas {
++			node := readyNodes[len(offNodeActive)%len(readyNodes)]
++			task := types.Task{
++				ID:            types.TaskID(newUUID()),
++				ServiceID:     service.ID,
++				NodeID:        node.ID,
++				DesiredStatus: types.TaskRunning,
++				ActualStatus:  types.TaskAssigned,
++				Image:         service.Spec.Image,
++				Version:       service.DeploymentVersion,
++				Ports:         s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
++				CreatedAt:     timestamp,
++				UpdatedAt:     timestamp,
++			}
++			s.tasks[task.ID] = task
++			offNodeActive = append(offNodeActive, task)
++			s.appendEventLocked(events.TypeTaskAssigned, types.EventInfo, "controlplane", "replacement task assigned during node drain", "task", string(task.ID), timestamp)
++		}
++		if availableTaskCount(offNodeActive) < service.Spec.Replicas {
++			continue
++		}
++		for _, task := range drainingTasks {
++			if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++				continue
++			}
++			if err := types.ValidateTaskDesiredTransition(task.DesiredStatus, types.TaskStopped); err != nil {
++				continue
++			}
++			task.DesiredStatus = types.TaskStopped
++			task.UpdatedAt = timestamp
++			s.tasks[task.ID] = task
++		}
++	}
++}
++
++func (s *MemoryService) activeServiceTasksOnNodeLocked(serviceID types.ServiceID, nodeID types.NodeID) []types.Task {
++	tasks := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.ServiceID != serviceID || task.NodeID != nodeID || !types.IsActiveTask(task) {
++			continue
++		}
++		tasks = append(tasks, task)
++	}
++	sortTasksByID(tasks)
++	return tasks
++}
++
++func (s *MemoryService) activeServiceTasksOffNodeLocked(serviceID types.ServiceID, nodeID types.NodeID) []types.Task {
++	tasks := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.ServiceID != serviceID || task.NodeID == nodeID || !types.IsActiveTask(task) {
++			continue
++		}
++		tasks = append(tasks, task)
++	}
++	sortTasksByID(tasks)
++	return tasks
++}
++
++func sortTasksByID(tasks []types.Task) {
++	slices.SortFunc(tasks, func(a, b types.Task) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++}
++
++func availableTaskCount(tasks []types.Task) int {
++	count := 0
++	for _, task := range tasks {
++		if types.IsAvailableTaskStatus(task.ActualStatus) {
++			count++
++		}
++	}
++	return count
++}
++
++func (s *MemoryService) nodeDrainStatusLocked(node types.Node) NodeDrainStatus {
++	status := NodeDrainStatus{
++		NodeID:     node.ID,
++		NodeStatus: node.Status,
++	}
++	if node.Status == types.NodeOffline {
++		status.Phase = DrainOffline
++		status.Message = "node is offline during drain"
++		return status
++	}
++	if node.Status != types.NodeDraining {
++		status.Phase = DrainNotDraining
++		status.Message = "node is not draining"
++		return status
++	}
++	for _, task := range s.tasks {
++		if task.NodeID != node.ID || !types.IsActiveTask(task) {
++			continue
++		}
++		status.TotalTasks++
++		if task.DesiredStatus != types.TaskStopped && task.DesiredStatus != types.TaskRemoved {
++			status.RemainingTasks++
++		}
++		service := s.services[task.ServiceID]
++		offNode := s.activeServiceTasksOffNodeLocked(service.ID, node.ID)
++		status.ReplacementTasks += len(offNode)
++		status.ReplacementReady += availableTaskCount(offNode)
++	}
++	if status.RemainingTasks == 0 {
++		status.Phase = DrainComplete
++		status.Message = "node drain completed"
++		return status
++	}
++	status.Phase = DrainPending
++	if len(s.readyNodesLocked()) == 0 {
++		status.InsufficientCapacity = true
++		status.Message = "waiting for ready replacement capacity"
++	} else {
++		status.Message = "waiting for replacement tasks to become healthy"
++	}
++	return status
++}
++
+ func countsTowardDesiredReplicas(task types.Task) bool {
+ 	return types.IsActiveTask(task)
+ }
+diff --git a/internal/controlplane/drain_test.go b/internal/controlplane/drain_test.go
+new file mode 100644
+index 0000000..a11e5c5
+--- /dev/null
++++ b/internal/controlplane/drain_test.go
+@@ -0,0 +1,184 @@
++package controlplane
++
++import (
++	"context"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	nodeA := registerDrainTestNode(t, ctx, service, "node-a")
++	created := createDrainTestService(t, ctx, service, 1)
++	nodeB := registerDrainTestNode(t, ctx, service, "node-b")
++	oldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)
++
++	if _, err := service.DrainNode(ctx, nodeA.Node.ID); err != nil {
++		t.Fatalf("drain node: %v", err)
++	}
++	status, err := service.GetNodeDrainStatus(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("get drain status: %v", err)
++	}
++	if status.Phase != DrainPending || status.ReplacementTasks != 1 || status.RemainingTasks != 1 {
++		t.Fatalf("unexpected pending drain status %#v", status)
++	}
++
++	replacement := singleTaskOnNode(t, ctx, service, created.ID, nodeB.Node.ID)
++	if replacement.ID == oldTask.ID {
++		t.Fatalf("expected replacement task, got old task")
++	}
++	if _, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:      replacement.ID,
++		NodeID:      nodeB.Node.ID,
++		Status:      types.TaskRunning,
++		ContainerID: "replacement-container",
++	}); err != nil {
++		t.Fatalf("report replacement running: %v", err)
++	}
++
++	old, err := service.GetTask(ctx, oldTask.ID)
++	if err != nil {
++		t.Fatalf("get old task: %v", err)
++	}
++	if old.DesiredStatus != types.TaskStopped {
++		t.Fatalf("expected old task to be stopped after replacement runs, got %#v", old)
++	}
++	status, err = service.GetNodeDrainStatus(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("get final drain status: %v", err)
++	}
++	if status.Phase != DrainComplete {
++		t.Fatalf("expected drain complete, got %#v", status)
++	}
++}
++
++func TestDrainWaitsWithInsufficientCapacity(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	node := registerDrainTestNode(t, ctx, service, "node-a")
++	createDrainTestService(t, ctx, service, 1)
++
++	if _, err := service.DrainNode(ctx, node.Node.ID); err != nil {
++		t.Fatalf("drain node: %v", err)
++	}
++	status, err := service.GetNodeDrainStatus(ctx, node.Node.ID)
++	if err != nil {
++		t.Fatalf("get drain status: %v", err)
++	}
++	if status.Phase != DrainPending || !status.InsufficientCapacity {
++		t.Fatalf("expected insufficient capacity pending drain, got %#v", status)
++	}
++	items, err := service.ListEvents(ctx, events.Filter{NodeID: node.Node.ID, Type: events.TypeNodeDrainPending})
++	if err != nil {
++		t.Fatalf("list events: %v", err)
++	}
++	if len(items) == 0 {
++		t.Fatalf("expected warning drain event")
++	}
++}
++
++func TestUncordonBeforeDrainCompletion(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	nodeA := registerDrainTestNode(t, ctx, service, "node-a")
++	created := createDrainTestService(t, ctx, service, 1)
++	registerDrainTestNode(t, ctx, service, "node-b")
++	oldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)
++
++	if _, err := service.DrainNode(ctx, nodeA.Node.ID); err != nil {
++		t.Fatalf("drain node: %v", err)
++	}
++	uncordoned, err := service.UncordonNode(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("uncordon node: %v", err)
++	}
++	if uncordoned.Status != types.NodeReady {
++		t.Fatalf("expected node ready after uncordon, got %q", uncordoned.Status)
++	}
++	old, err := service.GetTask(ctx, oldTask.ID)
++	if err != nil {
++		t.Fatalf("get old task: %v", err)
++	}
++	if old.DesiredStatus != types.TaskRunning {
++		t.Fatalf("expected old task to keep running before replacement is ready, got %#v", old)
++	}
++	status, err := service.GetNodeDrainStatus(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("get drain status: %v", err)
++	}
++	if status.Phase != DrainNotDraining {
++		t.Fatalf("expected not draining after uncordon, got %#v", status)
++	}
++}
++
++func TestNodeOfflineDuringDrainStatus(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	nodeA := registerDrainTestNode(t, ctx, service, "node-a")
++	createDrainTestService(t, ctx, service, 1)
++	registerDrainTestNode(t, ctx, service, "node-b")
++
++	if _, err := service.DrainNode(ctx, nodeA.Node.ID); err != nil {
++		t.Fatalf("drain node: %v", err)
++	}
++	if _, err := service.HeartbeatNode(ctx, NodeHeartbeat{NodeID: nodeA.Node.ID, Shutdown: true}); err != nil {
++		t.Fatalf("shutdown heartbeat: %v", err)
++	}
++	status, err := service.GetNodeDrainStatus(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("get drain status: %v", err)
++	}
++	if status.Phase != DrainOffline {
++		t.Fatalf("expected offline drain status, got %#v", status)
++	}
++}
++
++func registerDrainTestNode(t *testing.T, ctx context.Context, service *MemoryService, name string) NodeCommand {
++	t.Helper()
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             name,
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node %s: %v", name, err)
++	}
++	return registered
++}
++
++func createDrainTestService(t *testing.T, ctx context.Context, service *MemoryService, replicas int) types.Service {
++	t.Helper()
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "nginx:1.27",
++		Replicas:             replicas,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return created
++}
++
++func singleTaskOnNode(t *testing.T, ctx context.Context, service *MemoryService, serviceID types.ServiceID, nodeID types.NodeID) types.Task {
++	t.Helper()
++	tasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: serviceID, NodeID: nodeID})
++	if err != nil {
++		t.Fatalf("list tasks: %v", err)
++	}
++	active := make([]types.Task, 0)
++	for _, task := range tasks {
++		if types.IsActiveTask(task) {
++			active = append(active, task)
++		}
++	}
++	if len(active) != 1 {
++		t.Fatalf("expected one active task on node %s, got %#v", nodeID, tasks)
++	}
++	return active[0]
++}
+diff --git a/internal/events/events.go b/internal/events/events.go
+index c17bc7f..d7d0a03 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -13,6 +13,7 @@ const (
+ 	TypeNodeHeartbeat          = "node.heartbeat"
+ 	TypeNodeShutdown           = "node.shutdown"
+ 	TypeNodeStatusChanged      = "node.status.changed"
++	TypeNodeDrainPending       = "node.drain.pending"
+ 	TypeServiceCreated         = "service.created"
+ 	TypeServiceUpdated         = "service.updated"
+ 	TypeServiceDeleted         = "service.deleted"
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index ee8a83d..8a870a9 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `38-image-registry-authentication.md`
+-- Last matching commit: `same commit: Add registry credentials support`
+-- Completed prompt range: `00` through `38`
+-- Next prompt to execute: `39-node-drain-and-reschedule.md`
++- Last executed prompt: `39-node-drain-and-reschedule.md`
++- Last matching commit: `same commit: Add node drain rescheduling`
++- Completed prompt range: `00` through `39`
++- Next prompt to execute: `40-node-offline-detection-and-recovery.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

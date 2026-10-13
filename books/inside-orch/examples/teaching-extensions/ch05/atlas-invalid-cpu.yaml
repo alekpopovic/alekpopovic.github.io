@@ -1,0 +1,12 @@
+name: atlas-api
+image: nginx:1.27
+replicas: 3
+ports:
+  - container: 80
+    public: 0
+resources:
+  cpu: bananas
+  memory: 128Mi
+placement:
+  labels:
+    role: worker

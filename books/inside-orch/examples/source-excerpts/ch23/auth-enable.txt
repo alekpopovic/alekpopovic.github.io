@@ -1,0 +1,9 @@
+		required, ok := requiredRole(r)
+		if !ok || s.jwtSecret == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		token, err := auth.ParseBearer(r.Header.Get("Authorization"))
+		if err != nil {
+			s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "missing or invalid bearer token")
+			return

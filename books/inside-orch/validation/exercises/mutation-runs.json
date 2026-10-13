@@ -1,0 +1,271 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "scope": "Eight specified one-line teaching mutations in disposable copies; actual existing-test rejection, not a claim of exhaustive mutation coverage. Immutable snapshot unchanged.",
+  "runs": [
+    {
+      "id": "DEV-01",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/scheduler/scheduler.go",
+      "baseline_sha256": "c20e4c3c2bec5b84e5fc21f15c6a6698ef3a86a6c089ce184d2d1835f13f3288",
+      "old": "return Assignment{}, false, nil\n\t}\n\tif err != nil {",
+      "new": "return Assignment{}, true, nil\n\t}\n\tif err != nil {",
+      "specified_incorrect_behavior": "Misreport stale conflict as successful assignment.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/scheduler",
+        "-run",
+        "^(TestConcurrentSchedulerAttemptsAssignTaskOnce)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-01",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:46.574975+00:00",
+      "finished_at_utc": "2026-10-13T01:38:46.841351+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestConcurrentSchedulerAttemptsAssignTaskOnce"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-01.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-01.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-02",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/controlplane/controlplane.go",
+      "baseline_sha256": "60d757ca1486af1fd6b7d88323ac4e7d62c6cf769884040ac82cdb0d182fa896",
+      "old": "status = types.TaskFailed\n\t\t\teventType = events.TypeTaskHealthFailed",
+      "new": "status = types.TaskUnhealthy\n\t\t\teventType = events.TypeTaskHealthFailed",
+      "specified_incorrect_behavior": "Keep restartable unhealthy task unhealthy instead of marking failed.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestUnhealthyRestartableTaskIsMarkedFailed)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-02",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:46.884051+00:00",
+      "finished_at_utc": "2026-10-13T01:38:47.171406+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestUnhealthyRestartableTaskIsMarkedFailed"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-02.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-02.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-03",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "pkg/types/lifecycle.go",
+      "baseline_sha256": "3421090d7cf925f93164c1194fa1d527851e63358ba833194da85f96e14d7ed3",
+      "old": "return status == TaskStopped || status == TaskRemoved || status == TaskFailed",
+      "new": "return status == TaskStopped || status == TaskFailed",
+      "specified_incorrect_behavior": "Deny removed report during cleanup intent.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-03",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:47.214912+00:00",
+      "finished_at_utc": "2026-10-13T01:38:47.508027+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-03.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-03.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-04",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/rollout/rollout.go",
+      "baseline_sha256": "14d28f64a885da5ead349d9e0fe48a69a18853b8f4d303916784d03accdec224",
+      "old": "if state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {",
+      "new": "if false && state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {",
+      "specified_incorrect_behavior": "Never complete otherwise successful rollout.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/rollout",
+        "-run",
+        "^(TestControllerSuccessfulRollout)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-04",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:47.550789+00:00",
+      "finished_at_utc": "2026-10-13T01:38:48.238659+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestControllerSuccessfulRollout"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-04.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-04.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-05",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/controlplane/controlplane.go",
+      "baseline_sha256": "60d757ca1486af1fd6b7d88323ac4e7d62c6cf769884040ac82cdb0d182fa896",
+      "old": "service, ok := s.services[id]\n\tif !ok || !namespace.Matches(ctx, service.Namespace) {\n\t\treturn types.Service{}, store.ErrNotFound",
+      "new": "service, ok := s.services[id]\n\tif !ok {\n\t\treturn types.Service{}, store.ErrNotFound",
+      "specified_incorrect_behavior": "Allow GetService to return a foreign namespace record.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestNamespaceIsolationAndDuplicateNames)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-05",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:48.276596+00:00",
+      "finished_at_utc": "2026-10-13T01:38:49.358337+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestNamespaceIsolationAndDuplicateNames"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-05.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-05.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-06",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/controlplane/controlplane.go",
+      "baseline_sha256": "60d757ca1486af1fd6b7d88323ac4e7d62c6cf769884040ac82cdb0d182fa896",
+      "old": "if err := quota.Check(s.quotaLocked(service.Namespace), usage); err != nil {",
+      "new": "if err := quota.Check(s.quotaLocked(service.Namespace), usage); err != nil && false {",
+      "specified_incorrect_behavior": "Ignore quota denial in ScaleService.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestConcurrentScaleCannotExceedQuota)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-06",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:49.396281+00:00",
+      "finished_at_utc": "2026-10-13T01:38:51.380184+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestConcurrentScaleCannotExceedQuota"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-06.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-06.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-07",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/gitops/gitops.go",
+      "baseline_sha256": "25d894c3e51cedd8e3ee363a0f186bb50ef0040ca8d919ba828d6f6b2b3a54e4",
+      "old": "if source.Prune {",
+      "new": "if source.Prune && false {",
+      "specified_incorrect_behavior": "Disable requested GitOps prune.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/gitops",
+        "-run",
+        "^(TestControllerSyncsLocalFixtureRepositoryAndPrunes)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-07",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:51.421598+00:00",
+      "finished_at_utc": "2026-10-13T01:38:54.479243+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestControllerSyncsLocalFixtureRepositoryAndPrunes"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-07.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-07.mutant.stderr.txt"
+    },
+    {
+      "id": "DEV-08",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "mutation_path": "internal/cronjobs/cronjobs.go",
+      "baseline_sha256": "0d8156467964d6f840dc44e494a871bf9818df6d6c5c9c04b2f8b5d9733fae90",
+      "old": "case types.ConcurrencyForbid:\n\t\t\tif len(active) > 0 {",
+      "new": "case types.ConcurrencyForbid:\n\t\t\tif len(active) > 0 && false {",
+      "specified_incorrect_behavior": "Allow a due occurrence despite Forbid overlap.",
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-json",
+        "-count=1",
+        "./internal/cronjobs",
+        "-run",
+        "^(TestParseAndRunWithFakeClock|TestConcurrencyForbidAndReplace)$"
+      ],
+      "cwd": "/tmp/inside-orch-exercise-mutants/dev-08",
+      "prerequisites": [
+        "Go1.25.0",
+        "cached dependencies",
+        "Git for DEV-07"
+      ],
+      "started_at_utc": "2026-10-13T01:38:54.517257+00:00",
+      "finished_at_utc": "2026-10-13T01:38:54.818841+00:00",
+      "exit_code": 1,
+      "failing_tests": [
+        "TestConcurrencyForbidAndReplace"
+      ],
+      "incorrect_behavior_rejected": true,
+      "stdout": "validation/exercises/dev-08.mutant.stdout.jsonl",
+      "stderr": "validation/exercises/dev-08.mutant.stderr.txt"
+    }
+  ],
+  "all_rejected": true
+}

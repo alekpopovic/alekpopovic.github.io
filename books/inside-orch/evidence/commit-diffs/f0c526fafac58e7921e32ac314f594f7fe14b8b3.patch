@@ -1,0 +1,2602 @@
+commit f0c526fafac58e7921e32ac314f594f7fe14b8b3
+Date: 2026-07-14T13:06:33+02:00
+Subject: prompts
+
+
+---
+ prompts/00-agents-md-and-architecture-docs.md      | 55 ++++++++++++++++
+ prompts/01-repository-bootstrap.md                 | 62 ++++++++++++++++++
+ prompts/02-core-domain-models.md                   | 74 ++++++++++++++++++++++
+ prompts/03-postgresql-schema-and-store-layer.md    | 44 +++++++++++++
+ prompts/04-api-server-v1.md                        | 49 ++++++++++++++
+ prompts/05-cobra-cli.md                            | 64 +++++++++++++++++++
+ prompts/06-docker-engine-runtime-wrapper.md        | 42 ++++++++++++
+ .../07-worker-agent-registration-and-heartbeat.md  | 41 ++++++++++++
+ .../08-task-assignment-between-server-and-agent.md | 37 +++++++++++
+ prompts/09-scheduler-v1.md                         | 43 +++++++++++++
+ prompts/10-reconciler-v1.md                        | 36 +++++++++++
+ prompts/11-health-checker.md                       | 38 +++++++++++
+ prompts/12-logs-support.md                         | 26 ++++++++
+ prompts/13-durable-events-system.md                | 36 +++++++++++
+ prompts/14-rolling-update-v1.md                    | 40 ++++++++++++
+ prompts/15-rollback-v1.md                          | 24 +++++++
+ prompts/16-safe-service-deletion-and-cleanup.md    | 28 ++++++++
+ prompts/17-resource-accounting.md                  | 29 +++++++++
+ prompts/18-user-api-auth-v1.md                     | 33 ++++++++++
+ prompts/19-agent-security-bootstrap.md             | 24 +++++++
+ prompts/20-prometheus-metrics.md                   | 39 ++++++++++++
+ prompts/21-local-development-environment.md        | 35 ++++++++++
+ prompts/22-end-to-end-tests.md                     | 27 ++++++++
+ prompts/23-github-actions-ci.md                    | 22 +++++++
+ prompts/24-idempotency-audit.md                    | 30 +++++++++
+ prompts/25-failure-modes-hardening.md              | 27 ++++++++
+ prompts/26-senior-distributed-systems-review.md    | 29 +++++++++
+ prompts/27-production-documentation.md             | 37 +++++++++++
+ prompts/28-mvp-release-preparation.md              | 31 +++++++++
+ .../29-freeze-api-and-state-machine-contract.md    | 43 +++++++++++++
+ prompts/30-transaction-boundaries-audit.md         | 38 +++++++++++
+ prompts/31-scheduler-concurrency-safety.md         | 32 ++++++++++
+ prompts/32-reconciler-idempotency-under-restart.md | 30 +++++++++
+ prompts/33-fake-runtime-for-deterministic-tests.md | 40 ++++++++++++
+ .../34-port-allocation-and-collision-handling.md   | 31 +++++++++
+ prompts/35-basic-service-discovery.md              | 36 +++++++++++
+ prompts/36-traefik-integration.md                  | 33 ++++++++++
+ prompts/37-secrets-mvp.md                          | 44 +++++++++++++
+ prompts/38-image-registry-authentication.md        | 33 ++++++++++
+ prompts/39-node-drain-and-reschedule.md            | 35 ++++++++++
+ prompts/40-node-offline-detection-and-recovery.md  | 37 +++++++++++
+ prompts/41-manual-docker-drift-reconciliation.md   | 31 +++++++++
+ ...ployment-lock-and-concurrent-user-operations.md | 31 +++++++++
+ .../43-deployment-yaml-schema-and-validation.md    | 35 ++++++++++
+ prompts/44-config-management-hardening.md          | 29 +++++++++
+ prompts/45-structured-error-model.md               | 33 ++++++++++
+ prompts/46-audit-logging.md                        | 43 +++++++++++++
+ prompts/47-prometheus-alert-rules.md               | 28 ++++++++
+ prompts/48-grafana-dashboard-json.md               | 26 ++++++++
+ prompts/49-backup-and-restore-runbook.md           | 29 +++++++++
+ prompts/50-production-deployment-manifest.md       | 28 ++++++++
+ prompts/51-security-review.md                      | 37 +++++++++++
+ prompts/52-container-security-policy.md            | 34 ++++++++++
+ prompts/53-healthcheck-ssrf-protection.md          | 26 ++++++++
+ prompts/54-autoscaling-design-doc.md               | 31 +++++++++
+ prompts/55-autoscaling-mvp-implementation.md       | 36 +++++++++++
+ prompts/56-ha-control-plane-design.md              | 36 +++++++++++
+ prompts/57-controller-leader-election-mvp.md       | 32 ++++++++++
+ prompts/58-multi-agent-load-test.md                | 35 ++++++++++
+ prompts/59-chaos-testing-scenarios.md              | 22 +++++++
+ prompts/60-release-hardening-v0-2-0.md             | 31 +++++++++
+ 61 files changed, 2167 insertions(+)
+
+diff --git a/prompts/00-agents-md-and-architecture-docs.md b/prompts/00-agents-md-and-architecture-docs.md
+new file mode 100644
+index 0000000..4b64850
+--- /dev/null
++++ b/prompts/00-agents-md-and-architecture-docs.md
+@@ -0,0 +1,55 @@
++# 00. AGENTS.md and architecture docs
++
++```text
++Create an AGENTS.md file for this repository.
++
++Project context:
++We are building a production-grade Docker container orchestrator in Go. The orchestrator should manage multi-node deployments using Docker Engine API first, with a clean architecture that could later support containerd.
++
++Core components:
++- orch-server: control plane API server
++- orch-agent: worker node agent
++- orch: CLI
++- scheduler: places tasks on nodes
++- reconciler: keeps actual state equal to desired state
++- store: PostgreSQL persistence
++- docker runtime package: wrapper around Docker Engine API
++- healthchecker: HTTP/TCP health checks
++- rollout manager: rolling updates and rollback
++- events/logs/metrics
++
++Create AGENTS.md with:
++- repository layout
++- Go coding conventions
++- error handling conventions
++- logging conventions
++- testing expectations
++- migration rules
++- API compatibility rules
++- security rules
++- commands for build/test/lint
++- definition of done for every task
++
++Assume:
++- Go modules
++- PostgreSQL
++- Docker Engine API
++- Cobra CLI
++- sqlc or pgx for database access
++- golangci-lint
++- Prometheus metrics
++
++Important constraints:
++- Prefer small cohesive packages.
++- No global mutable state unless explicitly justified.
++- All external side effects must be behind interfaces.
++- Scheduler and reconciler must be deterministic and unit-testable.
++- Docker operations must be idempotent.
++- Never store secrets in plaintext.
++- Every feature must include tests.
++- Every API endpoint must have request/response structs and validation.
++- Every long-running loop must support context cancellation.
++- All timestamps must be UTC.
++
++After creating AGENTS.md, also create a short docs/ARCHITECTURE.md summarizing the system.
++```
+diff --git a/prompts/01-repository-bootstrap.md b/prompts/01-repository-bootstrap.md
+new file mode 100644
+index 0000000..e07b8e7
+--- /dev/null
++++ b/prompts/01-repository-bootstrap.md
+@@ -0,0 +1,62 @@
++# 01. Repository bootstrap
++
++```text
++Initialize the repository for a Go-based Docker container orchestrator.
++
++Create this structure:
++
++cmd/
++  orch/
++    main.go
++  orch-server/
++    main.go
++  orch-agent/
++    main.go
++
++internal/
++  api/
++  auth/
++  config/
++  docker/
++  events/
++  health/
++  node/
++  reconciler/
++  rollout/
++  scheduler/
++  store/
++  task/
++
++pkg/
++  types/
++
++deployments/
++  examples/
++
++docs/
++  ARCHITECTURE.md
++  DEVELOPMENT.md
++
++migrations/
++
++Requirements:
++- Initialize go.mod.
++- Create basic buildable binaries for orch, orch-server, and orch-agent.
++- Add a Makefile with:
++  - make build
++  - make test
++  - make lint
++  - make run-server
++  - make run-agent
++- Add docker-compose.yml with PostgreSQL and optional local orchestrator services.
++- Add .env.example.
++- Add README.md with quickstart.
++- Add basic structured logging.
++- Add context cancellation handling in all main packages.
++- Add graceful shutdown for server and agent.
++- Add unit test placeholders where useful.
++
++Use idiomatic Go.
++Keep the initial code minimal but production-shaped.
++At the end, run go test ./... and fix failures.
++```
+diff --git a/prompts/02-core-domain-models.md b/prompts/02-core-domain-models.md
+new file mode 100644
+index 0000000..db5312c
+--- /dev/null
++++ b/prompts/02-core-domain-models.md
+@@ -0,0 +1,74 @@
++# 02. Core domain models
++
++```text
++Design and implement the core domain model for the orchestrator.
++
++Create Go types under pkg/types or internal/domain for:
++
++Node:
++- ID
++- hostname
++- advertise address
++- labels
++- capacity CPU/memory
++- allocatable CPU/memory
++- status: ready, draining, offline, unknown
++- last heartbeat timestamp
++- created/updated timestamps
++
++Service:
++- ID
++- name
++- image
++- replicas
++- env vars
++- secret references
++- ports
++- resource requests/limits
++- healthcheck
++- restart policy
++- placement constraints
++- deployment version
++- created/updated timestamps
++
++Task:
++- ID
++- service ID
++- node ID
++- container ID
++- desired status
++- actual status
++- image
++- version
++- restart count
++- failure reason
++- timestamps
++
++Deployment/Rollout:
++- ID
++- service ID
++- from version
++- to version
++- strategy
++- status
++- max unavailable
++- max surge
++- timestamps
++
++Event:
++- ID
++- type
++- severity
++- source
++- message
++- related object type/id
++- timestamp
++
++Requirements:
++- Use strong typed enums where appropriate.
++- Add JSON tags for API serialization.
++- Add validation methods for ServiceSpec and NodeSpec.
++- Add table-driven unit tests for validation.
++- Keep models free from database-specific annotations unless necessary.
++- Document the lifecycle of Service -> Task -> Container in docs/ARCHITECTURE.md.
++```
+diff --git a/prompts/03-postgresql-schema-and-store-layer.md b/prompts/03-postgresql-schema-and-store-layer.md
+new file mode 100644
+index 0000000..614c6bc
+--- /dev/null
++++ b/prompts/03-postgresql-schema-and-store-layer.md
+@@ -0,0 +1,44 @@
++# 03. PostgreSQL schema and store layer
++
++```text
++Implement the PostgreSQL persistence layer.
++
++Create migrations for:
++- nodes
++- services
++- service_versions if needed
++- tasks
++- deployments
++- events
++
++Requirements:
++- Use UUID primary keys.
++- Store timestamps in UTC.
++- Add indexes for:
++  - tasks by service_id
++  - tasks by node_id
++  - tasks by status
++  - nodes by status
++  - events by related object and created_at
++- Add optimistic concurrency where appropriate, for example version column or updated_at checks.
++- Add store interfaces for:
++  - NodeStore
++  - ServiceStore
++  - TaskStore
++  - DeploymentStore
++  - EventStore
++- Implement PostgreSQL-backed stores.
++- Add unit/integration tests.
++- Integration tests may use testcontainers-go or a docker-compose documented flow.
++- All store operations must accept context.Context.
++- No SQL string concatenation with untrusted input.
++- Return domain-specific errors:
++  - ErrNotFound
++  - ErrConflict
++  - ErrInvalidState
++  - ErrDuplicate
++
++At the end:
++- Document how to run migrations.
++- Run tests and fix failures.
++```
+diff --git a/prompts/04-api-server-v1.md b/prompts/04-api-server-v1.md
+new file mode 100644
+index 0000000..2b7b0e9
+--- /dev/null
++++ b/prompts/04-api-server-v1.md
+@@ -0,0 +1,49 @@
++# 04. API server v1
++
++```text
++Implement the first version of the control-plane REST API.
++
++Endpoints:
++
++Health:
++- GET /healthz
++- GET /readyz
++
++Nodes:
++- GET /v1/nodes
++- GET /v1/nodes/{id}
++- POST /v1/nodes/{id}/drain
++- POST /v1/nodes/{id}/uncordon
++
++Services:
++- POST /v1/services
++- GET /v1/services
++- GET /v1/services/{id}
++- DELETE /v1/services/{id}
++- POST /v1/services/{id}/scale
++- POST /v1/services/{id}/rollout
++- POST /v1/services/{id}/rollback
++
++Tasks:
++- GET /v1/tasks
++- GET /v1/tasks/{id}
++
++Events:
++- GET /v1/events
++
++Requirements:
++- Use net/http or chi.
++- Add request/response DTOs.
++- Validate all inputs.
++- Return structured JSON errors.
++- Add request ID middleware.
++- Add structured access logs.
++- Add panic recovery middleware.
++- Add timeouts.
++- Keep handlers thin.
++- Business logic should live in service/usecase packages.
++- Add unit tests for handlers.
++- Add API examples to docs/API.md.
++
++Do not implement auth yet, but structure the middleware chain so auth can be added later.
++```
+diff --git a/prompts/05-cobra-cli.md b/prompts/05-cobra-cli.md
+new file mode 100644
+index 0000000..32bdea4
+--- /dev/null
++++ b/prompts/05-cobra-cli.md
+@@ -0,0 +1,64 @@
++# 05. Cobra CLI
++
++```text
++Implement the initial orch CLI using Cobra.
++
++Commands:
++
++orch version
++
++orch node ls
++orch node inspect <node-id>
++orch node drain <node-id>
++orch node uncordon <node-id>
++
++orch deploy <file.yaml>
++orch service ls
++orch service inspect <service-name-or-id>
++orch service ps <service-name-or-id>
++orch scale <service-name-or-id> --replicas <n>
++orch rollout <service-name-or-id> --image <image>
++orch rollback <service-name-or-id>
++orch delete <service-name-or-id>
++
++orch events
++orch logs <service-name-or-id>
++
++Requirements:
++- Read server URL from:
++  1. --server flag
++  2. ORCH_SERVER_URL env var
++  3. config file
++- Support JSON and table output:
++  --output table
++  --output json
++- Implement YAML parsing for deploy files.
++- Validate deploy files before sending to API.
++- Add useful human-readable error messages.
++- Add examples to README.md.
++- Add tests for YAML parsing and CLI command construction.
++
++Example deploy YAML:
++
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 3
++ports:
++  - container: 8080
++    public: 80
++env:
++  NODE_ENV: production
++resources:
++  cpu: 500m
++  memory: 512Mi
++healthcheck:
++  type: http
++  path: /health
++  interval: 10s
++  timeout: 2s
++restart:
++  policy: always
++placement:
++  labels:
++    role: app
++```
+diff --git a/prompts/06-docker-engine-runtime-wrapper.md b/prompts/06-docker-engine-runtime-wrapper.md
+new file mode 100644
+index 0000000..651e823
+--- /dev/null
++++ b/prompts/06-docker-engine-runtime-wrapper.md
+@@ -0,0 +1,42 @@
++# 06. Docker Engine runtime wrapper
++
++```text
++Implement a Docker Engine runtime package.
++
++Package: internal/docker
++
++Create an interface:
++
++type Runtime interface {
++    PullImage(ctx context.Context, image string, auth *RegistryAuth) error
++    CreateContainer(ctx context.Context, spec ContainerSpec) (ContainerID, error)
++    StartContainer(ctx context.Context, id ContainerID) error
++    StopContainer(ctx context.Context, id ContainerID, timeout time.Duration) error
++    RemoveContainer(ctx context.Context, id ContainerID, force bool) error
++    InspectContainer(ctx context.Context, id ContainerID) (ContainerStatus, error)
++    ListManagedContainers(ctx context.Context, labels map[string]string) ([]ContainerStatus, error)
++    StreamLogs(ctx context.Context, id ContainerID, opts LogOptions) (<-chan LogLine, <-chan error)
++}
++
++Requirements:
++- Use official Docker Go SDK.
++- Every container created by this orchestrator must include labels:
++  - orch.managed=true
++  - orch.service_id
++  - orch.task_id
++  - orch.node_id
++  - orch.version
++- Operations must be idempotent:
++  - creating an existing task should not create duplicate containers
++  - stopping an already stopped container should be success
++  - removing an already removed container should be success
++- Support:
++  - env vars
++  - exposed ports
++  - resource limits
++  - restart policy disabled by default, because orchestrator controls restarts
++  - healthcheck config if possible
++- Add unit tests using mocks.
++- Add integration tests guarded by an environment variable, e.g. ORCH_DOCKER_INTEGRATION=1.
++- Document required Docker daemon permissions and security risks.
++```
+diff --git a/prompts/07-worker-agent-registration-and-heartbeat.md b/prompts/07-worker-agent-registration-and-heartbeat.md
+new file mode 100644
+index 0000000..03fb800
+--- /dev/null
++++ b/prompts/07-worker-agent-registration-and-heartbeat.md
+@@ -0,0 +1,41 @@
++# 07. Worker agent registration and heartbeat
++
++```text
++Implement the worker agent registration and heartbeat flow.
++
++Agent behavior:
++- Start with config:
++  - server URL
++  - node name
++  - advertise address
++  - labels
++  - heartbeat interval
++  - Docker socket path
++- Detect local node capacity:
++  - CPU cores
++  - memory
++- Register node with control plane.
++- Send heartbeat every N seconds.
++- Mark itself draining/offline only based on server response or shutdown lifecycle.
++- On graceful shutdown, notify server if possible.
++
++Server behavior:
++- Add internal endpoints for agents:
++  - POST /v1/agent/register
++  - POST /v1/agent/heartbeat
++- Store node information.
++- Update last heartbeat.
++- Return node status and any control-plane directives.
++
++Requirements:
++- Use context cancellation.
++- Add retry with exponential backoff.
++- Add jitter.
++- Avoid thundering herd.
++- Add tests for heartbeat state transitions.
++- Add docs/AGENT.md explaining agent lifecycle.
++
++Security:
++- For now use a static bootstrap token from config.
++- Structure the code so mTLS can replace this later.
++```
+diff --git a/prompts/08-task-assignment-between-server-and-agent.md b/prompts/08-task-assignment-between-server-and-agent.md
+new file mode 100644
+index 0000000..04f5adb
+--- /dev/null
++++ b/prompts/08-task-assignment-between-server-and-agent.md
+@@ -0,0 +1,37 @@
++# 08. Task assignment between server and agent
++
++```text
++Implement task assignment between control plane and worker agents.
++
++Server:
++- Add endpoint:
++  - GET /v1/agent/tasks?node_id=<id>
++  - POST /v1/agent/tasks/{task_id}/status
++- The GET endpoint should return desired tasks assigned to that node.
++- The status endpoint should allow agent to report:
++  - pulling
++  - created
++  - running
++  - unhealthy
++  - failed
++  - stopped
++  - removed
++
++Agent:
++- Poll for assigned tasks.
++- For each task:
++  - pull image
++  - create container
++  - start container
++  - report status after each step
++- Reconcile local Docker state with assigned tasks.
++- Stop/remove containers that are managed by this orchestrator but no longer assigned to this node.
++
++Requirements:
++- Idempotent task execution.
++- No duplicate container per task.
++- Safe retry after process restart.
++- Add local cache only if needed; server remains source of truth.
++- Add table-driven unit tests for task state transitions.
++- Add integration test with fake runtime.
++```
+diff --git a/prompts/09-scheduler-v1.md b/prompts/09-scheduler-v1.md
+new file mode 100644
+index 0000000..b8a9740
+--- /dev/null
++++ b/prompts/09-scheduler-v1.md
+@@ -0,0 +1,43 @@
++# 09. Scheduler v1
++
++```text
++Implement scheduler v1.
++
++Goal:
++Assign pending tasks to suitable ready nodes.
++
++Inputs:
++- service resource requests
++- service placement labels
++- current node status
++- current running tasks
++- node capacity and allocatable resources
++
++Algorithm:
++1. Load pending tasks.
++2. Load ready nodes.
++3. Filter nodes:
++   - status must be ready
++   - not draining
++   - labels must match placement constraints
++   - enough free CPU/memory
++4. Score nodes:
++   - prefer more free memory
++   - prefer fewer running tasks for same service
++   - prefer fewer total running tasks
++5. Assign task to best node.
++6. Emit event.
++
++Requirements:
++- Scheduler must be deterministic.
++- Add interfaces for store access.
++- No direct Docker calls in scheduler.
++- Add table-driven unit tests covering:
++  - no nodes
++  - labels mismatch
++  - insufficient resources
++  - spread across nodes
++  - deterministic tie-breaking
++  - node draining
++- Add docs/SCHEDULER.md with algorithm explanation.
++```
+diff --git a/prompts/10-reconciler-v1.md b/prompts/10-reconciler-v1.md
+new file mode 100644
+index 0000000..537734d
+--- /dev/null
++++ b/prompts/10-reconciler-v1.md
+@@ -0,0 +1,36 @@
++# 10. Reconciler v1
++
++```text
++Implement the service reconciler.
++
++Goal:
++Keep actual task count equal to desired service replicas.
++
++Loop:
++- List active services.
++- For each service:
++  - Count non-terminal tasks for current service version.
++  - If count < replicas, create missing pending tasks.
++  - If count > replicas, select extra tasks to stop.
++  - If tasks are failed and restart policy allows restart, create replacement tasks.
++- Emit events for every decision.
++
++Requirements:
++- All logic must be idempotent.
++- Use context cancellation.
++- Add configurable interval.
++- Add leader-lock abstraction but do not implement HA locking yet.
++- Do not schedule directly from reconciler; create pending tasks and let scheduler assign them.
++- Add unit tests for:
++  - scale up
++  - scale down
++  - failed task replacement
++  - no-op when desired equals actual
++  - service deletion
++  - version mismatch
++- Add metrics:
++  - reconciliation duration
++  - reconciliation errors
++  - created tasks count
++  - stopped tasks count
++```
+diff --git a/prompts/11-health-checker.md b/prompts/11-health-checker.md
+new file mode 100644
+index 0000000..7d336c3
+--- /dev/null
++++ b/prompts/11-health-checker.md
+@@ -0,0 +1,38 @@
++# 11. Health checker
++
++```text
++Implement health checking for running tasks.
++
++Support healthcheck types:
++- HTTP
++- TCP
++- none
++
++Service YAML example:
++healthcheck:
++  type: http
++  path: /health
++  interval: 10s
++  timeout: 2s
++  healthyThreshold: 2
++  unhealthyThreshold: 3
++
++Agent behavior:
++- For each running assigned task, perform health checks.
++- Report status to server:
++  - healthy
++  - unhealthy
++- Do not restart directly unless the server/task directive says so.
++- Respect context cancellation.
++- Avoid synchronized checks by adding jitter.
++
++Server/reconciler behavior:
++- If a task is unhealthy beyond threshold, mark it failed or needs replacement depending on restart policy.
++- Emit event.
++
++Requirements:
++- Add tests for HTTP and TCP health checks.
++- Use httptest for HTTP tests.
++- Add fake clock if helpful.
++- Add docs/HEALTHCHECKS.md.
++```
+diff --git a/prompts/12-logs-support.md b/prompts/12-logs-support.md
+new file mode 100644
+index 0000000..a14467c
+--- /dev/null
++++ b/prompts/12-logs-support.md
+@@ -0,0 +1,26 @@
++# 12. Logs support
++
++```text
++Implement basic logs support.
++
++Goal:
++Allow CLI command:
++orch logs <service-name-or-id>
++orch logs <service-name-or-id> --follow
++orch logs <service-name-or-id> --task <task-id>
++orch logs <service-name-or-id> --tail 100
++
++Implementation:
++- Agent streams logs from Docker for managed containers.
++- Server exposes logs endpoint:
++  - GET /v1/logs?service_id=&task_id=&follow=&tail=
++- For MVP, proxy logs from agent through server.
++- Use chunked HTTP or server-sent events for follow mode.
++- Add timeout and cancellation.
++- Avoid loading unbounded logs into memory.
++
++Requirements:
++- Add tests for log stream cancellation.
++- Add error handling when task/node is offline.
++- Add docs/LOGS.md explaining MVP limitation.
++```
+diff --git a/prompts/13-durable-events-system.md b/prompts/13-durable-events-system.md
+new file mode 100644
+index 0000000..f793a20
+--- /dev/null
++++ b/prompts/13-durable-events-system.md
+@@ -0,0 +1,36 @@
++# 13. Durable events system
++
++```text
++Implement a durable events system.
++
++Events should be emitted by:
++- API service creation/update/delete
++- scheduler task assignment
++- reconciler task creation/stop decisions
++- agent task status changes
++- health checker unhealthy transitions
++- rollout manager
++
++Requirements:
++- Store events in PostgreSQL.
++- Add event severity:
++  - info
++  - warning
++  - error
++- Add event type constants.
++- Add helper function:
++  Emit(ctx, Event)
++- Do not let event emission failure crash critical paths unless explicitly configured.
++- Add API filtering:
++  - by service_id
++  - by task_id
++  - by node_id
++  - by type
++  - by severity
++  - since timestamp
++- Add CLI:
++  orch events
++  orch events --service api
++  orch events --follow
++- Add tests.
++```
+diff --git a/prompts/14-rolling-update-v1.md b/prompts/14-rolling-update-v1.md
+new file mode 100644
+index 0000000..2544ee8
+--- /dev/null
++++ b/prompts/14-rolling-update-v1.md
+@@ -0,0 +1,40 @@
++# 14. Rolling update v1
++
++```text
++Implement rolling update for services.
++
++API:
++POST /v1/services/{id}/rollout
++
++Request:
++{
++  "image": "ghcr.io/example/api:1.0.1",
++  "maxUnavailable": 1,
++  "maxSurge": 1
++}
++
++Behavior:
++- Create a new service version.
++- Gradually create new-version tasks.
++- Wait for new tasks to become healthy.
++- Stop old-version tasks.
++- Continue until all running tasks are on new version.
++- Mark rollout successful.
++- If a new task fails health checks, pause rollout and mark failed.
++- Emit events for each rollout step.
++
++Requirements:
++- Implement as a rollout controller loop, not a blocking API request.
++- API request should start rollout and return rollout ID.
++- Add GET endpoint for rollout status.
++- Add CLI:
++  orch rollout api --image ghcr.io/example/api:1.0.1
++  orch rollout status api
++- Add tests for:
++  - successful rollout
++  - failed new task
++  - max unavailable respected
++  - max surge respected
++  - idempotent resume after controller restart
++- Document rollout state machine.
++```
+diff --git a/prompts/15-rollback-v1.md b/prompts/15-rollback-v1.md
+new file mode 100644
+index 0000000..f7e99bc
+--- /dev/null
++++ b/prompts/15-rollback-v1.md
+@@ -0,0 +1,24 @@
++# 15. Rollback v1
++
++```text
++Implement rollback support.
++
++API:
++POST /v1/services/{id}/rollback
++
++Behavior:
++- Find previous successful service version.
++- Start a rollout back to that version.
++- Preserve audit trail.
++- Emit rollback events.
++
++Requirements:
++- Do not delete failed rollout history.
++- Add CLI:
++  orch rollback api
++- Add tests:
++  - rollback after failed rollout
++  - rollback when no previous version exists
++  - rollback idempotency
++- Update docs/ROLLOUTS.md.
++```
+diff --git a/prompts/16-safe-service-deletion-and-cleanup.md b/prompts/16-safe-service-deletion-and-cleanup.md
+new file mode 100644
+index 0000000..eea6a0a
+--- /dev/null
++++ b/prompts/16-safe-service-deletion-and-cleanup.md
+@@ -0,0 +1,28 @@
++# 16. Safe service deletion and cleanup
++
++```text
++Implement safe service deletion.
++
++Behavior:
++- DELETE /v1/services/{id} marks service as deleting.
++- Reconciler creates stop directives for all tasks.
++- Agents stop and remove containers.
++- Once all tasks are terminal/removed, service is marked deleted.
++- Hard delete should not be default.
++
++Requirements:
++- Add service status:
++  - active
++  - deleting
++  - deleted
++- Add task desired status:
++  - running
++  - stopped
++  - removed
++- Add tests:
++  - deleting service with running tasks
++  - repeated delete request is idempotent
++  - agent offline during deletion
++  - final cleanup after agent returns
++- Emit events.
++```
+diff --git a/prompts/17-resource-accounting.md b/prompts/17-resource-accounting.md
+new file mode 100644
+index 0000000..3227232
+--- /dev/null
++++ b/prompts/17-resource-accounting.md
+@@ -0,0 +1,29 @@
++# 17. Resource accounting
++
++```text
++Implement resource accounting.
++
++Goal:
++Scheduler should avoid overcommitting CPU and memory based on service resource requests.
++
++Requirements:
++- Parse CPU values:
++  - "500m"
++  - "1"
++  - "2.5"
++- Parse memory values:
++  - "128Mi"
++  - "512Mi"
++  - "1Gi"
++  - "2G"
++- Store normalized values:
++  - CPU in millicores
++  - memory in bytes
++- Add validation:
++  - requests cannot exceed limits
++  - values must be positive
++  - missing values should use configurable defaults
++- Scheduler should compute allocated resources from non-terminal tasks.
++- Add tests for parsers and scheduler accounting.
++- Add documentation.
++```
+diff --git a/prompts/18-user-api-auth-v1.md b/prompts/18-user-api-auth-v1.md
+new file mode 100644
+index 0000000..9b5e34b
+--- /dev/null
++++ b/prompts/18-user-api-auth-v1.md
+@@ -0,0 +1,33 @@
++# 18. User API auth v1
++
++```text
++Implement user API authentication and authorization v1.
++
++Scope:
++- JWT-based auth for user-facing REST API.
++- Static user config or database-backed users for MVP.
++- Roles:
++  - admin
++  - operator
++  - viewer
++
++Permissions:
++- viewer:
++  - list/read nodes, services, tasks, events, logs
++- operator:
++  - deploy, scale, rollout, rollback, delete services
++- admin:
++  - manage users, drain nodes, configure cluster
++
++Requirements:
++- Add auth middleware.
++- Add RBAC middleware.
++- Keep agent authentication separate from user authentication.
++- Never log tokens.
++- Add tests for:
++  - missing token
++  - invalid token
++  - insufficient role
++  - allowed access
++- Update docs/SECURITY.md.
++```
+diff --git a/prompts/19-agent-security-bootstrap.md b/prompts/19-agent-security-bootstrap.md
+new file mode 100644
+index 0000000..6bbfe3f
+--- /dev/null
++++ b/prompts/19-agent-security-bootstrap.md
+@@ -0,0 +1,24 @@
++# 19. Agent security bootstrap
++
++```text
++Improve agent authentication.
++
++Current state:
++Agent uses a static bootstrap token.
++
++Implement:
++- Agent registration token.
++- Server issues short-lived agent credential after successful registration.
++- Agent uses credential for heartbeat and task polling.
++- Add token rotation support.
++- Add server-side revocation field for nodes.
++
++Design for future mTLS:
++- Create interfaces so token auth can later be replaced or combined with mTLS.
++- Document future mTLS design in docs/SECURITY.md.
++
++Requirements:
++- Never store raw tokens in DB; store hashed tokens.
++- Never print tokens in logs.
++- Add tests for token issuance, validation, expiration, and revocation.
++```
+diff --git a/prompts/20-prometheus-metrics.md b/prompts/20-prometheus-metrics.md
+new file mode 100644
+index 0000000..b2502f9
+--- /dev/null
++++ b/prompts/20-prometheus-metrics.md
+@@ -0,0 +1,39 @@
++# 20. Prometheus metrics
++
++```text
++Implement Prometheus metrics.
++
++Expose:
++- /metrics on orch-server
++- /metrics on orch-agent
++
++Server metrics:
++- api_requests_total
++- api_request_duration_seconds
++- scheduler_runs_total
++- scheduler_errors_total
++- scheduler_duration_seconds
++- reconciler_runs_total
++- reconciler_errors_total
++- reconciler_duration_seconds
++- tasks_created_total
++- tasks_failed_total
++- rollouts_total
++- rollout_failures_total
++
++Agent metrics:
++- heartbeat_success_total
++- heartbeat_failure_total
++- docker_operations_total
++- docker_operation_errors_total
++- task_state_changes_total
++- healthcheck_success_total
++- healthcheck_failure_total
++
++Requirements:
++- Use prometheus/client_golang.
++- Keep metric labels low-cardinality.
++- Do not use service name or task ID as high-cardinality labels unless justified.
++- Add docs/OBSERVABILITY.md.
++- Add tests where practical.
++```
+diff --git a/prompts/21-local-development-environment.md b/prompts/21-local-development-environment.md
+new file mode 100644
+index 0000000..15ae3c2
+--- /dev/null
++++ b/prompts/21-local-development-environment.md
+@@ -0,0 +1,35 @@
++# 21. Local development environment
++
++```text
++Create a complete local development environment.
++
++Requirements:
++- docker-compose.yml should start:
++  - PostgreSQL
++  - orch-server
++  - one orch-agent
++  - optional demo app
++- Add scripts:
++  - scripts/dev-up.sh
++  - scripts/dev-down.sh
++  - scripts/migrate-up.sh
++  - scripts/migrate-down.sh
++  - scripts/demo-deploy.sh
++- Add example service YAMLs:
++  - deployments/examples/http-api.yaml
++  - deployments/examples/worker.yaml
++- README quickstart should allow a developer to:
++  1. start local environment
++  2. run migrations
++  3. register an agent
++  4. deploy demo app
++  5. scale demo app
++  6. view logs/events
++  7. delete demo app
++
++Requirements:
++- Scripts must fail fast.
++- Scripts must be portable Bash.
++- Do not require root except Docker access.
++- Document prerequisites.
++```
+diff --git a/prompts/22-end-to-end-tests.md b/prompts/22-end-to-end-tests.md
+new file mode 100644
+index 0000000..80e7099
+--- /dev/null
++++ b/prompts/22-end-to-end-tests.md
+@@ -0,0 +1,27 @@
++# 22. End-to-end tests
++
++```text
++Implement end-to-end tests for the orchestrator MVP.
++
++Test scenario:
++1. Start test PostgreSQL.
++2. Start orch-server.
++3. Start fake or real orch-agent.
++4. Deploy service with 2 replicas.
++5. Verify 2 tasks are created.
++6. Verify scheduler assigns tasks.
++7. Verify agent starts containers or fake runtime transitions them to running.
++8. Scale service to 3 replicas.
++9. Verify one additional task.
++10. Scale service to 1 replica.
++11. Verify extra tasks are stopped.
++12. Delete service.
++13. Verify cleanup.
++
++Requirements:
++- Prefer fake Docker runtime for stable CI.
++- Add optional real Docker E2E behind ORCH_E2E_DOCKER=1.
++- Tests must be deterministic.
++- Avoid arbitrary sleeps; use polling with timeouts.
++- Add CI workflow for unit tests.
++```
+diff --git a/prompts/23-github-actions-ci.md b/prompts/23-github-actions-ci.md
+new file mode 100644
+index 0000000..52c63a0
+--- /dev/null
++++ b/prompts/23-github-actions-ci.md
+@@ -0,0 +1,22 @@
++# 23. GitHub Actions CI
++
++```text
++Add GitHub Actions CI.
++
++Workflow:
++- checkout
++- setup Go
++- cache Go modules
++- run gofmt check
++- run go vet
++- run golangci-lint
++- run go test ./...
++- optionally run integration tests with PostgreSQL service
++
++Requirements:
++- Add .github/workflows/ci.yml.
++- Add golangci-lint config.
++- Add race detector job if practical.
++- Add coverage output.
++- Update README with CI badge placeholder.
++```
+diff --git a/prompts/24-idempotency-audit.md b/prompts/24-idempotency-audit.md
+new file mode 100644
+index 0000000..6b7ab4b
+--- /dev/null
++++ b/prompts/24-idempotency-audit.md
+@@ -0,0 +1,30 @@
++# 24. Idempotency audit
++
++```text
++Perform an idempotency audit of the orchestrator.
++
++Review:
++- API handlers
++- reconciler
++- scheduler
++- agent task execution
++- Docker runtime wrapper
++- rollout controller
++- service deletion
++
++Find cases where retrying the same operation could:
++- create duplicate tasks
++- create duplicate containers
++- assign a task twice
++- stop the wrong task
++- corrupt rollout state
++- emit misleading status
++- leak resources
++
++Then implement fixes.
++
++Requirements:
++- Add tests proving idempotency for critical flows.
++- Add comments only where they clarify non-obvious behavior.
++- Update docs/RELIABILITY.md with idempotency rules.
++```
+diff --git a/prompts/25-failure-modes-hardening.md b/prompts/25-failure-modes-hardening.md
+new file mode 100644
+index 0000000..78b32b6
+--- /dev/null
++++ b/prompts/25-failure-modes-hardening.md
+@@ -0,0 +1,27 @@
++# 25. Failure modes hardening
++
++```text
++Analyze and improve behavior for these failure modes:
++
++- agent process restarts
++- server process restarts
++- Docker daemon restarts
++- node goes offline
++- node returns after being offline
++- task is manually deleted using docker rm
++- container exits with non-zero code
++- image pull fails
++- port is already allocated
++- database temporarily unavailable
++- rollout interrupted mid-way
++
++For each failure mode:
++1. Describe current behavior.
++2. Identify unsafe behavior.
++3. Implement the safest MVP fix.
++4. Add tests.
++5. Add docs/RELIABILITY.md section.
++
++Do not over-engineer HA yet.
++Focus on deterministic recovery and clear events.
++```
+diff --git a/prompts/26-senior-distributed-systems-review.md b/prompts/26-senior-distributed-systems-review.md
+new file mode 100644
+index 0000000..a82a102
+--- /dev/null
++++ b/prompts/26-senior-distributed-systems-review.md
+@@ -0,0 +1,29 @@
++# 26. Senior distributed systems review
++
++```text
++Act as a senior distributed systems engineer and review this repository.
++
++Focus areas:
++- correctness of scheduler/reconciler separation
++- task lifecycle state machine
++- rollout safety
++- idempotency
++- node failure handling
++- database transaction boundaries
++- API consistency
++- security gaps
++- observability gaps
++- test quality
++
++Output:
++1. prioritized findings
++2. concrete code changes
++3. implementation plan
++4. then implement the top critical fixes
++
++Constraints:
++- Do not rewrite the entire system.
++- Prefer small targeted patches.
++- Add tests for every fix.
++- Update docs when behavior changes.
++```
+diff --git a/prompts/27-production-documentation.md b/prompts/27-production-documentation.md
+new file mode 100644
+index 0000000..39fbb47
+--- /dev/null
++++ b/prompts/27-production-documentation.md
+@@ -0,0 +1,37 @@
++# 27. Production documentation
++
++```text
++Create production-quality documentation for this orchestrator.
++
++Docs to create/update:
++- README.md
++- docs/ARCHITECTURE.md
++- docs/API.md
++- docs/AGENT.md
++- docs/SCHEDULER.md
++- docs/RECONCILER.md
++- docs/ROLLOUTS.md
++- docs/HEALTHCHECKS.md
++- docs/SECURITY.md
++- docs/OBSERVABILITY.md
++- docs/RELIABILITY.md
++- docs/OPERATIONS.md
++
++Documentation should explain:
++- what problem this orchestrator solves
++- what it intentionally does not solve yet
++- architecture
++- component responsibilities
++- service/task/node lifecycle
++- deployment flow
++- scaling flow
++- rolling update flow
++- failure recovery
++- local development
++- production deployment assumptions
++- security model
++- operational runbooks
++
++Keep docs accurate to the current code.
++Do not document features that are not implemented unless clearly marked as roadmap.
++```
+diff --git a/prompts/28-mvp-release-preparation.md b/prompts/28-mvp-release-preparation.md
+new file mode 100644
+index 0000000..8651058
+--- /dev/null
++++ b/prompts/28-mvp-release-preparation.md
+@@ -0,0 +1,31 @@
++# 28. MVP release preparation
++
++```text
++Prepare the repository for an MVP release.
++
++MVP acceptance criteria:
++- orch-server starts cleanly
++- orch-agent registers with server
++- CLI can deploy a YAML service
++- reconciler creates tasks for desired replicas
++- scheduler assigns tasks to ready nodes
++- agent starts Docker containers
++- service can be scaled up/down
++- logs can be viewed
++- events are persisted
++- service can be deleted
++- tests pass
++- local docker-compose demo works
++- README quickstart is accurate
++
++Tasks:
++1. Run the full test suite.
++2. Run lint.
++3. Review README quickstart.
++4. Fix broken flows.
++5. Add missing tests for critical MVP paths.
++6. Produce RELEASE_NOTES.md for v0.1.0.
++
++Do not add large new features.
++Focus on making the MVP reliable and demonstrable.
++```
+diff --git a/prompts/29-freeze-api-and-state-machine-contract.md b/prompts/29-freeze-api-and-state-machine-contract.md
+new file mode 100644
+index 0000000..021d7c2
+--- /dev/null
++++ b/prompts/29-freeze-api-and-state-machine-contract.md
+@@ -0,0 +1,43 @@
++# 29. Freeze API and state-machine contract
++
++```text
++Review and formalize the orchestrator API and state-machine contracts.
++
++Context:
++This repository implements a Docker-based container orchestrator in Go with:
++- orch-server control plane
++- orch-agent worker agent
++- orch CLI
++- PostgreSQL store
++- Docker Engine runtime
++- scheduler
++- reconciler
++- rollout controller
++
++Task:
++Create a stable internal contract for:
++1. Service lifecycle
++2. Task lifecycle
++3. Node lifecycle
++4. Deployment/Rollout lifecycle
++5. Agent task execution lifecycle
++
++Deliverables:
++- docs/STATE_MACHINES.md
++- Go enum definitions for all lifecycle states
++- validation helpers for legal state transitions
++- unit tests for allowed and forbidden transitions
++- comments explaining terminal states and retryable states
++
++Important rules:
++- State transitions must be explicit.
++- Invalid transitions must return domain errors.
++- Terminal states must not be mutated except through documented recovery paths.
++- Reconciler, scheduler, agent, and rollout controller must use the same transition helpers.
++- Do not introduce large new features.
++- Focus on correctness and consistency.
++
++At the end:
++- Run go test ./...
++- Fix any compile or test failures.
++```
+diff --git a/prompts/30-transaction-boundaries-audit.md b/prompts/30-transaction-boundaries-audit.md
+new file mode 100644
+index 0000000..a0079a3
+--- /dev/null
++++ b/prompts/30-transaction-boundaries-audit.md
+@@ -0,0 +1,38 @@
++# 30. Transaction boundaries audit
++
++```text
++Audit and improve database transaction boundaries.
++
++Context:
++This orchestrator has multiple controllers:
++- reconciler creates/stops tasks
++- scheduler assigns tasks
++- rollout controller changes service versions
++- agents report task status
++- API handlers create/update desired state
++
++Task:
++Review all store operations and identify places where multiple writes must be atomic.
++
++Implement transaction support for critical flows:
++- service creation + initial version creation + event emission
++- scale request + event emission
++- task assignment by scheduler
++- agent task status update + event emission
++- rollout creation + service version update
++- rollback creation
++- service deletion marking
++
++Requirements:
++- Add store.WithTx(ctx, fn) or equivalent transaction abstraction.
++- Avoid leaking database-specific transaction types into domain logic.
++- Prevent partial writes that could corrupt desired/actual state.
++- Use row-level locking where needed to avoid double scheduling.
++- Add tests for rollback-on-error.
++- Add tests for concurrent scheduler attempts assigning the same task.
++- Document transaction rules in docs/RELIABILITY.md.
++
++At the end:
++- Run go test ./...
++- Fix failures.
++```
+diff --git a/prompts/31-scheduler-concurrency-safety.md b/prompts/31-scheduler-concurrency-safety.md
+new file mode 100644
+index 0000000..ca1ef08
+--- /dev/null
++++ b/prompts/31-scheduler-concurrency-safety.md
+@@ -0,0 +1,32 @@
++# 31. Scheduler concurrency safety
++
++```text
++Make scheduler safe under concurrent execution.
++
++Context:
++In the future there may be multiple orch-server instances or accidental multiple scheduler loops. Scheduler must not assign the same pending task twice.
++
++Task:
++Update scheduler and store layer so task assignment is concurrency-safe.
++
++Requirements:
++- Pending tasks should be claimed atomically.
++- Two scheduler loops must not assign the same task to different nodes.
++- Prefer SELECT FOR UPDATE SKIP LOCKED or equivalent PostgreSQL-safe pattern.
++- Assignment must include:
++  - task ID
++  - selected node ID
++  - assigned timestamp
++  - version/update guard
++- Add tests that simulate two schedulers running at the same time.
++- Add deterministic tie-breaking when nodes have the same score.
++- Add metrics for:
++  - tasks claimed
++  - assignment conflicts
++  - scheduling attempts
++  - scheduling failures
++- Document scheduler concurrency assumptions in docs/SCHEDULER.md.
++
++Do not implement full HA leader election yet.
++Focus only on correctness if scheduler accidentally runs concurrently.
++```
+diff --git a/prompts/32-reconciler-idempotency-under-restart.md b/prompts/32-reconciler-idempotency-under-restart.md
+new file mode 100644
+index 0000000..3726388
+--- /dev/null
++++ b/prompts/32-reconciler-idempotency-under-restart.md
+@@ -0,0 +1,30 @@
++# 32. Reconciler idempotency under restart
++
++```text
++Harden the reconciler for server restarts and repeated runs.
++
++Context:
++The reconciler keeps desired service replicas equal to actual tasks. It may be interrupted at any time.
++
++Task:
++Make reconciler idempotent and restart-safe.
++
++Requirements:
++- Repeated reconciliation must not create duplicate tasks.
++- Failed tasks must produce at most one replacement unless policy allows multiple attempts.
++- Scale-down selection must be stable and deterministic.
++- Deleted services must continue cleanup after server restart.
++- Rollout-owned tasks must not be incorrectly counted as normal tasks.
++- Add reconciliation generation or operation ID if needed.
++- Add tests for:
++  - server restart between task creation and scheduling
++  - repeated reconcile loop with same service
++  - failed task replacement only once
++  - scale down repeated twice
++  - service deletion repeated twice
++- Emit events only when a real state change happens.
++- Update docs/RECONCILER.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/33-fake-runtime-for-deterministic-tests.md b/prompts/33-fake-runtime-for-deterministic-tests.md
+new file mode 100644
+index 0000000..48566a4
+--- /dev/null
++++ b/prompts/33-fake-runtime-for-deterministic-tests.md
+@@ -0,0 +1,40 @@
++# 33. Fake runtime for deterministic tests
++
++```text
++Implement a fake container runtime for deterministic unit and E2E tests.
++
++Context:
++The orchestrator uses Docker Engine in production, but CI and controller tests need a fake runtime.
++
++Task:
++Create internal/runtime abstraction if not already present, then add:
++- DockerRuntime implementation
++- FakeRuntime implementation
++
++FakeRuntime should support:
++- PullImage
++- CreateContainer
++- StartContainer
++- StopContainer
++- RemoveContainer
++- InspectContainer
++- ListManagedContainers
++- StreamLogs
++- configurable failures:
++  - image pull failure
++  - create failure
++  - start failure
++  - health failure
++  - container exits after start
++
++Requirements:
++- FakeRuntime must be thread-safe.
++- FakeRuntime must record operations for assertions.
++- Tests must not depend on real Docker unless explicitly enabled.
++- Existing agent tests should use FakeRuntime.
++- Add examples of failure injection tests.
++- Document how to run real Docker integration tests separately.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/34-port-allocation-and-collision-handling.md b/prompts/34-port-allocation-and-collision-handling.md
+new file mode 100644
+index 0000000..ccfb2dd
+--- /dev/null
++++ b/prompts/34-port-allocation-and-collision-handling.md
+@@ -0,0 +1,31 @@
++# 34. Port allocation and collision handling
++
++```text
++Implement host port allocation and collision handling.
++
++Context:
++Services may request public host ports. The orchestrator must avoid scheduling two tasks with the same host port on the same node.
++
++Task:
++Add port allocation awareness to scheduler and Docker runtime.
++
++Requirements:
++- Service ports may specify:
++  - container port
++  - public host port
++  - protocol tcp/udp
++- Scheduler must reject nodes where requested host port is already allocated.
++- Dynamic host port allocation should be supported if public port is omitted or set to 0.
++- Store assigned host ports on task records.
++- Agent must use assigned ports when creating containers.
++- If Docker reports port already allocated, agent reports a structured failure reason.
++- Reconciler should retry on another node if possible.
++- Add tests for:
++  - two services requesting same port on same node
++  - same port allowed on different nodes
++  - dynamic port assignment
++  - Docker port allocation failure
++- Update docs/NETWORKING.md.
++
++Do not build overlay networking yet.
++```
+diff --git a/prompts/35-basic-service-discovery.md b/prompts/35-basic-service-discovery.md
+new file mode 100644
+index 0000000..49e97ca
+--- /dev/null
++++ b/prompts/35-basic-service-discovery.md
+@@ -0,0 +1,36 @@
++# 35. Basic service discovery
++
++```text
++Implement basic service discovery for MVP.
++
++Context:
++The orchestrator currently runs containers across Docker hosts. Services need a way to discover running task endpoints.
++
++Task:
++Add a service discovery endpoint and CLI support.
++
++API:
++- GET /v1/services/{id}/endpoints
++- GET /v1/discovery/services
++- GET /v1/discovery/services/{name}
++
++Endpoint data:
++- service name
++- task ID
++- node ID
++- node address
++- public host port
++- container port
++- protocol
++- health status
++- service version
++
++Requirements:
++- Only return running and healthy tasks by default.
++- Add query option include_unhealthy=true.
++- Add CLI:
++  - orch endpoints <service>
++- Add tests for endpoint filtering.
++- Add docs/SERVICE_DISCOVERY.md.
++- Keep it simple; do not implement DNS yet.
++```
+diff --git a/prompts/36-traefik-integration.md b/prompts/36-traefik-integration.md
+new file mode 100644
+index 0000000..4c2cf4a
+--- /dev/null
++++ b/prompts/36-traefik-integration.md
+@@ -0,0 +1,33 @@
++# 36. Traefik integration
++
++```text
++Add optional Traefik integration for HTTP routing.
++
++Context:
++For MVP, the orchestrator can use Traefik as an external reverse proxy instead of implementing its own proxy.
++
++Task:
++Create an optional integration that exposes service routing metadata for Traefik.
++
++Support service YAML:
++
++routes:
++  - host: api.example.com
++    pathPrefix: /
++    port: 8080
++    tls: true
++
++Implementation options:
++- Generate a dynamic Traefik file provider config, or
++- Expose an HTTP provider endpoint that Traefik can poll.
++
++Choose the simpler implementation for this repository.
++
++Requirements:
++- Routing config should include only healthy running tasks.
++- Update config when tasks start/stop/become unhealthy.
++- Add tests for generated routing config.
++- Add docs/TRAEFIK.md with local dev example.
++- Add docker-compose example with Traefik + demo service.
++- Do not require Traefik for core orchestrator operation.
++```
+diff --git a/prompts/37-secrets-mvp.md b/prompts/37-secrets-mvp.md
+new file mode 100644
+index 0000000..3ef1629
+--- /dev/null
++++ b/prompts/37-secrets-mvp.md
+@@ -0,0 +1,44 @@
++# 37. Secrets MVP
++
++```text
++Implement MVP secrets support.
++
++Context:
++Services should reference secrets without storing plaintext secret values in service YAML or logs.
++
++YAML example:
++
++env:
++  DATABASE_URL:
++    secretRef: prod/database-url
++  NODE_ENV:
++    value: production
++
++Task:
++Add secrets model and API.
++
++API:
++- POST /v1/secrets
++- GET /v1/secrets
++- GET /v1/secrets/{name}
++- DELETE /v1/secrets/{name}
++
++Requirements:
++- Store encrypted secret values at rest.
++- Use envelope-style abstraction even if MVP uses a local master key.
++- Never return secret plaintext from GET endpoints.
++- Never log secret values.
++- Agent should receive plaintext only when needed to start a task.
++- Redact secret values in errors and events.
++- Add config for encryption key.
++- Add tests for:
++  - create secret
++  - retrieve metadata
++  - inject secret into task env
++  - redaction in logs/errors
++  - wrong encryption key behavior
++- Add docs/SECRETS.md.
++
++Security note:
++Do not implement external Vault integration yet, but design the interface so it can be added later.
++```
+diff --git a/prompts/38-image-registry-authentication.md b/prompts/38-image-registry-authentication.md
+new file mode 100644
+index 0000000..f2edb06
+--- /dev/null
++++ b/prompts/38-image-registry-authentication.md
+@@ -0,0 +1,33 @@
++# 38. Image registry authentication
++
++```text
++Implement image registry authentication.
++
++Context:
++Services may use private images from registries such as ghcr.io, Docker Hub, GitLab Registry, or a private registry.
++
++Task:
++Add registry credentials support.
++
++Requirements:
++- Add RegistryCredential model:
++  - registry host
++  - username
++  - encrypted password/token
++  - created/updated timestamps
++- Add API endpoints:
++  - POST /v1/registry-credentials
++  - GET /v1/registry-credentials
++  - DELETE /v1/registry-credentials/{id}
++- Service YAML may reference a credential:
++  imagePullSecret: ghcr-prod
++- Agent should receive pull credentials only for assigned tasks.
++- Docker runtime should use credentials for PullImage.
++- Never log credentials.
++- Add tests:
++  - credential create/delete
++  - service references missing credential
++  - agent receives correct auth
++  - Docker pull gets auth config
++- Update docs/REGISTRIES.md.
++```
+diff --git a/prompts/39-node-drain-and-reschedule.md b/prompts/39-node-drain-and-reschedule.md
+new file mode 100644
+index 0000000..ad0cb7b
+--- /dev/null
++++ b/prompts/39-node-drain-and-reschedule.md
+@@ -0,0 +1,35 @@
++# 39. Node drain and reschedule
++
++```text
++Implement production-grade node drain behavior.
++
++Context:
++Operators need to safely remove a node from scheduling and move workloads elsewhere.
++
++Command:
++orch node drain <node-id>
++
++Behavior:
++- Mark node as draining.
++- Scheduler must stop placing new tasks on it.
++- Reconciler should create replacement tasks on other ready nodes.
++- Once replacements are healthy, old tasks on drained node should be stopped.
++- If no capacity exists, drain should remain pending and emit warning events.
++- Add uncordon support to return node to ready state.
++
++Requirements:
++- Add drain status/progress.
++- Add API:
++  - POST /v1/nodes/{id}/drain
++  - POST /v1/nodes/{id}/uncordon
++  - GET /v1/nodes/{id}/drain-status
++- Add CLI:
++  - orch node drain
++  - orch node uncordon
++- Add tests:
++  - drain with enough capacity
++  - drain with insufficient capacity
++  - uncordon before completion
++  - node offline during drain
++- Update docs/OPERATIONS.md with runbook.
++```
+diff --git a/prompts/40-node-offline-detection-and-recovery.md b/prompts/40-node-offline-detection-and-recovery.md
+new file mode 100644
+index 0000000..6b7f654
+--- /dev/null
++++ b/prompts/40-node-offline-detection-and-recovery.md
+@@ -0,0 +1,37 @@
++# 40. Node offline detection and recovery
++
++```text
++Implement node offline detection and recovery.
++
++Context:
++Agents send heartbeat to the control plane. The server must detect stale nodes.
++
++Task:
++Add node monitor controller.
++
++Behavior:
++- If node heartbeat is stale beyond threshold, mark node offline.
++- Scheduler must not place new tasks on offline nodes.
++- Reconciler should decide whether to replace tasks from offline nodes.
++- When node returns, agent must reconcile local containers with server assignments.
++- Avoid duplicate live tasks when a network partition heals.
++
++Requirements:
++- Add configurable heartbeat timeout.
++- Add node statuses:
++  - ready
++  - draining
++  - offline
++  - unknown
++- Add task condition:
++  - node_lost
++- Add conservative replacement policy:
++  - stateless services may be replaced after timeout
++  - stateful services should not be replaced automatically yet
++- Add tests:
++  - heartbeat stale marks node offline
++  - returned node reconciles stale containers
++  - scheduler avoids offline node
++  - replacement is created only once
++- Update docs/RELIABILITY.md.
++```
+diff --git a/prompts/41-manual-docker-drift-reconciliation.md b/prompts/41-manual-docker-drift-reconciliation.md
+new file mode 100644
+index 0000000..060e10b
+--- /dev/null
++++ b/prompts/41-manual-docker-drift-reconciliation.md
+@@ -0,0 +1,31 @@
++# 41. Manual Docker drift reconciliation
++
++```text
++Handle drift caused by manual Docker operations.
++
++Context:
++An operator may manually stop/remove containers with docker CLI. The orchestrator must detect and repair drift.
++
++Task:
++Improve agent local reconciliation.
++
++Agent should:
++- List managed containers using orch labels.
++- Compare local containers with assigned tasks from server.
++- Report missing containers.
++- Stop/remove managed containers no longer assigned to this node.
++- Detect containers with mismatched image/version/labels.
++- Avoid touching non-orchestrator containers.
++
++Requirements:
++- Add drift event types:
++  - managed_container_missing
++  - unexpected_managed_container
++  - managed_container_state_mismatch
++- Add tests using FakeRuntime:
++  - container manually removed
++  - container manually stopped
++  - unexpected managed container exists
++  - non-managed container ignored
++- Update docs/AGENT.md.
++```
+diff --git a/prompts/42-deployment-lock-and-concurrent-user-operations.md b/prompts/42-deployment-lock-and-concurrent-user-operations.md
+new file mode 100644
+index 0000000..ba8dde4
+--- /dev/null
++++ b/prompts/42-deployment-lock-and-concurrent-user-operations.md
+@@ -0,0 +1,31 @@
++# 42. Deployment lock and concurrent user operations
++
++```text
++Protect services from unsafe concurrent user operations.
++
++Context:
++Users may call scale, rollout, rollback, and delete at the same time.
++
++Task:
++Add service-level operation locking.
++
++Rules:
++- delete wins over scale/rollout.
++- rollback cannot start during active rollout unless forced.
++- rollout cannot start during another active rollout.
++- scale during rollout should either be supported explicitly or rejected with clear error.
++- repeated same operation should be idempotent when possible.
++
++Requirements:
++- Add operation lock or service operation status.
++- Return clear API errors:
++  - 409 conflict
++  - operation already in progress
++- Add tests:
++  - rollout + rollout
++  - rollout + rollback
++  - delete + rollout
++  - scale + delete
++  - repeated delete
++- Update docs/API.md and docs/ROLLOUTS.md.
++```
+diff --git a/prompts/43-deployment-yaml-schema-and-validation.md b/prompts/43-deployment-yaml-schema-and-validation.md
+new file mode 100644
+index 0000000..337bd7d
+--- /dev/null
++++ b/prompts/43-deployment-yaml-schema-and-validation.md
+@@ -0,0 +1,35 @@
++# 43. Deployment YAML schema and validation
++
++```text
++Create a formal deployment YAML schema and validation system.
++
++Context:
++The CLI accepts service YAML files. Validation must catch errors before sending to the server.
++
++Task:
++Define the canonical service spec schema.
++
++Requirements:
++- Add docs/SERVICE_SPEC.md.
++- Add JSON Schema or equivalent schema file under schemas/service.schema.json.
++- CLI must validate:
++  - required name
++  - valid image
++  - replicas >= 0
++  - valid ports
++  - valid resources
++  - valid healthcheck
++  - valid placement labels
++  - valid routes
++  - valid secret references
++- Server must repeat validation and not trust CLI.
++- Add command:
++  orch validate <file.yaml>
++- Add tests with valid and invalid YAML examples.
++- Add examples:
++  - simple web service
++  - worker
++  - private image
++  - service with secrets
++  - service with route
++```
+diff --git a/prompts/44-config-management-hardening.md b/prompts/44-config-management-hardening.md
+new file mode 100644
+index 0000000..c669eab
+--- /dev/null
++++ b/prompts/44-config-management-hardening.md
+@@ -0,0 +1,29 @@
++# 44. Config management hardening
++
++```text
++Harden configuration management for orch-server, orch-agent, and orch CLI.
++
++Task:
++Implement consistent config loading.
++
++Sources:
++1. command flags
++2. environment variables
++3. config file
++4. defaults
++
++Requirements:
++- Use one config package.
++- Support YAML config files.
++- Add config validation.
++- Print effective config with secrets redacted:
++  - orch-server config print
++  - orch-agent config print
++- Add docs/CONFIGURATION.md.
++- Add .env.example updates.
++- Add tests for precedence:
++  - flags override env
++  - env overrides config file
++  - config file overrides defaults
++- Ensure no secret is printed in logs or config output.
++```
+diff --git a/prompts/45-structured-error-model.md b/prompts/45-structured-error-model.md
+new file mode 100644
+index 0000000..e76a4ea
+--- /dev/null
++++ b/prompts/45-structured-error-model.md
+@@ -0,0 +1,33 @@
++# 45. Structured error model
++
++```text
++Implement a consistent structured error model across API, CLI, controllers, and agent.
++
++Requirements:
++- Create domain error types:
++  - not_found
++  - invalid_argument
++  - conflict
++  - unauthorized
++  - forbidden
++  - failed_precondition
++  - unavailable
++  - internal
++- API errors should include:
++  - code
++  - message
++  - request_id
++  - details optional
++- CLI should convert API errors into helpful human-readable messages.
++- Controllers should emit structured events for important errors.
++- Logs should include error code and object identifiers.
++- Do not leak secrets in error details.
++
++Add tests for:
++- API error mapping
++- CLI rendering
++- redaction
++- controller event emission
++
++Update docs/API.md.
++```
+diff --git a/prompts/46-audit-logging.md b/prompts/46-audit-logging.md
+new file mode 100644
+index 0000000..50fca89
+--- /dev/null
++++ b/prompts/46-audit-logging.md
+@@ -0,0 +1,43 @@
++# 46. Audit logging
++
++```text
++Implement audit logging for user and agent actions.
++
++Context:
++Production systems need an immutable audit trail for operational actions.
++
++Task:
++Add audit log model and persistence.
++
++Audit events should include:
++- actor type: user, agent, system
++- actor ID
++- action
++- target type
++- target ID
++- request ID
++- source IP if available
++- timestamp
++- outcome: success/failure
++- metadata with redaction
++
++Capture:
++- service create/update/delete
++- scale
++- rollout
++- rollback
++- node drain/uncordon
++- secret create/delete
++- registry credential create/delete
++- agent registration
++- agent token rotation
++
++Requirements:
++- Store audit logs separately from operational events.
++- Never store secret plaintext.
++- Add API for admin audit search.
++- Add CLI:
++  - orch audit
++- Add tests.
++- Update docs/SECURITY.md and docs/OPERATIONS.md.
++```
+diff --git a/prompts/47-prometheus-alert-rules.md b/prompts/47-prometheus-alert-rules.md
+new file mode 100644
+index 0000000..5c03a82
+--- /dev/null
++++ b/prompts/47-prometheus-alert-rules.md
+@@ -0,0 +1,28 @@
++# 47. Prometheus alert rules
++
++```text
++Create recommended Prometheus alert rules for the orchestrator.
++
++Task:
++Add deploy/monitoring/prometheus-rules.yaml.
++
++Alerts:
++- OrchServerDown
++- OrchAgentHeartbeatMissing
++- NodeOffline
++- SchedulerErrorsHigh
++- ReconcilerErrorsHigh
++- RolloutFailed
++- TaskFailuresHigh
++- DockerOperationErrorsHigh
++- DatabaseUnavailable
++- APIErrorRateHigh
++- ReconciliationLatencyHigh
++
++Requirements:
++- Use practical labels and annotations.
++- Keep labels low-cardinality.
++- Add docs/OBSERVABILITY.md section explaining alerts.
++- Add local docker-compose monitoring example if Prometheus exists.
++- Do not require full Grafana setup yet.
++```
+diff --git a/prompts/48-grafana-dashboard-json.md b/prompts/48-grafana-dashboard-json.md
+new file mode 100644
+index 0000000..0729f09
+--- /dev/null
++++ b/prompts/48-grafana-dashboard-json.md
+@@ -0,0 +1,26 @@
++# 48. Grafana dashboard JSON
++
++```text
++Create a starter Grafana dashboard for the orchestrator.
++
++Task:
++Add deploy/monitoring/grafana/orchestrator-dashboard.json.
++
++Dashboard panels:
++- API request rate
++- API error rate
++- API latency
++- scheduler runs/errors
++- reconciler runs/errors
++- task state counts
++- node status counts
++- agent heartbeat failures
++- Docker operation errors
++- rollout success/failure counts
++- healthcheck success/failure
++
++Requirements:
++- Use Prometheus datasource variable.
++- Keep dashboard generic.
++- Add docs/OBSERVABILITY.md instructions.
++```
+diff --git a/prompts/49-backup-and-restore-runbook.md b/prompts/49-backup-and-restore-runbook.md
+new file mode 100644
+index 0000000..ab474dd
+--- /dev/null
++++ b/prompts/49-backup-and-restore-runbook.md
+@@ -0,0 +1,29 @@
++# 49. Backup and restore runbook
++
++```text
++Create backup and restore support for orchestrator state.
++
++Context:
++The orchestrator stores desired state, actual state, events, secrets metadata, and rollout history in PostgreSQL.
++
++Task:
++Add operational backup/restore documentation and helper scripts.
++
++Deliverables:
++- scripts/backup-db.sh
++- scripts/restore-db.sh
++- docs/BACKUP_RESTORE.md
++
++Requirements:
++- Scripts must use pg_dump and psql/pg_restore where appropriate.
++- Scripts must fail fast.
++- Scripts must require explicit database URL.
++- Document:
++  - what is backed up
++  - what is not backed up
++  - how secrets encryption key affects restore
++  - restore into new environment
++  - restore after accidental service deletion
++  - restore after DB loss
++- Add safety warning before destructive restore.
++```
+diff --git a/prompts/50-production-deployment-manifest.md b/prompts/50-production-deployment-manifest.md
+new file mode 100644
+index 0000000..62c05a1
+--- /dev/null
++++ b/prompts/50-production-deployment-manifest.md
+@@ -0,0 +1,28 @@
++# 50. Production deployment manifest
++
++```text
++Create production deployment examples for the orchestrator itself.
++
++Task:
++Add examples for deploying:
++- orch-server
++- orch-agent
++- PostgreSQL dependency assumptions
++- Prometheus scraping
++
++Deliverables:
++- deployments/production/docker-compose.yml
++- deployments/production/systemd/orch-agent.service
++- deployments/production/systemd/orch-server.service
++- docs/PRODUCTION_DEPLOYMENT.md
++
++Requirements:
++- Include environment variables.
++- Include volume mounts.
++- Include Docker socket access warning for agent.
++- Include TLS/auth placeholders.
++- Include systemd restart policies.
++- Include log location guidance.
++- Include firewall/ports documentation.
++- Do not hardcode secrets.
++```
+diff --git a/prompts/51-security-review.md b/prompts/51-security-review.md
+new file mode 100644
+index 0000000..38f667b
+--- /dev/null
++++ b/prompts/51-security-review.md
+@@ -0,0 +1,37 @@
++# 51. Security review
++
++```text
++Act as a senior application security engineer and review this repository.
++
++Focus:
++- Docker socket exposure
++- agent authentication
++- user authentication
++- RBAC
++- secrets handling
++- registry credentials
++- API input validation
++- audit logging
++- log redaction
++- path traversal
++- command injection
++- SSRF through healthchecks
++- unsafe container options
++- privilege escalation
++- default container security profile
++
++Output:
++1. Prioritized security findings
++2. Exploit scenario for each high-risk issue
++3. Minimal fix
++4. Tests to prove the fix
++5. Documentation updates
++
++Then implement the critical and high-risk fixes only.
++
++Constraints:
++- Do not add large unrelated features.
++- Do not weaken developer experience unnecessarily.
++- Do not log secrets or tokens.
++- Run tests at the end.
++```
+diff --git a/prompts/52-container-security-policy.md b/prompts/52-container-security-policy.md
+new file mode 100644
+index 0000000..66f49c8
+--- /dev/null
++++ b/prompts/52-container-security-policy.md
+@@ -0,0 +1,34 @@
++# 52. Container security policy
++
++```text
++Implement default container security policy.
++
++Context:
++By default, orchestrated containers should be safer than raw Docker defaults.
++
++Task:
++Add security options to service spec and runtime.
++
++Defaults:
++- run as non-root when image supports it, or allow explicit user setting
++- no privileged containers by default
++- read-only root filesystem optional
++- drop Linux capabilities by default where safe
++- allow explicit capability add only through policy
++- no host network by default
++- no host PID namespace by default
++- no arbitrary hostPath mounts by default
++
++Requirements:
++- Add ServiceSpec securityContext.
++- Validate unsafe options.
++- Add cluster policy config:
++  - allowPrivileged
++  - allowHostNetwork
++  - allowHostPID
++  - allowedHostPathPrefixes
++  - allowedCapabilities
++- API should reject disallowed specs.
++- Add tests for policy enforcement.
++- Update docs/SECURITY.md and docs/SERVICE_SPEC.md.
++```
+diff --git a/prompts/53-healthcheck-ssrf-protection.md b/prompts/53-healthcheck-ssrf-protection.md
+new file mode 100644
+index 0000000..9c26857
+--- /dev/null
++++ b/prompts/53-healthcheck-ssrf-protection.md
+@@ -0,0 +1,26 @@
++# 53. Healthcheck SSRF protection
++
++```text
++Harden healthchecks against SSRF and unsafe targets.
++
++Context:
++Users can define HTTP healthchecks. The agent must only check the assigned container endpoint, not arbitrary URLs.
++
++Task:
++Update healthcheck implementation and validation.
++
++Requirements:
++- Healthcheck spec should allow path, port, scheme, interval, timeout.
++- It must not accept arbitrary full URLs.
++- Agent constructs healthcheck target from task/container/node networking data.
++- Reject paths with invalid format.
++- Prevent redirects to private metadata endpoints or external destinations.
++- Add max response body read limit.
++- Add tests for:
++  - normal /health path
++  - full URL rejected
++  - redirect handling
++  - huge response body
++  - timeout
++- Update docs/HEALTHCHECKS.md.
++```
+diff --git a/prompts/54-autoscaling-design-doc.md b/prompts/54-autoscaling-design-doc.md
+new file mode 100644
+index 0000000..75e85b5
+--- /dev/null
++++ b/prompts/54-autoscaling-design-doc.md
+@@ -0,0 +1,31 @@
++# 54. Autoscaling design doc
++
++```text
++Create a design document for autoscaling, but do not implement it yet.
++
++Context:
++Future orchestrator versions should support autoscaling based on CPU, memory, queue depth, or custom metrics.
++
++Task:
++Create docs/AUTOSCALING_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- metrics sources
++- scaling targets
++- min/max replicas
++- cooldown periods
++- stabilization windows
++- scale up/down policies
++- interaction with rollout
++- interaction with node capacity
++- failure modes
++- API proposal
++- YAML proposal
++- test strategy
++
++Important:
++- Do not implement autoscaling yet.
++- Make the design compatible with the current reconciler and scheduler.
++```
+diff --git a/prompts/55-autoscaling-mvp-implementation.md b/prompts/55-autoscaling-mvp-implementation.md
+new file mode 100644
+index 0000000..f4796b3
+--- /dev/null
++++ b/prompts/55-autoscaling-mvp-implementation.md
+@@ -0,0 +1,36 @@
++# 55. Autoscaling MVP implementation
++
++```text
++Implement autoscaling MVP based on the accepted docs/AUTOSCALING_DESIGN.md.
++
++Scope:
++- CPU-based autoscaling using metrics abstraction
++- fake metrics provider for tests
++- optional Prometheus provider if straightforward
++
++Service YAML example:
++
++autoscaling:
++  enabled: true
++  minReplicas: 2
++  maxReplicas: 10
++  targetCPUUtilization: 70
++  cooldown: 60s
++
++Requirements:
++- Add autoscaler controller.
++- Autoscaler updates desired replicas through the same service scale path as CLI/API.
++- Respect min/max replicas.
++- Respect cooldown.
++- Do not scale during active rollout unless design allows it.
++- Emit events for scale decisions.
++- Add metrics for autoscaler decisions.
++- Add tests:
++  - scale up
++  - scale down
++  - cooldown
++  - max replicas
++  - min replicas
++  - active rollout interaction
++- Update docs.
++```
+diff --git a/prompts/56-ha-control-plane-design.md b/prompts/56-ha-control-plane-design.md
+new file mode 100644
+index 0000000..1cf0842
+--- /dev/null
++++ b/prompts/56-ha-control-plane-design.md
+@@ -0,0 +1,36 @@
++# 56. HA control plane design
++
++```text
++Create a design document for high-availability control plane.
++
++Context:
++The orchestrator currently has one orch-server instance. Future production should support multiple control-plane instances.
++
++Task:
++Create docs/HA_CONTROL_PLANE_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- active-active vs active-passive
++- leader election needs
++- which controllers need leader locks:
++  - scheduler
++  - reconciler
++  - rollout controller
++  - node monitor
++  - autoscaler
++- database locking options
++- etcd/Raft option
++- PostgreSQL advisory locks option
++- failure modes:
++  - leader dies
++  - split brain
++  - DB unavailable
++  - network partition
++- migration path from current architecture
++- testing strategy
++
++Do not implement HA yet.
++Recommend the simplest safe MVP approach.
++```
+diff --git a/prompts/57-controller-leader-election-mvp.md b/prompts/57-controller-leader-election-mvp.md
+new file mode 100644
+index 0000000..bb7dcad
+--- /dev/null
++++ b/prompts/57-controller-leader-election-mvp.md
+@@ -0,0 +1,32 @@
++# 57. Controller leader election MVP
++
++```text
++Implement MVP leader election for controllers using PostgreSQL advisory locks.
++
++Context:
++We need to prevent multiple orch-server instances from running the same controller concurrently.
++
++Scope:
++- scheduler
++- reconciler
++- rollout controller
++- node monitor
++- autoscaler if implemented
++
++Requirements:
++- Add LeaderElector interface.
++- Add PostgreSQL advisory lock implementation.
++- Controllers should run only while lock is held.
++- If lock is lost, controller loop must stop safely.
++- Add metrics:
++  - leader status
++  - lock acquisition failures
++- Add tests for:
++  - one leader active
++  - second instance waits/fails
++  - lock released on shutdown
++  - controller stops when lock lost
++- Update docs/HA_CONTROL_PLANE_DESIGN.md and docs/OPERATIONS.md.
++
++Do not introduce etcd yet.
++```
+diff --git a/prompts/58-multi-agent-load-test.md b/prompts/58-multi-agent-load-test.md
+new file mode 100644
+index 0000000..fe2f7f1
+--- /dev/null
++++ b/prompts/58-multi-agent-load-test.md
+@@ -0,0 +1,35 @@
++# 58. Multi-agent load test
++
++```text
++Create a load test for multi-node orchestration behavior.
++
++Task:
++Add a load test tool under tools/loadtest or cmd/orch-loadtest.
++
++Scenario:
++- create N fake nodes
++- deploy M services
++- each service has R replicas
++- simulate task transitions to running
++- randomly fail tasks
++- randomly mark nodes offline/online
++- measure convergence time
++
++Requirements:
++- Use fake runtime/fake agents where possible.
++- Configurable parameters:
++  - nodes
++  - services
++  - replicas
++  - failure rate
++  - duration
++- Output summary:
++  - tasks created
++  - tasks running
++  - tasks failed
++  - average convergence time
++  - scheduler errors
++  - reconciler errors
++- Do not require real Docker.
++- Add docs/LOAD_TESTING.md.
++```
+diff --git a/prompts/59-chaos-testing-scenarios.md b/prompts/59-chaos-testing-scenarios.md
+new file mode 100644
+index 0000000..b8695a2
+--- /dev/null
++++ b/prompts/59-chaos-testing-scenarios.md
+@@ -0,0 +1,22 @@
++# 59. Chaos testing scenarios
++
++```text
++Add chaos-style integration tests for orchestrator reliability.
++
++Scenarios:
++1. Agent restarts during task start.
++2. Server restarts during rollout.
++3. Docker runtime fails to start container.
++4. Image pull fails repeatedly.
++5. Node goes offline during scale-up.
++6. Node returns with stale containers.
++7. Database write fails during scheduler assignment.
++8. User deletes service during rollout.
++
++Requirements:
++- Use fake runtime and fake clock where possible.
++- Avoid arbitrary sleeps.
++- Use polling with clear timeouts.
++- Each scenario must assert final safe state and emitted events.
++- Add docs/CHAOS_TESTING.md with explanation.
++```
+diff --git a/prompts/60-release-hardening-v0-2-0.md b/prompts/60-release-hardening-v0-2-0.md
+new file mode 100644
+index 0000000..ce886eb
+--- /dev/null
++++ b/prompts/60-release-hardening-v0-2-0.md
+@@ -0,0 +1,31 @@
++# 60. Release hardening v0.2.0
++
++```text
++Prepare the repository for v0.2.0 production-hardening release.
++
++Acceptance criteria:
++- All tests pass.
++- Lint passes.
++- API docs match implementation.
++- Service spec docs match validation.
++- No known secret leaks in logs.
++- Reconciler is idempotent.
++- Scheduler is concurrency-safe.
++- Agent recovers after restart.
++- Node offline detection works.
++- Service deletion is safe.
++- Rollout/rollback state machine is documented.
++- Local docker-compose demo works.
++- Production deployment docs exist.
++
++Tasks:
++1. Run full test suite.
++2. Run lint.
++3. Run security-sensitive grep checks for tokens/secrets logging.
++4. Run local demo if possible.
++5. Fix blockers.
++6. Update CHANGELOG.md.
++7. Create RELEASE_NOTES.md for v0.2.0.
++
++Do not add new features unless required to satisfy acceptance criteria.
++```

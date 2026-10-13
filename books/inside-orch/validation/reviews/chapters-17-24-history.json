@@ -1,0 +1,1207 @@
+[
+  {
+    "chapter": "17",
+    "commit": "de5900bced92ad9d5786cd258ff7941d67369d33",
+    "relevant_changes": [
+      {
+        "path": "internal/rollout/rollout.go",
+        "hunk_headers": [
+          "@@ -2,46 +2,304 @@ package rollout"
+        ],
+        "inspected_changed_lines": [
+          "@@ -2,46 +2,304 @@ package rollout",
+          "+\t\"fmt\"",
+          "+\t\"log/slog\"",
+          "+\t\"sort\"",
+          "+\tGetService(ctx context.Context, id types.ServiceID) (types.Service, error)",
+          "+\tListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)",
+          "+\tCreateTask(ctx context.Context, task types.Task) (types.Task, error)",
+          "+\tStopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)",
+          "+\tListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error)",
+          "+\tUpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error)",
+          "+\tAppendEvent(ctx context.Context, event types.Event) (types.Event, error)",
+          "+\tstore  Store",
+          "+\tlogger *slog.Logger",
+          "-func NewManager(eventStore ...events.Store) *Manager {",
+          "+func NewController(store Store, logger *slog.Logger) *Controller {",
+          "+\tif logger == nil {",
+          "+\t\tlogger = slog.Default()",
+          "+\treturn &Controller{"
+        ]
+      },
+      {
+        "path": "internal/rollout/rollout_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,267 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,267 @@",
+          "+\t\"context\"",
+          "+\t\"errors\"",
+          "+\t\"log/slog\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/store\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestControllerSuccessfulRollout(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tfake := newFakeStore(2, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})",
+          "+\tcontroller := NewController(fake, slog.Default())",
+          "+\tmustRunOnce(t, controller, ctx)",
+          "+\tassertTaskVersions(t, fake.tasks, map[int64]int{1: 2, 2: 1})",
+          "+\tfake.markNewestNewTask(types.TaskHealthy)",
+          "+\tmustRunOnce(t, controller, ctx)",
+          "+\tassertTaskCounts(t, fake.tasks, 2, 1)",
+          "+\tmustRunOnce(t, controller, ctx)"
+        ]
+      },
+      {
+        "path": "docs/ROLLOUTS.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,48 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,48 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "17",
+    "commit": "430a061fe7f01df966e33d0b86654c627b7d5e39",
+    "relevant_changes": [
+      {
+        "path": "internal/rollout/rollout.go",
+        "hunk_headers": [
+          "@@ -77,7 +77,7 @@ func (c *Controller) RunOnce(ctx context.Context) error {",
+          "@@ -109,7 +109,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D",
+          "@@ -145,7 +145,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D",
+          "@@ -303,3 +303,17 @@ func isActive(task types.Task) bool {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -77,7 +77,7 @@ func (c *Controller) RunOnce(ctx context.Context) error {",
+          "+\tfor _, status := range []types.DeploymentStatus{types.DeploymentPending, types.DeploymentRunning, types.DeploymentRollingBack} {",
+          "@@ -109,7 +109,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D",
+          "+\t\t_, err := c.setStatus(ctx, deployment, terminalStatusFor(deployment), terminalMessageFor(deployment), types.EventInfo)",
+          "@@ -145,7 +145,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D",
+          "+\t\t_, err := c.setStatus(ctx, deployment, terminalStatusFor(deployment), terminalMessageFor(deployment), types.EventInfo)",
+          "@@ -303,3 +303,17 @@ func isActive(task types.Task) bool {",
+          "+func terminalStatusFor(deployment types.Deployment) types.DeploymentStatus {",
+          "+\tif deployment.ToVersion < deployment.FromVersion {",
+          "+\t\treturn types.DeploymentRolledBack",
+          "+\t}",
+          "+\treturn types.DeploymentSucceeded",
+          "+func terminalMessageFor(deployment types.Deployment) string {",
+          "+\tif deployment.ToVersion < deployment.FromVersion {",
+          "+\t\treturn \"rollback completed\"",
+          "+\t}",
+          "+\treturn \"rollout completed\""
+        ]
+      },
+      {
+        "path": "internal/rollout/rollout_test.go",
+        "hunk_headers": [
+          "@@ -81,6 +81,32 @@ func TestControllerIdempotentResume(t *testing.T) {",
+          "@@ -103,8 +129,12 @@ func newFakeStore(replicas int, deployment types.Deployment) *fakeStore {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -81,6 +81,32 @@ func TestControllerIdempotentResume(t *testing.T) {",
+          "+func TestControllerCompletesRollback(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tfake := newFakeStore(2, types.Deployment{",
+          "+\t\tFromVersion:    2,",
+          "+\t\tToVersion:      1,",
+          "+\t\tStatus:         types.DeploymentRollingBack,",
+          "+\t\tMaxUnavailable: 1,",
+          "+\t\tMaxSurge:       0,",
+          "+\t})",
+          "+\tfake.service.DeploymentVersion = 1",
+          "+\tfake.service.Spec.Image = \"ghcr.io/example/api:1.0.0\"",
+          "+\tfake.tasks = map[types.TaskID]types.Task{",
+          "+\t\t\"old-a\": task(\"old-a\", 2, types.TaskRunning, types.TaskHealthy),",
+          "+\t\t\"old-b\": task(\"old-b\", 2, types.TaskRunning, types.TaskHealthy),",
+          "+\t\t\"new-a\": task(\"new-a\", 1, types.TaskRunning, types.TaskHealthy),",
+          "+\t\t\"new-b\": task(\"new-b\", 1, types.TaskRunning, types.TaskHealthy),",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "internal/controlplane/rollback_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,107 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,107 @@",
+          "+\t\"context\"",
+          "+\t\"errors\"",
+          "+\t\"testing\"",
+          "+\t\"github.com/alekpopovic/orch/internal/store\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestRollbackAfterFailedRollout(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tservice := NewMemoryService()",
+          "+\tcreated := createRollbackTestService(t, ctx, service)",
+          "+\tfailed, err := service.RolloutService(ctx, created.ID, RolloutSpec{",
+          "+\t\tImage:          \"ghcr.io/example/api:2.0.0\",",
+          "+\t\tMaxUnavailable: 1,",
+          "+\t\tMaxSurge:       1,",
+          "+\t})",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"start rollout: %v\", err)",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "docs/ROLLOUTS.md",
+        "hunk_headers": [
+          "@@ -9,7 +9,8 @@ Rollouts are asynchronous. `POST /v1/services/{id}/rollout` records a new servic",
+          "@@ -28,6 +29,22 @@ Task execution remains the agent's responsibility. The rollout controller only c",
+          "@@ -35,6 +52,7 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \\",
+          "@@ -45,4 +63,5 @@ curl http://localhost:8080/v1/rollouts/{rollout_id}"
+        ],
+        "inspected_changed_lines": [
+          "@@ -9,7 +9,8 @@ Rollouts are asynchronous. `POST /v1/services/{id}/rollout` records a new servic",
+          "@@ -28,6 +29,22 @@ Task execution remains the agent's responsibility. The rollout controller only c",
+          "@@ -35,6 +52,7 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \\",
+          "@@ -45,4 +63,5 @@ curl http://localhost:8080/v1/rollouts/{rollout_id}"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "17",
+    "commit": "5bfb4ac394a609469263de9e14d25d5c2660ee8f",
+    "relevant_changes": [
+      {
+        "path": "internal/controlplane/operation_lock_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,126 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,126 @@",
+          "+\t\"context\"",
+          "+\t\"errors\"",
+          "+\t\"strings\"",
+          "+\t\"testing\"",
+          "+\t\"github.com/alekpopovic/orch/internal/store\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestRolloutWhileRolloutInProgress(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tservice := NewMemoryService()",
+          "+\tcreated := createOperationLockTestService(t, ctx, service)",
+          "+\tfirst, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: \"nginx:1.28\", MaxUnavailable: 1, MaxSurge: 1})",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"first rollout: %v\", err)",
+          "+\t}",
+          "+\trepeated, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: \"nginx:1.28\", MaxUnavailable: 1, MaxSurge: 1})",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"repeated rollout should be idempotent: %v\", err)"
+        ]
+      },
+      {
+        "path": "docs/ROLLOUTS.md",
+        "hunk_headers": [
+          "@@ -23,6 +23,18 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback",
+          "@@ -71,5 +83,6 @@ Status-change events are emitted only when the deployment status actually change"
+        ],
+        "inspected_changed_lines": [
+          "@@ -23,6 +23,18 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback",
+          "@@ -71,5 +83,6 @@ Status-change events are emitted only when the deployment status actually change"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "18",
+    "commit": "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+    "relevant_changes": [
+      {
+        "path": "internal/reconciler/reconciler.go",
+        "hunk_headers": [
+          "@@ -19,6 +19,7 @@ type Store interface {",
+          "@@ -166,14 +167,30 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {",
+          "@@ -181,7 +198,7 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {",
+          "@@ -190,6 +207,47 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -19,6 +19,7 @@ type Store interface {",
+          "+\tUpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error)",
+          "@@ -166,14 +167,30 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {",
+          "+\tknownServices := make(map[types.ServiceID]types.Service, len(services))",
+          "+\t\tif service.Status == \"\" {",
+          "+\t\t\tservice.Status = types.ServiceActive",
+          "+\t\t}",
+          "+\t\tif service.Status != types.ServiceDeleted {",
+          "+\t\t\tknownServices[service.ID] = service",
+          "+\t\t}",
+          "+\t\tvar serviceResult Result",
+          "+\t\tvar err error",
+          "+\t\tswitch service.Status {",
+          "+\t\tcase types.ServiceActive:",
+          "+\t\t\tserviceResult, err = r.reconcileService(ctx, service)",
+          "+\t\tcase types.ServiceDeleting:",
+          "+\t\t\tserviceResult, err = r.reconcileDeletingService(ctx, service)",
+          "+\t\tcase types.ServiceDeleted:"
+        ]
+      },
+      {
+        "path": "internal/controlplane/controlplane.go",
+        "hunk_headers": [
+          "@@ -227,7 +227,7 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node",
+          "@@ -303,6 +303,9 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR",
+          "@@ -373,6 +376,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe",
+          "@@ -428,16 +432,28 @@ func (s *MemoryService) DeleteService(ctx context.Context, id types.ServiceID) e",
+          "@@ -456,6 +472,9 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re",
+          "@@ -489,6 +508,9 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,",
+          "@@ -565,6 +587,9 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)",
+          "@@ -694,6 +719,29 @@ func (s *MemoryService) ListTasksByService(ctx context.Context, serviceID types.",
+          "@@ -882,6 +930,9 @@ func (s *MemoryService) reconcileAllServicesLocked(timestamp time.Time) {",
+          "@@ -955,6 +1006,25 @@ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) boo"
+        ],
+        "inspected_changed_lines": [
+          "@@ -227,7 +227,7 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node",
+          "+\t\tif task.DesiredStatus == types.TaskRemoved || task.ActualStatus == types.TaskRemoved {",
+          "@@ -303,6 +303,9 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR",
+          "+\tif status == types.TaskRemoved {",
+          "+\t\ts.maybeFinalizeServiceDeletionLocked(task.ServiceID, task.UpdatedAt)",
+          "+\t}",
+          "@@ -373,6 +376,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe",
+          "+\t\tStatus:            types.ServiceActive,",
+          "@@ -428,16 +432,28 @@ func (s *MemoryService) DeleteService(ctx context.Context, id types.ServiceID) e",
+          "+\tservice, ok := s.services[id]",
+          "+\tif !ok {",
+          "+\tif service.Status == types.ServiceDeleted || service.Status == types.ServiceDeleting {",
+          "+\t\treturn nil",
+          "+\t}",
+          "+\tnow := s.now()",
+          "+\tservice.Status = types.ServiceDeleting",
+          "+\tservice.UpdatedAt = now",
+          "+\ts.services[id] = service"
+        ]
+      },
+      {
+        "path": "internal/agent/agent.go",
+        "hunk_headers": [
+          "@@ -135,6 +135,9 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID",
+          "@@ -194,6 +197,36 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a"
+        ],
+        "inspected_changed_lines": [
+          "@@ -135,6 +135,9 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID",
+          "+\tif task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {",
+          "+\t\treturn r.removeAssignedTask(ctx, nodeID, task)",
+          "+\t}",
+          "@@ -194,6 +197,36 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a",
+          "+func (r *Runner) removeAssignedTask(ctx context.Context, nodeID types.NodeID, task types.Task) error {",
+          "+\tcontainerID := orchdocker.ContainerID(task.ContainerID)",
+          "+\tif containerID == \"\" {",
+          "+\t\tcontainers, err := r.runtime.ListManagedContainers(ctx, map[string]string{",
+          "+\t\t\torchdocker.NodeIDLabel: string(nodeID),",
+          "+\t\t\torchdocker.TaskIDLabel: string(task.ID),",
+          "+\t\t})",
+          "+\t\tif err != nil {",
+          "+\t\t\treturn err",
+          "+\t\t}",
+          "+\t\tif len(containers) > 0 {",
+          "+\t\t\tcontainerID = containers[0].ID",
+          "+\t\t}"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "18",
+    "commit": "66cfb7049fc1fbceeec9e36a7067febe8cbab698",
+    "relevant_changes": [
+      {
+        "path": "internal/controlplane/controlplane.go",
+        "hunk_headers": [
+          "@@ -325,6 +325,11 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR"
+        ],
+        "inspected_changed_lines": [
+          "@@ -325,6 +325,11 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR",
+          "+\tif report.Status == types.TaskFailed {",
+          "+\t\teventType = events.TypeTaskFailed",
+          "+\t\tseverity = types.EventError",
+          "+\t\tmessage = \"task failed\"",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "internal/agent/agent.go",
+        "hunk_headers": [
+          "@@ -152,14 +152,21 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID",
+          "@@ -170,24 +177,36 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a",
+          "@@ -226,6 +245,26 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a"
+        ],
+        "inspected_changed_lines": [
+          "@@ -152,14 +152,21 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID",
+          "+\tvar firstErr error",
+          "+\t\t\tif firstErr == nil {",
+          "+\t\t\t\tfirstErr = err",
+          "+\t\t\t}",
+          "+\tif err := r.cleanupUnassigned(ctx, nodeID, assigned); err != nil {",
+          "+\t\treturn err",
+          "+\t}",
+          "+\treturn firstErr",
+          "@@ -170,24 +177,36 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a",
+          "+\tstatus, found, err := r.currentTaskContainer(ctx, nodeID, task)",
+          "+\tif err != nil {",
+          "+\t\treturn err",
+          "+\t}",
+          "+\tif found {",
+          "+\t\tif status.Running {",
+          "+\t\t\tif task.ContainerID != string(status.ID) || task.ActualStatus == types.TaskAssigned || task.ActualStatus == types.TaskCreated || task.ActualStatus == types.TaskPulling {",
+          "+\t\t\t\tif _, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(status.ID)}); err != nil {"
+        ]
+      },
+      {
+        "path": "docs/RELIABILITY.md",
+        "hunk_headers": [
+          "@@ -19,6 +19,96 @@ Every controller and agent operation should be safe to retry after a timeout, pr"
+        ],
+        "inspected_changed_lines": [
+          "@@ -19,6 +19,96 @@ Every controller and agent operation should be safe to retry after a timeout, pr"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "19",
+    "commit": "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+    "relevant_changes": [
+      {
+        "path": "internal/controlplane/drain_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,184 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,184 @@",
+          "+\t\"context\"",
+          "+\t\"testing\"",
+          "+\t\"github.com/alekpopovic/orch/internal/events\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tservice := NewMemoryService()",
+          "+\tnodeA := registerDrainTestNode(t, ctx, service, \"node-a\")",
+          "+\tcreated := createDrainTestService(t, ctx, service, 1)",
+          "+\tnodeB := registerDrainTestNode(t, ctx, service, \"node-b\")",
+          "+\toldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)",
+          "+\tif _, err := service.DrainNode(ctx, nodeA.Node.ID); err != nil {",
+          "+\t\tt.Fatalf(\"drain node: %v\", err)",
+          "+\t}",
+          "+\tstatus, err := service.GetNodeDrainStatus(ctx, nodeA.Node.ID)",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"get drain status: %v\", err)"
+        ]
+      },
+      {
+        "path": "docs/OPERATIONS.md",
+        "hunk_headers": [
+          "@@ -142,10 +142,24 @@ Rollback requires a previous successful version.",
+          "@@ -153,6 +167,8 @@ Uncordon:"
+        ],
+        "inspected_changed_lines": [
+          "@@ -142,10 +142,24 @@ Rollback requires a previous successful version.",
+          "@@ -153,6 +167,8 @@ Uncordon:"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "19",
+    "commit": "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5",
+    "relevant_changes": [
+      {
+        "path": "internal/node/monitor.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,72 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,72 @@",
+          "+\t\"context\"",
+          "+\t\"fmt\"",
+          "+\t\"log/slog\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tMarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)",
+          "+\tcontrolPlane OfflineMarker",
+          "+\tlogger       *slog.Logger",
+          "+\ttimeout      time.Duration",
+          "+\tinterval     time.Duration",
+          "+func NewMonitor(controlPlane OfflineMarker, logger *slog.Logger, timeout time.Duration, interval time.Duration) *Monitor {",
+          "+\tif logger == nil {",
+          "+\t\tlogger = slog.Default()",
+          "+\t}",
+          "+\treturn &Monitor{",
+          "+\t\tcontrolPlane: controlPlane,",
+          "+\t\tlogger:       logger,"
+        ]
+      },
+      {
+        "path": "internal/node/monitor_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,59 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,59 @@",
+          "+\t\"context\"",
+          "+\t\"errors\"",
+          "+\t\"io\"",
+          "+\t\"log/slog\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestMonitorCheckOnceMarksStaleNodesOffline(t *testing.T) {",
+          "+\ttimeout := 30 * time.Second",
+          "+\tmarker := &fakeOfflineMarker{",
+          "+\t\tnodes: []types.Node{{ID: \"node-a\", Status: types.NodeOffline}},",
+          "+\t}",
+          "+\tmonitor := NewMonitor(marker, slog.New(slog.NewTextHandler(io.Discard, nil)), timeout, time.Second)",
+          "+\toffline, err := monitor.CheckOnce(context.Background())",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"check once: %v\", err)",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "internal/controlplane/offline_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,193 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,193 @@",
+          "+\t\"context\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/events\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestMarkStaleNodesOfflineReplacesStatelessTaskOnce(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tservice := NewMemoryService()",
+          "+\tbase := time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)",
+          "+\tcurrent := base",
+          "+\tservice.now = func() time.Time { return current }",
+          "+\tnodeA := registerOfflineTestNode(t, ctx, service, \"node-a\")",
+          "+\tcreated := createOfflineTestService(t, ctx, service, \"api\", false)",
+          "+\toldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)",
+          "+\tcurrent = base.Add(25 * time.Second)",
+          "+\tnodeB := registerOfflineTestNode(t, ctx, service, \"node-b\")",
+          "+\tcurrent = base.Add(40 * time.Second)"
+        ]
+      },
+      {
+        "path": "docs/OPERATIONS.md",
+        "hunk_headers": [
+          "@@ -32,7 +32,6 @@ Before production use:",
+          "@@ -47,6 +46,8 @@ Server:"
+        ],
+        "inspected_changed_lines": [
+          "@@ -32,7 +32,6 @@ Before production use:",
+          "@@ -47,6 +46,8 @@ Server:"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "20",
+    "commit": "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+    "relevant_changes": [
+      {
+        "path": "internal/discovery/discovery.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,117 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,117 @@",
+          "+\t\"sort\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tServiceID      types.ServiceID    `json:\"service_id\"`",
+          "+\tServiceName    string             `json:\"service_name\"`",
+          "+\tTaskID         types.TaskID       `json:\"task_id\"`",
+          "+\tNodeID         types.NodeID       `json:\"node_id\"`",
+          "+\tNodeAddress    string             `json:\"node_address\"`",
+          "+\tPublicHostPort int                `json:\"public_host_port\"`",
+          "+\tContainerPort  int                `json:\"container_port\"`",
+          "+\tProtocol       types.PortProtocol `json:\"protocol\"`",
+          "+\tHealthStatus   types.TaskStatus   `json:\"health_status\"`",
+          "+\tServiceVersion int64              `json:\"service_version\"`",
+          "+\tServiceID   types.ServiceID `json:\"service_id\"`",
+          "+\tServiceName string          `json:\"service_name\"`",
+          "+\tEndpoints   []Endpoint      `json:\"endpoints\"`",
+          "+func BuildServiceEndpoints(service types.Service, tasks []types.Task, nodes []types.Node, includeUnhealthy bool) ServiceEndpoints {",
+          "+\tnodesByID := make(map[types.NodeID]types.Node, len(nodes))"
+        ]
+      },
+      {
+        "path": "internal/discovery/discovery_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,68 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,68 @@",
+          "+\t\"testing\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestBuildServiceEndpointsFiltersByHealth(t *testing.T) {",
+          "+\tservice := types.Service{",
+          "+\t\tID: \"svc-1\",",
+          "+\t\tSpec: types.ServiceSpec{",
+          "+\t\t\tName:  \"api\",",
+          "+\t\t\tPorts: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},",
+          "+\t\t},",
+          "+\t}",
+          "+\tnodes := []types.Node{{ID: \"node-a\", AdvertiseAddress: \"10.0.0.10\"}}",
+          "+\ttasks := []types.Task{",
+          "+\t\tendpointTask(\"running\", \"node-a\", types.TaskRunning),",
+          "+\t\tendpointTask(\"healthy\", \"node-a\", types.TaskHealthy),",
+          "+\t\tendpointTask(\"unhealthy\", \"node-a\", types.TaskUnhealthy),",
+          "+\t\tendpointTask(\"pending\", \"node-a\", types.TaskPending),",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "docs/SERVICE_DISCOVERY.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,48 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,48 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "20",
+    "commit": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+    "relevant_changes": [
+      {
+        "path": "internal/dns/server.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,218 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,218 @@",
+          "+\t\"context\"",
+          "+\t\"encoding/binary\"",
+          "+\t\"fmt\"",
+          "+\t\"net\"",
+          "+\t\"strings\"",
+          "+\t\"sync/atomic\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/controlplane\"",
+          "+\t\"github.com/alekpopovic/orch/internal/namespace\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tListServices(context.Context) ([]types.Service, error)",
+          "+\tListTasks(context.Context, controlplane.TaskFilter) ([]types.Task, error)",
+          "+\tListNodes(context.Context) ([]types.Node, error)",
+          "+\tqueries atomic.Uint64",
+          "+\terrors  atomic.Uint64",
+          "+func (m *Metrics) IncDNSQuery() { m.queries.Add(1) }",
+          "+func (m *Metrics) IncDNSError() { m.errors.Add(1) }"
+        ]
+      },
+      {
+        "path": "internal/dns/server_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,79 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,79 @@",
+          "+\t\"context\"",
+          "+\t\"encoding/binary\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/controlplane\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tservices []types.Service",
+          "+\ttasks    []types.Task",
+          "+\tnodes    []types.Node",
+          "+func (f fakeStore) ListServices(context.Context) ([]types.Service, error) { return f.services, nil }",
+          "+func (f fakeStore) ListTasks(context.Context, controlplane.TaskFilter) ([]types.Task, error) {",
+          "+\treturn f.tasks, nil",
+          "+func (f fakeStore) ListNodes(context.Context) ([]types.Node, error) { return f.nodes, nil }",
+          "+func query(name string) []byte {",
+          "+\tpacket := make([]byte, 12)",
+          "+\tbinary.BigEndian.PutUint16(packet[0:2], 7)",
+          "+\tbinary.BigEndian.PutUint16(packet[4:6], 1)"
+        ]
+      },
+      {
+        "path": "docs/SERVICE_DISCOVERY.md",
+        "hunk_headers": [
+          "@@ -1,6 +1,8 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -1,6 +1,8 @@"
+        ]
+      },
+      {
+        "path": "deployments/examples/internal-dns-compose.yaml",
+        "hunk_headers": [
+          "@@ -0,0 +1,20 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,20 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "21",
+    "commit": "ea0760e8201c842371caf6671a90bcfeb90197bb",
+    "relevant_changes": [
+      {
+        "path": "internal/traefik/config.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,197 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,197 @@",
+          "+\t\"fmt\"",
+          "+\t\"net\"",
+          "+\t\"net/url\"",
+          "+\t\"sort\"",
+          "+\t\"strconv\"",
+          "+\t\"strings\"",
+          "+\t\"unicode\"",
+          "+\t\"github.com/alekpopovic/orch/internal/discovery\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tHTTP HTTPConfig `json:\"http\"`",
+          "+\tRouters  map[string]Router  `json:\"routers,omitempty\"`",
+          "+\tServices map[string]Service `json:\"services,omitempty\"`",
+          "+\tRule    string     `json:\"rule\"`",
+          "+\tService string     `json:\"service\"`",
+          "+\tTLS     *TLSConfig `json:\"tls,omitempty\"`",
+          "+\tLoadBalancer LoadBalancer `json:\"loadBalancer\"`",
+          "+\tServers        []Server `json:\"servers\"`"
+        ]
+      },
+      {
+        "path": "internal/traefik/config_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,147 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,147 @@",
+          "+\t\"testing\"",
+          "+\t\"github.com/alekpopovic/orch/internal/discovery\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestBuildConfigIncludesOnlyHealthyTCPRouteEndpoints(t *testing.T) {",
+          "+\tservice := types.Service{",
+          "+\t\tID:     \"service-1\",",
+          "+\t\tStatus: types.ServiceActive,",
+          "+\t\tSpec: types.ServiceSpec{",
+          "+\t\t\tName: \"api\",",
+          "+\t\t\tRoutes: []types.Route{{",
+          "+\t\t\t\tHost:       \"api.example.com\",",
+          "+\t\t\t\tPathPrefix: \"/\",",
+          "+\t\t\t\tPort:       8080,",
+          "+\t\t\t\tTLS:        true,",
+          "+\t\t\t}},",
+          "+\t\t},",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "docs/TRAEFIK.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,75 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,75 @@"
+        ]
+      },
+      {
+        "path": "deployments/examples/traefik-demo.yaml",
+        "hunk_headers": [
+          "@@ -0,0 +1,19 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,19 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "21",
+    "commit": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+    "relevant_changes": [
+      {
+        "path": "docs/NETWORKING.md",
+        "hunk_headers": [
+          "@@ -1,5 +1,7 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -1,5 +1,7 @@"
+        ]
+      },
+      {
+        "path": "docs/NETWORKING_DESIGN.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,11 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,11 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "22",
+    "commit": "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+    "relevant_changes": [
+      {
+        "path": "docs/AUTOSCALING_DESIGN.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,223 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,223 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "22",
+    "commit": "b575252d6c5ff0918439e2f209af9d9695eebbb6",
+    "relevant_changes": [
+      {
+        "path": "internal/autoscaler/autoscaler.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,271 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,271 @@",
+          "+\t\"context\"",
+          "+\t\"errors\"",
+          "+\t\"fmt\"",
+          "+\t\"log/slog\"",
+          "+\t\"math\"",
+          "+\t\"sync\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/events\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+\tListServices(ctx context.Context) ([]types.Service, error)",
+          "+\tScaleService(ctx context.Context, id types.ServiceID, replicas int) (types.Service, error)",
+          "+\tGetServiceRollout(ctx context.Context, id types.ServiceID) (types.Deployment, error)",
+          "+\tServiceCPUUtilization(ctx context.Context, service types.Service) (float64, error)",
+          "+\tAppendEvent(ctx context.Context, event types.Event) (types.Event, error)",
+          "+\tIncAutoscalerDecision(decision string)",
+          "+\tIncAutoscalerErrors()",
+          "+\tSetAutoscalerRecommendation(serviceID string, replicas int)"
+        ]
+      },
+      {
+        "path": "internal/autoscaler/autoscaler_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,217 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,217 @@",
+          "+\t\"context\"",
+          "+\t\"io\"",
+          "+\t\"log/slog\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+\t\"github.com/alekpopovic/orch/internal/controlplane\"",
+          "+\t\"github.com/alekpopovic/orch/internal/events\"",
+          "+\t\"github.com/alekpopovic/orch/pkg/types\"",
+          "+func TestAutoscalerScalesUpAndDown(t *testing.T) {",
+          "+\tctx := context.Background()",
+          "+\tservice := controlplane.NewMemoryService()",
+          "+\tcreated := createAutoscaledService(t, service, 2, types.AutoscalingPolicy{",
+          "+\t\tEnabled:              true,",
+          "+\t\tMinReplicas:          1,",
+          "+\t\tMaxReplicas:          10,",
+          "+\t\tTargetCPUUtilization: 50,",
+          "+\t\tCooldown:             time.Second,"
+        ]
+      },
+      {
+        "path": "docs/AUTOSCALING.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,57 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,57 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "23",
+    "commit": "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+    "relevant_changes": [
+      {
+        "path": "internal/auth/auth.go",
+        "hunk_headers": [
+          "@@ -1,11 +1,176 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -1,11 +1,176 @@",
+          "+\t\"context\"",
+          "+\t\"crypto/hmac\"",
+          "+\t\"crypto/sha256\"",
+          "+\t\"encoding/base64\"",
+          "+\t\"encoding/json\"",
+          "+\t\"errors\"",
+          "+\t\"fmt\"",
+          "+\t\"strings\"",
+          "+\t\"time\"",
+          "+\tRoleAdmin    Role = \"admin\"",
+          "+\tRoleOperator Role = \"operator\"",
+          "+\tRoleViewer   Role = \"viewer\"",
+          "+\tRole    Role",
+          "+\tErrMissingToken = errors.New(\"missing bearer token\")",
+          "+\tErrInvalidToken = errors.New(\"invalid bearer token\")",
+          "+\tSubject   string `json:\"sub\"`",
+          "+\tRole      Role   `json:\"role\"`"
+        ]
+      },
+      {
+        "path": "internal/api/api.go",
+        "hunk_headers": [
+          "@@ -14,6 +14,7 @@ import (",
+          "@@ -26,6 +27,9 @@ type Server struct {",
+          "@@ -42,6 +46,18 @@ func WithBootstrapToken(token string) Option {",
+          "@@ -56,6 +72,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...",
+          "@@ -606,11 +623,75 @@ func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {",
+          "@@ -716,6 +797,16 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -14,6 +14,7 @@ import (",
+          "+\t\"github.com/alekpopovic/orch/internal/auth\"",
+          "@@ -26,6 +27,9 @@ type Server struct {",
+          "+\tjwtSecret      string",
+          "+\tstaticUsers    map[string]auth.Role",
+          "+\tnow            func() time.Time",
+          "@@ -42,6 +46,18 @@ func WithBootstrapToken(token string) Option {",
+          "+func WithUserJWT(secret string) Option {",
+          "+\treturn func(server *Server) {",
+          "+\t\tserver.jwtSecret = secret",
+          "+\t}",
+          "+func WithStaticUsers(users map[string]auth.Role) Option {",
+          "+\treturn func(server *Server) {",
+          "+\t\tserver.staticUsers = users",
+          "+\t}",
+          "@@ -56,6 +72,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...",
+          "+\t\tnow:          func() time.Time { return time.Now().UTC() },",
+          "@@ -606,11 +623,75 @@ func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {"
+        ]
+      },
+      {
+        "path": "docs/SECURITY.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,56 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,56 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "23",
+    "commit": "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+    "relevant_changes": [
+      {
+        "path": "internal/auth/agent.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,72 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,72 @@",
+          "+\t\"context\"",
+          "+\t\"crypto/rand\"",
+          "+\t\"crypto/sha256\"",
+          "+\t\"encoding/base64\"",
+          "+\t\"fmt\"",
+          "+\t\"time\"",
+          "+\tToken     string    `json:\"token\"`",
+          "+\tExpiresAt time.Time `json:\"expires_at\"`",
+          "+\tHash      string",
+          "+\tExpiresAt time.Time",
+          "+\tRevoked   bool",
+          "+\tNodeID string",
+          "+\tIssue(ctx context.Context, identity AgentIdentity) (AgentCredential, AgentCredentialRecord, error)",
+          "+\tValidate(ctx context.Context, token string, record AgentCredentialRecord, now time.Time) error",
+          "+\tttl func() time.Duration",
+          "+func NewTokenAgentCredentialIssuer(ttl time.Duration) *TokenAgentCredentialIssuer {",
+          "+\tif ttl <= 0 {"
+        ]
+      },
+      {
+        "path": "internal/auth/agent_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,67 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,67 @@",
+          "+\t\"context\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "+func TestAgentCredentialIssuanceStoresOnlyHash(t *testing.T) {",
+          "+\tissuer := NewTokenAgentCredentialIssuer(time.Minute)",
+          "+\tcredential, record, err := issuer.Issue(context.Background(), AgentIdentity{NodeID: \"node-a\"})",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"issue credential: %v\", err)",
+          "+\t}",
+          "+\tif credential.Token == \"\" {",
+          "+\t\tt.Fatalf(\"expected token\")",
+          "+\t}",
+          "+\tif record.Hash == \"\" {",
+          "+\t\tt.Fatalf(\"expected stored hash\")",
+          "+\t}",
+          "+\tif record.Hash == credential.Token {",
+          "+\t\tt.Fatalf(\"raw token must not be stored\")"
+        ]
+      },
+      {
+        "path": "internal/api/api.go",
+        "hunk_headers": [
+          "@@ -29,6 +29,7 @@ type Server struct {",
+          "@@ -64,6 +65,12 @@ func WithLogStreamer(streamer LogStreamer) Option {",
+          "@@ -80,6 +87,9 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...",
+          "@@ -148,6 +158,7 @@ type AgentHeartbeatRequest struct {",
+          "@@ -217,7 +228,7 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {",
+          "@@ -243,13 +254,15 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {",
+          "@@ -258,6 +271,9 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {",
+          "@@ -269,18 +285,23 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {",
+          "@@ -290,9 +311,6 @@ func (s *Server) agentListTasks(w http.ResponseWriter, r *http.Request) {",
+          "@@ -306,6 +324,9 @@ func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {",
+          "@@ -775,7 +796,7 @@ func (s *Server) decodeJSON(w http.ResponseWriter, r *http.Request, target any)",
+          "@@ -788,7 +809,7 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {",
+          "@@ -797,6 +818,40 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -29,6 +29,7 @@ type Server struct {",
+          "+\tagentIssuer    auth.AgentCredentialIssuer",
+          "@@ -64,6 +65,12 @@ func WithLogStreamer(streamer LogStreamer) Option {",
+          "+func WithAgentCredentialIssuer(issuer auth.AgentCredentialIssuer) Option {",
+          "+\treturn func(server *Server) {",
+          "+\t\tserver.agentIssuer = issuer",
+          "+\t}",
+          "@@ -80,6 +87,9 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...",
+          "+\tif server.agentIssuer == nil {",
+          "+\t\tserver.agentIssuer = auth.NewTokenAgentCredentialIssuer(15 * time.Minute)",
+          "+\t}",
+          "@@ -148,6 +158,7 @@ type AgentHeartbeatRequest struct {",
+          "+\tCredential *auth.AgentCredential         `json:\"credential,omitempty\"`",
+          "@@ -217,7 +228,7 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {",
+          "+\tif !s.authorizeAgentRegistration(w, r) {",
+          "@@ -243,13 +254,15 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {",
+          "+\tcredential, err := s.issueAgentCredential(r.Context(), command.Node.ID)",
+          "+\tif err != nil {"
+        ]
+      },
+      {
+        "path": "docs/SECURITY.md",
+        "hunk_headers": [
+          "@@ -40,17 +40,39 @@ Roles are hierarchical: `admin` includes `operator` and `viewer`; `operator` inc"
+        ],
+        "inspected_changed_lines": [
+          "@@ -40,17 +40,39 @@ Roles are hierarchical: `admin` includes `operator` and `viewer`; `operator` inc"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "23",
+    "commit": "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7",
+    "relevant_changes": [
+      {
+        "path": "docs/SECURITY.md",
+        "hunk_headers": [
+          "@@ -2,6 +2,8 @@",
+          "@@ -65,6 +67,10 @@ Recommended controls:"
+        ],
+        "inspected_changed_lines": [
+          "@@ -2,6 +2,8 @@",
+          "@@ -65,6 +67,10 @@ Recommended controls:"
+        ]
+      },
+      {
+        "path": "docs/SECURITY_REVIEW.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,150 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,150 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "24",
+    "commit": "ad738d1867eefb3c92cc4280659ae76943341426",
+    "relevant_changes": [
+      {
+        "path": "internal/secrets/envelope.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,108 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,108 @@",
+          "+\t\"context\"",
+          "+\t\"crypto/aes\"",
+          "+\t\"crypto/cipher\"",
+          "+\t\"crypto/rand\"",
+          "+\t\"crypto/sha256\"",
+          "+\t\"encoding/base64\"",
+          "+\t\"encoding/hex\"",
+          "+\t\"fmt\"",
+          "+\t\"io\"",
+          "+\t\"strings\"",
+          "+\tKeyID string",
+          "+\tData  []byte",
+          "+\tEncrypt(ctx context.Context, plaintext []byte) (Ciphertext, error)",
+          "+\tDecrypt(ctx context.Context, ciphertext Ciphertext) ([]byte, error)",
+          "+\tkey   []byte",
+          "+\tkeyID string",
+          "+func NewLocalEnvelope(keyMaterial string) (*LocalEnvelope, error) {"
+        ]
+      },
+      {
+        "path": "internal/secrets/envelope_test.go",
+        "hunk_headers": [
+          "@@ -0,0 +1,45 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,45 @@",
+          "+\t\"context\"",
+          "+\t\"testing\"",
+          "+func TestLocalEnvelopeEncryptDecrypt(t *testing.T) {",
+          "+\tenvelope, err := NewLocalEnvelope(\"test-secret-key\")",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"create envelope: %v\", err)",
+          "+\t}",
+          "+\tciphertext, err := envelope.Encrypt(context.Background(), []byte(\"super-secret\"))",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"encrypt: %v\", err)",
+          "+\t}",
+          "+\tif string(ciphertext.Data) == \"super-secret\" {",
+          "+\t\tt.Fatalf(\"expected ciphertext not to store plaintext\")",
+          "+\t}",
+          "+\tplaintext, err := envelope.Decrypt(context.Background(), ciphertext)",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"decrypt: %v\", err)"
+        ]
+      },
+      {
+        "path": "internal/config/config.go",
+        "hunk_headers": [
+          "@@ -15,6 +15,7 @@ type ServerConfig struct {",
+          "@@ -39,6 +40,7 @@ func LoadServer() ServerConfig {",
+          "@@ -114,6 +116,9 @@ func (cfg ServerConfig) Validate() error {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -15,6 +15,7 @@ type ServerConfig struct {",
+          "+\tSecretKey           string",
+          "@@ -39,6 +40,7 @@ func LoadServer() ServerConfig {",
+          "+\t\tSecretKey:           getenv(\"ORCH_SECRET_KEY\", \"dev-secret-key-change-me\"),",
+          "@@ -114,6 +116,9 @@ func (cfg ServerConfig) Validate() error {",
+          "+\tif strings.TrimSpace(cfg.SecretKey) == \"\" {",
+          "+\t\treturn fmt.Errorf(\"secret encryption key is required\")",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "docs/SECRETS.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,65 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,65 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  },
+  {
+    "chapter": "24",
+    "commit": "a4844c571a0ddf33879556413a62d49a408609e3",
+    "relevant_changes": [
+      {
+        "path": "internal/config/config.go",
+        "hunk_headers": [
+          "@@ -6,9 +6,42 @@ import (",
+          "@@ -16,67 +49,341 @@ type ServerConfig struct {",
+          "@@ -92,22 +399,71 @@ func labelsFromEnv(key string) map[string]string {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -6,9 +6,42 @@ import (",
+          "+\t\"gopkg.in/yaml.v3\"",
+          "+\tAddr                string        `json:\"addr\" yaml:\"addr\"`",
+          "+\tDatabaseURL         string        `json:\"database_url\" yaml:\"database_url\"`",
+          "+\tLogLevel            string        `json:\"log_level\" yaml:\"log_level\"`",
+          "+\tBootstrapToken      string        `json:\"bootstrap_token\" yaml:\"bootstrap_token\"`",
+          "+\tJWTSecret           string        `json:\"jwt_secret\" yaml:\"jwt_secret\"`",
+          "+\tUsers               string        `json:\"users\" yaml:\"users\"`",
+          "+\tSecretKey           string        `json:\"secret_key\" yaml:\"secret_key\"`",
+          "+\tGracefulShutdownTTL time.Duration `json:\"graceful_shutdown_ttl\" yaml:\"graceful_shutdown_ttl\"`",
+          "+\tHeartbeatTimeout    time.Duration `json:\"heartbeat_timeout\" yaml:\"heartbeat_timeout\"`",
+          "+\tNodeMonitorInterval time.Duration `json:\"node_monitor_interval\" yaml:\"node_monitor_interval\"`",
+          "+\tNodeName            string            `json:\"node_name\" yaml:\"node_name\"`",
+          "+\tAdvertiseAddress    string            `json:\"advertise_address\" yaml:\"advertise_address\"`",
+          "+\tAgentAddr           string            `json:\"agent_addr\" yaml:\"agent_addr\"`",
+          "+\tLabels              map[string]string `json:\"labels\" yaml:\"labels\"`",
+          "+\tServerURL           string            `json:\"server_url\" yaml:\"server_url\"`",
+          "+\tBootstrapToken      string            `json:\"bootstrap_token\" yaml:\"bootstrap_token\"`"
+        ]
+      },
+      {
+        "path": "internal/config/config_test.go",
+        "hunk_headers": [
+          "@@ -1,6 +1,11 @@",
+          "@@ -42,3 +47,103 @@ func TestLoadAgentPrefersRegistrationToken(t *testing.T) {"
+        ],
+        "inspected_changed_lines": [
+          "@@ -1,6 +1,11 @@",
+          "+\t\"os\"",
+          "+\t\"path/filepath\"",
+          "+\t\"testing\"",
+          "+\t\"time\"",
+          "@@ -42,3 +47,103 @@ func TestLoadAgentPrefersRegistrationToken(t *testing.T) {",
+          "+func TestServerConfigPrecedence(t *testing.T) {",
+          "+\tpath := filepath.Join(t.TempDir(), \"server.yaml\")",
+          "+\twriteConfigFile(t, path, `",
+          "+\tt.Setenv(\"ORCH_SERVER_ADDR\", \":9100\")",
+          "+\tt.Setenv(\"ORCH_LOG_LEVEL\", \"debug\")",
+          "+\tcfg, err := LoadServerWithFile(path, ServerOverrides{Addr: \":9200\"})",
+          "+\tif err != nil {",
+          "+\t\tt.Fatalf(\"load server config: %v\", err)",
+          "+\t}",
+          "+\tif cfg.Addr != \":9200\" {",
+          "+\t\tt.Fatalf(\"expected flag override addr, got %q\", cfg.Addr)",
+          "+\t}"
+        ]
+      },
+      {
+        "path": "docs/CONFIGURATION.md",
+        "hunk_headers": [
+          "@@ -0,0 +1,94 @@"
+        ],
+        "inspected_changed_lines": [
+          "@@ -0,0 +1,94 @@"
+        ]
+      }
+    ],
+    "classification": "Historical changed-path/hunk inspection, not proof of prompt execution."
+  }
+]

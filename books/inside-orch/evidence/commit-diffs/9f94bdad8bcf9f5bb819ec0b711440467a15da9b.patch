@@ -1,0 +1,1282 @@
+commit 9f94bdad8bcf9f5bb819ec0b711440467a15da9b
+Date: 2026-07-14T15:01:05+02:00
+Subject: prompts
+
+
+---
+ ...-openapi-specification-and-generated-clients.md | 41 ++++++++++++++++++
+ prompts/62-api-versioning-strategy.md              | 32 ++++++++++++++
+ prompts/63-policy-engine-design.md                 | 38 +++++++++++++++++
+ prompts/64-admission-controller-mvp.md             | 38 +++++++++++++++++
+ prompts/65-namespaces-projects.md                  | 40 ++++++++++++++++++
+ prompts/66-resource-quotas.md                      | 42 +++++++++++++++++++
+ ...67-image-tag-immutability-and-digest-pinning.md | 35 ++++++++++++++++
+ prompts/68-image-signing-design.md                 | 34 +++++++++++++++
+ .../69-sbom-and-vulnerability-scanning-design.md   | 28 +++++++++++++
+ prompts/70-gitops-deployment-flow.md               | 43 +++++++++++++++++++
+ ...tween-gitops-desired-state-and-cluster-state.md | 34 +++++++++++++++
+ prompts/72-cron-jobs-and-one-shot-jobs-design.md   | 33 +++++++++++++++
+ prompts/73-one-shot-jobs-mvp.md                    | 46 ++++++++++++++++++++
+ prompts/74-cron-jobs-mvp.md                        | 49 ++++++++++++++++++++++
+ prompts/75-stateful-workloads-design.md            | 31 ++++++++++++++
+ prompts/76-persistent-volume-abstraction.md        | 43 +++++++++++++++++++
+ prompts/77-cni-advanced-networking-design.md       | 28 +++++++++++++
+ prompts/78-internal-dns-mvp.md                     | 28 +++++++++++++
+ prompts/79-plugin-system-design.md                 | 33 +++++++++++++++
+ prompts/80-notification-sinks.md                   | 42 +++++++++++++++++++
+ prompts/81-maintenance-windows.md                  | 35 ++++++++++++++++
+ prompts/82-cluster-upgrade-framework.md            | 34 +++++++++++++++
+ prompts/83-database-migration-safety.md            | 27 ++++++++++++
+ prompts/84-data-retention-and-pruning.md           | 35 ++++++++++++++++
+ prompts/85-tenant-aware-billing-export-report.md   | 33 +++++++++++++++
+ .../86-fuzz-tests-for-parsers-and-validators.md    | 26 ++++++++++++
+ prompts/87-property-tests-for-scheduler.md         | 30 +++++++++++++
+ prompts/88-performance-profiling.md                | 29 +++++++++++++
+ ...89-scale-test-1000-services-with-fake-agents.md | 35 ++++++++++++++++
+ prompts/90-v0-3-0-release-hardening.md             | 42 +++++++++++++++++++
+ 30 files changed, 1064 insertions(+)
+
+diff --git a/prompts/61-openapi-specification-and-generated-clients.md b/prompts/61-openapi-specification-and-generated-clients.md
+new file mode 100644
+index 0000000..4f39fb2
+--- /dev/null
++++ b/prompts/61-openapi-specification-and-generated-clients.md
+@@ -0,0 +1,41 @@
++# 61. OpenAPI specification and generated clients
++
++```text
++Create and maintain an OpenAPI specification for the orchestrator API.
++
++Context:
++The repository contains orch-server REST API, orch CLI, agents, scheduler, reconciler, events, logs, rollouts, secrets, registry credentials, and node operations.
++
++Task:
++Add a formal OpenAPI v3 specification for the public user-facing API.
++
++Deliverables:
++- api/openapi.yaml
++- docs/API.md updated to reference the OpenAPI spec
++- generated or hand-written Go API client package under pkg/client
++- CLI updated to use the shared client package where practical
++
++Requirements:
++- Include endpoints for:
++  - health
++  - nodes
++  - services
++  - tasks
++  - events
++  - logs
++  - rollouts
++  - secrets
++  - registry credentials
++  - audit logs
++- Include request/response schemas.
++- Include structured error schema.
++- Include auth scheme.
++- Add CI check to validate OpenAPI syntax.
++- Add tests proving API handlers match documented response shapes where practical.
++- Do not expose internal agent endpoints in the public OpenAPI spec unless clearly separated.
++
++At the end:
++- Run go test ./...
++- Run OpenAPI validation.
++- Update README with API client usage example.
++```
+diff --git a/prompts/62-api-versioning-strategy.md b/prompts/62-api-versioning-strategy.md
+new file mode 100644
+index 0000000..82f992b
+--- /dev/null
++++ b/prompts/62-api-versioning-strategy.md
+@@ -0,0 +1,32 @@
++# 62. API versioning strategy
++
++```text
++Design and implement API versioning rules.
++
++Context:
++The orchestrator exposes /v1 APIs. As the system matures, API compatibility must be explicit.
++
++Task:
++Create an API versioning strategy and enforce it in code.
++
++Deliverables:
++- docs/API_VERSIONING.md
++- middleware or router structure for versioned APIs
++- compatibility tests for selected endpoints
++
++Requirements:
++- Keep existing /v1 behavior stable.
++- Define what counts as:
++  - backward-compatible change
++  - breaking change
++  - deprecated field
++  - removed endpoint
++- Add deprecation metadata support.
++- Add response headers for deprecated endpoints if needed.
++- Add tests for v1 routing.
++- Add docs explaining how future /v2 APIs should be introduced.
++- Do not create /v2 yet unless required for structure.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/63-policy-engine-design.md b/prompts/63-policy-engine-design.md
+new file mode 100644
+index 0000000..759db91
+--- /dev/null
++++ b/prompts/63-policy-engine-design.md
+@@ -0,0 +1,38 @@
++# 63. Policy engine design
++
++```text
++Create a design document for a policy engine.
++
++Context:
++The orchestrator needs production controls for container security, resource limits, host mounts, image registries, privileged mode, secrets, and deployment rules.
++
++Task:
++Create docs/POLICY_ENGINE_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- policy enforcement points:
++  - service creation
++  - rollout
++  - scale
++  - node drain
++  - secret usage
++  - registry credential usage
++  - agent task execution
++- policy examples:
++  - require resource limits
++  - block privileged containers
++  - allow only approved registries
++  - block latest tag in production
++  - require healthchecks
++  - restrict host path mounts
++  - restrict public ports
++- static config policy vs dynamic policy
++- future OPA/Rego integration
++- audit logging
++- test strategy
++
++Do not implement the policy engine yet.
++Design it so it fits the current validation and admission flow.
++```
+diff --git a/prompts/64-admission-controller-mvp.md b/prompts/64-admission-controller-mvp.md
+new file mode 100644
+index 0000000..fa56e66
+--- /dev/null
++++ b/prompts/64-admission-controller-mvp.md
+@@ -0,0 +1,38 @@
++# 64. Admission controller MVP
++
++```text
++Implement an admission controller MVP for service specs.
++
++Context:
++The orchestrator needs a central place to validate and reject unsafe or non-compliant workload definitions before they are persisted.
++
++Task:
++Add an admission package used by service create, rollout, and update paths.
++
++Requirements:
++- Create internal/admission package.
++- Admission should receive:
++  - actor
++  - operation type
++  - namespace/project if implemented
++  - service spec
++  - cluster policy config
++- Enforce:
++  - required resource requests and limits
++  - no privileged containers unless allowed
++  - no host network unless allowed
++  - no host PID unless allowed
++  - allowed image registries
++  - block image tag "latest" if configured
++  - require healthcheck if configured
++  - allowed host path prefixes
++  - max replicas per service
++  - max public ports per service
++- Return structured errors.
++- Emit audit event for rejected admission.
++- Add tests for every policy.
++- Update docs/SECURITY.md and docs/SERVICE_SPEC.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/65-namespaces-projects.md b/prompts/65-namespaces-projects.md
+new file mode 100644
+index 0000000..aa4732e
+--- /dev/null
++++ b/prompts/65-namespaces-projects.md
+@@ -0,0 +1,40 @@
++# 65. Namespaces / projects
++
++```text
++Implement namespaces or projects for workload isolation.
++
++Context:
++The orchestrator currently has global services, nodes, secrets, events, and users. Production usage needs logical separation.
++
++Task:
++Add a Namespace or Project model.
++
++Requirements:
++- Add namespace/project table.
++- Add namespace field to:
++  - services
++  - tasks
++  - deployments
++  - events
++  - secrets
++  - registry credentials
++  - audit logs
++- CLI should support:
++  - --namespace
++  - default namespace from config
++  - orch namespace ls
++  - orch namespace create <name>
++  - orch namespace delete <name>
++- API should scope list/read/write operations by namespace.
++- RBAC should support namespace-scoped roles.
++- Existing data should migrate to default namespace.
++- Add tests:
++  - namespace isolation
++  - same service name allowed in different namespaces
++  - secret references cannot cross namespace unless explicitly allowed
++  - viewer in one namespace cannot read another namespace
++- Update docs/MULTI_TENANCY.md.
++
++At the end:
++- Run migrations and go test ./...
++```
+diff --git a/prompts/66-resource-quotas.md b/prompts/66-resource-quotas.md
+new file mode 100644
+index 0000000..8eb39f6
+--- /dev/null
++++ b/prompts/66-resource-quotas.md
+@@ -0,0 +1,42 @@
++# 66. Resource quotas
++
++```text
++Implement namespace-level resource quotas.
++
++Context:
++After namespaces/projects exist, each namespace should have configurable limits.
++
++Task:
++Add quotas for namespace/project resource usage.
++
++Quota fields:
++- max services
++- max replicas
++- max CPU millicores
++- max memory bytes
++- max public ports
++- max secrets
++- max registry credentials
++
++Requirements:
++- Quota is checked during:
++  - service create
++  - scale
++  - rollout if it changes resources
++  - secret create
++  - registry credential create
++- Quota accounting must be transaction-safe.
++- Return clear 403 or 409 structured errors when quota is exceeded.
++- Add CLI:
++  - orch quota get --namespace <name>
++  - orch quota set --namespace <name> ...
++- Add tests:
++  - quota allow
++  - quota deny
++  - concurrent scale requests cannot exceed quota
++  - deleted services release quota
++- Update docs/MULTI_TENANCY.md and docs/API.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/67-image-tag-immutability-and-digest-pinning.md b/prompts/67-image-tag-immutability-and-digest-pinning.md
+new file mode 100644
+index 0000000..42e4d14
+--- /dev/null
++++ b/prompts/67-image-tag-immutability-and-digest-pinning.md
+@@ -0,0 +1,35 @@
++# 67. Image tag immutability and digest pinning
++
++```text
++Implement image digest tracking and optional digest pinning.
++
++Context:
++Using mutable image tags can cause inconsistent rollouts. The orchestrator should record the resolved image digest for each task/version.
++
++Task:
++Add image digest resolution and storage.
++
++Requirements:
++- During rollout or task creation, resolve image tag to digest when possible.
++- Store:
++  - requested image
++  - resolved image digest
++  - registry
++  - image name
++  - tag
++- Service version should reference immutable image digest if policy requires it.
++- Docker runtime should pull by digest when digest pinning is enabled.
++- Add admission policy:
++  - requireDigest
++  - allowMutableTags
++  - denyLatestTag
++- Add tests:
++  - digest parsing
++  - tag parsing
++  - rollout stores digest
++  - policy rejects mutable tag
++  - Docker runtime receives digest-pinned image
++- Update docs/REGISTRIES.md and docs/SECURITY.md.
++
++Do not build a full registry proxy.
++```
+diff --git a/prompts/68-image-signing-design.md b/prompts/68-image-signing-design.md
+new file mode 100644
+index 0000000..05886d5
+--- /dev/null
++++ b/prompts/68-image-signing-design.md
+@@ -0,0 +1,34 @@
++# 68. Image signing design
++
++```text
++Create a design document for image signing and verification.
++
++Context:
++The orchestrator should eventually verify container images before deployment using technologies such as Sigstore/cosign or equivalent.
++
++Task:
++Create docs/IMAGE_SIGNING_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- threat model
++- where verification happens:
++  - API admission
++  - rollout creation
++  - agent before pull/start
++- trust roots
++- keyless signing option
++- key-based signing option
++- policy examples:
++  - require signed images
++  - require specific issuer
++  - require specific identity
++  - allow unsigned images only in dev namespace
++- failure modes
++- audit events
++- test strategy
++- rollout migration path
++
++Do not implement verification yet.
++```
+diff --git a/prompts/69-sbom-and-vulnerability-scanning-design.md b/prompts/69-sbom-and-vulnerability-scanning-design.md
+new file mode 100644
+index 0000000..df97790
+--- /dev/null
++++ b/prompts/69-sbom-and-vulnerability-scanning-design.md
+@@ -0,0 +1,28 @@
++# 69. SBOM and vulnerability scanning design
++
++```text
++Create a design document for SBOM and vulnerability scanning.
++
++Context:
++Production deployments should track image provenance, SBOM metadata, and vulnerability scan status.
++
++Task:
++Create docs/SUPPLY_CHAIN_SECURITY_DESIGN.md.
++
++Cover:
++- SBOM ingestion
++- vulnerability scan integration
++- registry scanner integration
++- admission policy based on severity
++- exceptions and waivers
++- audit logging
++- periodic rescan
++- behavior when a running image later becomes vulnerable
++- API proposal
++- CLI proposal
++- data model proposal
++- test strategy
++
++Do not implement scanning yet.
++Keep the design compatible with current image registry and admission flow.
++```
+diff --git a/prompts/70-gitops-deployment-flow.md b/prompts/70-gitops-deployment-flow.md
+new file mode 100644
+index 0000000..090030e
+--- /dev/null
++++ b/prompts/70-gitops-deployment-flow.md
+@@ -0,0 +1,43 @@
++# 70. GitOps deployment flow
++
++```text
++Implement a GitOps-style sync controller MVP.
++
++Context:
++Operators may want the orchestrator to reconcile service definitions from a Git repository instead of manually running orch deploy.
++
++Task:
++Add GitOps MVP.
++
++Spec:
++- A GitOps source points to:
++  - repository URL
++  - branch
++  - path
++  - sync interval
++  - namespace
++- The controller periodically fetches specs and applies them.
++- Deleting a file should optionally delete the service depending on prune setting.
++
++Requirements:
++- Add GitOpsSource model and store.
++- Add controller loop with context cancellation.
++- Add API:
++  - POST /v1/gitops/sources
++  - GET /v1/gitops/sources
++  - DELETE /v1/gitops/sources/{id}
++  - POST /v1/gitops/sources/{id}/sync
++- Add CLI:
++  - orch gitops add
++  - orch gitops ls
++  - orch gitops sync
++  - orch gitops delete
++- Validate YAML through existing admission path.
++- Emit events and audit logs.
++- Add tests using a local fixture repo.
++- Do not store Git credentials in plaintext.
++- Update docs/GITOPS.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md b/prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md
+new file mode 100644
+index 0000000..c430f8a
+--- /dev/null
++++ b/prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md
+@@ -0,0 +1,34 @@
++# 71. Drift detection between GitOps desired state and cluster state
++
++```text
++Implement GitOps drift detection.
++
++Context:
++If GitOps is enabled, users may manually change services through the API or CLI. The system should detect and optionally correct drift.
++
++Task:
++Add drift detection for GitOps-managed services.
++
++Requirements:
++- Mark services managed by a GitOps source.
++- Store source commit SHA and file path for each applied service.
++- Compare live service spec with Git desired spec.
++- Add status:
++  - in_sync
++  - drifted
++  - unknown
++  - sync_error
++- Add CLI:
++  - orch gitops status
++  - orch gitops diff <service>
++- Support policy:
++  - warn only
++  - auto-revert drift
++- Emit events for drift.
++- Add tests:
++  - manual scale creates drift
++  - manual rollout creates drift
++  - auto-revert restores desired state
++  - deleted file with prune enabled deletes service
++- Update docs/GITOPS.md.
++```
+diff --git a/prompts/72-cron-jobs-and-one-shot-jobs-design.md b/prompts/72-cron-jobs-and-one-shot-jobs-design.md
+new file mode 100644
+index 0000000..a28324a
+--- /dev/null
++++ b/prompts/72-cron-jobs-and-one-shot-jobs-design.md
+@@ -0,0 +1,33 @@
++# 72. Cron jobs and one-shot jobs design
++
++```text
++Create a design document for jobs and cron jobs.
++
++Context:
++The orchestrator currently focuses on long-running services. Many production systems also need one-shot jobs and scheduled jobs.
++
++Task:
++Create docs/JOBS_DESIGN.md.
++
++Cover:
++- one-shot jobs
++- cron jobs
++- retries
++- backoff
++- parallelism
++- completions
++- deadlines
++- logs
++- events
++- resource requests
++- secrets
++- placement
++- failure modes
++- API proposal
++- CLI proposal
++- database schema proposal
++- interaction with scheduler and agent
++- cleanup/TTL
++
++Do not implement jobs yet.
++```
+diff --git a/prompts/73-one-shot-jobs-mvp.md b/prompts/73-one-shot-jobs-mvp.md
+new file mode 100644
+index 0000000..d13c955
+--- /dev/null
++++ b/prompts/73-one-shot-jobs-mvp.md
+@@ -0,0 +1,46 @@
++# 73. One-shot jobs MVP
++
++```text
++Implement one-shot jobs MVP based on docs/JOBS_DESIGN.md.
++
++Task:
++Add support for running finite jobs.
++
++YAML example:
++
++kind: Job
++name: db-migrate
++image: ghcr.io/example/migrator:1.2.0
++command: ["./migrate", "up"]
++restart:
++  policy: on-failure
++backoffLimit: 3
++resources:
++  cpu: 500m
++  memory: 512Mi
++
++Requirements:
++- Add Job model and Task reuse or separate JobTask if cleaner.
++- Scheduler can place job tasks.
++- Agent can run job container and report exit code.
++- Reconciler handles retries up to backoffLimit.
++- Job status:
++  - pending
++  - running
++  - succeeded
++  - failed
++- Add API:
++  - POST /v1/jobs
++  - GET /v1/jobs
++  - GET /v1/jobs/{id}
++  - DELETE /v1/jobs/{id}
++- Add CLI:
++  - orch job run <file.yaml>
++  - orch job ls
++  - orch job logs <job>
++- Add tests for success, failure, retry, delete.
++- Update docs/JOBS.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/74-cron-jobs-mvp.md b/prompts/74-cron-jobs-mvp.md
+new file mode 100644
+index 0000000..a6e663c
+--- /dev/null
++++ b/prompts/74-cron-jobs-mvp.md
+@@ -0,0 +1,49 @@
++# 74. Cron jobs MVP
++
++```text
++Implement cron jobs MVP.
++
++Context:
++One-shot jobs exist. Now add scheduled jobs.
++
++Task:
++Add CronJob model and controller.
++
++YAML example:
++
++kind: CronJob
++name: nightly-report
++schedule: "0 2 * * *"
++concurrencyPolicy: Forbid
++jobTemplate:
++  image: ghcr.io/example/reporter:1.0.0
++  command: ["./report"]
++  resources:
++    cpu: 250m
++    memory: 256Mi
++
++Requirements:
++- Parse cron schedules.
++- Support timezone explicitly; default UTC.
++- Support concurrency policies:
++  - Allow
++  - Forbid
++  - Replace
++- Create Job instances on schedule.
++- Add missed schedule handling with a configurable limit.
++- Add API:
++  - POST /v1/cronjobs
++  - GET /v1/cronjobs
++  - GET /v1/cronjobs/{id}
++  - DELETE /v1/cronjobs/{id}
++- Add CLI:
++  - orch cronjob apply <file.yaml>
++  - orch cronjob ls
++  - orch cronjob suspend <name>
++  - orch cronjob resume <name>
++- Add tests using fake clock.
++- Update docs/JOBS.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/75-stateful-workloads-design.md b/prompts/75-stateful-workloads-design.md
+new file mode 100644
+index 0000000..75bfd5e
+--- /dev/null
++++ b/prompts/75-stateful-workloads-design.md
+@@ -0,0 +1,31 @@
++# 75. Stateful workloads design
++
++```text
++Create a design document for stateful workloads.
++
++Context:
++The orchestrator currently focuses on stateless services. Stateful workloads require stable identity, stable storage, and careful replacement semantics.
++
++Task:
++Create docs/STATEFUL_WORKLOADS_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- stable task identity
++- ordered startup/shutdown
++- persistent volume claims
++- node affinity
++- backup/snapshot hooks
++- replacement behavior when node is offline
++- split-brain risks
++- service discovery for stateful tasks
++- rollout strategy for stateful workloads
++- API/YAML proposal
++- scheduler changes
++- agent changes
++- test strategy
++
++Do not implement stateful workloads yet.
++Be conservative and clearly mark risks.
++```
+diff --git a/prompts/76-persistent-volume-abstraction.md b/prompts/76-persistent-volume-abstraction.md
+new file mode 100644
+index 0000000..d45f580
+--- /dev/null
++++ b/prompts/76-persistent-volume-abstraction.md
+@@ -0,0 +1,43 @@
++# 76. Persistent volume abstraction
++
++```text
++Implement persistent volume abstraction MVP.
++
++Context:
++The orchestrator needs a storage model before stateful workloads can be safely supported.
++
++Task:
++Add storage primitives.
++
++Models:
++- Volume
++- VolumeClaim
++- VolumeAttachment
++
++Requirements:
++- Support local Docker volumes first.
++- Add volume claim references in service/job specs.
++- Scheduler must place tasks on nodes where required local volume exists or can be created.
++- Agent must create/attach Docker volumes.
++- Store volume attachment state.
++- Prevent two tasks from writing to the same ReadWriteOnce volume unless policy allows.
++- Add API:
++  - POST /v1/volumes
++  - GET /v1/volumes
++  - GET /v1/volumes/{id}
++  - DELETE /v1/volumes/{id}
++  - POST /v1/volume-claims
++  - GET /v1/volume-claims
++- Add CLI:
++  - orch volume ls
++  - orch volume create
++  - orch volume inspect
++- Add tests:
++  - create local volume
++  - schedule task with volume
++  - block conflicting attachment
++  - cleanup after task stop
++- Update docs/STORAGE.md.
++
++Do not implement distributed storage yet.
++```
+diff --git a/prompts/77-cni-advanced-networking-design.md b/prompts/77-cni-advanced-networking-design.md
+new file mode 100644
+index 0000000..b87dfcf
+--- /dev/null
++++ b/prompts/77-cni-advanced-networking-design.md
+@@ -0,0 +1,28 @@
++# 77. CNI / advanced networking design
++
++```text
++Create a design document for advanced networking.
++
++Context:
++The MVP uses host ports and optional Traefik integration. Future versions may need overlay networking, internal DNS, and network policies.
++
++Task:
++Create docs/NETWORKING_DESIGN.md.
++
++Cover:
++- current host-port model
++- limitations
++- service discovery options
++- internal DNS design
++- overlay networking options
++- CNI plugin integration option
++- network policy model
++- ingress model
++- egress restrictions
++- multi-node routing
++- security risks
++- migration plan from host ports
++- testing strategy
++
++Do not implement advanced networking yet.
++```
+diff --git a/prompts/78-internal-dns-mvp.md b/prompts/78-internal-dns-mvp.md
+new file mode 100644
+index 0000000..bdc8980
+--- /dev/null
++++ b/prompts/78-internal-dns-mvp.md
+@@ -0,0 +1,28 @@
++# 78. Internal DNS MVP
++
++```text
++Implement a simple internal DNS service MVP.
++
++Context:
++Service discovery endpoints exist. Containers should be able to resolve service names to healthy task endpoints.
++
++Task:
++Add an optional internal DNS component.
++
++Requirements:
++- Add orch-dns binary or internal DNS server inside orch-server if simpler.
++- Resolve:
++  - <service>.<namespace>.svc.orch
++  - <service>.svc.orch
++- Return records for healthy running endpoints.
++- Support TTL config.
++- Add metrics:
++  - dns_queries_total
++  - dns_errors_total
++- Add tests for DNS resolution.
++- Add docker-compose example showing container using orchestrator DNS.
++- Update docs/SERVICE_DISCOVERY.md and docs/NETWORKING.md.
++
++Keep MVP simple.
++Do not implement full Kubernetes DNS compatibility.
++```
+diff --git a/prompts/79-plugin-system-design.md b/prompts/79-plugin-system-design.md
+new file mode 100644
+index 0000000..df93b7d
+--- /dev/null
++++ b/prompts/79-plugin-system-design.md
+@@ -0,0 +1,33 @@
++# 79. Plugin system design
++
++```text
++Create a design document for orchestrator plugins.
++
++Context:
++Future integrations may include storage drivers, registry providers, secret backends, metrics providers, policy engines, and notification sinks.
++
++Task:
++Create docs/PLUGIN_SYSTEM_DESIGN.md.
++
++Cover:
++- goals
++- non-goals
++- plugin types:
++  - runtime
++  - storage
++  - secrets
++  - registry
++  - policy
++  - metrics
++  - notifications
++- in-process vs external plugin model
++- version compatibility
++- security model
++- configuration
++- lifecycle
++- observability
++- test strategy
++- examples
++
++Do not implement plugin system yet.
++```
+diff --git a/prompts/80-notification-sinks.md b/prompts/80-notification-sinks.md
+new file mode 100644
+index 0000000..552737b
+--- /dev/null
++++ b/prompts/80-notification-sinks.md
+@@ -0,0 +1,42 @@
++# 80. Notification sinks
++
++```text
++Implement notification sinks for important events.
++
++Context:
++Operators need alerts outside the orchestrator UI/CLI.
++
++Task:
++Add notification sink support.
++
++Supported sinks for MVP:
++- webhook
++- Slack-compatible webhook if simple
++- generic HTTP endpoint
++
++Events to notify:
++- rollout failed
++- node offline
++- task failure threshold exceeded
++- admission rejected
++- quota exceeded
++- service deleted
++- secret deleted
++- scheduler unable to place task
++
++Requirements:
++- Add NotificationSink model.
++- Add API:
++  - POST /v1/notification-sinks
++  - GET /v1/notification-sinks
++  - DELETE /v1/notification-sinks/{id}
++  - POST /v1/notification-sinks/{id}/test
++- Add retry with backoff.
++- Add redaction for secrets.
++- Add signing secret for webhooks.
++- Add tests for delivery success/failure/retry.
++- Update docs/NOTIFICATIONS.md.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/81-maintenance-windows.md b/prompts/81-maintenance-windows.md
+new file mode 100644
+index 0000000..6b930e4
+--- /dev/null
++++ b/prompts/81-maintenance-windows.md
+@@ -0,0 +1,35 @@
++# 81. Maintenance windows
++
++```text
++Implement maintenance windows for disruptive operations.
++
++Context:
++Production operators may want rollouts, node drains, and automatic replacements to happen only during approved windows.
++
++Task:
++Add maintenance window support.
++
++Requirements:
++- Add MaintenanceWindow model:
++  - name
++  - namespace or global scope
++  - schedule
++  - timezone
++  - allowed operations
++  - enabled flag
++- Operations that can respect windows:
++  - rollout
++  - rollback
++  - node drain
++  - autoscaling scale-down if implemented
++  - non-urgent task replacement
++- Emergency operations may bypass with --force and audit log.
++- Add API and CLI:
++  - orch maintenance create
++  - orch maintenance ls
++  - orch maintenance delete
++- Add tests using fake clock.
++- Update docs/OPERATIONS.md.
++
++Do not block critical safety replacements unless explicitly configured.
++```
+diff --git a/prompts/82-cluster-upgrade-framework.md b/prompts/82-cluster-upgrade-framework.md
+new file mode 100644
+index 0000000..1829c79
+--- /dev/null
++++ b/prompts/82-cluster-upgrade-framework.md
+@@ -0,0 +1,34 @@
++# 82. Cluster upgrade framework
++
++```text
++Design and implement a cluster upgrade framework.
++
++Context:
++The orchestrator itself has server, agent, database schema, and CLI versions. Production upgrades need compatibility checks.
++
++Task:
++Add version compatibility and upgrade documentation.
++
++Requirements:
++- Add version endpoint:
++  - GET /v1/version
++- Agents report version in registration and heartbeat.
++- Server records agent version.
++- Add compatibility rules:
++  - minimum supported agent version
++  - maximum tested agent version
++  - database schema version
++- Add CLI:
++  - orch version
++  - orch cluster check-upgrade
++- Add docs/UPGRADES.md with:
++  - server upgrade
++  - agent rolling upgrade
++  - database migration
++  - rollback procedure
++- Add tests for incompatible agent rejection/warning.
++- Add startup check for database schema version.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/83-database-migration-safety.md b/prompts/83-database-migration-safety.md
+new file mode 100644
+index 0000000..70f45e0
+--- /dev/null
++++ b/prompts/83-database-migration-safety.md
+@@ -0,0 +1,27 @@
++# 83. Database migration safety
++
++```text
++Harden database migrations for production.
++
++Context:
++The orchestrator depends on PostgreSQL migrations. Unsafe migrations can break production control plane.
++
++Task:
++Improve migration tooling and safety.
++
++Requirements:
++- Add migration status command:
++  - orch-server migrate status
++  - orch-server migrate up
++  - orch-server migrate down only if explicitly allowed
++- Add schema version table if not present.
++- Add advisory lock around migrations.
++- Add startup check that refuses to run with unsupported schema version.
++- Add docs/MIGRATIONS.md.
++- Add tests for:
++  - migration lock
++  - startup with old schema
++  - startup with future schema
++  - idempotent migration status
++- Ensure migrations are reversible only when safe.
++```
+diff --git a/prompts/84-data-retention-and-pruning.md b/prompts/84-data-retention-and-pruning.md
+new file mode 100644
+index 0000000..01eef48
+--- /dev/null
++++ b/prompts/84-data-retention-and-pruning.md
+@@ -0,0 +1,35 @@
++# 84. Data retention and pruning
++
++```text
++Implement data retention and pruning policies.
++
++Context:
++Events, audit logs, task history, rollout history, and logs metadata can grow without bound.
++
++Task:
++Add retention configuration and pruning controller.
++
++Retention targets:
++- events
++- audit logs
++- completed tasks
++- failed tasks
++- old rollouts
++- completed jobs
++- old GitOps sync records
++
++Requirements:
++- Add retention config.
++- Add pruning controller with dry-run mode.
++- Add CLI:
++  - orch retention status
++  - orch retention prune --dry-run
++- Never prune active services, running tasks, active rollouts, or unresolved failures.
++- Emit audit logs for pruning.
++- Add tests:
++  - prune old events
++  - keep recent events
++  - keep active task history
++  - dry-run does not delete
++- Update docs/OPERATIONS.md.
++```
+diff --git a/prompts/85-tenant-aware-billing-export-report.md b/prompts/85-tenant-aware-billing-export-report.md
+new file mode 100644
+index 0000000..8fdca70
+--- /dev/null
++++ b/prompts/85-tenant-aware-billing-export-report.md
+@@ -0,0 +1,33 @@
++# 85. Tenant-aware billing/export report
++
++```text
++Implement usage export for namespaces/projects.
++
++Context:
++For internal platforms or SaaS-style usage, operators need usage reports by namespace/project.
++
++Task:
++Add usage accounting export.
++
++Metrics:
++- CPU requested over time
++- memory requested over time
++- replica count over time
++- service count
++- task runtime duration
++- public ports
++- storage claims if implemented
++
++Requirements:
++- Add periodic usage snapshots.
++- Add API:
++  - GET /v1/usage?namespace=&from=&to=
++- Add CLI:
++  - orch usage --namespace <name> --from <date> --to <date>
++  - orch usage export --format csv
++- Add CSV export.
++- Add tests for usage aggregation.
++- Update docs/MULTI_TENANCY.md and docs/OPERATIONS.md.
++
++Do not implement payments or invoicing.
++```
+diff --git a/prompts/86-fuzz-tests-for-parsers-and-validators.md b/prompts/86-fuzz-tests-for-parsers-and-validators.md
+new file mode 100644
+index 0000000..6de23ae
+--- /dev/null
++++ b/prompts/86-fuzz-tests-for-parsers-and-validators.md
+@@ -0,0 +1,26 @@
++# 86. Fuzz tests for parsers and validators
++
++```text
++Add fuzz tests for high-risk parsers and validators.
++
++Targets:
++- service YAML parser
++- resource quantity parser
++- cron expression parser if implemented
++- image reference parser
++- port spec parser
++- label selector parser
++- healthcheck path validator
++- OpenAPI request validation if applicable
++
++Requirements:
++- Use Go fuzzing support.
++- Fuzz tests must not require Docker or network.
++- Add seed corpus with valid and invalid examples.
++- Ensure fuzz failures produce useful minimized cases.
++- Add docs/TESTING.md explaining how to run fuzz tests.
++- Add CI job only if runtime is reasonable; otherwise document manual command.
++
++At the end:
++- Run normal go test ./...
++```
+diff --git a/prompts/87-property-tests-for-scheduler.md b/prompts/87-property-tests-for-scheduler.md
+new file mode 100644
+index 0000000..684bd78
+--- /dev/null
++++ b/prompts/87-property-tests-for-scheduler.md
+@@ -0,0 +1,30 @@
++# 87. Property tests for scheduler
++
++```text
++Add property-style tests for scheduler correctness.
++
++Context:
++The scheduler is critical and must maintain invariants across many random cluster states.
++
++Task:
++Create randomized tests for scheduler.
++
++Invariants:
++- task assigned only to ready node
++- task not assigned to draining/offline node
++- assigned node has enough CPU/memory
++- placement labels match
++- host port conflicts are avoided
++- deterministic output for same input
++- no duplicate assignment
++
++Requirements:
++- Generate random nodes, tasks, services, labels, and resources.
++- Use fixed seeds for reproducibility.
++- Log seed on failure.
++- Keep tests fast.
++- Add docs/TESTING.md section.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/88-performance-profiling.md b/prompts/88-performance-profiling.md
+new file mode 100644
+index 0000000..ba0b222
+--- /dev/null
++++ b/prompts/88-performance-profiling.md
+@@ -0,0 +1,29 @@
++# 88. Performance profiling
++
++```text
++Add performance profiling support.
++
++Context:
++Controllers may become slow as services, tasks, nodes, and events grow.
++
++Task:
++Add optional pprof and benchmark suite.
++
++Requirements:
++- Add config option to enable pprof only on admin/debug listener.
++- Never expose pprof publicly by default.
++- Add benchmarks for:
++  - scheduler scoring
++  - reconciliation loop for many services
++  - event insertion
++  - service list API
++  - task list API
++- Add docs/PERFORMANCE.md:
++  - how to run benchmarks
++  - how to capture profiles
++  - safety warning for pprof
++- Add tests ensuring debug endpoints are disabled by default.
++
++At the end:
++- Run go test ./...
++```
+diff --git a/prompts/89-scale-test-1000-services-with-fake-agents.md b/prompts/89-scale-test-1000-services-with-fake-agents.md
+new file mode 100644
+index 0000000..9aad5ad
+--- /dev/null
++++ b/prompts/89-scale-test-1000-services-with-fake-agents.md
+@@ -0,0 +1,35 @@
++# 89. Scale test: 1,000 services with fake agents
++
++```text
++Create a scale test for 1,000 services using fake agents.
++
++Context:
++We need to understand MVP scalability limits without requiring 1,000 real containers.
++
++Task:
++Add a scale test command or integration test.
++
++Scenario:
++- start server with PostgreSQL
++- register configurable number of fake nodes
++- create 1,000 services with 1-5 replicas each
++- simulate agents transitioning tasks to running
++- measure time to convergence
++- collect scheduler/reconciler metrics
++
++Requirements:
++- No real Docker required.
++- Configurable:
++  - service count
++  - node count
++  - replicas per service
++  - failure rate
++- Output:
++  - convergence duration
++  - tasks created
++  - scheduler iterations
++  - reconciliation iterations
++  - errors
++- Add docs/SCALE_TESTING.md.
++- Do not run this in normal CI unless marked as optional.
++```
+diff --git a/prompts/90-v0-3-0-release-hardening.md b/prompts/90-v0-3-0-release-hardening.md
+new file mode 100644
+index 0000000..87b616e
+--- /dev/null
++++ b/prompts/90-v0-3-0-release-hardening.md
+@@ -0,0 +1,42 @@
++# 90. v0.3.0 release hardening
++
++```text
++Prepare the repository for v0.3.0 release.
++
++Expected v0.3.0 scope:
++- OpenAPI spec
++- API versioning
++- admission controller
++- namespaces/projects
++- quotas
++- GitOps MVP
++- jobs MVP if implemented
++- improved storage/networking design docs
++- upgrade/migration safety
++- stronger tests
++
++Acceptance criteria:
++- All tests pass.
++- Lint passes.
++- Migration status works.
++- API docs match implementation.
++- OpenAPI spec validates.
++- Namespaces isolate resources.
++- Quotas are enforced transaction-safely.
++- Admission rejects unsafe specs.
++- GitOps sync is tested.
++- No secrets or credentials are logged.
++- Release notes are accurate.
++
++Tasks:
++1. Run full test suite.
++2. Run lint.
++3. Run OpenAPI validation.
++4. Run migration status tests.
++5. Run security-sensitive grep checks.
++6. Fix blockers only.
++7. Update CHANGELOG.md.
++8. Create RELEASE_NOTES.md for v0.3.0.
++
++Do not add new features during release hardening.
++```

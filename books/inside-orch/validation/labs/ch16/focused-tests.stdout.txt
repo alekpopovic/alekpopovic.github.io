@@ -1,0 +1,8 @@
+=== RUN   TestLogHandlerStopsOnCancellation
+--- PASS: TestLogHandlerStopsOnCancellation (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/agent	0.005s
+=== RUN   TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation
+--- PASS: TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/docker	0.004s

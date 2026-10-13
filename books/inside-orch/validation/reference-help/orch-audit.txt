@@ -1,0 +1,22 @@
+List audit logs
+
+Usage:
+  orch audit [flags]
+
+Flags:
+      --action string        filter by action
+      --actor-id string      filter by actor ID
+      --actor-type string    filter by actor type: user, agent, system
+  -h, --help                 help for audit
+      --limit int            maximum audit records to return (default 100)
+      --outcome string       filter by outcome: success, failure
+      --since string         filter since RFC3339 timestamp
+      --target-id string     filter by target ID
+      --target-type string   filter by target type
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

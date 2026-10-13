@@ -1,0 +1,1168 @@
+commit c69f9ffa830284692aabf9e65ab9eb1f79d3a114
+Date: 2026-07-14T15:07:17+02:00
+Subject: Add deterministic fake container runtime
+
+
+---
+ docs/DEVELOPMENT.md               |   8 +
+ internal/agent/agent_test.go      | 188 +++++------------
+ internal/docker/fake.go           | 428 ++++++++++++++++++++++++++++++++++++++
+ internal/docker/fake_test.go      | 162 +++++++++++++++
+ internal/e2e/orchestrator_test.go | 148 +------------
+ 5 files changed, 650 insertions(+), 284 deletions(-)
+
+diff --git a/docs/DEVELOPMENT.md b/docs/DEVELOPMENT.md
+index bb48831..7cdd410 100644
+--- a/docs/DEVELOPMENT.md
++++ b/docs/DEVELOPMENT.md
+@@ -40,6 +40,8 @@ Fast unit tests must run with:
+ go test ./...
+ ```
+ 
++Most controller, agent, and E2E tests use `internal/docker.FakeRuntime`. It implements the same runtime interface as the Docker Engine adapter, records operations for assertions, supports deterministic logs, and can inject pull/create/start/health failures or containers that exit immediately after start.
++
+ Integration tests that require PostgreSQL are skipped unless `ORCH_INTEGRATION_DATABASE_URL` is set:
+ 
+ ```sh
+@@ -57,6 +59,12 @@ ORCH_DOCKER_INTEGRATION=1 go test ./internal/docker -run Integration
+ 
+ These tests talk to the Docker daemon configured by the standard Docker environment variables such as `DOCKER_HOST`, `DOCKER_TLS_VERIFY`, and `DOCKER_CERT_PATH`.
+ 
++The full orchestrator E2E defaults to `FakeRuntime`. Run the real Docker variant explicitly:
++
++```sh
++ORCH_E2E_DOCKER=1 go test ./internal/e2e -run RealDocker
++```
++
+ ## Docker Daemon Access
+ 
+ The worker agent needs permission to call the Docker Engine API for image pulls, container create/start/stop/remove, inspect, list, and log streaming. In local development this usually means access to `/var/run/docker.sock` or a Docker context configured through environment variables.
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index ebb1d0f..caa75cd 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -35,7 +35,7 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 			},
+ 		}},
+ 	}
+-	runtime := &fakeRuntime{createdID: orchdocker.ContainerID("container-1")}
++	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("container-1"))
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
+@@ -43,8 +43,8 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	}
+ 
+ 	wantRuntimeCalls := []string{"list", "pull:nginx:1.27", "create:" + string(taskID), "start:container-1", "list"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	wantStatuses := []types.TaskStatus{types.TaskPulling, types.TaskCreated, types.TaskRunning}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+@@ -67,18 +67,15 @@ func TestReconcileAssignedTaskRecreatesManuallyDeletedContainer(t *testing.T) {
+ 			Version:       1,
+ 		},
+ 	}}}
+-	runtime := &fakeRuntime{
+-		inspect:   map[orchdocker.ContainerID]orchdocker.ContainerStatus{},
+-		createdID: "replacement-container",
+-	}
++	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("replacement-container"))
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
+ 		t.Fatalf("reconcile assigned tasks: %v", err)
+ 	}
+ 	wantRuntimeCalls := []string{"inspect:missing-container", "list", "pull:nginx:1.27", "create:" + string(taskID), "start:replacement-container", "list"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	wantStatuses := []types.TaskStatus{types.TaskPulling, types.TaskCreated, types.TaskRunning}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+@@ -100,7 +97,8 @@ func TestReconcileAssignedTaskReReportsRunningContainerAfterAgentRestart(t *test
+ 			Version:       1,
+ 		},
+ 	}}}
+-	runtime := &fakeRuntime{managed: []orchdocker.ContainerStatus{{
++	runtime := orchdocker.NewFakeRuntime()
++	runtime.AddContainer(orchdocker.ContainerStatus{
+ 		ID:      "container-1",
+ 		Running: true,
+ 		Labels: map[string]string{
+@@ -108,15 +106,15 @@ func TestReconcileAssignedTaskReReportsRunningContainerAfterAgentRestart(t *test
+ 			orchdocker.TaskIDLabel:  string(taskID),
+ 			orchdocker.NodeIDLabel:  string(nodeID),
+ 		},
+-	}}}
++	})
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
+ 		t.Fatalf("reconcile assigned tasks: %v", err)
+ 	}
+ 	wantRuntimeCalls := []string{"list", "list"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	wantStatuses := []types.TaskStatus{types.TaskRunning}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+@@ -142,15 +140,18 @@ func TestReconcileAssignedTaskDoesNotRecreateWhenDockerUnavailable(t *testing.T)
+ 			Version:       1,
+ 		},
+ 	}}}
+-	runtime := &fakeRuntime{inspectErr: errDockerUnavailable, listErr: errDockerUnavailable}
++	runtime := orchdocker.NewFakeRuntime(
++		orchdocker.WithFakeInspectFailure(errDockerUnavailable),
++		orchdocker.WithFakeListFailure(errDockerUnavailable),
++	)
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != errDockerUnavailable {
+ 		t.Fatalf("expected docker unavailable error, got %v", err)
+ 	}
+ 	wantRuntimeCalls := []string{"inspect:container-1", "list", "list"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	if len(client.statuses) != 0 {
+ 		t.Fatalf("expected no status reports while Docker availability is unknown, got %#v", client.statuses)
+@@ -172,9 +173,8 @@ func TestReconcileAssignedTaskReportsExitedContainerFailed(t *testing.T) {
+ 			Version:       1,
+ 		},
+ 	}}}
+-	runtime := &fakeRuntime{inspect: map[orchdocker.ContainerID]orchdocker.ContainerStatus{
+-		"container-1": {ID: "container-1", Running: false, ExitCode: 2},
+-	}}
++	runtime := orchdocker.NewFakeRuntime()
++	runtime.AddContainer(orchdocker.ContainerStatus{ID: "container-1", Running: false, ExitCode: 2})
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err == nil {
+@@ -194,21 +194,21 @@ func TestReconcileAssignedTaskReportsPullAndCreateFailures(t *testing.T) {
+ 	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
+ 	tests := []struct {
+ 		name         string
+-		runtime      *fakeRuntime
++		runtime      *orchdocker.FakeRuntime
+ 		wantCalls    []string
+ 		wantReason   string
+ 		wantStatuses []types.TaskStatus
+ 	}{
+ 		{
+ 			name:         "pull failure",
+-			runtime:      &fakeRuntime{pullErr: errors.New("pull failed")},
++			runtime:      orchdocker.NewFakeRuntime(orchdocker.WithFakePullFailure(errors.New("pull failed"))),
+ 			wantCalls:    []string{"list", "pull:nginx:1.27", "list"},
+ 			wantReason:   "pull failed",
+ 			wantStatuses: []types.TaskStatus{types.TaskPulling, types.TaskFailed},
+ 		},
+ 		{
+ 			name:         "create failure",
+-			runtime:      &fakeRuntime{createErr: errors.New("port is already allocated")},
++			runtime:      orchdocker.NewFakeRuntime(orchdocker.WithFakeCreateFailure(errors.New("port is already allocated"))),
+ 			wantCalls:    []string{"list", "pull:nginx:1.27", "create:" + string(taskID), "list"},
+ 			wantReason:   "port is already allocated",
+ 			wantStatuses: []types.TaskStatus{types.TaskPulling, types.TaskFailed},
+@@ -232,8 +232,8 @@ func TestReconcileAssignedTaskReportsPullAndCreateFailures(t *testing.T) {
+ 			if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err == nil {
+ 				t.Fatalf("expected task execution error")
+ 			}
+-			if !equalStrings(tt.runtime.calls, tt.wantCalls) {
+-				t.Fatalf("expected runtime calls %#v, got %#v", tt.wantCalls, tt.runtime.calls)
++			if !equalStrings(tt.runtime.OperationStrings(), tt.wantCalls) {
++				t.Fatalf("expected runtime calls %#v, got %#v", tt.wantCalls, tt.runtime.OperationStrings())
+ 			}
+ 			if !equalStatuses(client.statuses, tt.wantStatuses) {
+ 				t.Fatalf("expected statuses %#v, got %#v", tt.wantStatuses, client.statuses)
+@@ -249,15 +249,15 @@ func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
+ 	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
+ 	staleTaskID := types.TaskID("00000000-0000-4000-8000-000000000004")
+ 	client := &fakeAgentClient{}
+-	runtime := &fakeRuntime{
+-		managed: []orchdocker.ContainerStatus{{
+-			ID: orchdocker.ContainerID("stale-container"),
+-			Labels: map[string]string{
+-				orchdocker.TaskIDLabel: string(staleTaskID),
+-				orchdocker.NodeIDLabel: string(nodeID),
+-			},
+-		}},
+-	}
++	runtime := orchdocker.NewFakeRuntime()
++	runtime.AddContainer(orchdocker.ContainerStatus{
++		ID: orchdocker.ContainerID("stale-container"),
++		Labels: map[string]string{
++			orchdocker.ManagedLabel: "true",
++			orchdocker.TaskIDLabel:  string(staleTaskID),
++			orchdocker.NodeIDLabel:  string(nodeID),
++		},
++	})
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
+@@ -265,8 +265,8 @@ func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
+ 	}
+ 
+ 	wantRuntimeCalls := []string{"list", "stop:stale-container", "remove:stale-container"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	wantStatuses := []types.TaskStatus{types.TaskRemoved}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+@@ -291,7 +291,7 @@ func TestReconcileRemovesAssignedStoppedTask(t *testing.T) {
+ 			},
+ 		}},
+ 	}
+-	runtime := &fakeRuntime{}
++	runtime := orchdocker.NewFakeRuntime()
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
+ 
+ 	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
+@@ -299,8 +299,8 @@ func TestReconcileRemovesAssignedStoppedTask(t *testing.T) {
+ 	}
+ 
+ 	wantRuntimeCalls := []string{"stop:container-1", "remove:container-1", "list"}
+-	if !equalStrings(runtime.calls, wantRuntimeCalls) {
+-		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
+ 	wantStatuses := []types.TaskStatus{types.TaskRemoved}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+@@ -331,9 +331,8 @@ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ 		},
+ 	}
+ 	client := &fakeAgentClient{tasks: []api.AgentTask{task}}
+-	runtime := &fakeRuntime{inspect: map[orchdocker.ContainerID]orchdocker.ContainerStatus{
+-		"container-1": {ID: "container-1", Running: true},
+-	}}
++	runtime := orchdocker.NewFakeRuntime()
++	runtime.AddContainer(orchdocker.ContainerStatus{ID: "container-1", Running: true})
+ 	checker := &fakeHealthChecker{results: []bool{true, true, false, false}}
+ 	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).
+ 		WithRuntime(runtime).
+@@ -359,16 +358,15 @@ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ }
+ 
+ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+-	runtime := &fakeRuntime{
+-		managed: []orchdocker.ContainerStatus{{
+-			ID: "container-1",
+-			Labels: map[string]string{
+-				orchdocker.TaskIDLabel: "task-1",
+-			},
+-		}},
+-		logStarted: make(chan struct{}),
+-		logBlock:   true,
+-	}
++	logStarted := make(chan struct{})
++	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeLogBlock(logStarted))
++	runtime.AddContainer(orchdocker.ContainerStatus{
++		ID: "container-1",
++		Labels: map[string]string{
++			orchdocker.ManagedLabel: "true",
++			orchdocker.TaskIDLabel:  "task-1",
++		},
++	})
+ 	handler := NewLogHandler(runtime, "secret", slog.New(slog.NewTextHandler(io.Discard, nil)))
+ 	ctx, cancel := context.WithCancel(context.Background())
+ 	req := httptest.NewRequest(http.MethodGet, "/v1/agent/logs?task_id=task-1&follow=true", nil).WithContext(ctx)
+@@ -380,7 +378,7 @@ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+ 		close(done)
+ 	}()
+ 
+-	<-runtime.logStarted
++	<-logStarted
+ 	cancel()
+ 	select {
+ 	case <-done:
+@@ -391,7 +389,7 @@ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+ 
+ func TestLogHandlerExposesMetrics(t *testing.T) {
+ 	agentMetrics := metrics.NewAgent()
+-	handler := NewLogHandler(&fakeRuntime{}, "secret", slog.New(slog.NewTextHandler(io.Discard, nil)), WithMetricsHandler(agentMetrics.Handler()))
++	handler := NewLogHandler(orchdocker.NewFakeRuntime(), "secret", slog.New(slog.NewTextHandler(io.Discard, nil)), WithMetricsHandler(agentMetrics.Handler()))
+ 
+ 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+ 	rec := httptest.NewRecorder()
+@@ -437,90 +435,6 @@ func (c *fakeAgentClient) ReportTaskStatus(_ context.Context, taskID types.TaskI
+ 	}, nil
+ }
+ 
+-type fakeRuntime struct {
+-	calls      []string
+-	createdID  orchdocker.ContainerID
+-	managed    []orchdocker.ContainerStatus
+-	inspect    map[orchdocker.ContainerID]orchdocker.ContainerStatus
+-	inspectErr error
+-	listErr    error
+-	pullErr    error
+-	createErr  error
+-	logStarted chan struct{}
+-	logBlock   bool
+-}
+-
+-func (r *fakeRuntime) PullImage(_ context.Context, image string, _ *orchdocker.RegistryAuth) error {
+-	r.calls = append(r.calls, "pull:"+image)
+-	return r.pullErr
+-}
+-
+-func (r *fakeRuntime) CreateContainer(_ context.Context, spec orchdocker.ContainerSpec) (orchdocker.ContainerID, error) {
+-	r.calls = append(r.calls, "create:"+spec.TaskID)
+-	if r.createErr != nil {
+-		return "", r.createErr
+-	}
+-	return r.createdID, nil
+-}
+-
+-func (r *fakeRuntime) StartContainer(_ context.Context, id orchdocker.ContainerID) error {
+-	r.calls = append(r.calls, "start:"+string(id))
+-	return nil
+-}
+-
+-func (r *fakeRuntime) StopContainer(_ context.Context, id orchdocker.ContainerID, _ time.Duration) error {
+-	r.calls = append(r.calls, "stop:"+string(id))
+-	return nil
+-}
+-
+-func (r *fakeRuntime) RemoveContainer(_ context.Context, id orchdocker.ContainerID, _ bool) error {
+-	r.calls = append(r.calls, "remove:"+string(id))
+-	return nil
+-}
+-
+-func (r *fakeRuntime) InspectContainer(_ context.Context, id orchdocker.ContainerID) (orchdocker.ContainerStatus, error) {
+-	r.calls = append(r.calls, "inspect:"+string(id))
+-	if r.inspectErr != nil {
+-		return orchdocker.ContainerStatus{}, r.inspectErr
+-	}
+-	if r.inspect == nil {
+-		return orchdocker.ContainerStatus{}, errFakeNotFound{}
+-	}
+-	status, ok := r.inspect[id]
+-	if !ok {
+-		return orchdocker.ContainerStatus{}, errFakeNotFound{}
+-	}
+-	return status, nil
+-}
+-
+-func (r *fakeRuntime) ListManagedContainers(_ context.Context, _ map[string]string) ([]orchdocker.ContainerStatus, error) {
+-	r.calls = append(r.calls, "list")
+-	if r.listErr != nil {
+-		return nil, r.listErr
+-	}
+-	return r.managed, nil
+-}
+-
+-func (r *fakeRuntime) StreamLogs(context.Context, orchdocker.ContainerID, orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
+-	lines := make(chan orchdocker.LogLine)
+-	errs := make(chan error)
+-	if r.logStarted != nil {
+-		close(r.logStarted)
+-	}
+-	if r.logBlock {
+-		return lines, errs
+-	}
+-	close(lines)
+-	close(errs)
+-	return lines, errs
+-}
+-
+-type errFakeNotFound struct{}
+-
+-func (errFakeNotFound) Error() string {
+-	return "not found"
+-}
+-
+ var errDockerUnavailable = errors.New("docker unavailable")
+ 
+ type fakeHealthChecker struct {
+diff --git a/internal/docker/fake.go b/internal/docker/fake.go
+new file mode 100644
+index 0000000..f690aac
+--- /dev/null
++++ b/internal/docker/fake.go
+@@ -0,0 +1,428 @@
++package docker
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"sort"
++	"strconv"
++	"strings"
++	"sync"
++	"time"
++)
++
++var ErrFakeContainerNotFound = errors.New("fake container not found")
++
++type FakeRuntime struct {
++	mu sync.Mutex
++
++	next               int
++	nextIDs            []ContainerID
++	containers         map[ContainerID]ContainerStatus
++	byTask             map[string]ContainerID
++	logs               map[ContainerID][]LogLine
++	operations         []FakeOperation
++	pullErr            error
++	createErr          error
++	startErr           error
++	inspectErr         error
++	listErr            error
++	healthErr          error
++	exitAfterStart     bool
++	exitAfterStartCode int
++	logBlock           bool
++	logStarted         chan struct{}
++	logStartedOnce     sync.Once
++}
++
++type FakeRuntimeOption func(*FakeRuntime)
++
++type FakeOperation struct {
++	Name        string
++	Image       string
++	TaskID      string
++	ContainerID ContainerID
++	Force       bool
++	Labels      map[string]string
++}
++
++func NewFakeRuntime(opts ...FakeRuntimeOption) *FakeRuntime {
++	runtime := &FakeRuntime{
++		containers: make(map[ContainerID]ContainerStatus),
++		byTask:     make(map[string]ContainerID),
++		logs:       make(map[ContainerID][]LogLine),
++	}
++	for _, opt := range opts {
++		opt(runtime)
++	}
++	return runtime
++}
++
++func WithFakeContainerIDs(ids ...ContainerID) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.nextIDs = append([]ContainerID(nil), ids...)
++	}
++}
++
++func WithFakePullFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.pullErr = err
++	}
++}
++
++func WithFakeCreateFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.createErr = err
++	}
++}
++
++func WithFakeStartFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.startErr = err
++	}
++}
++
++func WithFakeInspectFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.inspectErr = err
++	}
++}
++
++func WithFakeListFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.listErr = err
++	}
++}
++
++func WithFakeHealthFailure(err error) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.healthErr = err
++	}
++}
++
++func WithFakeExitAfterStart(exitCode int) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.exitAfterStart = true
++		runtime.exitAfterStartCode = exitCode
++	}
++}
++
++func WithFakeLogBlock(started chan struct{}) FakeRuntimeOption {
++	return func(runtime *FakeRuntime) {
++		runtime.logBlock = true
++		runtime.logStarted = started
++	}
++}
++
++func (r *FakeRuntime) PullImage(ctx context.Context, image string, _ *RegistryAuth) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "pull", Image: image})
++	if strings.TrimSpace(image) == "" {
++		return fmt.Errorf("image is required")
++	}
++	return r.pullErr
++}
++
++func (r *FakeRuntime) CreateContainer(ctx context.Context, spec ContainerSpec) (ContainerID, error) {
++	if err := ctx.Err(); err != nil {
++		return "", err
++	}
++	if err := spec.Validate(); err != nil {
++		return "", err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "create", TaskID: spec.TaskID})
++	if r.createErr != nil {
++		return "", r.createErr
++	}
++	if id := r.byTask[spec.TaskID]; id != "" {
++		return id, nil
++	}
++	id := r.nextContainerIDLocked()
++	now := time.Now().UTC()
++	labels := fakeManagedLabels(spec)
++	r.byTask[spec.TaskID] = id
++	r.containers[id] = ContainerStatus{
++		ID:        id,
++		Name:      spec.Name,
++		Image:     spec.Image,
++		State:     "created",
++		Status:    "created",
++		Labels:    labels,
++		CreatedAt: now,
++	}
++	return id, nil
++}
++
++func (r *FakeRuntime) StartContainer(ctx context.Context, id ContainerID) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "start", ContainerID: id})
++	if r.startErr != nil {
++		return r.startErr
++	}
++	status, ok := r.containers[id]
++	if !ok {
++		return fmt.Errorf("%w: %s", ErrFakeContainerNotFound, id)
++	}
++	now := time.Now().UTC()
++	status.State = "running"
++	status.Status = "running"
++	status.Running = true
++	status.StartedAt = now
++	r.logs[id] = append(r.logs[id], LogLine{Stream: "stdout", Line: "started " + string(id), Timestamp: now})
++	if r.exitAfterStart {
++		status.State = "exited"
++		status.Status = "exited"
++		status.Running = false
++		status.ExitCode = r.exitAfterStartCode
++		if status.ExitCode == 0 {
++			status.ExitCode = 1
++		}
++		status.FinishedAt = now
++		r.logs[id] = append(r.logs[id], LogLine{Stream: "stderr", Line: fmt.Sprintf("exited %s with code %d", id, status.ExitCode), Timestamp: now})
++	}
++	r.containers[id] = status
++	return nil
++}
++
++func (r *FakeRuntime) StopContainer(ctx context.Context, id ContainerID, _ time.Duration) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "stop", ContainerID: id})
++	status, ok := r.containers[id]
++	if !ok {
++		return nil
++	}
++	if !status.Running {
++		return nil
++	}
++	status.State = "exited"
++	status.Status = "exited"
++	status.Running = false
++	status.FinishedAt = time.Now().UTC()
++	r.containers[id] = status
++	return nil
++}
++
++func (r *FakeRuntime) RemoveContainer(ctx context.Context, id ContainerID, force bool) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "remove", ContainerID: id, Force: force})
++	status, ok := r.containers[id]
++	if !ok {
++		return nil
++	}
++	delete(r.byTask, status.Labels[TaskIDLabel])
++	delete(r.containers, id)
++	return nil
++}
++
++func (r *FakeRuntime) InspectContainer(ctx context.Context, id ContainerID) (ContainerStatus, error) {
++	if err := ctx.Err(); err != nil {
++		return ContainerStatus{}, err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "inspect", ContainerID: id})
++	if r.inspectErr != nil {
++		return ContainerStatus{}, r.inspectErr
++	}
++	status, ok := r.containers[id]
++	if !ok {
++		return ContainerStatus{}, fmt.Errorf("%w: %s", ErrFakeContainerNotFound, id)
++	}
++	return cloneStatus(status), nil
++}
++
++func (r *FakeRuntime) ListManagedContainers(ctx context.Context, labels map[string]string) ([]ContainerStatus, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "list", Labels: cloneMap(labels)})
++	if r.listErr != nil {
++		return nil, r.listErr
++	}
++	statuses := make([]ContainerStatus, 0, len(r.containers))
++	for _, status := range r.containers {
++		if !fakeMatchesLabels(status, labels) {
++			continue
++		}
++		statuses = append(statuses, cloneStatus(status))
++	}
++	sort.Slice(statuses, func(i, j int) bool {
++		if statuses[i].CreatedAt.Equal(statuses[j].CreatedAt) {
++			return statuses[i].ID < statuses[j].ID
++		}
++		return statuses[i].CreatedAt.Before(statuses[j].CreatedAt)
++	})
++	return statuses, nil
++}
++
++func (r *FakeRuntime) StreamLogs(ctx context.Context, id ContainerID, _ LogOptions) (<-chan LogLine, <-chan error) {
++	lines := make(chan LogLine)
++	errs := make(chan error, 1)
++	r.mu.Lock()
++	r.operations = append(r.operations, FakeOperation{Name: "logs", ContainerID: id})
++	logs := append([]LogLine(nil), r.logs[id]...)
++	block := r.logBlock
++	started := r.logStarted
++	r.mu.Unlock()
++
++	go func() {
++		defer close(lines)
++		defer close(errs)
++		if started != nil {
++			r.logStartedOnce.Do(func() { close(started) })
++		}
++		if block {
++			<-ctx.Done()
++			return
++		}
++		for _, line := range logs {
++			select {
++			case <-ctx.Done():
++				return
++			case lines <- line:
++			}
++		}
++	}()
++	return lines, errs
++}
++
++func (r *FakeRuntime) CheckHealth(ctx context.Context, id ContainerID) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.operations = append(r.operations, FakeOperation{Name: "health", ContainerID: id})
++	return r.healthErr
++}
++
++func (r *FakeRuntime) AddContainer(status ContainerStatus) {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	status = cloneStatus(status)
++	if status.ID == "" {
++		status.ID = r.nextContainerIDLocked()
++	}
++	if status.CreatedAt.IsZero() {
++		status.CreatedAt = time.Now().UTC()
++	}
++	if status.Labels == nil {
++		status.Labels = make(map[string]string)
++	}
++	r.containers[status.ID] = status
++	if taskID := status.Labels[TaskIDLabel]; taskID != "" {
++		r.byTask[taskID] = status.ID
++	}
++}
++
++func (r *FakeRuntime) SetLogs(id ContainerID, logs []LogLine) {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	r.logs[id] = append([]LogLine(nil), logs...)
++}
++
++func (r *FakeRuntime) Operations() []FakeOperation {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	operations := make([]FakeOperation, len(r.operations))
++	for i, operation := range r.operations {
++		operations[i] = operation
++		operations[i].Labels = cloneMap(operation.Labels)
++	}
++	return operations
++}
++
++func (r *FakeRuntime) OperationStrings() []string {
++	operations := r.Operations()
++	values := make([]string, len(operations))
++	for i, operation := range operations {
++		values[i] = operation.String()
++	}
++	return values
++}
++
++func (op FakeOperation) String() string {
++	switch op.Name {
++	case "pull":
++		return "pull:" + op.Image
++	case "create":
++		return "create:" + op.TaskID
++	case "start", "stop", "remove", "inspect", "logs", "health":
++		return op.Name + ":" + string(op.ContainerID)
++	default:
++		return op.Name
++	}
++}
++
++func (r *FakeRuntime) nextContainerIDLocked() ContainerID {
++	if len(r.nextIDs) > 0 {
++		id := r.nextIDs[0]
++		r.nextIDs = r.nextIDs[1:]
++		return id
++	}
++	r.next++
++	return ContainerID("fake-container-" + strconv.Itoa(r.next))
++}
++
++func fakeManagedLabels(spec ContainerSpec) map[string]string {
++	labels := make(map[string]string, len(spec.Labels)+5)
++	for key, value := range spec.Labels {
++		labels[key] = value
++	}
++	labels[ManagedLabel] = "true"
++	labels[ServiceIDLabel] = spec.ServiceID
++	labels[TaskIDLabel] = spec.TaskID
++	labels[NodeIDLabel] = spec.NodeID
++	labels[VersionLabel] = strconv.FormatInt(spec.Version, 10)
++	return labels
++}
++
++func fakeMatchesLabels(status ContainerStatus, labels map[string]string) bool {
++	if status.Labels[ManagedLabel] != "true" {
++		return false
++	}
++	for key, value := range labels {
++		if status.Labels[key] != value {
++			return false
++		}
++	}
++	return true
++}
++
++func cloneStatus(status ContainerStatus) ContainerStatus {
++	status.Labels = cloneMap(status.Labels)
++	return status
++}
++
++func cloneMap(values map[string]string) map[string]string {
++	if values == nil {
++		return nil
++	}
++	cloned := make(map[string]string, len(values))
++	for key, value := range values {
++		cloned[key] = value
++	}
++	return cloned
++}
++
++var _ Runtime = (*FakeRuntime)(nil)
+diff --git a/internal/docker/fake_test.go b/internal/docker/fake_test.go
+new file mode 100644
+index 0000000..3a4450e
+--- /dev/null
++++ b/internal/docker/fake_test.go
+@@ -0,0 +1,162 @@
++package docker
++
++import (
++	"context"
++	"errors"
++	"sync"
++	"testing"
++	"time"
++)
++
++func TestFakeRuntimeRecordsOperationsAndCreatesIdempotently(t *testing.T) {
++	runtime := NewFakeRuntime(WithFakeContainerIDs("container-1"))
++
++	first, err := runtime.CreateContainer(context.Background(), containerSpecFixture())
++	if err != nil {
++		t.Fatalf("create container: %v", err)
++	}
++	second, err := runtime.CreateContainer(context.Background(), containerSpecFixture())
++	if err != nil {
++		t.Fatalf("create container again: %v", err)
++	}
++	if first != second {
++		t.Fatalf("expected idempotent create to return %q, got %q", first, second)
++	}
++	if err := runtime.StartContainer(context.Background(), first); err != nil {
++		t.Fatalf("start container: %v", err)
++	}
++	status, err := runtime.InspectContainer(context.Background(), first)
++	if err != nil {
++		t.Fatalf("inspect container: %v", err)
++	}
++	if !status.Running || status.Labels[TaskIDLabel] != "task-1" {
++		t.Fatalf("expected running managed task container, got %#v", status)
++	}
++	want := []string{"create:task-1", "create:task-1", "start:container-1", "inspect:container-1"}
++	if !equalStringSlices(runtime.OperationStrings(), want) {
++		t.Fatalf("expected operations %#v, got %#v", want, runtime.OperationStrings())
++	}
++}
++
++func TestFakeRuntimeIsThreadSafeForConcurrentCreates(t *testing.T) {
++	runtime := NewFakeRuntime()
++	spec := containerSpecFixture()
++	const workers = 16
++	var wg sync.WaitGroup
++	ids := make(chan ContainerID, workers)
++	errs := make(chan error, workers)
++	for i := 0; i < workers; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			id, err := runtime.CreateContainer(context.Background(), spec)
++			ids <- id
++			errs <- err
++		}()
++	}
++	wg.Wait()
++	close(ids)
++	close(errs)
++
++	var first ContainerID
++	for err := range errs {
++		if err != nil {
++			t.Fatalf("create container: %v", err)
++		}
++	}
++	for id := range ids {
++		if first == "" {
++			first = id
++			continue
++		}
++		if id != first {
++			t.Fatalf("expected all workers to receive %q, got %q", first, id)
++		}
++	}
++	statuses, err := runtime.ListManagedContainers(context.Background(), map[string]string{TaskIDLabel: "task-1"})
++	if err != nil {
++		t.Fatalf("list managed containers: %v", err)
++	}
++	if len(statuses) != 1 {
++		t.Fatalf("expected one container, got %#v", statuses)
++	}
++}
++
++func TestFakeRuntimeFailureInjection(t *testing.T) {
++	errPull := errors.New("pull failed")
++	errCreate := errors.New("create failed")
++	errStart := errors.New("start failed")
++	errHealth := errors.New("health failed")
++
++	if err := NewFakeRuntime(WithFakePullFailure(errPull)).PullImage(context.Background(), "nginx:1.27", nil); !errors.Is(err, errPull) {
++		t.Fatalf("expected pull failure, got %v", err)
++	}
++	if _, err := NewFakeRuntime(WithFakeCreateFailure(errCreate)).CreateContainer(context.Background(), containerSpecFixture()); !errors.Is(err, errCreate) {
++		t.Fatalf("expected create failure, got %v", err)
++	}
++
++	startRuntime := NewFakeRuntime(WithFakeStartFailure(errStart))
++	id, err := startRuntime.CreateContainer(context.Background(), containerSpecFixture())
++	if err != nil {
++		t.Fatalf("create before start failure: %v", err)
++	}
++	if err := startRuntime.StartContainer(context.Background(), id); !errors.Is(err, errStart) {
++		t.Fatalf("expected start failure, got %v", err)
++	}
++
++	healthRuntime := NewFakeRuntime(WithFakeHealthFailure(errHealth))
++	if err := healthRuntime.CheckHealth(context.Background(), "container-1"); !errors.Is(err, errHealth) {
++		t.Fatalf("expected health failure, got %v", err)
++	}
++}
++
++func TestFakeRuntimeCanExitAfterStart(t *testing.T) {
++	runtime := NewFakeRuntime(WithFakeExitAfterStart(7))
++	id, err := runtime.CreateContainer(context.Background(), containerSpecFixture())
++	if err != nil {
++		t.Fatalf("create container: %v", err)
++	}
++	if err := runtime.StartContainer(context.Background(), id); err != nil {
++		t.Fatalf("start container: %v", err)
++	}
++	status, err := runtime.InspectContainer(context.Background(), id)
++	if err != nil {
++		t.Fatalf("inspect container: %v", err)
++	}
++	if status.Running || status.ExitCode != 7 || status.FinishedAt.IsZero() {
++		t.Fatalf("expected exited container with code 7, got %#v", status)
++	}
++}
++
++func TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation(t *testing.T) {
++	started := make(chan struct{})
++	runtime := NewFakeRuntime(WithFakeLogBlock(started))
++	ctx, cancel := context.WithCancel(context.Background())
++	lines, errs := runtime.StreamLogs(ctx, "container-1", LogOptions{Follow: true})
++
++	select {
++	case <-started:
++	case <-time.After(time.Second):
++		t.Fatal("expected stream logs to start")
++	}
++	cancel()
++	for range lines {
++	}
++	for err := range errs {
++		if err != nil {
++			t.Fatalf("expected no log error, got %v", err)
++		}
++	}
++}
++
++func equalStringSlices(left, right []string) bool {
++	if len(left) != len(right) {
++		return false
++	}
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
++	}
++	return true
++}
+diff --git a/internal/e2e/orchestrator_test.go b/internal/e2e/orchestrator_test.go
+index 10355d2..9b20250 100644
+--- a/internal/e2e/orchestrator_test.go
++++ b/internal/e2e/orchestrator_test.go
+@@ -4,14 +4,12 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"errors"
+-	"fmt"
+ 	"io"
+ 	"log/slog"
+ 	"net/http/httptest"
+ 	"net/url"
+ 	"os"
+ 	"strings"
+-	"sync"
+ 	"testing"
+ 	"time"
+ 
+@@ -27,7 +25,7 @@ import (
+ )
+ 
+ func TestOrchestratorMVPE2EWithFakeRuntime(t *testing.T) {
+-	runOrchestratorMVP(t, newFakeRuntime())
++	runOrchestratorMVP(t, orchdocker.NewFakeRuntime())
+ }
+ 
+ func TestOrchestratorMVPE2EWithRealDocker(t *testing.T) {
+@@ -226,150 +224,6 @@ func waitFor(t *testing.T, name string, condition func() bool) {
+ 	}
+ }
+ 
+-type fakeRuntime struct {
+-	mu         sync.Mutex
+-	next       int
+-	containers map[orchdocker.ContainerID]orchdocker.ContainerStatus
+-	byTask     map[string]orchdocker.ContainerID
+-	logs       map[orchdocker.ContainerID][]orchdocker.LogLine
+-}
+-
+-func newFakeRuntime() *fakeRuntime {
+-	return &fakeRuntime{
+-		containers: make(map[orchdocker.ContainerID]orchdocker.ContainerStatus),
+-		byTask:     make(map[string]orchdocker.ContainerID),
+-		logs:       make(map[orchdocker.ContainerID][]orchdocker.LogLine),
+-	}
+-}
+-
+-func (r *fakeRuntime) PullImage(context.Context, string, *orchdocker.RegistryAuth) error {
+-	return nil
+-}
+-
+-func (r *fakeRuntime) CreateContainer(_ context.Context, spec orchdocker.ContainerSpec) (orchdocker.ContainerID, error) {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	if id := r.byTask[spec.TaskID]; id != "" {
+-		return id, nil
+-	}
+-	r.next++
+-	id := orchdocker.ContainerID(fmt.Sprintf("fake-container-%d", r.next))
+-	r.byTask[spec.TaskID] = id
+-	r.containers[id] = orchdocker.ContainerStatus{
+-		ID:        id,
+-		Name:      spec.Name,
+-		Image:     spec.Image,
+-		State:     "created",
+-		Labels:    managedLabels(spec),
+-		CreatedAt: time.Now().UTC(),
+-	}
+-	return id, nil
+-}
+-
+-func (r *fakeRuntime) StartContainer(_ context.Context, id orchdocker.ContainerID) error {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	status, ok := r.containers[id]
+-	if !ok {
+-		return fmt.Errorf("container %s not found", id)
+-	}
+-	status.State = "running"
+-	status.Running = true
+-	status.StartedAt = time.Now().UTC()
+-	r.containers[id] = status
+-	r.logs[id] = append(r.logs[id], orchdocker.LogLine{Stream: "stdout", Line: "started " + string(id), Timestamp: status.StartedAt})
+-	return nil
+-}
+-
+-func (r *fakeRuntime) StopContainer(_ context.Context, id orchdocker.ContainerID, _ time.Duration) error {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	status, ok := r.containers[id]
+-	if !ok {
+-		return nil
+-	}
+-	status.State = "exited"
+-	status.Running = false
+-	status.FinishedAt = time.Now().UTC()
+-	r.containers[id] = status
+-	return nil
+-}
+-
+-func (r *fakeRuntime) RemoveContainer(_ context.Context, id orchdocker.ContainerID, _ bool) error {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	status, ok := r.containers[id]
+-	if !ok {
+-		return nil
+-	}
+-	delete(r.byTask, status.Labels[orchdocker.TaskIDLabel])
+-	delete(r.containers, id)
+-	return nil
+-}
+-
+-func (r *fakeRuntime) InspectContainer(_ context.Context, id orchdocker.ContainerID) (orchdocker.ContainerStatus, error) {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	status, ok := r.containers[id]
+-	if !ok {
+-		return orchdocker.ContainerStatus{}, fmt.Errorf("container %s not found", id)
+-	}
+-	return status, nil
+-}
+-
+-func (r *fakeRuntime) ListManagedContainers(_ context.Context, labels map[string]string) ([]orchdocker.ContainerStatus, error) {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
+-	statuses := make([]orchdocker.ContainerStatus, 0, len(r.containers))
+-	for _, status := range r.containers {
+-		if !matchesLabels(status, labels) {
+-			continue
+-		}
+-		statuses = append(statuses, status)
+-	}
+-	return statuses, nil
+-}
+-
+-func (r *fakeRuntime) StreamLogs(_ context.Context, id orchdocker.ContainerID, _ orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
+-	lines := make(chan orchdocker.LogLine)
+-	errs := make(chan error, 1)
+-	r.mu.Lock()
+-	logs := append([]orchdocker.LogLine(nil), r.logs[id]...)
+-	r.mu.Unlock()
+-	go func() {
+-		defer close(lines)
+-		defer close(errs)
+-		for _, line := range logs {
+-			lines <- line
+-		}
+-	}()
+-	return lines, errs
+-}
+-
+-func managedLabels(spec orchdocker.ContainerSpec) map[string]string {
+-	return map[string]string{
+-		orchdocker.ManagedLabel:   "true",
+-		orchdocker.ServiceIDLabel: spec.ServiceID,
+-		orchdocker.TaskIDLabel:    spec.TaskID,
+-		orchdocker.NodeIDLabel:    spec.NodeID,
+-		orchdocker.VersionLabel:   fmt.Sprintf("%d", spec.Version),
+-	}
+-}
+-
+-func matchesLabels(status orchdocker.ContainerStatus, labels map[string]string) bool {
+-	if status.Labels[orchdocker.ManagedLabel] != "true" {
+-		return false
+-	}
+-	for key, value := range labels {
+-		if status.Labels[key] != value {
+-			return false
+-		}
+-	}
+-	return true
+-}
+-
+-var _ orchdocker.Runtime = (*fakeRuntime)(nil)
+-
+ func TestPostgresMigrationsE2E(t *testing.T) {
+ 	databaseURL := os.Getenv("ORCH_E2E_DATABASE_URL")
+ 	if databaseURL == "" {

@@ -1,0 +1,12 @@
+{"Time":"2026-10-13T03:18:47.271094636+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/cronjobs"}
+{"Time":"2026-10-13T03:18:47.273507788+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock"}
+{"Time":"2026-10-13T03:18:47.27354704+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Output":"=== RUN   TestParseAndRunWithFakeClock\n"}
+{"Time":"2026-10-13T03:18:47.273562895+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Output":"--- PASS: TestParseAndRunWithFakeClock (0.00s)\n"}
+{"Time":"2026-10-13T03:18:47.273570507+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Elapsed":0}
+{"Time":"2026-10-13T03:18:47.273580914+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace"}
+{"Time":"2026-10-13T03:18:47.273590064+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Output":"=== RUN   TestConcurrencyForbidAndReplace\n"}
+{"Time":"2026-10-13T03:18:47.273601029+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Output":"--- PASS: TestConcurrencyForbidAndReplace (0.00s)\n"}
+{"Time":"2026-10-13T03:18:47.273609969+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Elapsed":0}
+{"Time":"2026-10-13T03:18:47.273622052+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Output":"PASS\n"}
+{"Time":"2026-10-13T03:18:47.273954924+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Output":"ok  \tgithub.com/alekpopovic/orch/internal/cronjobs\t0.003s\n"}
+{"Time":"2026-10-13T03:18:47.273969312+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/cronjobs","Elapsed":0.003}

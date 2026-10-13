@@ -1,0 +1,8 @@
+{"Time":"2026-10-13T03:18:45.241516178+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/controlplane"}
+{"Time":"2026-10-13T03:18:45.244689015+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed"}
+{"Time":"2026-10-13T03:18:45.244713879+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Output":"=== RUN   TestUnhealthyRestartableTaskIsMarkedFailed\n"}
+{"Time":"2026-10-13T03:18:45.244791126+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Output":"--- PASS: TestUnhealthyRestartableTaskIsMarkedFailed (0.00s)\n"}
+{"Time":"2026-10-13T03:18:45.2447979+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestUnhealthyRestartableTaskIsMarkedFailed","Elapsed":0}
+{"Time":"2026-10-13T03:18:45.244809215+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"PASS\n"}
+{"Time":"2026-10-13T03:18:45.244949949+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"ok  \tgithub.com/alekpopovic/orch/internal/controlplane\t0.003s\n"}
+{"Time":"2026-10-13T03:18:45.244965314+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/controlplane","Elapsed":0.003}

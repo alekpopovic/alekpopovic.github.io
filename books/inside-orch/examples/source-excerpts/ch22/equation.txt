@@ -1,0 +1,16 @@
+func recommendation(current int, cpuUtilization float64, policy types.AutoscalingPolicy) int {
+	if current < policy.MinReplicas {
+		current = policy.MinReplicas
+	}
+	recommended := current
+	if policy.TargetCPUUtilization > 0 {
+		recommended = int(math.Ceil(float64(current) * cpuUtilization / float64(policy.TargetCPUUtilization)))
+	}
+	if recommended < policy.MinReplicas {
+		recommended = policy.MinReplicas
+	}
+	if policy.MaxReplicas > 0 && recommended > policy.MaxReplicas {
+		recommended = policy.MaxReplicas
+	}
+	return recommended
+}

@@ -1,0 +1,88 @@
+{
+  "chapter_id": "21",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch21.host-url",
+      "statement": "Backend URL uses extracted node host and endpoint PublicHostPort with HTTP scheme.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/traefik/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 143,
+      "line_end": 174,
+      "associated_commits": [
+        "ea0760e8201c842371caf6671a90bcfeb90197bb",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Router TLS does not imply backend TLS.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch21.fields",
+      "statement": "Builder emits rule/service/TLS plus servers/passHostHeader and omits routes without servers.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/traefik/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 62,
+      "line_end": 93,
+      "associated_commits": [
+        "ea0760e8201c842371caf6671a90bcfeb90197bb",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "External Traefik must fetch/apply config.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch21.selection",
+      "statement": "Route servers require matching container port, TCP, running/healthy and usable published address.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/traefik/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 118,
+      "line_end": 141,
+      "associated_commits": [
+        "ea0760e8201c842371caf6671a90bcfeb90197bb",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Cannot independently prove gateway reachability.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch21.overlay",
+      "statement": "Overlay/CNI/network policy mechanisms are proposals, not this host-port integration.",
+      "classification": "design only",
+      "source_path": "docs/NETWORKING_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 11,
+      "associated_commits": [
+        "ea0760e8201c842371caf6671a90bcfeb90197bb",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No runtime plugin/overlay enforcement inferred.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestBuildConfigIncludesOnlyHealthyTCPRouteEndpoints",
+    "TestBuildConfigSkipsRoutesWithoutHealthyServers",
+    "TestTraefikConfigUsesHealthyServiceRouteEndpoints"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

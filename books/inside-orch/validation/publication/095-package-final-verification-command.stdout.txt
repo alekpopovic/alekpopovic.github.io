@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T04:16:34.202981+00:00",
+  "scope": "Separate standard-library ZIP reader verifies inventory/CRC/member hashes/path structure and exact browser-tested export bytes. System sha256sum verifies external checksum file separately.",
+  "script_sha256": "60149abe38e77ba171db2d94b26068373dbc123ab7bec4323fb3b056f926cb9b",
+  "packages": {
+    "inside-orch-offline.zip": {
+      "reader_files_exactly_match_tested_export": 213,
+      "sections": 47,
+      "numbered_chapter_answers": 40,
+      "appendix_answers": 1,
+      "member_hashes_verified": 609,
+      "crc_passed": true,
+      "sorted_order": true,
+      "fixed_timestamps": true,
+      "sha256": "040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a"
+    },
+    "inside-orch-sources.zip": {
+      "chapters": 40,
+      "appendices": 6,
+      "answers": 40,
+      "labs": 8,
+      "excluded_application_snapshot": true,
+      "member_hashes_verified": 1063,
+      "crc_passed": true,
+      "sorted_order": true,
+      "fixed_timestamps": true,
+      "sha256": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06"
+    }
+  }
+}

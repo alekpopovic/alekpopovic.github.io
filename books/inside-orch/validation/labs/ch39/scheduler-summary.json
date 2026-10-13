@@ -1,0 +1,65 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "./internal/scheduler",
+    "./internal/api",
+    "-run",
+    "^$",
+    "-bench",
+    "^(BenchmarkSchedulerScoring|BenchmarkServiceListAPI|BenchmarkTaskListAPI)$",
+    "-benchtime",
+    "100ms",
+    "-count",
+    "3",
+    "-benchmem",
+    "-cpu",
+    "2"
+  ],
+  "started_at_utc": "2026-10-13T01:24:04.905117+00:00",
+  "finished_at_utc": "2026-10-13T01:24:08.024264+00:00",
+  "go": "1.25.0",
+  "goos": "linux",
+  "goarch": "amd64",
+  "cpu": "AMD Ryzen 5 5500",
+  "gomaxprocs": 2,
+  "workload": {
+    "ready_nodes": 100,
+    "pending_tasks": 1000,
+    "cpu_per_task_millicores": 100,
+    "memory_per_task_bytes": 67108864,
+    "random_seed": null
+  },
+  "samples": [
+    {
+      "iterations": 9,
+      "ns_per_op": 11991457,
+      "bytes_per_op": 718664,
+      "allocations_per_op": 630
+    },
+    {
+      "iterations": 9,
+      "ns_per_op": 12012169,
+      "bytes_per_op": 718664,
+      "allocations_per_op": 630
+    },
+    {
+      "iterations": 9,
+      "ns_per_op": 12050878,
+      "bytes_per_op": 718664,
+      "allocations_per_op": 630
+    }
+  ],
+  "median_ns_per_op": 12012169,
+  "range_ns_per_op": [
+    11991457,
+    12050878
+  ],
+  "raw_stdout_sha256": "1442f3cdd727b5be1cf13af2fe183b8671a040ea3d0fc936399ee48a724c796e",
+  "limitations": [
+    "Three short samples on a shared host; no statistical confidence interval inferred.",
+    "Pure Plan only: no HTTP, database, Docker or container startup.",
+    "API benchmark raw logs interleave with result labels; not automatically attributed here."
+  ]
+}

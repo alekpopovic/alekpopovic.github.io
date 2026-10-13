@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T04:48:57.874512+00:00",
+  "origin": "http://127.0.0.1:4000",
+  "scope": "Owned local static preview; HTTP pages, exact shipped downloads and genuine404. No live publication or browser execution.",
+  "checks": [
+    {
+      "path": "/books/inside-orch/",
+      "http_status": 200,
+      "bytes": 50894
+    },
+    {
+      "path": "/books/inside-orch/06-follow-one-request-through-the-control-plane.html",
+      "http_status": 200,
+      "bytes": 82520
+    },
+    {
+      "path": "/assets/books/inside-orch/downloads/inside-orch.pdf",
+      "http_status": 200,
+      "bytes": 1924410,
+      "sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3"
+    },
+    {
+      "path": "/assets/books/inside-orch/downloads/inside-orch.epub",
+      "http_status": 200,
+      "bytes": 991265,
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b"
+    },
+    {
+      "path": "/inside-orch-release-missing-page/",
+      "http_status": 404
+    }
+  ]
+}

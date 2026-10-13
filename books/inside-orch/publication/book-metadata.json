@@ -1,0 +1,81 @@
+{
+  "title": "Inside orch",
+  "subtitle": "Building and Operating a Docker Orchestrator in Go",
+  "author": "Aleksandar Popovic",
+  "author_url": "https://www.alekpopovic.com",
+  "language": "en",
+  "edition": "1.0",
+  "status": "local_review_candidate",
+  "source_repository": "https://github.com/alekpopovic/orch",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "chapters_planned": 40,
+  "appendices_planned": 6,
+  "labs_planned": 8,
+  "copyright": "Copyright © 2026 Aleksandar Popovic. All rights reserved. No new public license is granted for the original manuscript. Source excerpts and third-party materials retain their existing rights and notices.",
+  "isbn": null,
+  "page_count": null,
+  "publication_url": null,
+  "formats_planned": [
+    "Markdown",
+    "PDF",
+    "EPUB",
+    "HTML"
+  ],
+  "source_license_note": "No root license file or repository license metadata observed in the pinned Orch snapshot. Public availability does not grant a new source license.",
+  "book_id": "inside-orch",
+  "target_repository": "https://github.com/alekpopovic/alekpopovic.github.io",
+  "book_root": "books/inside-orch",
+  "public_url": "https://www.alekpopovic.com/books/inside-orch/",
+  "reading_sections_planned": 47,
+  "rights": "All rights reserved",
+  "rights_decision": "Explicit owner selection in the book-production session, 2026-10-13 Europe/Belgrade.",
+  "typesetting_fonts": [
+    {
+      "path": "publication/fonts/dm-sans.ttf",
+      "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+      "notice_path": "publication/fonts/dm-sans-OFL.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/passion-one-bold.ttf",
+      "sha256": "3a7249909b2e56e831f8a357a4ee549e9c5945cd003f0e5e3bd8791a76d98b7e",
+      "notice_path": "publication/fonts/passion-one-OFL.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/dejavu-sans-mono.ttf",
+      "sha256": "a54dca07c76d6289e717e75e0a58c0128f6d7269ef3faf76417c9d7d3bba37ab",
+      "notice_path": "publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/noto-color-emoji.ttf",
+      "sha256": "9fd0a3d0ce84d77e3185dfbae77bd1abf3926aa49a032e354d076c4f17151f10",
+      "notice_path": "publication/fonts/noto-color-emoji-OFL.txt",
+      "scope": "Bundled installed font, retaining its original font license; used only for exact source symbols and code typography."
+    },
+    {
+      "path": "publication/fonts/dejavu-sans-mono-bold.ttf",
+      "sha256": "2d67eed9b325ee2e69f906ce4f3f6264d5105230a13352c8494daad4f17b12c8",
+      "notice_path": "publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "scope": "Bundled installed font, retaining its original font license; used only for exact source symbols and code typography."
+    }
+  ],
+  "description": "A source-based engineering study of orch: Go control planes, Docker workers, state ownership, scheduling, failure recovery, and the limits of executable integration.",
+  "brand": "orch",
+  "publication_notes": "Copyright © 2026 Aleksandar Popovic. All rights reserved. No new public license is granted for the original manuscript. Source excerpts and third-party materials retain their existing rights and notices. Exact Orch excerpts are attributed to the pinned source edition; this book does not relicense that repository.",
+  "edition_date": "2026-10-13",
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "meaningful_manuscript_words": 101211,
+  "lab_status": "All eight laboratories actually rerun; independent recorded scope and outcomes under validation/labs/review076",
+  "laboratories": 8,
+  "formats": [
+    "Markdown",
+    "PDF",
+    "EPUB",
+    "native HTML",
+    "offline HTML"
+  ]
+}

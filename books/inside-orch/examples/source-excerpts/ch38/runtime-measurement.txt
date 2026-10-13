@@ -1,0 +1,8 @@
+func (r *instrumentedRuntime) measure(operation string, call func() error) error {
+	r.metrics.IncDockerOperation(operation)
+	err := call()
+	if err != nil {
+		r.metrics.IncDockerOperationError(operation)
+	}
+	return err
+}

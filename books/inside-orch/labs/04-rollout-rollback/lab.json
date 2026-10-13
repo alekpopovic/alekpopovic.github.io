@@ -1,0 +1,33 @@
+{
+  "id": "04",
+  "title": "rollout-rollback",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "author": "Aleksandar Popovic",
+  "prepared_at_utc": "2026-10-13T01:13:01.650291+00:00",
+  "classification": "teaching extension",
+  "inputs": {
+    "examples/teaching-extensions/rollout/main.go": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9"
+  },
+  "records": [
+    "validation/labs/04-check.json",
+    "validation/labs/lab04-rollout-observed.json"
+  ],
+  "machine_assertions": [
+    "surge<=4",
+    "modeledavailable>=3",
+    "healthyreplacementcoverage",
+    "7observedcheckpoints",
+    "operationconflicts",
+    "failedhistorypreserved",
+    "lateandstalerejection"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_rollout_security_labs.py",
+    "--lab",
+    "04"
+  ],
+  "release_status": "Actual scoped results prepared; final book-wide review pending",
+  "cleanup": "In-memory state discarded; only run-owned output files. Lab05 closes owned loopback listeners.",
+  "input_revision_note": "Canonical teaching-code formatting or verifier updates; repeat-execution gate076 will freeze current hashes."
+}

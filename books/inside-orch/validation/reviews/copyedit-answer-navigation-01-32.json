@@ -1,0 +1,37 @@
+{
+  "status": "fixed",
+  "at_utc": "2026-10-13T01:35:44.155248+00:00",
+  "scope": "Replace literal solution paths in chapter prose with actual relative reading links; no answer content or source listings changed.",
+  "changes": [
+    {
+      "path": "books/inside-orch/manuscript/chapters/04-domain-models-and-state-machines.md",
+      "before": "Worked answers are in `manuscript/solutions/ch04.md`. They distinguish the helper's local rules from delivery, persistence, and host-fencing claims that require later experiments.",
+      "after": "Worked answers are in [worked answers](../solutions/ch04.md). They distinguish the helper's local rules from delivery, persistence, and host-fencing claims that require later experiments.",
+      "sha256": "15dd49dfdc25d6664b2c6870587d06f93b656c6302518fb7a0f1cfe80c89a9e8"
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "before": "Complete worked answers are in `manuscript/solutions/ch05.md`.",
+      "after": "Complete worked answers are in [worked answers](../solutions/ch05.md).",
+      "sha256": "f2cc8f4f42313ee0e0ccee7abbbb3dc5a1f4ee94893ac151ec742d063e390c7a"
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "before": "Worked answers are in `manuscript/solutions/ch06.md`.",
+      "after": "Worked answers are in [worked answers](../solutions/ch06.md).",
+      "sha256": "ce34ff9c517c2cb0e2341d6e1df5648d6153ba4d7a604a2e2fb416be253ccf78"
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "before": "Worked answers are in `manuscript/solutions/ch07.md`.",
+      "after": "Worked answers are in [worked answers](../solutions/ch07.md).",
+      "sha256": "3a51730f12a6e46d39c3ec840e60110c07a97b610de2dd1e17aae24016d95345"
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "before": "Worked answers are in `manuscript/solutions/ch08.md`.",
+      "after": "Worked answers are in [worked answers](../solutions/ch08.md).",
+      "sha256": "17fcc2209bac3fd9d581966b32e4c1f86e6df29ba018e7ef554ebfff07948fb2"
+    }
+  ]
+}

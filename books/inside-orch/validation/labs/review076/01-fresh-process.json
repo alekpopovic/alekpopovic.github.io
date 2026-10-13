@@ -1,0 +1,159 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:39:06.310728+00:00",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "origin": "http://127.0.0.1:41207",
+  "mode": "actual fresh orch-server processes, manual node registration, no Docker execution",
+  "observations": [
+    {
+      "event": "ready",
+      "process": 1,
+      "pid": 601146,
+      "at_utc": "2026-10-13T01:39:06.319143+00:00"
+    },
+    {
+      "event": "stopped",
+      "process": 1,
+      "exit_code": 0,
+      "at_utc": "2026-10-13T01:39:06.324818+00:00"
+    },
+    {
+      "event": "ready",
+      "process": 2,
+      "pid": 601155,
+      "at_utc": "2026-10-13T01:39:06.376552+00:00"
+    },
+    {
+      "event": "stopped",
+      "process": 2,
+      "exit_code": 0,
+      "at_utc": "2026-10-13T01:39:06.382149+00:00"
+    }
+  ],
+  "version": {
+    "api_version": "v1",
+    "server_version": "0.3.0",
+    "minimum_agent_version": "0.2.0",
+    "maximum_tested_agent_version": "0.3.0",
+    "database_schema_version": 16,
+    "minimum_schema_version": 15,
+    "maximum_schema_version": 16
+  },
+  "before": {
+    "services": [
+      {
+        "id": "862b2969-8b53-4bdd-a59c-847b9b9b2ba3",
+        "namespace": "default",
+        "spec": {
+          "name": "book-http",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "nginx:1.27-alpine",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27-alpine"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T01:39:06.321319494Z",
+        "updated_at": "2026-10-13T01:39:06.321319494Z"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "265966b8-fe7d-42d7-8a95-9a37fe2c49fe",
+        "namespace": "default",
+        "service_id": "862b2969-8b53-4bdd-a59c-847b9b9b2ba3",
+        "node_id": "9c096af1-1b2e-44df-aede-b4710f621632",
+        "desired_status": "running",
+        "actual_status": "assigned",
+        "image": "nginx:1.27-alpine",
+        "requested_image": "nginx:1.27-alpine",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27-alpine",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T01:39:06.321319494Z",
+        "updated_at": "2026-10-13T01:39:06.321319494Z",
+        "started_at": "0001-01-01T00:00:00Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "9c096af1-1b2e-44df-aede-b4710f621632",
+        "hostname": "book-http-node",
+        "advertise_address": "http://127.0.0.1:1",
+        "capacity": {
+          "cpu": 4000,
+          "memory": 1073741824
+        },
+        "allocatable": {
+          "cpu": 4000,
+          "memory": 1073741824
+        },
+        "status": "ready",
+        "last_heartbeat_at": "2026-10-13T01:39:06.320576433Z",
+        "created_at": "2026-10-13T01:39:06.320576433Z",
+        "updated_at": "2026-10-13T01:39:06.32059536Z",
+        "agent_version": "0.3.0"
+      }
+    ],
+    "namespaces": [
+      {
+        "name": "book-payments",
+        "created_at": "2026-10-13T01:39:06.31994051Z"
+      },
+      {
+        "name": "default",
+        "created_at": "2026-10-13T01:39:06.315077607Z"
+      }
+    ]
+  },
+  "captured_ids": {
+    "node": "9c096af1-1b2e-44df-aede-b4710f621632",
+    "service": "862b2969-8b53-4bdd-a59c-847b9b9b2ba3",
+    "tasks": [
+      "265966b8-fe7d-42d7-8a95-9a37fe2c49fe"
+    ]
+  },
+  "after": {
+    "services": [],
+    "tasks": [],
+    "nodes": [],
+    "namespaces": [
+      {
+        "name": "default",
+        "created_at": "2026-10-13T01:39:06.328873037Z"
+      }
+    ]
+  },
+  "assertions": {
+    "new_process_ready": true,
+    "services_lost": true,
+    "tasks_lost": true,
+    "nodes_lost": true,
+    "custom_namespace_lost": true,
+    "default_namespace_recreated": true
+  },
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:39:06.382189+00:00"
+}

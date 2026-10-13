@@ -1,0 +1,84 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewer": "editorial_foundation; independently reviewed unauthored chapter slices",
+  "method": "Derive representative outcomes from pinned owner/predicate/arithmetic first, then compare supplied worked answer. Inspect every unauthored answer for source scope, assumptions, counterexamples and safe prerequisite language. Own17\u201324 and AppendixD are explicitly delegated, not self-certified.",
+  "representative_solutions": [
+    {
+      "exercise_id": "ch01.ex2",
+      "independent_argument": "main constructs MemoryService after optional schema check; database availability cannot change selected maps.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch09.ex1",
+      "independent_argument": "AssignTask WHERE matches expected UpdatedAt and pending; row_version increment is not the tested predicate. One-winner SQL record is separate from fresh-process recovery.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch10.ex3",
+      "independent_argument": "Two independent task rows can both win claims after reading one stale node budget; no shared reservation object follows from those per-row guards.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch14.ex1",
+      "independent_argument": "With both thresholds2/start running, counters are1/0,0/1,1/0,0/1,0/2; final unhealthy only. Clarified question to remove threshold ambiguity.",
+      "comparison": "agrees with supplied answer after EX-BOOK-001question clarification",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch27.ex2",
+      "independent_argument": "Wrong selected namespace authority fails403before lookup; authorized scope with foreign object ID can fail404at Matches.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch28.ex3",
+      "independent_argument": "60+120cumulative snapshot seconds aggregate180; unique elapsed120requires a different interval/delta model.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch31.ex3",
+      "independent_argument": "Earliest minute1/minute2 selected under missedlimit2; Forbid tests prioractivecohort once, so empty-start backlog can create several.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch32.ex2",
+      "independent_argument": "WritableRWO checks any activeattachment; it does not skip existingreadonlyrecords. Newreadonlyrequest takes a differentbranch.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch34.ex3",
+      "independent_argument": "Cancel closesDone and returnsconnection to pool; Release sees closedDone and skipsunlock; retained PostgreSQLsession can still own advisorylock.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch35.ex2",
+      "independent_argument": "Blocked is structureddecision despite nilcommanderror; automation must parse JSONstatus and warnings.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch38.ex2",
+      "independent_argument": "Failurecounter increments per accepted failed request; duplicatereport can incrementcounter without another transitionevent.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    },
+    {
+      "exercise_id": "ch39.ex1",
+      "independent_argument": "Fakeconvergence times directmemorycreation and syntheticreports; simulationticks are not actualPlaninvocations or Dockerthroughput.",
+      "comparison": "agrees with supplied answer",
+      "validation": "inspected"
+    }
+  ],
+  "all_chapter_exercises": 160,
+  "additional_practice": 24,
+  "actual_offline_baseline": "validation/exercises/offline-runs.json",
+  "actual_incorrect_behavior_rejection": "validation/exercises/mutation-runs.json",
+  "mandatory_live_prerequisites": "No mandatory chapter exercise requires live production infrastructure; optional owned runtime/database procedures retain separate laboratory prerequisites."
+}

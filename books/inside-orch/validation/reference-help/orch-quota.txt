@@ -1,0 +1,20 @@
+Manage namespace resource quotas
+
+Usage:
+  orch quota [command]
+
+Available Commands:
+  get         Show quota and current usage
+  set         Set quota limits (zero means unlimited)
+
+Flags:
+  -h, --help   help for quota
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch quota [command] --help" for more information about a command.

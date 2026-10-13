@@ -1,0 +1,27 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "command": "python3 books/inside-orch/scripts/audit_editorial_evidence.py --git-dir /tmp/inside-orch-reference-history.git",
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "prerequisites": [
+    "Python3",
+    "authored and captured text"
+  ],
+  "started_at_utc": "2026-10-13T02:31:32.588309+00:00",
+  "finished_at_utc": "2026-10-13T02:31:33.658160+00:00",
+  "exit_code": 0,
+  "scanned_files": 1353,
+  "patterns": [
+    "private_key",
+    "github_token",
+    "aws_access_key",
+    "jwt_literal",
+    "private_author_email"
+  ],
+  "findings": [],
+  "limitations": [
+    "Static high-signal pattern scan is not a proof arbitrary passwords or canaries cannot appear.",
+    "Manual source-to-channel review separately traces authorized plaintext and synthetic fixture use.",
+    "Immutable source corpus excluded from mutation; output records never include matched sensitive values."
+  ],
+  "status": "passed"
+}

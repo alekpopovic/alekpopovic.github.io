@@ -1,0 +1,96 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T04:07:31.275222+00:00",
+  "pdf_sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "publication_status": "Local candidate; no push or deployment",
+  "canonical_prose_changed": false,
+  "prompt": "087",
+  "status": "passed_build_gate",
+  "pages": 546,
+  "canonical_reading_sections": 47,
+  "bookmarks": 639,
+  "author": "Aleksandar Popovic",
+  "tool": {
+    "name": "WeasyPrint",
+    "version": "68.0"
+  },
+  "embedded_font_families": [
+    "BookEmoji",
+    "BookMono",
+    "BookMono-Bold",
+    "DM",
+    "DM-Bold"
+  ],
+  "input_hashes_checked": 212,
+  "checks": [
+    {
+      "record": "validation/publication/final-notice-site-build.json",
+      "record_sha256": "23115b924bfde296d085127706d3ec141a27b24326710c3d081c2aef4a43dca7",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:48:28.836367+00:00",
+      "finished_at_utc": "2026-10-13T03:49:09.213179+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/final-notice-site-build.stdout.txt",
+      "stderr": "validation/publication/final-notice-site-build.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/notice-rebuild-format-check.json",
+      "record_sha256": "c69ea3714a1b298498b5afca1063095ab480e83a09ac78713cf6bcdfbb94c91f",
+      "command": [
+        ".venv/bin/python",
+        "books/inside-orch/scripts/verify_formats.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:57:07.488435+00:00",
+      "finished_at_utc": "2026-10-13T03:57:21.160889+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/notice-rebuild-format-check.stdout.txt",
+      "stderr": "validation/publication/notice-rebuild-format-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/invariant-table-publisher-tests.json",
+      "record_sha256": "1c110497ecbf06b615d33e388f63ff1ce4107fb5a08b984eb18feb8d70a2940f",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "books/inside-orch/tests",
+        "-p",
+        "test_publisher_adapter.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:04:30.407386+00:00",
+      "finished_at_utc": "2026-10-13T03:04:30.616907+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/invariant-table-publisher-tests.stdout.txt",
+      "stderr": "validation/publication/invariant-table-publisher-tests.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "build_configuration": [
+    "scripts/build.py",
+    "publication/print.css",
+    "publication/pdf-build/inside-orch.html"
+  ],
+  "limitations": [
+    "Final all-page visual review is the separate 088 gate; this acceptance does not replace it.",
+    "The final print includes explicitly referenced companions after the 47 canonical sections; prompt corpus and immutable application snapshot are excluded."
+  ],
+  "notice_rebuild_rebind": {
+    "prior_pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+    "prior_record": "validation/publication/prior-notice-rebuild/validation/publication/pdf-typesetting-acceptance.json",
+    "equivalence_record": "validation/publication/pdf-rebuild-equivalence.json",
+    "equivalence_record_sha256": "78a2ba8b1729fba3499f14fa9fe2282072e9b5f03a678563b207dc41bc4e1169",
+    "scope": "All 546 text/content streams and raster images equal the reviewed prior edition. Fresh build/check records retained; no new visual views or format builds claimed."
+  }
+}

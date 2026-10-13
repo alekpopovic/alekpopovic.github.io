@@ -1,0 +1,30 @@
+test_accepts_exact_owned_loopback (test_lab_database_guard.IsolationGuardTests.test_accepts_exact_owned_loopback) ... ok
+test_rejects_database_mismatch (test_lab_database_guard.IsolationGuardTests.test_rejects_database_mismatch) ... ok
+test_rejects_missing_ownership (test_lab_database_guard.IsolationGuardTests.test_rejects_missing_ownership) ... ok
+test_rejects_real_database (test_lab_database_guard.IsolationGuardTests.test_rejects_real_database) ... ok
+test_rejects_remote (test_lab_database_guard.IsolationGuardTests.test_rejects_remote) ... ok
+test_rejects_stopped_container (test_lab_database_guard.IsolationGuardTests.test_rejects_stopped_container) ... ok
+test_rejects_wildcard_binding (test_lab_database_guard.IsolationGuardTests.test_rejects_wildcard_binding) ... ok
+test_rejects_wrong_port (test_lab_database_guard.IsolationGuardTests.test_rejects_wrong_port) ... ok
+test_companion_and_raw_evidence_boundaries (test_publisher_adapter.AdapterTests.test_companion_and_raw_evidence_boundaries) ... ok
+test_cross_section_fragment_and_query (test_publisher_adapter.AdapterTests.test_cross_section_fragment_and_query) ... ok
+test_duplicate_heading_ids_and_print_prefix (test_publisher_adapter.AdapterTests.test_duplicate_heading_ids_and_print_prefix) ... ok
+test_duplicate_stem_rejected (test_publisher_adapter.AdapterTests.test_duplicate_stem_rejected) ... ok
+test_nested_order_and_native_titles (test_publisher_adapter.AdapterTests.test_nested_order_and_native_titles) ... ok
+test_offline_companion_links_round_trip_without_root_paths (test_publisher_adapter.AdapterTests.test_offline_companion_links_round_trip_without_root_paths) ... ok
+test_print_companion_fragments_use_unique_document_prefix (test_publisher_adapter.AdapterTests.test_print_companion_fragments_use_unique_document_prefix) ... ok
+test_print_images_use_local_files_without_network_fetch (test_publisher_adapter.AdapterTests.test_print_images_use_local_files_without_network_fetch) ... ok
+test_print_rejects_remote_image_fetches (test_publisher_adapter.AdapterTests.test_print_rejects_remote_image_fetches) ... ok
+test_symlink_escape_rejected (test_publisher_adapter.AdapterTests.test_symlink_escape_rejected) ... ok
+test_traversal_rejected (test_publisher_adapter.AdapterTests.test_traversal_rejected) ... ok
+test_unsupported_and_missing_historical_path_rejected (test_publisher_adapter.AdapterTests.test_unsupported_and_missing_historical_path_rejected) ... ok
+test_wrong_title_grammar_rejected (test_publisher_adapter.AdapterTests.test_wrong_title_grammar_rejected) ... ok
+test_empty_target_rejected (test_recovery_targets.RecoveryTargets.test_empty_target_rejected) ... ok
+test_equal_names_rejected (test_recovery_targets.RecoveryTargets.test_equal_names_rejected) ... ok
+test_external_names_rejected (test_recovery_targets.RecoveryTargets.test_external_names_rejected) ... ok
+test_fresh_distinct_lab_names (test_recovery_targets.RecoveryTargets.test_fresh_distinct_lab_names) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.140s
+
+OK

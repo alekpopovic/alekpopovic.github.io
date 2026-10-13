@@ -1,0 +1,959 @@
+package types
+
+import (
+	"encoding/json"
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+)
+
+type NodeID string
+type TaskID string
+type ServiceID string
+type DeploymentID string
+type EventID string
+
+type Namespace struct {
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ResourceQuota struct {
+	Namespace              string    `json:"namespace"`
+	MaxServices            int       `json:"max_services,omitempty"`
+	MaxReplicas            int       `json:"max_replicas,omitempty"`
+	MaxCPUMillicores       int64     `json:"max_cpu_millicores,omitempty"`
+	MaxMemoryBytes         int64     `json:"max_memory_bytes,omitempty"`
+	MaxPublicPorts         int       `json:"max_public_ports,omitempty"`
+	MaxSecrets             int       `json:"max_secrets,omitempty"`
+	MaxRegistryCredentials int       `json:"max_registry_credentials,omitempty"`
+	UpdatedAt              time.Time `json:"updated_at"`
+}
+
+type ResourceUsage struct {
+	Services            int   `json:"services"`
+	Replicas            int   `json:"replicas"`
+	CPUMillicores       int64 `json:"cpu_millicores"`
+	MemoryBytes         int64 `json:"memory_bytes"`
+	PublicPorts         int   `json:"public_ports"`
+	Secrets             int   `json:"secrets"`
+	RegistryCredentials int   `json:"registry_credentials"`
+}
+
+type ImageMetadata struct {
+	RequestedImage string `json:"requested_image" yaml:"requested_image"`
+	Digest         string `json:"digest,omitempty" yaml:"digest,omitempty"`
+	Registry       string `json:"registry" yaml:"registry"`
+	Name           string `json:"name" yaml:"name"`
+	Tag            string `json:"tag,omitempty" yaml:"tag,omitempty"`
+	Pinned         bool   `json:"pinned,omitempty" yaml:"pinned,omitempty"`
+}
+
+type GitOpsSource struct {
+	ID              string            `json:"id"`
+	Namespace       string            `json:"namespace"`
+	RepositoryURL   string            `json:"repository_url"`
+	Branch          string            `json:"branch"`
+	Path            string            `json:"path"`
+	SyncInterval    time.Duration     `json:"sync_interval"`
+	Prune           bool              `json:"prune"`
+	DriftPolicy     GitOpsDriftPolicy `json:"drift_policy,omitempty"`
+	ManagedServices []string          `json:"managed_services,omitempty"`
+	LastRevision    string            `json:"last_revision,omitempty"`
+	LastError       string            `json:"last_error,omitempty"`
+	LastSyncedAt    time.Time         `json:"last_synced_at,omitempty"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+}
+
+type Node struct {
+	ID               NodeID            `json:"id"`
+	Hostname         string            `json:"hostname"`
+	AdvertiseAddress string            `json:"advertise_address"`
+	Labels           map[string]string `json:"labels,omitempty"`
+	Capacity         Resources         `json:"capacity"`
+	Allocatable      Resources         `json:"allocatable"`
+	Status           NodeStatus        `json:"status"`
+	LastHeartbeatAt  time.Time         `json:"last_heartbeat_at"`
+	AgentTokenHash   string            `json:"-"`
+	AgentTokenExpiry time.Time         `json:"-"`
+	AgentRevoked     bool              `json:"-"`
+	CreatedAt        time.Time         `json:"created_at"`
+	UpdatedAt        time.Time         `json:"updated_at"`
+	AgentVersion     string            `json:"agent_version,omitempty"`
+}
+
+type Resources struct {
+	CPU    int64 `json:"cpu"`
+	Memory int64 `json:"memory"`
+}
+
+func (resources *Resources) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		CPU    json.RawMessage `json:"cpu"`
+		Memory json.RawMessage `json:"memory"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	cpu, err := parseCPUValue(raw.CPU)
+	if err != nil {
+		return err
+	}
+	memory, err := parseMemoryValue(raw.Memory)
+	if err != nil {
+		return err
+	}
+	resources.CPU = cpu
+	resources.Memory = memory
+	return nil
+}
+
+func parseCPUValue(raw json.RawMessage) (int64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+	var text string
+	if err := json.Unmarshal(raw, &text); err == nil {
+		return ParseCPU(text)
+	}
+	var number float64
+	if err := json.Unmarshal(raw, &number); err != nil {
+		return 0, fmt.Errorf("invalid CPU value")
+	}
+	if number <= 0 || math.Trunc(number) != number || math.IsNaN(number) || math.IsInf(number, 0) {
+		return 0, fmt.Errorf("invalid CPU value %v", number)
+	}
+	return int64(number), nil
+}
+
+func parseMemoryValue(raw json.RawMessage) (int64, error) {
+	if len(raw) == 0 || string(raw) == "null" {
+		return 0, nil
+	}
+	var text string
+	if err := json.Unmarshal(raw, &text); err == nil {
+		return ParseMemory(text)
+	}
+	var number int64
+	if err := json.Unmarshal(raw, &number); err != nil {
+		return 0, fmt.Errorf("invalid memory value")
+	}
+	if number <= 0 {
+		return 0, fmt.Errorf("invalid memory value %d", number)
+	}
+	return number, nil
+}
+
+type NodeStatus string
+
+const (
+	NodeReady    NodeStatus = "ready"
+	NodeDraining NodeStatus = "draining"
+	NodeOffline  NodeStatus = "offline"
+	NodeUnknown  NodeStatus = "unknown"
+)
+
+type NodeSpec struct {
+	Hostname         string            `json:"hostname"`
+	AdvertiseAddress string            `json:"advertise_address"`
+	Labels           map[string]string `json:"labels,omitempty"`
+	Capacity         Resources         `json:"capacity"`
+	Allocatable      Resources         `json:"allocatable"`
+}
+
+func (spec NodeSpec) Validate() error {
+	if strings.TrimSpace(spec.Hostname) == "" {
+		return fmt.Errorf("hostname is required")
+	}
+	if strings.TrimSpace(spec.AdvertiseAddress) == "" {
+		return fmt.Errorf("advertise address is required")
+	}
+	if err := validateNonNegativeResources("capacity", spec.Capacity); err != nil {
+		return err
+	}
+	if err := validateNonNegativeResources("allocatable", spec.Allocatable); err != nil {
+		return err
+	}
+	if spec.Allocatable.CPU > spec.Capacity.CPU {
+		return fmt.Errorf("allocatable CPU cannot exceed capacity CPU")
+	}
+	if spec.Allocatable.Memory > spec.Capacity.Memory {
+		return fmt.Errorf("allocatable memory cannot exceed capacity memory")
+	}
+	return nil
+}
+
+type Service struct {
+	ID                ServiceID           `json:"id"`
+	Namespace         string              `json:"namespace"`
+	Spec              ServiceSpec         `json:"spec"`
+	Status            ServiceStatus       `json:"status"`
+	DeploymentVersion int64               `json:"deployment_version"`
+	CreatedAt         time.Time           `json:"created_at"`
+	UpdatedAt         time.Time           `json:"updated_at"`
+	GitOps            *GitOpsManagedState `json:"gitops,omitempty"`
+}
+
+type ServiceStatus string
+
+const (
+	ServiceActive   ServiceStatus = "active"
+	ServiceDeleting ServiceStatus = "deleting"
+	ServiceDeleted  ServiceStatus = "deleted"
+)
+
+type ServiceSpec struct {
+	Name                 string                `json:"name"`
+	Image                string                `json:"image"`
+	ImageMetadata        ImageMetadata         `json:"image_metadata,omitempty"`
+	ImagePullSecret      string                `json:"image_pull_secret,omitempty"`
+	Stateful             bool                  `json:"stateful,omitempty"`
+	Replicas             int                   `json:"replicas"`
+	Env                  map[string]string     `json:"env,omitempty"`
+	SecretRefs           []SecretRef           `json:"secret_refs,omitempty"`
+	Ports                []Port                `json:"ports,omitempty"`
+	ResourceRequirements ResourceRequirements  `json:"resource_requirements"`
+	SecurityContext      SecurityContext       `json:"security_context,omitempty"`
+	Autoscaling          AutoscalingPolicy     `json:"autoscaling,omitempty"`
+	Healthcheck          *Healthcheck          `json:"healthcheck,omitempty"`
+	RestartPolicy        RestartPolicy         `json:"restart_policy"`
+	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+	Routes               []Route               `json:"routes,omitempty"`
+	VolumeClaims         []VolumeClaimMount    `json:"volume_claims,omitempty" yaml:"volumeClaims,omitempty"`
+}
+
+func (spec ServiceSpec) EffectiveImage() string {
+	if spec.ImageMetadata.Pinned && spec.ImageMetadata.Digest != "" && spec.ImageMetadata.Registry != "" && spec.ImageMetadata.Name != "" {
+		return strings.TrimSuffix(spec.ImageMetadata.Registry, "/") + "/" + strings.TrimPrefix(spec.ImageMetadata.Name, "/") + "@" + spec.ImageMetadata.Digest
+	}
+	return spec.Image
+}
+
+func (spec ServiceSpec) Validate() error {
+	if strings.TrimSpace(spec.Name) == "" {
+		return fmt.Errorf("service name is required")
+	}
+	if strings.TrimSpace(spec.Image) == "" {
+		return fmt.Errorf("image is required")
+	}
+	if !validImageReference(spec.Image) {
+		return fmt.Errorf("image reference is invalid")
+	}
+	if spec.Replicas < 0 {
+		return fmt.Errorf("replicas cannot be negative")
+	}
+	if err := spec.ResourceRequirements.Validate(); err != nil {
+		return err
+	}
+	if err := spec.SecurityContext.Validate(); err != nil {
+		return err
+	}
+	if err := spec.Autoscaling.Validate(); err != nil {
+		return err
+	}
+	for i, port := range spec.Ports {
+		if err := port.Validate(); err != nil {
+			return fmt.Errorf("ports[%d]: %w", i, err)
+		}
+	}
+	for i, ref := range spec.SecretRefs {
+		if err := ref.Validate(); err != nil {
+			return fmt.Errorf("secret_refs[%d]: %w", i, err)
+		}
+	}
+	if spec.Healthcheck != nil {
+		if err := spec.Healthcheck.Validate(); err != nil {
+			return err
+		}
+	}
+	if spec.RestartPolicy.Condition != "" {
+		if !validRestartCondition(spec.RestartPolicy.Condition) {
+			return fmt.Errorf("restart policy condition %q is invalid", spec.RestartPolicy.Condition)
+		}
+	}
+	for i, constraint := range spec.PlacementConstraints {
+		if err := constraint.Validate(); err != nil {
+			return fmt.Errorf("placement_constraints[%d]: %w", i, err)
+		}
+	}
+	for i, route := range spec.Routes {
+		if err := route.Validate(); err != nil {
+			return fmt.Errorf("routes[%d]: %w", i, err)
+		}
+	}
+	for i, mount := range spec.VolumeClaims {
+		if strings.TrimSpace(mount.Claim) == "" || !strings.HasPrefix(strings.TrimSpace(mount.Target), "/") {
+			return fmt.Errorf("volume_claims[%d]: claim and absolute target are required", i)
+		}
+	}
+	return nil
+}
+
+func validImageReference(image string) bool {
+	image = strings.TrimSpace(image)
+	if image == "" || strings.Contains(image, "://") || strings.HasPrefix(image, "-") {
+		return false
+	}
+	for _, char := range image {
+		if char <= ' ' || char == '"' || char == '\'' {
+			return false
+		}
+	}
+	return true
+}
+
+type SecretRef struct {
+	Name string `json:"name"`
+	Key  string `json:"key,omitempty"`
+	Env  string `json:"env,omitempty"`
+}
+
+func (ref SecretRef) Validate() error {
+	if strings.TrimSpace(ref.Name) == "" {
+		return fmt.Errorf("secret name is required")
+	}
+	if strings.TrimSpace(ref.EnvName()) == "" {
+		return fmt.Errorf("secret env name is required")
+	}
+	return nil
+}
+
+func (ref SecretRef) EnvName() string {
+	if strings.TrimSpace(ref.Env) != "" {
+		return strings.TrimSpace(ref.Env)
+	}
+	if strings.TrimSpace(ref.Key) != "" {
+		return strings.TrimSpace(ref.Key)
+	}
+	return strings.TrimSpace(ref.Name)
+}
+
+type Secret struct {
+	Name           string    `json:"name"`
+	Namespace      string    `json:"namespace"`
+	EncryptedValue []byte    `json:"-"`
+	KeyID          string    `json:"key_id,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+func (secret Secret) Metadata() SecretMetadata {
+	return SecretMetadata{
+		Name:      secret.Name,
+		Namespace: secret.Namespace,
+		KeyID:     secret.KeyID,
+		CreatedAt: secret.CreatedAt.UTC(),
+		UpdatedAt: secret.UpdatedAt.UTC(),
+	}
+}
+
+type SecretMetadata struct {
+	Name      string    `json:"name"`
+	Namespace string    `json:"namespace"`
+	KeyID     string    `json:"key_id,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type RegistryCredential struct {
+	ID                string    `json:"id"`
+	Namespace         string    `json:"namespace"`
+	Registry          string    `json:"registry"`
+	Username          string    `json:"username"`
+	EncryptedPassword []byte    `json:"-"`
+	KeyID             string    `json:"key_id,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+func (credential RegistryCredential) Metadata() RegistryCredentialMetadata {
+	return RegistryCredentialMetadata{
+		ID:        credential.ID,
+		Namespace: credential.Namespace,
+		Registry:  credential.Registry,
+		Username:  credential.Username,
+		KeyID:     credential.KeyID,
+		CreatedAt: credential.CreatedAt.UTC(),
+		UpdatedAt: credential.UpdatedAt.UTC(),
+	}
+}
+
+type RegistryCredentialMetadata struct {
+	ID        string    `json:"id"`
+	Namespace string    `json:"namespace"`
+	Registry  string    `json:"registry"`
+	Username  string    `json:"username"`
+	KeyID     string    `json:"key_id,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type Port struct {
+	Name          string       `json:"name,omitempty"`
+	Protocol      PortProtocol `json:"protocol"`
+	ContainerPort int          `json:"container_port"`
+	PublishedPort int          `json:"published_port,omitempty"`
+}
+
+func (port Port) Validate() error {
+	if port.Protocol == "" {
+		return fmt.Errorf("protocol is required")
+	}
+	if port.Protocol != PortTCP && port.Protocol != PortUDP {
+		return fmt.Errorf("protocol %q is invalid", port.Protocol)
+	}
+	if port.ContainerPort < 1 || port.ContainerPort > 65535 {
+		return fmt.Errorf("container port must be between 1 and 65535")
+	}
+	if port.PublishedPort < 0 || port.PublishedPort > 65535 {
+		return fmt.Errorf("published port must be between 0 and 65535")
+	}
+	return nil
+}
+
+type PortProtocol string
+
+const (
+	PortTCP PortProtocol = "tcp"
+	PortUDP PortProtocol = "udp"
+)
+
+type Route struct {
+	Host       string `json:"host"`
+	PathPrefix string `json:"path_prefix"`
+	Port       int    `json:"port"`
+	TLS        bool   `json:"tls,omitempty"`
+}
+
+func (route Route) Validate() error {
+	if strings.TrimSpace(route.Host) == "" {
+		return fmt.Errorf("host is required")
+	}
+	if strings.TrimSpace(route.PathPrefix) == "" {
+		return fmt.Errorf("path_prefix is required")
+	}
+	if !strings.HasPrefix(route.PathPrefix, "/") {
+		return fmt.Errorf("path_prefix must start with /")
+	}
+	if route.Port < 1 || route.Port > 65535 {
+		return fmt.Errorf("port must be between 1 and 65535")
+	}
+	return nil
+}
+
+type SecurityContext struct {
+	User                   string          `json:"user,omitempty"`
+	ReadOnlyRootFilesystem bool            `json:"read_only_root_filesystem,omitempty"`
+	Privileged             bool            `json:"privileged,omitempty"`
+	CapAdd                 []string        `json:"cap_add,omitempty"`
+	CapDrop                []string        `json:"cap_drop,omitempty"`
+	HostNetwork            bool            `json:"host_network,omitempty"`
+	HostPID                bool            `json:"host_pid,omitempty"`
+	HostPathMounts         []HostPathMount `json:"host_path_mounts,omitempty"`
+}
+
+type HostPathMount struct {
+	HostPath      string `json:"host_path"`
+	ContainerPath string `json:"container_path"`
+	ReadOnly      bool   `json:"read_only,omitempty"`
+}
+
+func (context SecurityContext) Validate() error {
+	if strings.ContainsAny(context.User, "\x00\r\n") {
+		return fmt.Errorf("security context user contains invalid characters")
+	}
+	for i, capability := range context.CapAdd {
+		if err := validateCapabilityName(capability); err != nil {
+			return fmt.Errorf("security_context.cap_add[%d]: %w", i, err)
+		}
+	}
+	for i, capability := range context.CapDrop {
+		if err := validateCapabilityName(capability); err != nil {
+			return fmt.Errorf("security_context.cap_drop[%d]: %w", i, err)
+		}
+	}
+	for i, mount := range context.HostPathMounts {
+		if err := mount.Validate(); err != nil {
+			return fmt.Errorf("security_context.host_path_mounts[%d]: %w", i, err)
+		}
+	}
+	return nil
+}
+
+func (mount HostPathMount) Validate() error {
+	if !strings.HasPrefix(mount.HostPath, "/") {
+		return fmt.Errorf("host_path must be absolute")
+	}
+	if strings.Contains(mount.HostPath, "\x00") || strings.Contains(mount.HostPath, "..") {
+		return fmt.Errorf("host_path contains invalid path segment")
+	}
+	if !strings.HasPrefix(mount.ContainerPath, "/") {
+		return fmt.Errorf("container_path must be absolute")
+	}
+	if strings.Contains(mount.ContainerPath, "\x00") || strings.Contains(mount.ContainerPath, "..") {
+		return fmt.Errorf("container_path contains invalid path segment")
+	}
+	return nil
+}
+
+func validateCapabilityName(capability string) error {
+	capability = strings.TrimSpace(capability)
+	if capability == "" {
+		return fmt.Errorf("capability is required")
+	}
+	capability = strings.TrimPrefix(strings.ToUpper(capability), "CAP_")
+	for _, char := range capability {
+		if (char < 'A' || char > 'Z') && (char < '0' || char > '9') && char != '_' {
+			return fmt.Errorf("capability %q is invalid", capability)
+		}
+	}
+	return nil
+}
+
+type ResourceRequirements struct {
+	Requests Resources `json:"requests"`
+	Limits   Resources `json:"limits"`
+}
+
+type AutoscalingPolicy struct {
+	Enabled              bool          `json:"enabled,omitempty"`
+	MinReplicas          int           `json:"min_replicas,omitempty"`
+	MaxReplicas          int           `json:"max_replicas,omitempty"`
+	TargetCPUUtilization int           `json:"target_cpu_utilization,omitempty"`
+	Cooldown             time.Duration `json:"cooldown,omitempty"`
+	StabilizationWindow  time.Duration `json:"stabilization_window,omitempty"`
+}
+
+func (policy AutoscalingPolicy) Validate() error {
+	if policy.MinReplicas < 0 {
+		return fmt.Errorf("autoscaling min replicas cannot be negative")
+	}
+	if policy.MaxReplicas < 0 {
+		return fmt.Errorf("autoscaling max replicas cannot be negative")
+	}
+	if policy.Enabled {
+		if policy.MaxReplicas == 0 {
+			return fmt.Errorf("autoscaling max replicas is required when autoscaling is enabled")
+		}
+		if policy.TargetCPUUtilization <= 0 {
+			return fmt.Errorf("autoscaling target CPU utilization must be positive")
+		}
+	}
+	if policy.MaxReplicas > 0 && policy.MinReplicas > policy.MaxReplicas {
+		return fmt.Errorf("autoscaling min replicas cannot exceed max replicas")
+	}
+	if policy.TargetCPUUtilization < 0 || policy.TargetCPUUtilization > 1000 {
+		return fmt.Errorf("autoscaling target CPU utilization must be between 1 and 1000")
+	}
+	if policy.Cooldown < 0 {
+		return fmt.Errorf("autoscaling cooldown cannot be negative")
+	}
+	if policy.StabilizationWindow < 0 {
+		return fmt.Errorf("autoscaling stabilization window cannot be negative")
+	}
+	return nil
+}
+
+type ResourceDefaults struct {
+	Requests Resources
+	Limits   Resources
+}
+
+func DefaultResourceDefaults() ResourceDefaults {
+	return ResourceDefaults{
+		Requests: Resources{CPU: 100, Memory: 128 * 1024 * 1024},
+		Limits:   Resources{CPU: 100, Memory: 128 * 1024 * 1024},
+	}
+}
+
+func (requirements ResourceRequirements) WithDefaults(defaults ResourceDefaults) (ResourceRequirements, error) {
+	if defaults.Requests.CPU <= 0 || defaults.Requests.Memory <= 0 {
+		return ResourceRequirements{}, fmt.Errorf("default resource requests must be positive")
+	}
+	if defaults.Limits.CPU <= 0 || defaults.Limits.Memory <= 0 {
+		return ResourceRequirements{}, fmt.Errorf("default resource limits must be positive")
+	}
+	if defaults.Requests.CPU > defaults.Limits.CPU {
+		return ResourceRequirements{}, fmt.Errorf("default requested CPU cannot exceed CPU limit")
+	}
+	if defaults.Requests.Memory > defaults.Limits.Memory {
+		return ResourceRequirements{}, fmt.Errorf("default requested memory cannot exceed memory limit")
+	}
+
+	normalized := requirements
+	if normalized.Requests.CPU == 0 {
+		normalized.Requests.CPU = defaults.Requests.CPU
+	}
+	if normalized.Requests.Memory == 0 {
+		normalized.Requests.Memory = defaults.Requests.Memory
+	}
+	if normalized.Limits.CPU == 0 {
+		normalized.Limits.CPU = defaults.Limits.CPU
+	}
+	if normalized.Limits.Memory == 0 {
+		normalized.Limits.Memory = defaults.Limits.Memory
+	}
+	if err := normalized.ValidateStrict(); err != nil {
+		return ResourceRequirements{}, err
+	}
+	return normalized, nil
+}
+
+func (requirements ResourceRequirements) Validate() error {
+	if err := validateNonNegativeResources("resource requests", requirements.Requests); err != nil {
+		return err
+	}
+	if err := validateNonNegativeResources("resource limits", requirements.Limits); err != nil {
+		return err
+	}
+	if requirements.Limits.CPU > 0 && requirements.Requests.CPU > requirements.Limits.CPU {
+		return fmt.Errorf("requested CPU cannot exceed CPU limit")
+	}
+	if requirements.Limits.Memory > 0 && requirements.Requests.Memory > requirements.Limits.Memory {
+		return fmt.Errorf("requested memory cannot exceed memory limit")
+	}
+	return nil
+}
+
+func (requirements ResourceRequirements) ValidateStrict() error {
+	if requirements.Requests.CPU <= 0 {
+		return fmt.Errorf("resource requests CPU must be positive")
+	}
+	if requirements.Requests.Memory <= 0 {
+		return fmt.Errorf("resource requests memory must be positive")
+	}
+	if requirements.Limits.CPU <= 0 {
+		return fmt.Errorf("resource limits CPU must be positive")
+	}
+	if requirements.Limits.Memory <= 0 {
+		return fmt.Errorf("resource limits memory must be positive")
+	}
+	return requirements.Validate()
+}
+
+func NormalizeServiceSpec(spec ServiceSpec, defaults ResourceDefaults) (ServiceSpec, error) {
+	normalized := spec
+	normalized.ImagePullSecret = strings.TrimSpace(normalized.ImagePullSecret)
+	requirements, err := normalized.ResourceRequirements.WithDefaults(defaults)
+	if err != nil {
+		return ServiceSpec{}, err
+	}
+	normalized.ResourceRequirements = requirements
+	if err := normalized.Validate(); err != nil {
+		return ServiceSpec{}, err
+	}
+	return normalized, nil
+}
+
+type Healthcheck struct {
+	Type               HealthcheckType `json:"type"`
+	Scheme             string          `json:"scheme,omitempty"`
+	Path               string          `json:"path,omitempty"`
+	Port               int             `json:"port"`
+	Interval           time.Duration   `json:"interval"`
+	Timeout            time.Duration   `json:"timeout"`
+	HealthyThreshold   int             `json:"healthy_threshold"`
+	UnhealthyThreshold int             `json:"unhealthy_threshold"`
+}
+
+func (check Healthcheck) Validate() error {
+	if check.Type == HealthcheckNone {
+		return nil
+	}
+	if check.Type != HealthcheckHTTP && check.Type != HealthcheckTCP {
+		return fmt.Errorf("healthcheck type %q is invalid", check.Type)
+	}
+	if check.Port < 1 || check.Port > 65535 {
+		return fmt.Errorf("healthcheck port must be between 1 and 65535")
+	}
+	if check.Type == HealthcheckHTTP {
+		if err := validateHealthcheckScheme(check.Scheme); err != nil {
+			return err
+		}
+		if err := validateHealthcheckPath(check.Path); err != nil {
+			return err
+		}
+	} else if strings.TrimSpace(check.Scheme) != "" {
+		return fmt.Errorf("healthcheck scheme is only valid for HTTP checks")
+	}
+	if check.Type == HealthcheckTCP && strings.TrimSpace(check.Path) != "" {
+		return fmt.Errorf("healthcheck path is only valid for HTTP checks")
+	}
+	if check.Interval < 0 {
+		return fmt.Errorf("healthcheck interval cannot be negative")
+	}
+	if check.Timeout < 0 {
+		return fmt.Errorf("healthcheck timeout cannot be negative")
+	}
+	if check.HealthyThreshold < 0 {
+		return fmt.Errorf("healthy threshold cannot be negative")
+	}
+	if check.UnhealthyThreshold < 0 {
+		return fmt.Errorf("unhealthy threshold cannot be negative")
+	}
+	return nil
+}
+
+func validateHealthcheckScheme(scheme string) error {
+	scheme = strings.ToLower(strings.TrimSpace(scheme))
+	if scheme == "" || scheme == "http" || scheme == "https" {
+		return nil
+	}
+	return fmt.Errorf("healthcheck scheme must be http or https")
+}
+
+func validateHealthcheckPath(path string) error {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return fmt.Errorf("healthcheck path is required for HTTP checks")
+	}
+	if strings.Contains(path, "://") {
+		return fmt.Errorf("healthcheck path must not be a full URL")
+	}
+	if !strings.HasPrefix(path, "/") || strings.HasPrefix(path, "//") {
+		return fmt.Errorf("healthcheck path must start with a single /")
+	}
+	for _, char := range path {
+		if char < ' ' || char == 0x7f {
+			return fmt.Errorf("healthcheck path contains invalid characters")
+		}
+	}
+	return nil
+}
+
+type HealthcheckType string
+
+const (
+	HealthcheckNone HealthcheckType = "none"
+	HealthcheckHTTP HealthcheckType = "http"
+	HealthcheckTCP  HealthcheckType = "tcp"
+)
+
+type RestartPolicy struct {
+	Condition   RestartCondition `json:"condition"`
+	MaxAttempts int              `json:"max_attempts,omitempty"`
+}
+
+type RestartCondition string
+
+const (
+	RestartNever     RestartCondition = "never"
+	RestartOnFailure RestartCondition = "on_failure"
+	RestartAlways    RestartCondition = "always"
+)
+
+type PlacementConstraint struct {
+	Key      string             `json:"key"`
+	Operator ConstraintOperator `json:"operator"`
+	Value    string             `json:"value"`
+}
+
+func (constraint PlacementConstraint) Validate() error {
+	if strings.TrimSpace(constraint.Key) == "" {
+		return fmt.Errorf("key is required")
+	}
+	if constraint.Operator != ConstraintEquals && constraint.Operator != ConstraintNotEquals {
+		return fmt.Errorf("operator %q is invalid", constraint.Operator)
+	}
+	return nil
+}
+
+type ConstraintOperator string
+
+const (
+	ConstraintEquals    ConstraintOperator = "equals"
+	ConstraintNotEquals ConstraintOperator = "not_equals"
+)
+
+type Task struct {
+	ID                   TaskID                `json:"id"`
+	Namespace            string                `json:"namespace"`
+	ServiceID            ServiceID             `json:"service_id"`
+	JobID                string                `json:"job_id,omitempty"`
+	NodeID               NodeID                `json:"node_id,omitempty"`
+	ContainerID          string                `json:"container_id,omitempty"`
+	DesiredStatus        TaskStatus            `json:"desired_status"`
+	ActualStatus         TaskStatus            `json:"actual_status"`
+	Image                string                `json:"image"`
+	RequestedImage       string                `json:"requested_image,omitempty"`
+	ResolvedImageDigest  string                `json:"resolved_image_digest,omitempty"`
+	ImageRegistry        string                `json:"image_registry,omitempty"`
+	ImageName            string                `json:"image_name,omitempty"`
+	ImageTag             string                `json:"image_tag,omitempty"`
+	Version              int64                 `json:"version"`
+	Ports                []Port                `json:"ports,omitempty"`
+	RestartCount         int                   `json:"restart_count"`
+	FailureReason        string                `json:"failure_reason,omitempty"`
+	Conditions           []TaskCondition       `json:"conditions,omitempty"`
+	CreatedAt            time.Time             `json:"created_at"`
+	UpdatedAt            time.Time             `json:"updated_at"`
+	StartedAt            time.Time             `json:"started_at,omitempty"`
+	FinishedAt           time.Time             `json:"finished_at,omitempty"`
+	ExitCode             *int                  `json:"exit_code,omitempty"`
+	Command              []string              `json:"command,omitempty"`
+	VolumeMounts         []ResolvedVolumeMount `json:"volume_mounts,omitempty"`
+	ResourceRequirements *ResourceRequirements `json:"resource_requirements,omitempty"`
+	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+}
+
+type TaskCondition struct {
+	Type               TaskConditionType `json:"type"`
+	Message            string            `json:"message,omitempty"`
+	LastTransitionTime time.Time         `json:"last_transition_time"`
+}
+
+type TaskConditionType string
+
+const (
+	TaskConditionNodeLost TaskConditionType = "node_lost"
+)
+
+type TaskStatus string
+
+const (
+	TaskPending   TaskStatus = "pending"
+	TaskAssigned  TaskStatus = "assigned"
+	TaskPulling   TaskStatus = "pulling"
+	TaskCreated   TaskStatus = "created"
+	TaskStarting  TaskStatus = "starting"
+	TaskRunning   TaskStatus = "running"
+	TaskHealthy   TaskStatus = "healthy"
+	TaskUnhealthy TaskStatus = "unhealthy"
+	TaskStopping  TaskStatus = "stopping"
+	TaskStopped   TaskStatus = "stopped"
+	TaskRemoved   TaskStatus = "removed"
+	TaskFailed    TaskStatus = "failed"
+)
+
+type Deployment struct {
+	ID             DeploymentID     `json:"id"`
+	Namespace      string           `json:"namespace"`
+	ServiceID      ServiceID        `json:"service_id"`
+	FromVersion    int64            `json:"from_version"`
+	ToVersion      int64            `json:"to_version"`
+	Strategy       RolloutStrategy  `json:"strategy"`
+	Status         DeploymentStatus `json:"status"`
+	MaxUnavailable int              `json:"max_unavailable"`
+	MaxSurge       int              `json:"max_surge"`
+	CreatedAt      time.Time        `json:"created_at"`
+	UpdatedAt      time.Time        `json:"updated_at"`
+	StartedAt      time.Time        `json:"started_at,omitempty"`
+	CompletedAt    time.Time        `json:"completed_at,omitempty"`
+}
+
+type RolloutStrategy string
+
+const (
+	RolloutRollingUpdate RolloutStrategy = "rolling_update"
+	RolloutRecreate      RolloutStrategy = "recreate"
+)
+
+type DeploymentStatus string
+
+const (
+	DeploymentPending     DeploymentStatus = "pending"
+	DeploymentRunning     DeploymentStatus = "running"
+	DeploymentPaused      DeploymentStatus = "paused"
+	DeploymentSucceeded   DeploymentStatus = "succeeded"
+	DeploymentFailed      DeploymentStatus = "failed"
+	DeploymentRollingBack DeploymentStatus = "rolling_back"
+	DeploymentRolledBack  DeploymentStatus = "rolled_back"
+)
+
+type Event struct {
+	ID                EventID           `json:"id"`
+	Namespace         string            `json:"namespace"`
+	Type              string            `json:"type"`
+	Severity          EventSeverity     `json:"severity"`
+	Source            string            `json:"source"`
+	Message           string            `json:"message"`
+	RelatedObjectType string            `json:"related_object_type,omitempty"`
+	RelatedObjectID   string            `json:"related_object_id,omitempty"`
+	Details           map[string]string `json:"details,omitempty"`
+	Timestamp         time.Time         `json:"timestamp"`
+}
+
+type EventSeverity string
+
+const (
+	EventInfo    EventSeverity = "info"
+	EventWarning EventSeverity = "warning"
+	EventWarn    EventSeverity = EventWarning
+	EventError   EventSeverity = "error"
+)
+
+func validateNonNegativeResources(name string, resources Resources) error {
+	if resources.CPU < 0 {
+		return fmt.Errorf("%s CPU cannot be negative", name)
+	}
+	if resources.Memory < 0 {
+		return fmt.Errorf("%s memory cannot be negative", name)
+	}
+	return nil
+}
+
+func ParseCPU(value string) (int64, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, nil
+	}
+	if strings.HasSuffix(value, "m") {
+		raw := strings.TrimSpace(strings.TrimSuffix(value, "m"))
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || parsed <= 0 {
+			return 0, fmt.Errorf("invalid CPU value %q", value)
+		}
+		return parsed, nil
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil || parsed <= 0 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		return 0, fmt.Errorf("invalid CPU value %q", value)
+	}
+	return int64(parsed * 1000), nil
+}
+
+func ParseMemory(value string) (int64, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, nil
+	}
+
+	units := []struct {
+		suffix string
+		scale  int64
+	}{
+		{"Gi", 1024 * 1024 * 1024},
+		{"Mi", 1024 * 1024},
+		{"Ki", 1024},
+		{"G", 1000 * 1000 * 1000},
+		{"M", 1000 * 1000},
+		{"K", 1000},
+	}
+	for _, unit := range units {
+		if strings.HasSuffix(value, unit.suffix) {
+			raw := strings.TrimSpace(strings.TrimSuffix(value, unit.suffix))
+			parsed, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil || parsed <= 0 {
+				return 0, fmt.Errorf("invalid memory value %q", value)
+			}
+			return parsed * unit.scale, nil
+		}
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || parsed <= 0 {
+		return 0, fmt.Errorf("invalid memory value %q", value)
+	}
+	return parsed, nil
+}
+
+func validRestartCondition(condition RestartCondition) bool {
+	switch condition {
+	case RestartNever, RestartOnFailure, RestartAlways:
+		return true
+	default:
+		return false
+	}
+}

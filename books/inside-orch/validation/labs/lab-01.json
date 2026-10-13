@@ -1,0 +1,140 @@
+{
+  "lab_id": "01",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/01-initialization-restart/lab.json",
+  "definition_sha256": "d47804ad5af540b60c663c9738e5cfcf1b57aea49e2d8ce7990180ab422f0e8d",
+  "guide": "labs/01-initialization-restart/README.md",
+  "guide_sha256": "25b855d95c42148d9159b3112198b3b00cd0b70531efb6b68c1bbe3f10b45d70",
+  "configuration_hashes": {
+    "labs/01-initialization-restart/book-http.yaml": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+    "scripts/observe_process_restart.py": "15d1ce9bda8c69a292decf217314bf5a2eeb3d58666ac2c4299a30961dc2dbc5",
+    "examples/teaching-extensions/docker-boundary/main.go": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Fresh authenticated server processes prove map loss; separate actual agent/Docker adapter full service flow, cached image, no published workload port.",
+  "state_continuity": "Two fresh server processes are stopped; separate fresh MemoryService/Docker teaching wrapper owns exact captured container IDs.",
+  "started_at_utc": "2026-10-13T01:39:06.250993+00:00",
+  "finished_at_utc": "2026-10-13T01:39:08.247698+00:00",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "--output",
+        "validation/labs/review076/01-fresh-process.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:39:06.250993+00:00",
+      "finished_at_utc": "2026-10-13T01:39:06.393389+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/01-fresh-process-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/docker-boundary"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:39:06.439580+00:00",
+      "finished_at_utc": "2026-10-13T01:39:08.247698+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/01-docker-flow-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "process_restart": {
+      "new_process_ready": true,
+      "services_lost": true,
+      "tasks_lost": true,
+      "nodes_lost": true,
+      "custom_namespace_lost": true,
+      "default_namespace_recreated": true
+    },
+    "process_ids": [
+      601146,
+      601155
+    ],
+    "captured_runtime_ids": {
+      "direct_container": "00df469e74979320019119b19a254d823d72a3e8af2694a98ad61c027574cbc5",
+      "node": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+      "ordinary_container": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+      "service": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+      "task": "89a881e3-0d1d-494c-8035-c4eafbd312ea"
+    },
+    "flow_counts": [
+      {
+        "stage": "deployed",
+        "active": 1,
+        "removed": 0
+      },
+      {
+        "stage": "scaled-up",
+        "active": 2,
+        "removed": 0
+      },
+      {
+        "stage": "scaled-down",
+        "active": 1,
+        "removed": 1
+      },
+      {
+        "stage": "deleted",
+        "active": 0,
+        "removed": 2
+      }
+    ],
+    "creation_events": 1,
+    "ordinary_host_config": {
+      "memory": 0,
+      "nano_cpus": 0
+    },
+    "direct_host_config": {
+      "memory": 134217728,
+      "nano_cpus": 250000000
+    },
+    "cleanup_records": [
+      "validation/labs/review076/01-docker-cleanup.json",
+      "validation/labs/review076/01-direct-container-cleanup.json"
+    ]
+  },
+  "original_records": [
+    "validation/labs/review076/01-fresh-process-command.json",
+    "validation/labs/review076/01-docker-flow-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/01-fresh-process-command.stdout.txt",
+      "sha256": "36adbf9be6bda6f88f0020fe6ff54951865e79f72af6bfba791ac0d9cb7f4e4f",
+      "bytes": 250
+    },
+    {
+      "path": "validation/labs/review076/01-fresh-process-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "validation/labs/review076/01-docker-flow-command.stdout.txt",
+      "sha256": "b48c8b246e751d8f6cb3d3df94f4e623a0fc82d9361773ff3d82050a3dbc8895",
+      "bytes": 8376
+    },
+    {
+      "path": "validation/labs/review076/01-docker-flow-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

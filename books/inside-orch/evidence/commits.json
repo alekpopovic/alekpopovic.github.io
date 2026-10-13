@@ -1,0 +1,737 @@
+[
+  {
+    "sha": "6156824b166e28d3917f92c9c6d140e2dca3dda2",
+    "author_date": "2026-06-11T02:49:53+02:00",
+    "committer_date": "2026-06-11T02:49:53+02:00",
+    "subject": "Create README.md",
+    "url": "https://github.com/alekpopovic/orch/commit/6156824b166e28d3917f92c9c6d140e2dca3dda2"
+  },
+  {
+    "sha": "6f90183927991506de435a55582b5c283212ff09",
+    "author_date": "2026-06-11T14:47:11+02:00",
+    "committer_date": "2026-06-11T14:47:11+02:00",
+    "subject": "Add repository agent and architecture docs",
+    "url": "https://github.com/alekpopovic/orch/commit/6f90183927991506de435a55582b5c283212ff09"
+  },
+  {
+    "sha": "72f27ed1d81b75e499ee65e0c9779e44b237f814",
+    "author_date": "2026-06-11T14:51:30+02:00",
+    "committer_date": "2026-06-11T14:51:30+02:00",
+    "subject": "Initialize Go orchestrator scaffold",
+    "url": "https://github.com/alekpopovic/orch/commit/72f27ed1d81b75e499ee65e0c9779e44b237f814"
+  },
+  {
+    "sha": "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+    "author_date": "2026-06-11T14:59:38+02:00",
+    "committer_date": "2026-06-11T14:59:38+02:00",
+    "subject": "Add core domain model types",
+    "url": "https://github.com/alekpopovic/orch/commit/c756f9d7f3a46e8bfe4d7bca291d67f6a783553d"
+  },
+  {
+    "sha": "7eba6544ffe2eba41b81faa811e899faf28b77a2",
+    "author_date": "2026-06-11T15:14:24+02:00",
+    "committer_date": "2026-06-11T15:14:24+02:00",
+    "subject": "Add PostgreSQL persistence layer",
+    "url": "https://github.com/alekpopovic/orch/commit/7eba6544ffe2eba41b81faa811e899faf28b77a2"
+  },
+  {
+    "sha": "64a0725387b8130be988948b81774aea7051c718",
+    "author_date": "2026-06-11T15:22:13+02:00",
+    "committer_date": "2026-06-11T15:22:13+02:00",
+    "subject": "Add control plane REST API",
+    "url": "https://github.com/alekpopovic/orch/commit/64a0725387b8130be988948b81774aea7051c718"
+  },
+  {
+    "sha": "042a4a44ecfaa884d6173f9d93afafa81a24ea27",
+    "author_date": "2026-06-11T15:32:06+02:00",
+    "committer_date": "2026-06-11T15:32:06+02:00",
+    "subject": "Add Cobra orch CLI",
+    "url": "https://github.com/alekpopovic/orch/commit/042a4a44ecfaa884d6173f9d93afafa81a24ea27"
+  },
+  {
+    "sha": "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+    "author_date": "2026-06-11T15:39:57+02:00",
+    "committer_date": "2026-06-11T15:39:57+02:00",
+    "subject": "Add Docker Engine runtime",
+    "url": "https://github.com/alekpopovic/orch/commit/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41"
+  },
+  {
+    "sha": "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+    "author_date": "2026-06-11T15:46:08+02:00",
+    "committer_date": "2026-06-11T15:46:08+02:00",
+    "subject": "Add agent registration and heartbeat flow",
+    "url": "https://github.com/alekpopovic/orch/commit/5cf9213849164ce1bebc4e042cc37bf5553c2427"
+  },
+  {
+    "sha": "239eb6abab67773e20a18944ac38e2589802946a",
+    "author_date": "2026-06-11T15:55:45+02:00",
+    "committer_date": "2026-06-11T15:55:45+02:00",
+    "subject": "Add agent task assignment reconciliation",
+    "url": "https://github.com/alekpopovic/orch/commit/239eb6abab67773e20a18944ac38e2589802946a"
+  },
+  {
+    "sha": "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+    "author_date": "2026-06-11T16:02:21+02:00",
+    "committer_date": "2026-06-11T16:02:21+02:00",
+    "subject": "Implement scheduler v1",
+    "url": "https://github.com/alekpopovic/orch/commit/fce0a657651c00ffb697bf4a4aba12d0b171f463"
+  },
+  {
+    "sha": "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+    "author_date": "2026-06-11T16:11:04+02:00",
+    "committer_date": "2026-06-11T16:11:04+02:00",
+    "subject": "Implement service reconciler",
+    "url": "https://github.com/alekpopovic/orch/commit/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3"
+  },
+  {
+    "sha": "ee067bd0f02566eb600031a0cb81f25919d52445",
+    "author_date": "2026-06-11T16:23:48+02:00",
+    "committer_date": "2026-06-11T16:23:48+02:00",
+    "subject": "Add task health checks",
+    "url": "https://github.com/alekpopovic/orch/commit/ee067bd0f02566eb600031a0cb81f25919d52445"
+  },
+  {
+    "sha": "39e2359653e0e8790feda86eb5fbee3eb5ae509f",
+    "author_date": "2026-06-11T16:32:33+02:00",
+    "committer_date": "2026-06-11T16:32:33+02:00",
+    "subject": "Add basic log streaming",
+    "url": "https://github.com/alekpopovic/orch/commit/39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+  },
+  {
+    "sha": "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+    "author_date": "2026-06-11T16:41:23+02:00",
+    "committer_date": "2026-06-11T16:41:23+02:00",
+    "subject": "Add durable events system",
+    "url": "https://github.com/alekpopovic/orch/commit/7ff58cef0f736ac9076942ce3ef1039d1fe72c72"
+  },
+  {
+    "sha": "de5900bced92ad9d5786cd258ff7941d67369d33",
+    "author_date": "2026-06-11T16:56:48+02:00",
+    "committer_date": "2026-06-11T16:56:48+02:00",
+    "subject": "Implement rolling service rollouts",
+    "url": "https://github.com/alekpopovic/orch/commit/de5900bced92ad9d5786cd258ff7941d67369d33"
+  },
+  {
+    "sha": "430a061fe7f01df966e33d0b86654c627b7d5e39",
+    "author_date": "2026-06-11T20:00:05+02:00",
+    "committer_date": "2026-06-11T20:00:05+02:00",
+    "subject": "Implement service rollback support",
+    "url": "https://github.com/alekpopovic/orch/commit/430a061fe7f01df966e33d0b86654c627b7d5e39"
+  },
+  {
+    "sha": "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+    "author_date": "2026-06-11T20:27:18+02:00",
+    "committer_date": "2026-06-11T20:27:18+02:00",
+    "subject": "Implement safe service deletion",
+    "url": "https://github.com/alekpopovic/orch/commit/2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7"
+  },
+  {
+    "sha": "44b60a210c5a17e444b02d622b6af0c1c11375e2",
+    "author_date": "2026-06-11T20:45:10+02:00",
+    "committer_date": "2026-06-11T20:45:10+02:00",
+    "subject": "Implement resource accounting",
+    "url": "https://github.com/alekpopovic/orch/commit/44b60a210c5a17e444b02d622b6af0c1c11375e2"
+  },
+  {
+    "sha": "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+    "author_date": "2026-06-11T21:33:52+02:00",
+    "committer_date": "2026-06-11T21:33:52+02:00",
+    "subject": "Implement user API auth and RBAC",
+    "url": "https://github.com/alekpopovic/orch/commit/403a9fc9d9005aca95ade9f5edfbbc77acd1a911"
+  },
+  {
+    "sha": "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+    "author_date": "2026-06-11T21:46:14+02:00",
+    "committer_date": "2026-06-11T21:46:14+02:00",
+    "subject": "Improve agent authentication",
+    "url": "https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e"
+  },
+  {
+    "sha": "b3e29e593f46b4e90899a56bd9391c03d7c42f1a",
+    "author_date": "2026-06-11T21:59:52+02:00",
+    "committer_date": "2026-06-11T21:59:52+02:00",
+    "subject": "Add Prometheus metrics",
+    "url": "https://github.com/alekpopovic/orch/commit/b3e29e593f46b4e90899a56bd9391c03d7c42f1a"
+  },
+  {
+    "sha": "fea57ca69115a1563982c853e54a1d5385209ea0",
+    "author_date": "2026-06-11T20:02:13Z",
+    "committer_date": "2026-06-11T20:02:13Z",
+    "subject": "Bump the go_modules group across 1 directory with 2 updates",
+    "url": "https://github.com/alekpopovic/orch/commit/fea57ca69115a1563982c853e54a1d5385209ea0"
+  },
+  {
+    "sha": "f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa",
+    "author_date": "2026-06-11T22:05:20+02:00",
+    "committer_date": "2026-06-11T22:05:20+02:00",
+    "subject": "Add local development environment",
+    "url": "https://github.com/alekpopovic/orch/commit/f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa"
+  },
+  {
+    "sha": "903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc",
+    "author_date": "2026-06-11T22:11:02+02:00",
+    "committer_date": "2026-06-11T22:11:02+02:00",
+    "subject": "Add orchestrator MVP end-to-end tests",
+    "url": "https://github.com/alekpopovic/orch/commit/903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc"
+  },
+  {
+    "sha": "1e46df4a538ef7a015733308d7f3f55e0d600020",
+    "author_date": "2026-06-11T22:15:46+02:00",
+    "committer_date": "2026-06-11T22:15:46+02:00",
+    "subject": "Add GitHub Actions CI",
+    "url": "https://github.com/alekpopovic/orch/commit/1e46df4a538ef7a015733308d7f3f55e0d600020"
+  },
+  {
+    "sha": "29b20fb897a3b61f0a30908587218eeeb52df858",
+    "author_date": "2026-06-11T22:20:44+02:00",
+    "committer_date": "2026-06-11T22:20:44+02:00",
+    "subject": "Fix idempotency edge cases",
+    "url": "https://github.com/alekpopovic/orch/commit/29b20fb897a3b61f0a30908587218eeeb52df858"
+  },
+  {
+    "sha": "66cfb7049fc1fbceeec9e36a7067febe8cbab698",
+    "author_date": "2026-06-11T23:31:08+02:00",
+    "committer_date": "2026-06-11T23:31:08+02:00",
+    "subject": "Improve failure recovery behavior",
+    "url": "https://github.com/alekpopovic/orch/commit/66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+  },
+  {
+    "sha": "316ba80ac1ea7ba465f1b0826b655233a651c043",
+    "author_date": "2026-06-11T23:41:39+02:00",
+    "committer_date": "2026-06-11T23:41:39+02:00",
+    "subject": "Harden task state idempotency",
+    "url": "https://github.com/alekpopovic/orch/commit/316ba80ac1ea7ba465f1b0826b655233a651c043"
+  },
+  {
+    "sha": "98d1882228d93b4894b37b95075ccf8e77ec1067",
+    "author_date": "2026-06-11T23:49:04+02:00",
+    "committer_date": "2026-06-11T23:49:04+02:00",
+    "subject": "Refresh production documentation",
+    "url": "https://github.com/alekpopovic/orch/commit/98d1882228d93b4894b37b95075ccf8e77ec1067"
+  },
+  {
+    "sha": "990d86458e21ba070baa2d26edbcf82cb21a48b3",
+    "author_date": "2026-06-12T00:06:21+02:00",
+    "committer_date": "2026-06-12T00:06:21+02:00",
+    "subject": "Prepare v0.1.0 MVP release",
+    "url": "https://github.com/alekpopovic/orch/commit/990d86458e21ba070baa2d26edbcf82cb21a48b3"
+  },
+  {
+    "sha": "01bfef62e27f2cd2c99a769450be4fd5b722039e",
+    "author_date": "2026-06-17T01:39:42+02:00",
+    "committer_date": "2026-06-17T01:39:42+02:00",
+    "subject": "Merge pull request #1 from alekpopovic/dependabot/go_modules/go_modules-870ce49782",
+    "url": "https://github.com/alekpopovic/orch/commit/01bfef62e27f2cd2c99a769450be4fd5b722039e"
+  },
+  {
+    "sha": "56ab72f9e823fedac3e89dd1cf6ef100f6b1fe18",
+    "author_date": "2026-06-17T01:42:35+02:00",
+    "committer_date": "2026-06-17T01:42:35+02:00",
+    "subject": "Create dependabot.yml",
+    "url": "https://github.com/alekpopovic/orch/commit/56ab72f9e823fedac3e89dd1cf6ef100f6b1fe18"
+  },
+  {
+    "sha": "bb8ea0e7d5b39893a722a11233ecd3d963f69889",
+    "author_date": "2026-06-16T23:43:14Z",
+    "committer_date": "2026-06-16T23:43:14Z",
+    "subject": "Bump github.com/docker/go-connections from 0.5.0 to 0.7.0",
+    "url": "https://github.com/alekpopovic/orch/commit/bb8ea0e7d5b39893a722a11233ecd3d963f69889"
+  },
+  {
+    "sha": "987e8ed4459a2feb193754ee1bb48406a54a4a1f",
+    "author_date": "2026-07-14T12:49:06+02:00",
+    "committer_date": "2026-07-14T12:49:06+02:00",
+    "subject": "Merge pull request #2 from alekpopovic/dependabot/go_modules/github.com/docker/go-connections-0.7.0",
+    "url": "https://github.com/alekpopovic/orch/commit/987e8ed4459a2feb193754ee1bb48406a54a4a1f"
+  },
+  {
+    "sha": "fdbd55f081815c9a4b99130e6106876b0b18eaf9",
+    "author_date": "2026-07-14T10:50:46Z",
+    "committer_date": "2026-07-14T10:50:46Z",
+    "subject": "Bump github.com/docker/docker",
+    "url": "https://github.com/alekpopovic/orch/commit/fdbd55f081815c9a4b99130e6106876b0b18eaf9"
+  },
+  {
+    "sha": "d95c9671c84a122fee1acfc81c3a11fb0f189518",
+    "author_date": "2026-07-14T13:04:27+02:00",
+    "committer_date": "2026-07-14T13:04:48+02:00",
+    "subject": "Track last executed prompt",
+    "url": "https://github.com/alekpopovic/orch/commit/d95c9671c84a122fee1acfc81c3a11fb0f189518"
+  },
+  {
+    "sha": "da7cf135866f0dec855df0914a19dd4e76d03d0b",
+    "author_date": "2026-07-14T10:50:46Z",
+    "committer_date": "2026-07-14T13:05:32+02:00",
+    "subject": "Bump github.com/docker/docker",
+    "url": "https://github.com/alekpopovic/orch/commit/da7cf135866f0dec855df0914a19dd4e76d03d0b"
+  },
+  {
+    "sha": "f0c526fafac58e7921e32ac314f594f7fe14b8b3",
+    "author_date": "2026-07-14T13:06:33+02:00",
+    "committer_date": "2026-07-14T13:06:33+02:00",
+    "subject": "prompts",
+    "url": "https://github.com/alekpopovic/orch/commit/f0c526fafac58e7921e32ac314f594f7fe14b8b3"
+  },
+  {
+    "sha": "aef0fffd9fff8fa72df37e5230d97d7c07d54b80",
+    "author_date": "2026-07-14T13:07:22+02:00",
+    "committer_date": "2026-07-14T13:07:22+02:00",
+    "subject": "Merge pull request #3 from alekpopovic/dependabot/go_modules/github.com/docker/docker-28.5.2incompatible",
+    "url": "https://github.com/alekpopovic/orch/commit/aef0fffd9fff8fa72df37e5230d97d7c07d54b80"
+  },
+  {
+    "sha": "6526b47f66da88117bab80468ce6b6c711d1e118",
+    "author_date": "2026-07-14T13:15:30+02:00",
+    "committer_date": "2026-07-14T13:15:30+02:00",
+    "subject": "Freeze lifecycle state machine contracts",
+    "url": "https://github.com/alekpopovic/orch/commit/6526b47f66da88117bab80468ce6b6c711d1e118"
+  },
+  {
+    "sha": "19837dd232d04ec57b7716922d49acc790318efa",
+    "author_date": "2026-07-14T13:15:46+02:00",
+    "committer_date": "2026-07-14T13:15:46+02:00",
+    "subject": "Track prompt 29 execution",
+    "url": "https://github.com/alekpopovic/orch/commit/19837dd232d04ec57b7716922d49acc790318efa"
+  },
+  {
+    "sha": "72fd9baff0bbfde49574257380bcd8f747cc2070",
+    "author_date": "2026-07-14T13:24:17+02:00",
+    "committer_date": "2026-07-14T13:24:17+02:00",
+    "subject": "Add transaction boundaries for store operations",
+    "url": "https://github.com/alekpopovic/orch/commit/72fd9baff0bbfde49574257380bcd8f747cc2070"
+  },
+  {
+    "sha": "5e9975effa6ede5a53505ca2d2735232f92c5655",
+    "author_date": "2026-07-14T13:24:33+02:00",
+    "committer_date": "2026-07-14T13:24:33+02:00",
+    "subject": "Track prompt 30 execution",
+    "url": "https://github.com/alekpopovic/orch/commit/5e9975effa6ede5a53505ca2d2735232f92c5655"
+  },
+  {
+    "sha": "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+    "author_date": "2026-07-14T14:58:50+02:00",
+    "committer_date": "2026-07-14T14:58:50+02:00",
+    "subject": "Add scheduler concurrency-safe assignment",
+    "url": "https://github.com/alekpopovic/orch/commit/1a1c216e8cfb442465f4d3c2c114d20da0342795"
+  },
+  {
+    "sha": "de0b19e627a266dc29632c1dda5ee4f2e2e7911a",
+    "author_date": "2026-07-14T14:59:08+02:00",
+    "committer_date": "2026-07-14T14:59:08+02:00",
+    "subject": "Update prompt execution tracker",
+    "url": "https://github.com/alekpopovic/orch/commit/de0b19e627a266dc29632c1dda5ee4f2e2e7911a"
+  },
+  {
+    "sha": "9f94bdad8bcf9f5bb819ec0b711440467a15da9b",
+    "author_date": "2026-07-14T15:01:05+02:00",
+    "committer_date": "2026-07-14T15:01:05+02:00",
+    "subject": "prompts",
+    "url": "https://github.com/alekpopovic/orch/commit/9f94bdad8bcf9f5bb819ec0b711440467a15da9b"
+  },
+  {
+    "sha": "a11cec091a69720c14b9713d8be68f38fe6df332",
+    "author_date": "2026-07-14T15:03:37+02:00",
+    "committer_date": "2026-07-14T15:03:37+02:00",
+    "subject": "Harden reconciler restart idempotency",
+    "url": "https://github.com/alekpopovic/orch/commit/a11cec091a69720c14b9713d8be68f38fe6df332"
+  },
+  {
+    "sha": "36bb28e056fb58e24942eb3c13b1d8336c4d6d8f",
+    "author_date": "2026-07-14T15:03:48+02:00",
+    "committer_date": "2026-07-14T15:03:48+02:00",
+    "subject": "Update tracker after prompt 32",
+    "url": "https://github.com/alekpopovic/orch/commit/36bb28e056fb58e24942eb3c13b1d8336c4d6d8f"
+  },
+  {
+    "sha": "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+    "author_date": "2026-07-14T15:07:17+02:00",
+    "committer_date": "2026-07-14T15:07:17+02:00",
+    "subject": "Add deterministic fake container runtime",
+    "url": "https://github.com/alekpopovic/orch/commit/c69f9ffa830284692aabf9e65ab9eb1f79d3a114"
+  },
+  {
+    "sha": "46b8ca697a8bfdb180b4cb35568dc768f717fd0e",
+    "author_date": "2026-07-14T15:07:29+02:00",
+    "committer_date": "2026-07-14T15:07:29+02:00",
+    "subject": "Update tracker after prompt 33",
+    "url": "https://github.com/alekpopovic/orch/commit/46b8ca697a8bfdb180b4cb35568dc768f717fd0e"
+  },
+  {
+    "sha": "3bfcef82a54dec457cf9d4187705fa70cc7215cf",
+    "author_date": "2026-07-14T15:14:25+02:00",
+    "committer_date": "2026-07-14T15:14:25+02:00",
+    "subject": "Add host port allocation awareness",
+    "url": "https://github.com/alekpopovic/orch/commit/3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+  },
+  {
+    "sha": "6314f0dfc9e89edc472ae1607baa618b03f6836f",
+    "author_date": "2026-07-14T15:14:37+02:00",
+    "committer_date": "2026-07-14T15:14:37+02:00",
+    "subject": "Update tracker after prompt 34",
+    "url": "https://github.com/alekpopovic/orch/commit/6314f0dfc9e89edc472ae1607baa618b03f6836f"
+  },
+  {
+    "sha": "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+    "author_date": "2026-07-14T15:18:45+02:00",
+    "committer_date": "2026-07-14T15:18:45+02:00",
+    "subject": "Add basic service discovery",
+    "url": "https://github.com/alekpopovic/orch/commit/03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a"
+  },
+  {
+    "sha": "e54d829392ce028943ed605565142daa586a890c",
+    "author_date": "2026-07-14T15:19:01+02:00",
+    "committer_date": "2026-07-14T15:19:01+02:00",
+    "subject": "Update tracker after prompt 35",
+    "url": "https://github.com/alekpopovic/orch/commit/e54d829392ce028943ed605565142daa586a890c"
+  },
+  {
+    "sha": "ea0760e8201c842371caf6671a90bcfeb90197bb",
+    "author_date": "2026-07-14T15:26:01+02:00",
+    "committer_date": "2026-07-14T15:26:01+02:00",
+    "subject": "Add optional Traefik integration",
+    "url": "https://github.com/alekpopovic/orch/commit/ea0760e8201c842371caf6671a90bcfeb90197bb"
+  },
+  {
+    "sha": "2dba7ba137d6b2fe83592a0d99672dc040ea9a09",
+    "author_date": "2026-07-14T15:26:24+02:00",
+    "committer_date": "2026-07-14T15:26:24+02:00",
+    "subject": "Update tracker after prompt 36",
+    "url": "https://github.com/alekpopovic/orch/commit/2dba7ba137d6b2fe83592a0d99672dc040ea9a09"
+  },
+  {
+    "sha": "ad738d1867eefb3c92cc4280659ae76943341426",
+    "author_date": "2026-07-14T15:34:50+02:00",
+    "committer_date": "2026-07-14T15:34:50+02:00",
+    "subject": "Add secrets MVP",
+    "url": "https://github.com/alekpopovic/orch/commit/ad738d1867eefb3c92cc4280659ae76943341426"
+  },
+  {
+    "sha": "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+    "author_date": "2026-07-14T15:39:30+02:00",
+    "committer_date": "2026-07-14T15:39:30+02:00",
+    "subject": "Add registry credentials support",
+    "url": "https://github.com/alekpopovic/orch/commit/fe41c80f83b62a3c8ea8430046acf088ec4014a1"
+  },
+  {
+    "sha": "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+    "author_date": "2026-07-14T15:43:40+02:00",
+    "committer_date": "2026-07-14T15:43:40+02:00",
+    "subject": "Add node drain rescheduling",
+    "url": "https://github.com/alekpopovic/orch/commit/42d4caa4451f4dea24113d48eb1e9e47f2cef558"
+  },
+  {
+    "sha": "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5",
+    "author_date": "2026-07-14T15:54:16+02:00",
+    "committer_date": "2026-07-14T15:54:16+02:00",
+    "subject": "Add node offline monitor",
+    "url": "https://github.com/alekpopovic/orch/commit/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+  },
+  {
+    "sha": "cf9769553d6599d798fafaffe1495d3d739fe993",
+    "author_date": "2026-07-14T16:00:41+02:00",
+    "committer_date": "2026-07-14T16:00:41+02:00",
+    "subject": "Add Docker drift reconciliation",
+    "url": "https://github.com/alekpopovic/orch/commit/cf9769553d6599d798fafaffe1495d3d739fe993"
+  },
+  {
+    "sha": "5bfb4ac394a609469263de9e14d25d5c2660ee8f",
+    "author_date": "2026-07-14T16:05:56+02:00",
+    "committer_date": "2026-07-14T16:05:56+02:00",
+    "subject": "Add service operation locks",
+    "url": "https://github.com/alekpopovic/orch/commit/5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+  },
+  {
+    "sha": "6f7954b8d31b52a7909ebe20d1e22b384af19530",
+    "author_date": "2026-07-14T16:08:22+02:00",
+    "committer_date": "2026-07-14T16:08:22+02:00",
+    "subject": "Add service spec validation",
+    "url": "https://github.com/alekpopovic/orch/commit/6f7954b8d31b52a7909ebe20d1e22b384af19530"
+  },
+  {
+    "sha": "a4844c571a0ddf33879556413a62d49a408609e3",
+    "author_date": "2026-07-14T16:13:09+02:00",
+    "committer_date": "2026-07-14T16:13:09+02:00",
+    "subject": "Harden config management",
+    "url": "https://github.com/alekpopovic/orch/commit/a4844c571a0ddf33879556413a62d49a408609e3"
+  },
+  {
+    "sha": "b5d4573f8fa5d56a5dcfde609e3794e93644a39d",
+    "author_date": "2026-07-14T16:19:42+02:00",
+    "committer_date": "2026-07-14T16:19:42+02:00",
+    "subject": "Add structured error model",
+    "url": "https://github.com/alekpopovic/orch/commit/b5d4573f8fa5d56a5dcfde609e3794e93644a39d"
+  },
+  {
+    "sha": "7935c334dcd264e70abb9e795889010b9ecdb03b",
+    "author_date": "2026-07-14T16:28:24+02:00",
+    "committer_date": "2026-07-14T16:28:24+02:00",
+    "subject": "Add audit logging",
+    "url": "https://github.com/alekpopovic/orch/commit/7935c334dcd264e70abb9e795889010b9ecdb03b"
+  },
+  {
+    "sha": "357903ef7cb95a7d6d8fad5f426a48ed48bc0b76",
+    "author_date": "2026-07-14T18:10:35+02:00",
+    "committer_date": "2026-07-14T18:10:35+02:00",
+    "subject": "Add Prometheus alert rules",
+    "url": "https://github.com/alekpopovic/orch/commit/357903ef7cb95a7d6d8fad5f426a48ed48bc0b76"
+  },
+  {
+    "sha": "aa44e586fd79147173588f0bf86763814bd23ec4",
+    "author_date": "2026-07-14T18:11:58+02:00",
+    "committer_date": "2026-07-14T18:11:58+02:00",
+    "subject": "Add Grafana dashboard",
+    "url": "https://github.com/alekpopovic/orch/commit/aa44e586fd79147173588f0bf86763814bd23ec4"
+  },
+  {
+    "sha": "64abe001e83932cba294831424557dfd16f77c8c",
+    "author_date": "2026-07-14T18:13:40+02:00",
+    "committer_date": "2026-07-14T18:13:40+02:00",
+    "subject": "Add backup and restore runbook",
+    "url": "https://github.com/alekpopovic/orch/commit/64abe001e83932cba294831424557dfd16f77c8c"
+  },
+  {
+    "sha": "18fcf32524007ba7d8a71acd70e5acc48f758e49",
+    "author_date": "2026-07-14T18:15:39+02:00",
+    "committer_date": "2026-07-14T18:15:39+02:00",
+    "subject": "Add production deployment manifests",
+    "url": "https://github.com/alekpopovic/orch/commit/18fcf32524007ba7d8a71acd70e5acc48f758e49"
+  },
+  {
+    "sha": "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7",
+    "author_date": "2026-07-14T18:20:03+02:00",
+    "committer_date": "2026-07-14T18:20:03+02:00",
+    "subject": "Add security review and healthcheck hardening",
+    "url": "https://github.com/alekpopovic/orch/commit/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+  },
+  {
+    "sha": "a140c4190af17969d207b5738cc7527e4ad96075",
+    "author_date": "2026-07-14T18:32:03+02:00",
+    "committer_date": "2026-07-14T18:32:03+02:00",
+    "subject": "Add container security policy",
+    "url": "https://github.com/alekpopovic/orch/commit/a140c4190af17969d207b5738cc7527e4ad96075"
+  },
+  {
+    "sha": "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081",
+    "author_date": "2026-07-14T18:34:02+02:00",
+    "committer_date": "2026-07-14T18:34:02+02:00",
+    "subject": "Harden healthcheck SSRF protection",
+    "url": "https://github.com/alekpopovic/orch/commit/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+  },
+  {
+    "sha": "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+    "author_date": "2026-07-14T18:34:47+02:00",
+    "committer_date": "2026-07-14T18:34:47+02:00",
+    "subject": "Add autoscaling design",
+    "url": "https://github.com/alekpopovic/orch/commit/cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2"
+  },
+  {
+    "sha": "b575252d6c5ff0918439e2f209af9d9695eebbb6",
+    "author_date": "2026-07-14T18:40:33+02:00",
+    "committer_date": "2026-07-14T18:40:33+02:00",
+    "subject": "Add autoscaling MVP",
+    "url": "https://github.com/alekpopovic/orch/commit/b575252d6c5ff0918439e2f209af9d9695eebbb6"
+  },
+  {
+    "sha": "b29a6fe91e90f74721e5175e43bf12aed6410f19",
+    "author_date": "2026-07-14T18:41:21+02:00",
+    "committer_date": "2026-07-14T18:41:21+02:00",
+    "subject": "Add HA control plane design",
+    "url": "https://github.com/alekpopovic/orch/commit/b29a6fe91e90f74721e5175e43bf12aed6410f19"
+  },
+  {
+    "sha": "eb3a07c20c550a533afaf36f414ede1ba6c00f78",
+    "author_date": "2026-07-14T18:43:36+02:00",
+    "committer_date": "2026-07-14T18:43:36+02:00",
+    "subject": "Add controller leader election MVP",
+    "url": "https://github.com/alekpopovic/orch/commit/eb3a07c20c550a533afaf36f414ede1ba6c00f78"
+  },
+  {
+    "sha": "7fcdaf5877145b77bb484b2bc7cabae8eb75acab",
+    "author_date": "2026-07-14T18:45:07+02:00",
+    "committer_date": "2026-07-14T18:45:07+02:00",
+    "subject": "Add multi-agent load test",
+    "url": "https://github.com/alekpopovic/orch/commit/7fcdaf5877145b77bb484b2bc7cabae8eb75acab"
+  },
+  {
+    "sha": "fe385251b7a2051b10af3dd6caaad8bb4821fa21",
+    "author_date": "2026-07-14T18:47:14+02:00",
+    "committer_date": "2026-07-14T18:47:14+02:00",
+    "subject": "Add chaos testing scenarios",
+    "url": "https://github.com/alekpopovic/orch/commit/fe385251b7a2051b10af3dd6caaad8bb4821fa21"
+  },
+  {
+    "sha": "1116845fdcc0abd051ddf65a31197f8b63e0c086",
+    "author_date": "2026-07-14T18:48:36+02:00",
+    "committer_date": "2026-07-14T18:48:36+02:00",
+    "subject": "Prepare v0.2.0 release hardening",
+    "url": "https://github.com/alekpopovic/orch/commit/1116845fdcc0abd051ddf65a31197f8b63e0c086"
+  },
+  {
+    "sha": "f94414db486b96e7088fccc8c4c502a1fa616d38",
+    "author_date": "2026-07-14T18:56:27+02:00",
+    "committer_date": "2026-07-14T18:56:27+02:00",
+    "subject": "Add OpenAPI spec and client",
+    "url": "https://github.com/alekpopovic/orch/commit/f94414db486b96e7088fccc8c4c502a1fa616d38"
+  },
+  {
+    "sha": "11e5172330871d16c0292fad9aedfd1a5eb3e45c",
+    "author_date": "2026-07-14T18:58:23+02:00",
+    "committer_date": "2026-07-14T18:58:23+02:00",
+    "subject": "ref",
+    "url": "https://github.com/alekpopovic/orch/commit/11e5172330871d16c0292fad9aedfd1a5eb3e45c"
+  },
+  {
+    "sha": "e0b5aaee636611286c5877dba754fe6954539d01",
+    "author_date": "2026-07-14T19:03:48+02:00",
+    "committer_date": "2026-07-14T19:03:48+02:00",
+    "subject": "Add GitHub Pages documentation portal",
+    "url": "https://github.com/alekpopovic/orch/commit/e0b5aaee636611286c5877dba754fe6954539d01"
+  },
+  {
+    "sha": "638998e543471c8e43f7091683d527fe7203ea8f",
+    "author_date": "2026-07-14T19:05:32+02:00",
+    "committer_date": "2026-07-14T19:05:32+02:00",
+    "subject": "Update Pages actions for Node 24",
+    "url": "https://github.com/alekpopovic/orch/commit/638998e543471c8e43f7091683d527fe7203ea8f"
+  },
+  {
+    "sha": "525ff908b2fe238b241735f2abcc32dc72067f54",
+    "author_date": "2026-07-14T19:13:24+02:00",
+    "committer_date": "2026-07-14T19:13:24+02:00",
+    "subject": "Refresh project branding and docs",
+    "url": "https://github.com/alekpopovic/orch/commit/525ff908b2fe238b241735f2abcc32dc72067f54"
+  },
+  {
+    "sha": "1b11b33c0fecbf65a95ae1584ac57b8f9259d31f",
+    "author_date": "2026-07-14T19:16:30+02:00",
+    "committer_date": "2026-07-14T19:16:30+02:00",
+    "subject": "Fix social card badge icons",
+    "url": "https://github.com/alekpopovic/orch/commit/1b11b33c0fecbf65a95ae1584ac57b8f9259d31f"
+  },
+  {
+    "sha": "c1577310f3e992d3f473c6617849ea7f906efcae",
+    "author_date": "2026-07-14T19:17:43+02:00",
+    "committer_date": "2026-07-14T19:17:43+02:00",
+    "subject": "Separate social card chart from headline",
+    "url": "https://github.com/alekpopovic/orch/commit/c1577310f3e992d3f473c6617849ea7f906efcae"
+  },
+  {
+    "sha": "13d2ce636bb60b14b805dd65e875dfdea6d42525",
+    "author_date": "2026-07-14T19:25:06+02:00",
+    "committer_date": "2026-07-14T19:25:06+02:00",
+    "subject": "Separate wordmark chart from tagline",
+    "url": "https://github.com/alekpopovic/orch/commit/13d2ce636bb60b14b805dd65e875dfdea6d42525"
+  },
+  {
+    "sha": "8bb0f52452edd04b2b5067ebc47531220b0666e1",
+    "author_date": "2026-07-14T19:30:46+02:00",
+    "committer_date": "2026-07-14T19:30:46+02:00",
+    "subject": "Modernize docs navigation and Pages links",
+    "url": "https://github.com/alekpopovic/orch/commit/8bb0f52452edd04b2b5067ebc47531220b0666e1"
+  },
+  {
+    "sha": "fb40e32681396cabe9f117a590e88262011df430",
+    "author_date": "2026-07-23T04:54:05Z",
+    "committer_date": "2026-07-23T04:54:05Z",
+    "subject": "Bump github.com/prometheus/client_golang from 1.23.2 to 1.24.0",
+    "url": "https://github.com/alekpopovic/orch/commit/fb40e32681396cabe9f117a590e88262011df430"
+  },
+  {
+    "sha": "bc8b5710424088d18026fa86ba77c733ab545011",
+    "author_date": "2026-07-25T19:48:36+02:00",
+    "committer_date": "2026-07-25T19:48:36+02:00",
+    "subject": "Merge pull request #4 from alekpopovic/dependabot/go_modules/github.com/prometheus/client_golang-1.24.0",
+    "url": "https://github.com/alekpopovic/orch/commit/bc8b5710424088d18026fa86ba77c733ab545011"
+  },
+  {
+    "sha": "19555151e4e0d69db21aa7ccec888d2b170ce908",
+    "author_date": "2026-07-30T04:53:48Z",
+    "committer_date": "2026-07-30T04:53:48Z",
+    "subject": "Bump github.com/prometheus/client_golang from 1.24.0 to 1.24.1",
+    "url": "https://github.com/alekpopovic/orch/commit/19555151e4e0d69db21aa7ccec888d2b170ce908"
+  },
+  {
+    "sha": "492939fc6f358ededdfaa0841e65ff1691fd61a0",
+    "author_date": "2026-07-30T04:53:53Z",
+    "committer_date": "2026-07-30T04:53:53Z",
+    "subject": "Bump github.com/docker/go-connections from 0.7.0 to 0.8.1",
+    "url": "https://github.com/alekpopovic/orch/commit/492939fc6f358ededdfaa0841e65ff1691fd61a0"
+  },
+  {
+    "sha": "4ceb0a138e43df4a28fb541f7f5a97264ce7e259",
+    "author_date": "2026-08-09T18:07:43+02:00",
+    "committer_date": "2026-08-09T18:07:43+02:00",
+    "subject": "Merge pull request #5 from alekpopovic/dependabot/go_modules/github.com/prometheus/client_golang-1.24.1",
+    "url": "https://github.com/alekpopovic/orch/commit/4ceb0a138e43df4a28fb541f7f5a97264ce7e259"
+  },
+  {
+    "sha": "1ea26fa6a2deaa5604b5f7f479604295ba9cdf49",
+    "author_date": "2026-08-09T18:07:56+02:00",
+    "committer_date": "2026-08-09T18:07:56+02:00",
+    "subject": "Merge pull request #6 from alekpopovic/dependabot/go_modules/github.com/docker/go-connections-0.8.1",
+    "url": "https://github.com/alekpopovic/orch/commit/1ea26fa6a2deaa5604b5f7f479604295ba9cdf49"
+  },
+  {
+    "sha": "9e78fed31df03d7a985a9f4ceae4770739b05014",
+    "author_date": "2026-08-21T13:07:33+02:00",
+    "committer_date": "2026-08-21T13:07:47+02:00",
+    "subject": "Implement API policies and namespaces",
+    "url": "https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014"
+  },
+  {
+    "sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+    "author_date": "2026-08-21T13:47:42+02:00",
+    "committer_date": "2026-08-21T13:47:42+02:00",
+    "subject": "Add quotas image pinning and GitOps",
+    "url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1"
+  },
+  {
+    "sha": "4c9369327bcefc03c3996837645d5160de8d56a3",
+    "author_date": "2026-08-21T13:47:58+02:00",
+    "committer_date": "2026-08-21T13:47:58+02:00",
+    "subject": "Update prompt execution tracker",
+    "url": "https://github.com/alekpopovic/orch/commit/4c9369327bcefc03c3996837645d5160de8d56a3"
+  },
+  {
+    "sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+    "author_date": "2026-08-21T14:43:45+02:00",
+    "committer_date": "2026-08-21T14:43:45+02:00",
+    "subject": "Add jobs storage DNS and notifications",
+    "url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87"
+  },
+  {
+    "sha": "821adf41578eaaf3772dfa7f22ef966540e9073d",
+    "author_date": "2026-08-21T14:43:57+02:00",
+    "committer_date": "2026-08-21T14:43:57+02:00",
+    "subject": "Update prompt execution tracker",
+    "url": "https://github.com/alekpopovic/orch/commit/821adf41578eaaf3772dfa7f22ef966540e9073d"
+  },
+  {
+    "sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+    "author_date": "2026-08-21T15:28:46+02:00",
+    "committer_date": "2026-08-21T15:28:46+02:00",
+    "subject": "Harden v0.3 operations and release",
+    "url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+  },
+  {
+    "sha": "5fd35afd0b4c289927d39f9e208344c11e000cea",
+    "author_date": "2026-08-21T15:28:56+02:00",
+    "committer_date": "2026-08-21T15:28:56+02:00",
+    "subject": "Update prompt execution tracker",
+    "url": "https://github.com/alekpopovic/orch/commit/5fd35afd0b4c289927d39f9e208344c11e000cea"
+  },
+  {
+    "sha": "79d616acb679f237513b86eafe8c535983973579",
+    "author_date": "2026-08-21T16:17:07+02:00",
+    "committer_date": "2026-08-21T16:17:07+02:00",
+    "subject": "Fix v0.3.0 release formatting gate (#7)",
+    "url": "https://github.com/alekpopovic/orch/commit/79d616acb679f237513b86eafe8c535983973579"
+  },
+  {
+    "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "author_date": "2026-08-21T18:41:59+02:00",
+    "committer_date": "2026-08-21T18:41:59+02:00",
+    "subject": "Update v0.3.0 release documentation (#8)",
+    "url": "https://github.com/alekpopovic/orch/commit/cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+  }
+]

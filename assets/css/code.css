@@ -1,0 +1,91 @@
+/* Shared, static editor styling for published examples; no JavaScript required. */
+:is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre {
+  min-width: 0;
+  max-width: 100%;
+  margin-block: 1.6em;
+  padding: 56px clamp(16px, 2vw, 24px) 22px;
+  border: 1px solid #354158;
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 20px 20px, #ff7b72 4px, transparent 4.5px),
+    radial-gradient(circle at 36px 20px, #eac16a 4px, transparent 4.5px),
+    radial-gradient(circle at 52px 20px, #82c69c 4px, transparent 4.5px),
+    linear-gradient(#1b2332 39px, #354158 39px 40px, #101725 40px);
+  background-color: #101725;
+  color: #dce5f4;
+  box-shadow: 0 6px 18px #10172512;
+  font: 13px/1.8 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  text-align: left;
+  white-space: pre;
+  overflow: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  overscroll-behavior-x: contain;
+  tab-size: 4;
+  scrollbar-width: thin;
+  scrollbar-color: #66748d #101725;
+  color-scheme: dark;
+}
+
+:is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre code {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: inherit;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+:is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre:focus-visible {
+  outline: 2px solid #5e86ed;
+  outline-offset: 3px;
+}
+
+/* Rouge tokens already emitted by Jekyll. Plain examples retain their text. */
+:is(.article-prose, .ai-prose, .book-article) pre :is(.c, .c1, .cm, .cp, .cs, .ch, .lineno) { color: #9caec8; }
+:is(.article-prose, .ai-prose, .book-article) pre :is(.k, .kd, .kn, .kp, .kr, .kt, .kc, .ow) { color: #cbb5ff; }
+:is(.article-prose, .ai-prose, .book-article) pre :is(.s, .s1, .s2, .sb, .sc, .sd, .se, .sh, .si, .sr, .ss, .sx) { color: #b7dfa4; }
+:is(.article-prose, .ai-prose, .book-article) pre :is(.m, .mb, .mf, .mh, .mi, .il, .mo, .no) { color: #ffc791; }
+:is(.article-prose, .ai-prose, .book-article) pre :is(.na, .nb, .nc, .nd, .ne, .nf, .nl, .nn, .nt) { color: #9dcbff; }
+:is(.article-prose, .ai-prose, .book-article) pre :is(.o, .p) { color: #bac9de; }
+:is(.article-prose, .ai-prose, .book-article) pre .err { color: #ffb5b5; background: transparent; }
+
+@media (max-width: 650px) {
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre {
+    padding: 52px 16px 18px;
+    border-radius: 11px;
+    font-size: 12px;
+  }
+}
+
+@media print {
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre {
+    padding: 12px;
+    border: 1px solid #d4d4d4;
+    background: #f5f5f5 !important;
+    color: #20201e !important;
+    box-shadow: none;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color-scheme: light;
+  }
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre code * { color: inherit !important; }
+}
+
+@media (forced-colors: active) {
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    box-shadow: none;
+  }
+  :is(.book-article, .article-prose, .ai-prose, .project-story, .learning-exercise) pre code * { color: inherit !important; }
+}

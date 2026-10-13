@@ -1,0 +1,219 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "command": "python3 books/inside-orch/scripts/audit_editorial_evidence.py --git-dir /tmp/inside-orch-reference-history.git",
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "prerequisites": [
+    "Python3",
+    "locked source bytes",
+    "local historical Git objects"
+  ],
+  "started_at_utc": "2026-10-13T02:31:32.588309+00:00",
+  "finished_at_utc": "2026-10-13T02:31:33.658160+00:00",
+  "exit_code": 0,
+  "claims": 475,
+  "reviewed_paths": [
+    {
+      "path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "sha256": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "sha256": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "sha256": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "sha256": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "sha256": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "sha256": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "sha256": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "sha256": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "sha256": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "sha256": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "sha256": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "sha256": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "sha256": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "sha256": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "sha256": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "sha256": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "sha256": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "sha256": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "sha256": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "sha256": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "sha256": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+      "independence": false
+    },
+    {
+      "path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "sha256": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "sha256": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "sha256": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "sha256": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "sha256": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "sha256": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "sha256": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "sha256": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "sha256": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "sha256": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "sha256": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "sha256": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+      "independence": true
+    },
+    {
+      "path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+      "independence": true
+    }
+  ],
+  "errors": [],
+  "pending_dependencies": [],
+  "status": "passed"
+}

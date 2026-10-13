@@ -1,0 +1,26 @@
+commit 56ab72f9e823fedac3e89dd1cf6ef100f6b1fe18
+Date: 2026-06-17T01:42:35+02:00
+Subject: Create dependabot.yml
+
+
+---
+ .github/dependabot.yml | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+new file mode 100644
+index 0000000..cd88554
+--- /dev/null
++++ b/.github/dependabot.yml
+@@ -0,0 +1,11 @@
++# To get started with Dependabot version updates, you'll need to specify which
++# package ecosystems to update and where the package manifests are located.
++# Please see the documentation for all configuration options:
++# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
++
++version: 2
++updates:
++  - package-ecosystem: "gomod" # See documentation for possible values
++    directory: "/" # Location of package manifests
++    schedule:
++      interval: "weekly"

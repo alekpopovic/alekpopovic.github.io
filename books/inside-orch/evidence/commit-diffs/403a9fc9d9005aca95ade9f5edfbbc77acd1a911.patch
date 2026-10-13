@@ -1,0 +1,727 @@
+commit 403a9fc9d9005aca95ade9f5edfbbc77acd1a911
+Date: 2026-06-11T21:33:52+02:00
+Subject: Implement user API auth and RBAC
+
+
+---
+ .env.example              |   2 +
+ cmd/orch-server/main.go   |   7 +-
+ docs/API.md               |   2 +
+ docs/SECURITY.md          |  56 +++++++++++++++
+ internal/api/api.go       |  97 +++++++++++++++++++++++++-
+ internal/api/api_test.go  |  98 ++++++++++++++++++++++++++
+ internal/auth/auth.go     | 171 +++++++++++++++++++++++++++++++++++++++++++++-
+ internal/cli/client.go    |  11 +++
+ internal/cli/root.go      |  26 ++++++-
+ internal/config/config.go |   4 ++
+ 10 files changed, 466 insertions(+), 8 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 0ac6373..40905b2 100644
+--- a/.env.example
++++ b/.env.example
+@@ -2,6 +2,8 @@ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+ ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
++ORCH_JWT_SECRET=dev-user-jwt-secret
++ORCH_USERS=admin:admin,operator:operator,viewer:viewer
+ ORCH_NODE_NAME=local-node
+ ORCH_AGENT_ADDR=:8081
+ ORCH_ADVERTISE_ADDRESS=http://127.0.0.1:8081
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index b3eb06e..d3a1166 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -11,6 +11,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/logging"
+@@ -33,6 +34,10 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 	if err := cfg.Validate(); err != nil {
+ 		return err
+ 	}
++	users, err := auth.ParseStaticUsers(cfg.Users)
++	if err != nil {
++		return err
++	}
+ 
+ 	controlPlane := controlplane.NewMemoryService()
+ 	rolloutController := rollout.NewController(controlPlane, logger)
+@@ -44,7 +49,7 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+-		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken)),
++		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users)),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/docs/API.md b/docs/API.md
+index 55e0d5a..be84dc3 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -12,6 +12,8 @@ The control-plane API uses JSON request and response bodies. Errors use a stable
+ }
+ ```
+ 
++User-facing `/v1/*` endpoints require `Authorization: Bearer <jwt>` when `ORCH_JWT_SECRET` is configured. Agent endpoints use the separate bootstrap-token flow documented below.
++
+ Clients may send `X-Request-ID`; otherwise the server generates one.
+ 
+ ## Health
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+new file mode 100644
+index 0000000..bb76c6a
+--- /dev/null
++++ b/docs/SECURITY.md
+@@ -0,0 +1,56 @@
++# Security
++
++## User API Authentication
++
++User-facing REST API endpoints support JWT authentication when `ORCH_JWT_SECRET` is configured on `orch-server`.
++
++Tokens use HMAC SHA-256 (`HS256`) and must include:
++
++- `sub`: user identifier.
++- `role`: one of `admin`, `operator`, or `viewer`.
++- `exp`: recommended expiration timestamp.
++
++Example claims:
++
++```json
++{
++  "sub": "alice",
++  "role": "operator",
++  "exp": 1791715200
++}
++```
++
++The server validates the signature, role, and expiration before applying RBAC.
++
++For MVP static users can be configured with `ORCH_USERS`:
++
++```sh
++ORCH_USERS=alice:admin,bob:operator,carol:viewer
++```
++
++When `ORCH_USERS` is set, the JWT `sub` must match a configured user and the configured role is authoritative. This prevents a token from escalating itself by changing the `role` claim.
++
++## Roles
++
++- `viewer`: list/read nodes, services, tasks, events, and logs.
++- `operator`: viewer access plus deploy, scale, rollout, rollback, and delete services.
++- `admin`: operator access plus node drain/uncordon and future cluster/user administration.
++
++Roles are hierarchical: `admin` includes `operator` and `viewer`; `operator` includes `viewer`.
++
++## Agent Authentication
++
++Agent authentication is separate from user authentication. Agent endpoints under `/v1/agent/*` continue to use the static bootstrap token configured by `ORCH_BOOTSTRAP_TOKEN`.
++
++Do not reuse user JWT secrets as agent bootstrap tokens.
++
++## Logging
++
++The API access log records request ID, method, path, status, and duration. It does not log `Authorization` headers, JWTs, bootstrap tokens, or request bodies.
++
++## MVP Limitations
++
++- Users are represented by signed JWT claims plus optional `ORCH_USERS` static config; there is no database-backed user management yet.
++- Token issuance is external to the server for now.
++- Use a long, random `ORCH_JWT_SECRET` and rotate it through your deployment secret manager.
++- mTLS should replace static bootstrap-token agent identity before production multi-tenant use.
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 31a73dd..06d14a3 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -14,6 +14,7 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/store"
+@@ -26,6 +27,9 @@ type Server struct {
+ 	logger         *slog.Logger
+ 	timeout        time.Duration
+ 	bootstrapToken string
++	jwtSecret      string
++	staticUsers    map[string]auth.Role
++	now            func() time.Time
+ }
+ 
+ type Option func(*Server)
+@@ -42,6 +46,18 @@ func WithBootstrapToken(token string) Option {
+ 	}
+ }
+ 
++func WithUserJWT(secret string) Option {
++	return func(server *Server) {
++		server.jwtSecret = secret
++	}
++}
++
++func WithStaticUsers(users map[string]auth.Role) Option {
++	return func(server *Server) {
++		server.staticUsers = users
++	}
++}
++
+ func WithLogStreamer(streamer LogStreamer) Option {
+ 	return func(server *Server) {
+ 		server.logStreamer = streamer
+@@ -56,6 +72,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 		controlPlane: controlPlane,
+ 		logger:       logger,
+ 		timeout:      15 * time.Second,
++		now:          func() time.Time { return time.Now().UTC() },
+ 	}
+ 	for _, opt := range opts {
+ 		opt(server)
+@@ -606,11 +623,75 @@ func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) middleware(next http.Handler) http.Handler {
+-	return requestIDMiddleware(s.accessLogMiddleware(s.recoveryMiddleware(s.timeoutMiddleware(authPlaceholderMiddleware(next)))))
++	return requestIDMiddleware(s.accessLogMiddleware(s.recoveryMiddleware(s.timeoutMiddleware(s.userAuthMiddleware(next)))))
+ }
+ 
+-func authPlaceholderMiddleware(next http.Handler) http.Handler {
+-	return next
++func (s *Server) userAuthMiddleware(next http.Handler) http.Handler {
++	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		required, ok := requiredRole(r)
++		if !ok || s.jwtSecret == "" {
++			next.ServeHTTP(w, r)
++			return
++		}
++		token, err := auth.ParseBearer(r.Header.Get("Authorization"))
++		if err != nil {
++			s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "missing or invalid bearer token")
++			return
++		}
++		principal, err := auth.ValidateJWT(token, s.jwtSecret, s.now())
++		if err != nil {
++			s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "invalid bearer token")
++			return
++		}
++		if len(s.staticUsers) > 0 {
++			role, ok := s.staticUsers[principal.Subject]
++			if !ok {
++				s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "unknown user")
++				return
++			}
++			principal.Role = role
++		}
++		if !auth.HasRole(principal.Role, required) {
++			s.writeAuthError(w, r, http.StatusForbidden, "forbidden", "insufficient role")
++			return
++		}
++		next.ServeHTTP(w, r.WithContext(auth.WithPrincipal(r.Context(), principal)))
++	})
++}
++
++func requiredRole(r *http.Request) (auth.Role, bool) {
++	path := r.URL.Path
++	if path == "/healthz" || path == "/readyz" || strings.HasPrefix(path, "/v1/agent/") {
++		return "", false
++	}
++	if r.Method == http.MethodGet {
++		switch {
++		case path == "/v1/nodes" || strings.HasPrefix(path, "/v1/nodes/"):
++			return auth.RoleViewer, true
++		case path == "/v1/services" || strings.HasPrefix(path, "/v1/services/"):
++			return auth.RoleViewer, true
++		case path == "/v1/tasks" || strings.HasPrefix(path, "/v1/tasks/"):
++			return auth.RoleViewer, true
++		case path == "/v1/events":
++			return auth.RoleViewer, true
++		case path == "/v1/logs":
++			return auth.RoleViewer, true
++		case strings.HasPrefix(path, "/v1/rollouts/"):
++			return auth.RoleViewer, true
++		}
++	}
++	if r.Method == http.MethodPost {
++		switch {
++		case strings.HasSuffix(path, "/drain") || strings.HasSuffix(path, "/uncordon"):
++			return auth.RoleAdmin, true
++		case path == "/v1/services" || strings.Contains(path, "/scale") || strings.Contains(path, "/rollout") || strings.Contains(path, "/rollback"):
++			return auth.RoleOperator, true
++		}
++	}
++	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/services/") {
++		return auth.RoleOperator, true
++	}
++	return auth.RoleAdmin, true
+ }
+ 
+ func requestIDMiddleware(next http.Handler) http.Handler {
+@@ -716,6 +797,16 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {
+ 	return true
+ }
+ 
++func (s *Server) writeAuthError(w http.ResponseWriter, r *http.Request, status int, code string, message string) {
++	writeJSON(w, status, ErrorResponse{
++		Error: RequestError{
++			Code:      code,
++			Message:   message,
++			RequestID: requestID(r.Context()),
++		},
++	})
++}
++
+ func (s *Server) pathNodeID(w http.ResponseWriter, r *http.Request) (types.NodeID, bool) {
+ 	id := r.PathValue("id")
+ 	if !validUUID(id) {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 1260e1a..fcc6aa9 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -12,6 +12,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -288,6 +289,58 @@ func TestInvalidPathID(t *testing.T) {
+ 	}
+ }
+ 
++func TestUserAuthMissingToken(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithUserJWT("test-secret"))
++	rec := doRequest(t, handler, http.MethodGet, "/v1/services", nil)
++
++	if rec.Code != http.StatusUnauthorized {
++		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
++	}
++}
++
++func TestUserAuthInvalidToken(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithUserJWT("test-secret"))
++	rec := doAuthenticatedRequest(t, handler, http.MethodGet, "/v1/services", nil, "not-a-jwt")
++
++	if rec.Code != http.StatusUnauthorized {
++		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
++	}
++}
++
++func TestUserAuthInsufficientRole(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithUserJWT("test-secret"))
++	token := userToken(t, auth.RoleViewer)
++	rec := doAuthenticatedRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "api",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`, token)
++
++	if rec.Code != http.StatusForbidden {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusForbidden, rec.Code, rec.Body.String())
++	}
++}
++
++func TestUserAuthAllowedAccess(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithUserJWT("test-secret"))
++	token := userToken(t, auth.RoleOperator)
++	rec := doAuthenticatedRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "api",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`, token)
++
++	if rec.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, rec.Code, rec.Body.String())
++	}
++}
++
+ func TestScaleService(t *testing.T) {
+ 	handler := newTestHandler()
+ 	create := doRequest(t, handler, http.MethodPost, "/v1/services", `{
+@@ -431,6 +484,38 @@ func doRequest(t *testing.T, handler http.Handler, method string, path string, b
+ 	return rec
+ }
+ 
++func doAuthenticatedRequest(t *testing.T, handler http.Handler, method string, path string, body any, token string) *httptest.ResponseRecorder {
++	t.Helper()
++	recorder := requestWithHeaders(t, handler, method, path, body, map[string]string{"Authorization": "Bearer " + token})
++	return recorder
++}
++
++func requestWithHeaders(t *testing.T, handler http.Handler, method string, path string, body any, headers map[string]string) *httptest.ResponseRecorder {
++	t.Helper()
++	var reader *strings.Reader
++	switch value := body.(type) {
++	case nil:
++		reader = strings.NewReader("")
++	case string:
++		reader = strings.NewReader(value)
++	default:
++		data, err := json.Marshal(value)
++		if err != nil {
++			t.Fatalf("marshal body: %v", err)
++		}
++		reader = strings.NewReader(string(data))
++	}
++	req := httptest.NewRequest(method, path, reader)
++	req.Header.Set("Content-Type", "application/json")
++	req.Header.Set("X-Request-ID", "test-request-id")
++	for key, value := range headers {
++		req.Header.Set(key, value)
++	}
++	rec := httptest.NewRecorder()
++	handler.ServeHTTP(rec, req)
++	return rec
++}
++
+ func doAgentRequest(t *testing.T, handler http.Handler, method string, path string, body any) *httptest.ResponseRecorder {
+ 	t.Helper()
+ 	var reader *strings.Reader
+@@ -454,6 +539,19 @@ func doAgentRequest(t *testing.T, handler http.Handler, method string, path stri
+ 	return rec
+ }
+ 
++func userToken(t *testing.T, role auth.Role) string {
++	t.Helper()
++	token, err := auth.SignJWT(auth.Claims{
++		Subject:   "user-1",
++		Role:      role,
++		ExpiresAt: time.Now().Add(time.Hour).Unix(),
++	}, "test-secret")
++	if err != nil {
++		t.Fatalf("sign JWT: %v", err)
++	}
++	return token
++}
++
+ func registerTestNode(t *testing.T, handler http.Handler) AgentResponse {
+ 	t.Helper()
+ 	rec := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/register", `{
+diff --git a/internal/auth/auth.go b/internal/auth/auth.go
+index fa12636..878e8f0 100644
+--- a/internal/auth/auth.go
++++ b/internal/auth/auth.go
+@@ -1,11 +1,176 @@
+ package auth
+ 
+-import "context"
++import (
++	"context"
++	"crypto/hmac"
++	"crypto/sha256"
++	"encoding/base64"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"strings"
++	"time"
++)
++
++type Role string
++
++const (
++	RoleAdmin    Role = "admin"
++	RoleOperator Role = "operator"
++	RoleViewer   Role = "viewer"
++)
+ 
+ type Principal struct {
+ 	Subject string
++	Role    Role
++}
++
++type contextKey struct{}
++
++var (
++	ErrMissingToken = errors.New("missing bearer token")
++	ErrInvalidToken = errors.New("invalid bearer token")
++)
++
++type Claims struct {
++	Subject   string `json:"sub"`
++	Role      Role   `json:"role"`
++	ExpiresAt int64  `json:"exp,omitempty"`
++	IssuedAt  int64  `json:"iat,omitempty"`
++}
++
++func WithPrincipal(ctx context.Context, principal Principal) context.Context {
++	return context.WithValue(ctx, contextKey{}, principal)
++}
++
++func PrincipalFromContext(ctx context.Context) (Principal, bool) {
++	principal, ok := ctx.Value(contextKey{}).(Principal)
++	return principal, ok
++}
++
++func ParseBearer(header string) (string, error) {
++	header = strings.TrimSpace(header)
++	if header == "" {
++		return "", ErrMissingToken
++	}
++	parts := strings.SplitN(header, " ", 2)
++	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || strings.TrimSpace(parts[1]) == "" {
++		return "", ErrInvalidToken
++	}
++	return strings.TrimSpace(parts[1]), nil
++}
++
++func SignJWT(claims Claims, secret string) (string, error) {
++	if strings.TrimSpace(secret) == "" {
++		return "", fmt.Errorf("JWT secret is required")
++	}
++	headerJSON, err := json.Marshal(map[string]string{"alg": "HS256", "typ": "JWT"})
++	if err != nil {
++		return "", err
++	}
++	claimsJSON, err := json.Marshal(claims)
++	if err != nil {
++		return "", err
++	}
++	unsigned := base64.RawURLEncoding.EncodeToString(headerJSON) + "." + base64.RawURLEncoding.EncodeToString(claimsJSON)
++	signature := sign(unsigned, secret)
++	return unsigned + "." + signature, nil
++}
++
++func ValidateJWT(token string, secret string, now time.Time) (Principal, error) {
++	if strings.TrimSpace(secret) == "" {
++		return Principal{}, fmt.Errorf("JWT secret is required")
++	}
++	parts := strings.Split(token, ".")
++	if len(parts) != 3 {
++		return Principal{}, ErrInvalidToken
++	}
++	unsigned := parts[0] + "." + parts[1]
++	if !hmac.Equal([]byte(parts[2]), []byte(sign(unsigned, secret))) {
++		return Principal{}, ErrInvalidToken
++	}
++
++	headerBytes, err := base64.RawURLEncoding.DecodeString(parts[0])
++	if err != nil {
++		return Principal{}, ErrInvalidToken
++	}
++	var header struct {
++		Algorithm string `json:"alg"`
++		Type      string `json:"typ"`
++	}
++	if err := json.Unmarshal(headerBytes, &header); err != nil {
++		return Principal{}, ErrInvalidToken
++	}
++	if header.Algorithm != "HS256" {
++		return Principal{}, ErrInvalidToken
++	}
++
++	claimsBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
++	if err != nil {
++		return Principal{}, ErrInvalidToken
++	}
++	var claims Claims
++	if err := json.Unmarshal(claimsBytes, &claims); err != nil {
++		return Principal{}, ErrInvalidToken
++	}
++	if strings.TrimSpace(claims.Subject) == "" || !ValidRole(claims.Role) {
++		return Principal{}, ErrInvalidToken
++	}
++	if claims.ExpiresAt > 0 && !now.Before(time.Unix(claims.ExpiresAt, 0)) {
++		return Principal{}, ErrInvalidToken
++	}
++	return Principal{Subject: claims.Subject, Role: claims.Role}, nil
++}
++
++func ValidRole(role Role) bool {
++	switch role {
++	case RoleAdmin, RoleOperator, RoleViewer:
++		return true
++	default:
++		return false
++	}
++}
++
++func HasRole(actual Role, required Role) bool {
++	return roleRank(actual) >= roleRank(required)
++}
++
++func ParseStaticUsers(raw string) (map[string]Role, error) {
++	users := make(map[string]Role)
++	raw = strings.TrimSpace(raw)
++	if raw == "" {
++		return users, nil
++	}
++	for _, entry := range strings.Split(raw, ",") {
++		parts := strings.SplitN(strings.TrimSpace(entry), ":", 2)
++		if len(parts) != 2 {
++			return nil, fmt.Errorf("invalid user entry %q", entry)
++		}
++		subject := strings.TrimSpace(parts[0])
++		role := Role(strings.TrimSpace(parts[1]))
++		if subject == "" || !ValidRole(role) {
++			return nil, fmt.Errorf("invalid user entry %q", entry)
++		}
++		users[subject] = role
++	}
++	return users, nil
++}
++
++func roleRank(role Role) int {
++	switch role {
++	case RoleAdmin:
++		return 3
++	case RoleOperator:
++		return 2
++	case RoleViewer:
++		return 1
++	default:
++		return 0
++	}
+ }
+ 
+-type Authorizer interface {
+-	Authorize(ctx context.Context, principal Principal, action string, resource string) error
++func sign(unsigned string, secret string) string {
++	mac := hmac.New(sha256.New, []byte(secret))
++	mac.Write([]byte(unsigned))
++	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
+ }
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 768aeae..46fa39b 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -20,6 +20,7 @@ import (
+ type APIClient struct {
+ 	baseURL    string
+ 	httpClient *http.Client
++	token      string
+ }
+ 
+ func NewAPIClient(serverURL string) (*APIClient, error) {
+@@ -38,6 +39,10 @@ func NewAPIClient(serverURL string) (*APIClient, error) {
+ 	}, nil
+ }
+ 
++func (c *APIClient) SetToken(token string) {
++	c.token = strings.TrimSpace(token)
++}
++
+ func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	var out api.ListNodesResponse
+ 	if err := c.do(ctx, http.MethodGet, "/v1/nodes", nil, &out); err != nil {
+@@ -209,6 +214,9 @@ func (c *APIClient) StreamLogs(ctx context.Context, serviceID string, taskID str
+ 	if err != nil {
+ 		return fmt.Errorf("create logs request: %w", err)
+ 	}
++	if c.token != "" {
++		req.Header.Set("Authorization", "Bearer "+c.token)
++	}
+ 	resp, err := c.httpClient.Do(req)
+ 	if err != nil {
+ 		return fmt.Errorf("request logs failed: %w", err)
+@@ -241,6 +249,9 @@ func (c *APIClient) do(ctx context.Context, method string, path string, body any
+ 		req.Header.Set("Content-Type", "application/json")
+ 	}
+ 	req.Header.Set("Accept", "application/json")
++	if c.token != "" {
++		req.Header.Set("Authorization", "Bearer "+c.token)
++	}
+ 
+ 	resp, err := c.httpClient.Do(req)
+ 	if err != nil {
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 811929f..0b276f2 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -40,6 +40,7 @@ type Client interface {
+ 
+ type Config struct {
+ 	ServerURL string `yaml:"server_url" json:"server_url"`
++	Token     string `yaml:"token" json:"token"`
+ }
+ 
+ type Options struct {
+@@ -52,6 +53,7 @@ type Options struct {
+ type app struct {
+ 	out        io.Writer
+ 	serverFlag string
++	tokenFlag  string
+ 	configPath string
+ 	output     string
+ 	newClient  func(serverURL string) (Client, error)
+@@ -98,6 +100,7 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.SetOut(out)
+ 	root.SetErr(errOut)
+ 	root.PersistentFlags().StringVar(&a.serverFlag, "server", "", "control-plane server URL")
++	root.PersistentFlags().StringVar(&a.tokenFlag, "token", "", "user API JWT bearer token")
+ 	root.PersistentFlags().StringVar(&a.output, "output", "table", "output format: table or json")
+ 	root.PersistentFlags().StringVar(&a.configPath, "config", a.configPath, "CLI config file")
+ 
+@@ -509,7 +512,14 @@ func (a *app) client() (Client, error) {
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	return a.newClient(serverURL)
++	client, err := a.newClient(serverURL)
++	if err != nil {
++		return nil, err
++	}
++	if apiClient, ok := client.(*APIClient); ok {
++		apiClient.SetToken(a.token())
++	}
++	return client, nil
+ }
+ 
+ func (a *app) serverURL() (string, error) {
+@@ -529,6 +539,20 @@ func (a *app) serverURL() (string, error) {
+ 	return "", fmt.Errorf("server URL is required; pass --server, set ORCH_SERVER_URL, or set server_url in %s", a.configPath)
+ }
+ 
++func (a *app) token() string {
++	if strings.TrimSpace(a.tokenFlag) != "" {
++		return strings.TrimSpace(a.tokenFlag)
++	}
++	if env := strings.TrimSpace(os.Getenv("ORCH_TOKEN")); env != "" {
++		return env
++	}
++	cfg, err := readConfig(a.configPath)
++	if err != nil {
++		return ""
++	}
++	return strings.TrimSpace(cfg.Token)
++}
++
+ func readConfig(path string) (Config, error) {
+ 	data, err := os.ReadFile(path)
+ 	if err != nil {
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 63b2ff3..7d7a956 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -13,6 +13,8 @@ type ServerConfig struct {
+ 	DatabaseURL         string
+ 	LogLevel            string
+ 	BootstrapToken      string
++	JWTSecret           string
++	Users               string
+ 	GracefulShutdownTTL time.Duration
+ }
+ 
+@@ -35,6 +37,8 @@ func LoadServer() ServerConfig {
+ 		DatabaseURL:         getenv("DATABASE_URL", "postgres://orch:orch@localhost:5432/orch?sslmode=disable"),
+ 		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+ 		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
++		JWTSecret:           getenv("ORCH_JWT_SECRET", ""),
++		Users:               getenv("ORCH_USERS", ""),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+ 	}
+ }

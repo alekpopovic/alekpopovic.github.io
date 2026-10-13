@@ -1,0 +1,2433 @@
+{
+  "metadata": {
+    "repository": "https://github.com/alekpopovic/orch",
+    "snapshot_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "prompt_count": 91,
+    "reachable_commit_count": 105,
+    "first_parent_commit_count": 99,
+    "unique_associated_implementation_commits": 66,
+    "design_prompt_numbers": [
+      54,
+      56,
+      63,
+      68,
+      69,
+      72,
+      75,
+      77,
+      79
+    ],
+    "tags": {
+      "0.1.0": "990d86458e21ba070baa2d26edbcf82cb21a48b3",
+      "0.3.0": "79d616acb679f237513b86eafe8c535983973579"
+    },
+    "mapping_verification": "Every selected historical anchor was verified to exist in that associated commit and appear in its changed-path diff. Mappings are topical associations, not transcript proof. No tests executed by this history audit."
+  },
+  "mapping": [
+    {
+      "prompt_id": "00",
+      "path": "prompts/00-agents-md-and-architecture-docs.md",
+      "title": "00. AGENTS.md and architecture docs",
+      "commit_sha": "6f90183927991506de435a55582b5c283212ff09",
+      "relationship": "associated",
+      "evidence_paths": [
+        "AGENTS.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "snapshot_evidence_paths": [
+        "AGENTS.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "note": "Architecture/conventions document; intended production architecture is not deployed topology.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/6f90183927991506de435a55582b5c283212ff09",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/6f90183927991506de435a55582b5c283212ff09/AGENTS.md",
+        "https://github.com/alekpopovic/orch/blob/6f90183927991506de435a55582b5c283212ff09/docs/ARCHITECTURE.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/00-agents-md-and-architecture-docs.md",
+      "prompt_sha256": "5811accea3383c2d1e979371a7f29b3fda23f6c65784e325ba84f1cd2f19d264",
+      "verified_changed_paths": [
+        "AGENTS.md",
+        "docs/ARCHITECTURE.md"
+      ]
+    },
+    {
+      "prompt_id": "01",
+      "path": "prompts/01-repository-bootstrap.md",
+      "title": "01. Repository bootstrap",
+      "commit_sha": "72f27ed1d81b75e499ee65e0c9779e44b237f814",
+      "relationship": "associated",
+      "evidence_paths": [
+        "go.mod",
+        "cmd/orch-server/main.go"
+      ],
+      "snapshot_evidence_paths": [
+        "go.mod",
+        "cmd/orch-server/main.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/72f27ed1d81b75e499ee65e0c9779e44b237f814",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/72f27ed1d81b75e499ee65e0c9779e44b237f814/go.mod",
+        "https://github.com/alekpopovic/orch/blob/72f27ed1d81b75e499ee65e0c9779e44b237f814/cmd/orch-server/main.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/01-repository-bootstrap.md",
+      "prompt_sha256": "94be85bea9f4cab7731833d1edaa3e8df4bde8dba708ae4dccc9e65b7076ba93",
+      "verified_changed_paths": [
+        "go.mod",
+        "cmd/orch-server/main.go"
+      ]
+    },
+    {
+      "prompt_id": "02",
+      "path": "prompts/02-core-domain-models.md",
+      "title": "02. Core domain models",
+      "commit_sha": "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+      "relationship": "associated",
+      "evidence_paths": [
+        "pkg/types/types.go",
+        "pkg/types/validation_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "pkg/types/types.go",
+        "pkg/types/validation_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/c756f9d7f3a46e8bfe4d7bca291d67f6a783553d/pkg/types/types.go",
+        "https://github.com/alekpopovic/orch/blob/c756f9d7f3a46e8bfe4d7bca291d67f6a783553d/pkg/types/validation_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/02-core-domain-models.md",
+      "prompt_sha256": "cb0f7205696625ad117d94308667f603c1fad4b8b898d9b21945e8b44bea79fd",
+      "verified_changed_paths": [
+        "pkg/types/types.go",
+        "pkg/types/validation_test.go"
+      ]
+    },
+    {
+      "prompt_id": "03",
+      "path": "prompts/03-postgresql-schema-and-store-layer.md",
+      "title": "03. PostgreSQL schema and store layer",
+      "commit_sha": "7eba6544ffe2eba41b81faa811e899faf28b77a2",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ],
+      "note": "PostgreSQL package/migrations exist; default server does not use it.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7eba6544ffe2eba41b81faa811e899faf28b77a2",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7eba6544ffe2eba41b81faa811e899faf28b77a2/internal/store/postgres.go",
+        "https://github.com/alekpopovic/orch/blob/7eba6544ffe2eba41b81faa811e899faf28b77a2/internal/store/postgres_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/03-postgresql-schema-and-store-layer.md",
+      "prompt_sha256": "54e5f45718c6995976f1a136da3531acea8533a1c446fb66980b0c6d25228252",
+      "verified_changed_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ]
+    },
+    {
+      "prompt_id": "04",
+      "path": "prompts/04-api-server-v1.md",
+      "title": "04. API server v1",
+      "commit_sha": "64a0725387b8130be988948b81774aea7051c718",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/api/api.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/api/api.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/64a0725387b8130be988948b81774aea7051c718",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/64a0725387b8130be988948b81774aea7051c718/internal/api/api.go",
+        "https://github.com/alekpopovic/orch/blob/64a0725387b8130be988948b81774aea7051c718/internal/controlplane/controlplane.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/04-api-server-v1.md",
+      "prompt_sha256": "80b443eee585a848305777f8f9eb5ecc2f96eb1beb595683027fe111af0d20fa",
+      "verified_changed_paths": [
+        "internal/api/api.go",
+        "internal/controlplane/controlplane.go"
+      ]
+    },
+    {
+      "prompt_id": "05",
+      "path": "prompts/05-cobra-cli.md",
+      "title": "05. Cobra CLI",
+      "commit_sha": "042a4a44ecfaa884d6173f9d93afafa81a24ea27",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/cli/root.go",
+        "internal/cli/deploy.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/cli/root.go",
+        "internal/cli/deploy.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/042a4a44ecfaa884d6173f9d93afafa81a24ea27",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/042a4a44ecfaa884d6173f9d93afafa81a24ea27/internal/cli/root.go",
+        "https://github.com/alekpopovic/orch/blob/042a4a44ecfaa884d6173f9d93afafa81a24ea27/internal/cli/deploy.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/05-cobra-cli.md",
+      "prompt_sha256": "06cc4e4af97a3ffa8999a38ceedd9f288f13bac250238bb8b1c2ba9f49b44f13",
+      "verified_changed_paths": [
+        "internal/cli/root.go",
+        "internal/cli/deploy.go"
+      ]
+    },
+    {
+      "prompt_id": "06",
+      "path": "prompts/06-docker-engine-runtime-wrapper.md",
+      "title": "06. Docker Engine runtime wrapper",
+      "commit_sha": "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/docker/docker.go",
+        "internal/docker/docker_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/docker/docker.go",
+        "internal/docker/docker_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41/internal/docker/docker.go",
+        "https://github.com/alekpopovic/orch/blob/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41/internal/docker/docker_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/06-docker-engine-runtime-wrapper.md",
+      "prompt_sha256": "779c1b4737019efa11a16f42f6be28dacca27e645b23e2a487163357240661cf",
+      "verified_changed_paths": [
+        "internal/docker/docker.go",
+        "internal/docker/docker_test.go"
+      ]
+    },
+    {
+      "prompt_id": "07",
+      "path": "prompts/07-worker-agent-registration-and-heartbeat.md",
+      "title": "07. Worker agent registration and heartbeat",
+      "commit_sha": "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/controlplane/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/controlplane/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/5cf9213849164ce1bebc4e042cc37bf5553c2427",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/5cf9213849164ce1bebc4e042cc37bf5553c2427/internal/agent/agent.go",
+        "https://github.com/alekpopovic/orch/blob/5cf9213849164ce1bebc4e042cc37bf5553c2427/internal/controlplane/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/07-worker-agent-registration-and-heartbeat.md",
+      "prompt_sha256": "014bcd792cdfb8a7b239b56d463592b845893586a8969183b83c698e561599e6",
+      "verified_changed_paths": [
+        "internal/agent/agent.go",
+        "internal/controlplane/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "08",
+      "path": "prompts/08-task-assignment-between-server-and-agent.md",
+      "title": "08. Task assignment between server and agent",
+      "commit_sha": "239eb6abab67773e20a18944ac38e2589802946a",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/239eb6abab67773e20a18944ac38e2589802946a",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/239eb6abab67773e20a18944ac38e2589802946a/internal/agent/agent.go",
+        "https://github.com/alekpopovic/orch/blob/239eb6abab67773e20a18944ac38e2589802946a/internal/agent/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/08-task-assignment-between-server-and-agent.md",
+      "prompt_sha256": "74928efb2d7353fda7ed5966ebea41d9c34b007ba7338b663b7d00b2e3a8a44c",
+      "verified_changed_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "09",
+      "path": "prompts/09-scheduler-v1.md",
+      "title": "09. Scheduler v1",
+      "commit_sha": "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/scheduler/scheduler_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/scheduler/scheduler_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/fce0a657651c00ffb697bf4a4aba12d0b171f463",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/fce0a657651c00ffb697bf4a4aba12d0b171f463/internal/scheduler/scheduler.go",
+        "https://github.com/alekpopovic/orch/blob/fce0a657651c00ffb697bf4a4aba12d0b171f463/internal/scheduler/scheduler_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/09-scheduler-v1.md",
+      "prompt_sha256": "6886871e2bcae09e57270bae8ba1ded946833514fe288e6c8a3bc7cff6986e4a",
+      "verified_changed_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/scheduler/scheduler_test.go"
+      ]
+    },
+    {
+      "prompt_id": "10",
+      "path": "prompts/10-reconciler-v1.md",
+      "title": "10. Reconciler v1",
+      "commit_sha": "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ],
+      "note": "Standalone reconciler module; default MemoryService separately performs reconciliation.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3/internal/reconciler/reconciler.go",
+        "https://github.com/alekpopovic/orch/blob/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3/internal/reconciler/reconciler_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/10-reconciler-v1.md",
+      "prompt_sha256": "8da6a94a551c822aea0c806eaef0864b65fe984761dbbf99f34e80705afe4598",
+      "verified_changed_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ]
+    },
+    {
+      "prompt_id": "11",
+      "path": "prompts/11-health-checker.md",
+      "title": "11. Health checker",
+      "commit_sha": "ee067bd0f02566eb600031a0cb81f25919d52445",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/ee067bd0f02566eb600031a0cb81f25919d52445",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/ee067bd0f02566eb600031a0cb81f25919d52445/internal/health/health.go",
+        "https://github.com/alekpopovic/orch/blob/ee067bd0f02566eb600031a0cb81f25919d52445/internal/health/health_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/11-health-checker.md",
+      "prompt_sha256": "125a9403cf290f0ad98ddde6ffdbfe6cdfd167b6269e0f4c7e5faf5b1f522718",
+      "verified_changed_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ]
+    },
+    {
+      "prompt_id": "12",
+      "path": "prompts/12-logs-support.md",
+      "title": "12. Logs support",
+      "commit_sha": "39e2359653e0e8790feda86eb5fbee3eb5ae509f",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/api/logs.go",
+        "internal/agent/logs.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/api/logs.go",
+        "internal/agent/logs.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/39e2359653e0e8790feda86eb5fbee3eb5ae509f",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/39e2359653e0e8790feda86eb5fbee3eb5ae509f/internal/api/logs.go",
+        "https://github.com/alekpopovic/orch/blob/39e2359653e0e8790feda86eb5fbee3eb5ae509f/internal/agent/logs.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/12-logs-support.md",
+      "prompt_sha256": "757c44da9ebc1eeb72801fb8615323a3f9bb2e06676185bb6c3fcd535b661dc7",
+      "verified_changed_paths": [
+        "internal/api/logs.go",
+        "internal/agent/logs.go"
+      ]
+    },
+    {
+      "prompt_id": "13",
+      "path": "prompts/13-durable-events-system.md",
+      "title": "13. Durable events system",
+      "commit_sha": "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/events/events.go",
+        "internal/store/postgres.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/events/events.go",
+        "internal/store/postgres.go"
+      ],
+      "note": "PostgreSQL event-store implementation exists; default runtime events remain memory-backed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7ff58cef0f736ac9076942ce3ef1039d1fe72c72/internal/events/events.go",
+        "https://github.com/alekpopovic/orch/blob/7ff58cef0f736ac9076942ce3ef1039d1fe72c72/internal/store/postgres.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/13-durable-events-system.md",
+      "prompt_sha256": "9adfabf16f6b5dc03a43c969c3bc10ea292a96938096a77daec6c8e77cb4ebda",
+      "verified_changed_paths": [
+        "internal/events/events.go",
+        "internal/store/postgres.go"
+      ]
+    },
+    {
+      "prompt_id": "14",
+      "path": "prompts/14-rolling-update-v1.md",
+      "title": "14. Rolling update v1",
+      "commit_sha": "de5900bced92ad9d5786cd258ff7941d67369d33",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/rollout/rollout.go",
+        "internal/rollout/rollout_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/rollout/rollout.go",
+        "internal/rollout/rollout_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/de5900bced92ad9d5786cd258ff7941d67369d33",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/de5900bced92ad9d5786cd258ff7941d67369d33/internal/rollout/rollout.go",
+        "https://github.com/alekpopovic/orch/blob/de5900bced92ad9d5786cd258ff7941d67369d33/internal/rollout/rollout_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/14-rolling-update-v1.md",
+      "prompt_sha256": "9541da8979b9706741e0348e0a81104db5bf2ccd7fd767d6865cd5cc3f89d71c",
+      "verified_changed_paths": [
+        "internal/rollout/rollout.go",
+        "internal/rollout/rollout_test.go"
+      ]
+    },
+    {
+      "prompt_id": "15",
+      "path": "prompts/15-rollback-v1.md",
+      "title": "15. Rollback v1",
+      "commit_sha": "430a061fe7f01df966e33d0b86654c627b7d5e39",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/rollback_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/rollback_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/430a061fe7f01df966e33d0b86654c627b7d5e39",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/430a061fe7f01df966e33d0b86654c627b7d5e39/internal/controlplane/rollback_test.go",
+        "https://github.com/alekpopovic/orch/blob/430a061fe7f01df966e33d0b86654c627b7d5e39/internal/controlplane/controlplane.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/15-rollback-v1.md",
+      "prompt_sha256": "4f3846912490e8d5dbd6d7447ee13eed7fbc0632a1af969ce988623e53f2ae12",
+      "verified_changed_paths": [
+        "internal/controlplane/rollback_test.go",
+        "internal/controlplane/controlplane.go"
+      ]
+    },
+    {
+      "prompt_id": "16",
+      "path": "prompts/16-safe-service-deletion-and-cleanup.md",
+      "title": "16. Safe service deletion and cleanup",
+      "commit_sha": "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/agent/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/agent/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7/internal/reconciler/reconciler.go",
+        "https://github.com/alekpopovic/orch/blob/2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7/internal/agent/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/16-safe-service-deletion-and-cleanup.md",
+      "prompt_sha256": "41b68f44980d14635b1907c06fd94bfe7bdb68969c65131f5ea0687d758f607e",
+      "verified_changed_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/agent/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "17",
+      "path": "prompts/17-resource-accounting.md",
+      "title": "17. Resource accounting",
+      "commit_sha": "44b60a210c5a17e444b02d622b6af0c1c11375e2",
+      "relationship": "associated",
+      "evidence_paths": [
+        "pkg/types/types.go",
+        "pkg/types/resources_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "pkg/types/types.go",
+        "pkg/types/resources_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/44b60a210c5a17e444b02d622b6af0c1c11375e2",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/44b60a210c5a17e444b02d622b6af0c1c11375e2/pkg/types/types.go",
+        "https://github.com/alekpopovic/orch/blob/44b60a210c5a17e444b02d622b6af0c1c11375e2/pkg/types/resources_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/17-resource-accounting.md",
+      "prompt_sha256": "6837f4a2089281a8b5ac2fab152d734da6419b0b29669272c584899a3c548f65",
+      "verified_changed_paths": [
+        "pkg/types/types.go",
+        "pkg/types/resources_test.go"
+      ]
+    },
+    {
+      "prompt_id": "18",
+      "path": "prompts/18-user-api-auth-v1.md",
+      "title": "18. User API auth v1",
+      "commit_sha": "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/auth/auth.go",
+        "internal/api/api_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/auth/auth.go",
+        "internal/api/api_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/403a9fc9d9005aca95ade9f5edfbbc77acd1a911/internal/auth/auth.go",
+        "https://github.com/alekpopovic/orch/blob/403a9fc9d9005aca95ade9f5edfbbc77acd1a911/internal/api/api_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/18-user-api-auth-v1.md",
+      "prompt_sha256": "2bf250c79051b1b6c505dad806e87db41dac846864a147c0fd0d34c5ac4440aa",
+      "verified_changed_paths": [
+        "internal/auth/auth.go",
+        "internal/api/api_test.go"
+      ]
+    },
+    {
+      "prompt_id": "19",
+      "path": "prompts/19-agent-security-bootstrap.md",
+      "title": "19. Agent security bootstrap",
+      "commit_sha": "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/auth/agent.go",
+        "internal/auth/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/auth/agent.go",
+        "internal/auth/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4f25e78c229ba040c07a84801490485b5a0cbb2e/internal/auth/agent.go",
+        "https://github.com/alekpopovic/orch/blob/4f25e78c229ba040c07a84801490485b5a0cbb2e/internal/auth/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/19-agent-security-bootstrap.md",
+      "prompt_sha256": "7209f3ce5207c5044bb3ab29c08e2de291c7358ee81847570199f02a2e5b3b79",
+      "verified_changed_paths": [
+        "internal/auth/agent.go",
+        "internal/auth/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "20",
+      "path": "prompts/20-prometheus-metrics.md",
+      "title": "20. Prometheus metrics",
+      "commit_sha": "b3e29e593f46b4e90899a56bd9391c03d7c42f1a",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/metrics/prometheus.go",
+        "internal/metrics/prometheus_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/metrics/prometheus.go",
+        "internal/metrics/prometheus_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/b3e29e593f46b4e90899a56bd9391c03d7c42f1a",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/b3e29e593f46b4e90899a56bd9391c03d7c42f1a/internal/metrics/prometheus.go",
+        "https://github.com/alekpopovic/orch/blob/b3e29e593f46b4e90899a56bd9391c03d7c42f1a/internal/metrics/prometheus_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/20-prometheus-metrics.md",
+      "prompt_sha256": "469dbd70cab74941c902564d9019febb93736979620e87b75ad6c6e63c208008",
+      "verified_changed_paths": [
+        "internal/metrics/prometheus.go",
+        "internal/metrics/prometheus_test.go"
+      ]
+    },
+    {
+      "prompt_id": "21",
+      "path": "prompts/21-local-development-environment.md",
+      "title": "21. Local development environment",
+      "commit_sha": "f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa",
+      "relationship": "associated",
+      "evidence_paths": [
+        "docker-compose.yml",
+        "scripts/demo-deploy.sh"
+      ],
+      "snapshot_evidence_paths": [
+        "compose.yaml",
+        "scripts/demo-deploy.sh"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa/docker-compose.yml",
+        "https://github.com/alekpopovic/orch/blob/f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa/scripts/demo-deploy.sh"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/21-local-development-environment.md",
+      "prompt_sha256": "d467398a5d5ccd3e5276b0efd7f831bbd2945a9a34539e8d9778a03d7213954d",
+      "verified_changed_paths": [
+        "docker-compose.yml",
+        "scripts/demo-deploy.sh"
+      ]
+    },
+    {
+      "prompt_id": "22",
+      "path": "prompts/22-end-to-end-tests.md",
+      "title": "22. End-to-end tests",
+      "commit_sha": "903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/e2e/orchestrator_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/e2e/orchestrator_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc/internal/e2e/orchestrator_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/22-end-to-end-tests.md",
+      "prompt_sha256": "f1deb5ac4dfd847581cf9d2ddc22ef2d80404c01a39efaecf2520270d3fd057f",
+      "verified_changed_paths": [
+        "internal/e2e/orchestrator_test.go"
+      ]
+    },
+    {
+      "prompt_id": "23",
+      "path": "prompts/23-github-actions-ci.md",
+      "title": "23. GitHub Actions CI",
+      "commit_sha": "1e46df4a538ef7a015733308d7f3f55e0d600020",
+      "relationship": "associated",
+      "evidence_paths": [
+        ".github/workflows/ci.yml",
+        ".golangci.yml"
+      ],
+      "snapshot_evidence_paths": [
+        ".github/workflows/ci.yml",
+        ".golangci.yml"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/1e46df4a538ef7a015733308d7f3f55e0d600020",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/1e46df4a538ef7a015733308d7f3f55e0d600020/.github/workflows/ci.yml",
+        "https://github.com/alekpopovic/orch/blob/1e46df4a538ef7a015733308d7f3f55e0d600020/.golangci.yml"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/23-github-actions-ci.md",
+      "prompt_sha256": "c75d1d15c1c09c76038b8f3fcfca2d624afb0bdacc20ac7c250f464a963110a9",
+      "verified_changed_paths": [
+        ".github/workflows/ci.yml",
+        ".golangci.yml"
+      ]
+    },
+    {
+      "prompt_id": "24",
+      "path": "prompts/24-idempotency-audit.md",
+      "title": "24. Idempotency audit",
+      "commit_sha": "29b20fb897a3b61f0a30908587218eeeb52df858",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/rollout/rollout_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/rollout/rollout_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/29b20fb897a3b61f0a30908587218eeeb52df858",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/29b20fb897a3b61f0a30908587218eeeb52df858/internal/controlplane/agent_test.go",
+        "https://github.com/alekpopovic/orch/blob/29b20fb897a3b61f0a30908587218eeeb52df858/internal/rollout/rollout_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/24-idempotency-audit.md",
+      "prompt_sha256": "84b2d799af89e39e5c5a47018eab4b64ee46ae9f7c37da0a84dd8c19a0576de7",
+      "verified_changed_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/rollout/rollout_test.go"
+      ]
+    },
+    {
+      "prompt_id": "25",
+      "path": "prompts/25-failure-modes-hardening.md",
+      "title": "25. Failure modes hardening",
+      "commit_sha": "66cfb7049fc1fbceeec9e36a7067febe8cbab698",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/agent/agent_test.go",
+        "docs/RELIABILITY.md"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/agent/agent_test.go",
+        "docs/RELIABILITY.md"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/66cfb7049fc1fbceeec9e36a7067febe8cbab698",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/66cfb7049fc1fbceeec9e36a7067febe8cbab698/internal/agent/agent_test.go",
+        "https://github.com/alekpopovic/orch/blob/66cfb7049fc1fbceeec9e36a7067febe8cbab698/docs/RELIABILITY.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/25-failure-modes-hardening.md",
+      "prompt_sha256": "eb6bc68674903435dae228cb527519fbada50e3b147a029be252625d6f85c116",
+      "verified_changed_paths": [
+        "internal/agent/agent_test.go",
+        "docs/RELIABILITY.md"
+      ]
+    },
+    {
+      "prompt_id": "26",
+      "path": "prompts/26-senior-distributed-systems-review.md",
+      "title": "26. Senior distributed systems review",
+      "commit_sha": "316ba80ac1ea7ba465f1b0826b655233a651c043",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/store/postgres_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/store/postgres_test.go"
+      ],
+      "note": "Associated targeted-fix commit; no separately persisted full distributed-systems review report located.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/316ba80ac1ea7ba465f1b0826b655233a651c043",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/316ba80ac1ea7ba465f1b0826b655233a651c043/internal/controlplane/agent_test.go",
+        "https://github.com/alekpopovic/orch/blob/316ba80ac1ea7ba465f1b0826b655233a651c043/internal/store/postgres_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/26-senior-distributed-systems-review.md",
+      "prompt_sha256": "c12f9db9a9f31548086477f7cd5b1089d26cbe293709a72545afc943a3ed2c09",
+      "verified_changed_paths": [
+        "internal/controlplane/agent_test.go",
+        "internal/store/postgres_test.go"
+      ]
+    },
+    {
+      "prompt_id": "27",
+      "path": "prompts/27-production-documentation.md",
+      "title": "27. Production documentation",
+      "commit_sha": "98d1882228d93b4894b37b95075ccf8e77ec1067",
+      "relationship": "associated",
+      "evidence_paths": [
+        "docs/OPERATIONS.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/OPERATIONS.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/98d1882228d93b4894b37b95075ccf8e77ec1067",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/98d1882228d93b4894b37b95075ccf8e77ec1067/docs/OPERATIONS.md",
+        "https://github.com/alekpopovic/orch/blob/98d1882228d93b4894b37b95075ccf8e77ec1067/docs/ARCHITECTURE.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/27-production-documentation.md",
+      "prompt_sha256": "94c7a8b9a82833f139d5f0fb61f248f728f4b4abb9caa7f4ed11497e17f7a4d2",
+      "verified_changed_paths": [
+        "docs/OPERATIONS.md",
+        "docs/ARCHITECTURE.md"
+      ]
+    },
+    {
+      "prompt_id": "28",
+      "path": "prompts/28-mvp-release-preparation.md",
+      "title": "28. MVP release preparation",
+      "commit_sha": "990d86458e21ba070baa2d26edbcf82cb21a48b3",
+      "relationship": "associated",
+      "evidence_paths": [
+        "RELEASE_NOTES.md",
+        "internal/e2e/orchestrator_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "RELEASE_NOTES.md",
+        "internal/e2e/orchestrator_test.go"
+      ],
+      "note": "MVP release preparation commit; release-publication date must come from GitHub release metadata.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/990d86458e21ba070baa2d26edbcf82cb21a48b3",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/990d86458e21ba070baa2d26edbcf82cb21a48b3/RELEASE_NOTES.md",
+        "https://github.com/alekpopovic/orch/blob/990d86458e21ba070baa2d26edbcf82cb21a48b3/internal/e2e/orchestrator_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/28-mvp-release-preparation.md",
+      "prompt_sha256": "ea7f33db8174f4c5799454b3327bbd60243646c477a8ef098a43f375cc4c8937",
+      "verified_changed_paths": [
+        "RELEASE_NOTES.md",
+        "internal/e2e/orchestrator_test.go"
+      ]
+    },
+    {
+      "prompt_id": "29",
+      "path": "prompts/29-freeze-api-and-state-machine-contract.md",
+      "title": "29. Freeze API and state-machine contract",
+      "commit_sha": "6526b47f66da88117bab80468ce6b6c711d1e118",
+      "relationship": "associated",
+      "evidence_paths": [
+        "pkg/types/lifecycle.go",
+        "pkg/types/lifecycle_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "pkg/types/lifecycle.go",
+        "pkg/types/lifecycle_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/6526b47f66da88117bab80468ce6b6c711d1e118",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/6526b47f66da88117bab80468ce6b6c711d1e118/pkg/types/lifecycle.go",
+        "https://github.com/alekpopovic/orch/blob/6526b47f66da88117bab80468ce6b6c711d1e118/pkg/types/lifecycle_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/29-freeze-api-and-state-machine-contract.md",
+      "prompt_sha256": "36cb9e72c6d5dcee5b3a3fe8b9942be82201894489db5d945598ebb1855596dc",
+      "verified_changed_paths": [
+        "pkg/types/lifecycle.go",
+        "pkg/types/lifecycle_test.go"
+      ]
+    },
+    {
+      "prompt_id": "30",
+      "path": "prompts/30-transaction-boundaries-audit.md",
+      "title": "30. Transaction boundaries audit",
+      "commit_sha": "72fd9baff0bbfde49574257380bcd8f747cc2070",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ],
+      "note": "Transactional PostgreSQL primitives; not proof of durable default-runtime writes.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/72fd9baff0bbfde49574257380bcd8f747cc2070",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/72fd9baff0bbfde49574257380bcd8f747cc2070/internal/store/postgres.go",
+        "https://github.com/alekpopovic/orch/blob/72fd9baff0bbfde49574257380bcd8f747cc2070/internal/store/postgres_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/30-transaction-boundaries-audit.md",
+      "prompt_sha256": "6ed729b63d3847a5aa199b79e17987e0729629933f82927be2c5a4a073f44c6a",
+      "verified_changed_paths": [
+        "internal/store/postgres.go",
+        "internal/store/postgres_test.go"
+      ]
+    },
+    {
+      "prompt_id": "31",
+      "path": "prompts/31-scheduler-concurrency-safety.md",
+      "title": "31. Scheduler concurrency safety",
+      "commit_sha": "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/store/postgres_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/store/postgres_test.go"
+      ],
+      "note": "Atomic claim/assignment package; default-runtime concurrency safety is scoped to one memory process.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/1a1c216e8cfb442465f4d3c2c114d20da0342795",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/1a1c216e8cfb442465f4d3c2c114d20da0342795/internal/scheduler/scheduler.go",
+        "https://github.com/alekpopovic/orch/blob/1a1c216e8cfb442465f4d3c2c114d20da0342795/internal/store/postgres_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/31-scheduler-concurrency-safety.md",
+      "prompt_sha256": "b50b545da41f1b0536aa092d2520bdd0767fa14545c9c9ae8a11156289cd41e1",
+      "verified_changed_paths": [
+        "internal/scheduler/scheduler.go",
+        "internal/store/postgres_test.go"
+      ]
+    },
+    {
+      "prompt_id": "32",
+      "path": "prompts/32-reconciler-idempotency-under-restart.md",
+      "title": "32. Reconciler idempotency under restart",
+      "commit_sha": "a11cec091a69720c14b9713d8be68f38fe6df332",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/a11cec091a69720c14b9713d8be68f38fe6df332",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/a11cec091a69720c14b9713d8be68f38fe6df332/internal/reconciler/reconciler.go",
+        "https://github.com/alekpopovic/orch/blob/a11cec091a69720c14b9713d8be68f38fe6df332/internal/reconciler/reconciler_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/32-reconciler-idempotency-under-restart.md",
+      "prompt_sha256": "fd7440cec0d49cce64299a8c65e8748e1a7392544f647f1cef04bed108834fb1",
+      "verified_changed_paths": [
+        "internal/reconciler/reconciler.go",
+        "internal/reconciler/reconciler_test.go"
+      ]
+    },
+    {
+      "prompt_id": "33",
+      "path": "prompts/33-fake-runtime-for-deterministic-tests.md",
+      "title": "33. Fake runtime for deterministic tests",
+      "commit_sha": "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/docker/fake.go",
+        "internal/docker/fake_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/docker/fake.go",
+        "internal/docker/fake_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/c69f9ffa830284692aabf9e65ab9eb1f79d3a114/internal/docker/fake.go",
+        "https://github.com/alekpopovic/orch/blob/c69f9ffa830284692aabf9e65ab9eb1f79d3a114/internal/docker/fake_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/33-fake-runtime-for-deterministic-tests.md",
+      "prompt_sha256": "224c01371e47ae95721a7d4a9894eff16285dbad7f828ec0329894fdcd8715d3",
+      "verified_changed_paths": [
+        "internal/docker/fake.go",
+        "internal/docker/fake_test.go"
+      ]
+    },
+    {
+      "prompt_id": "34",
+      "path": "prompts/34-port-allocation-and-collision-handling.md",
+      "title": "34. Port allocation and collision handling",
+      "commit_sha": "3bfcef82a54dec457cf9d4187705fa70cc7215cf",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "migrations/000002_task_ports.up.sql"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/scheduler/scheduler.go",
+        "migrations/000002_task_ports.up.sql"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/3bfcef82a54dec457cf9d4187705fa70cc7215cf",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/3bfcef82a54dec457cf9d4187705fa70cc7215cf/internal/scheduler/scheduler.go",
+        "https://github.com/alekpopovic/orch/blob/3bfcef82a54dec457cf9d4187705fa70cc7215cf/migrations/000002_task_ports.up.sql"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/34-port-allocation-and-collision-handling.md",
+      "prompt_sha256": "7937c1dc29b2f20cf354c813830ecbe085e5aeb0507fdd16bd226b2f80c9e33e",
+      "verified_changed_paths": [
+        "internal/scheduler/scheduler.go",
+        "migrations/000002_task_ports.up.sql"
+      ]
+    },
+    {
+      "prompt_id": "35",
+      "path": "prompts/35-basic-service-discovery.md",
+      "title": "35. Basic service discovery",
+      "commit_sha": "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/discovery/discovery.go",
+        "internal/discovery/discovery_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/discovery/discovery.go",
+        "internal/discovery/discovery_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a/internal/discovery/discovery.go",
+        "https://github.com/alekpopovic/orch/blob/03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a/internal/discovery/discovery_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/35-basic-service-discovery.md",
+      "prompt_sha256": "e96bc8082de78f2bee8ed9016c41851b068e56502da1d49dc55608726114a1dc",
+      "verified_changed_paths": [
+        "internal/discovery/discovery.go",
+        "internal/discovery/discovery_test.go"
+      ]
+    },
+    {
+      "prompt_id": "36",
+      "path": "prompts/36-traefik-integration.md",
+      "title": "36. Traefik integration",
+      "commit_sha": "ea0760e8201c842371caf6671a90bcfeb90197bb",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/traefik/config.go",
+        "internal/traefik/config_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/traefik/config.go",
+        "internal/traefik/config_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/ea0760e8201c842371caf6671a90bcfeb90197bb",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/ea0760e8201c842371caf6671a90bcfeb90197bb/internal/traefik/config.go",
+        "https://github.com/alekpopovic/orch/blob/ea0760e8201c842371caf6671a90bcfeb90197bb/internal/traefik/config_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/36-traefik-integration.md",
+      "prompt_sha256": "7a551c60d40539b7ed00bcfcdd8cbfa15310f336be1d8d4395e5e8ddbe5baf74",
+      "verified_changed_paths": [
+        "internal/traefik/config.go",
+        "internal/traefik/config_test.go"
+      ]
+    },
+    {
+      "prompt_id": "37",
+      "path": "prompts/37-secrets-mvp.md",
+      "title": "37. Secrets MVP",
+      "commit_sha": "ad738d1867eefb3c92cc4280659ae76943341426",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/secrets/envelope.go",
+        "internal/secrets/envelope_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/secrets/envelope.go",
+        "internal/secrets/envelope_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/ad738d1867eefb3c92cc4280659ae76943341426",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/ad738d1867eefb3c92cc4280659ae76943341426/internal/secrets/envelope.go",
+        "https://github.com/alekpopovic/orch/blob/ad738d1867eefb3c92cc4280659ae76943341426/internal/secrets/envelope_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/37-secrets-mvp.md",
+      "prompt_sha256": "6d8d20d2576a67f270bcc29d1aa4cfad43a867178feab6916cc060b9b6d56091",
+      "verified_changed_paths": [
+        "internal/secrets/envelope.go",
+        "internal/secrets/envelope_test.go"
+      ]
+    },
+    {
+      "prompt_id": "38",
+      "path": "prompts/38-image-registry-authentication.md",
+      "title": "38. Image registry authentication",
+      "commit_sha": "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/controlplane.go",
+        "migrations/000005_registry_credentials.up.sql"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/controlplane.go",
+        "migrations/000005_registry_credentials.up.sql"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/fe41c80f83b62a3c8ea8430046acf088ec4014a1/internal/controlplane/controlplane.go",
+        "https://github.com/alekpopovic/orch/blob/fe41c80f83b62a3c8ea8430046acf088ec4014a1/migrations/000005_registry_credentials.up.sql"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/38-image-registry-authentication.md",
+      "prompt_sha256": "8e177ec5ca7a23de1963ed22765747af7ce0c4463dccf607264eaf6b9ba112d2",
+      "verified_changed_paths": [
+        "internal/controlplane/controlplane.go",
+        "migrations/000005_registry_credentials.up.sql"
+      ]
+    },
+    {
+      "prompt_id": "39",
+      "path": "prompts/39-node-drain-and-reschedule.md",
+      "title": "39. Node drain and reschedule",
+      "commit_sha": "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/drain_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/drain_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/42d4caa4451f4dea24113d48eb1e9e47f2cef558/internal/controlplane/drain_test.go",
+        "https://github.com/alekpopovic/orch/blob/42d4caa4451f4dea24113d48eb1e9e47f2cef558/internal/controlplane/controlplane.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/39-node-drain-and-reschedule.md",
+      "prompt_sha256": "d390c07ef514241f320a46788357bcfc2957f763a55cb0476d5e2dec9d247f84",
+      "verified_changed_paths": [
+        "internal/controlplane/drain_test.go",
+        "internal/controlplane/controlplane.go"
+      ]
+    },
+    {
+      "prompt_id": "40",
+      "path": "prompts/40-node-offline-detection-and-recovery.md",
+      "title": "40. Node offline detection and recovery",
+      "commit_sha": "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/node/monitor.go",
+        "internal/controlplane/offline_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/node/monitor.go",
+        "internal/controlplane/offline_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5/internal/node/monitor.go",
+        "https://github.com/alekpopovic/orch/blob/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5/internal/controlplane/offline_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/40-node-offline-detection-and-recovery.md",
+      "prompt_sha256": "07be0369b4e4f27dfb823db90542dc91cc4bbdabc6ff9b74abb891d1f62e7f2c",
+      "verified_changed_paths": [
+        "internal/node/monitor.go",
+        "internal/controlplane/offline_test.go"
+      ]
+    },
+    {
+      "prompt_id": "41",
+      "path": "prompts/41-manual-docker-drift-reconciliation.md",
+      "title": "41. Manual Docker drift reconciliation",
+      "commit_sha": "cf9769553d6599d798fafaffe1495d3d739fe993",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/cf9769553d6599d798fafaffe1495d3d739fe993",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/cf9769553d6599d798fafaffe1495d3d739fe993/internal/agent/agent.go",
+        "https://github.com/alekpopovic/orch/blob/cf9769553d6599d798fafaffe1495d3d739fe993/internal/agent/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/41-manual-docker-drift-reconciliation.md",
+      "prompt_sha256": "c59ddaddefb77ff4b5c88a1c554b38df982b6b0452ca0c2b7bd50b5ec4f3f5b2",
+      "verified_changed_paths": [
+        "internal/agent/agent.go",
+        "internal/agent/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "42",
+      "path": "prompts/42-deployment-lock-and-concurrent-user-operations.md",
+      "title": "42. Deployment lock and concurrent user operations",
+      "commit_sha": "5bfb4ac394a609469263de9e14d25d5c2660ee8f",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/controlplane/operation_lock_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/operation_lock_test.go",
+        "internal/controlplane/controlplane.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/5bfb4ac394a609469263de9e14d25d5c2660ee8f",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/5bfb4ac394a609469263de9e14d25d5c2660ee8f/internal/controlplane/operation_lock_test.go",
+        "https://github.com/alekpopovic/orch/blob/5bfb4ac394a609469263de9e14d25d5c2660ee8f/internal/controlplane/controlplane.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/42-deployment-lock-and-concurrent-user-operations.md",
+      "prompt_sha256": "01748886949b51fa2c44a0e5633b271deee70ed3afd567b10157c9d6797bf4ac",
+      "verified_changed_paths": [
+        "internal/controlplane/operation_lock_test.go",
+        "internal/controlplane/controlplane.go"
+      ]
+    },
+    {
+      "prompt_id": "43",
+      "path": "prompts/43-deployment-yaml-schema-and-validation.md",
+      "title": "43. Deployment YAML schema and validation",
+      "commit_sha": "6f7954b8d31b52a7909ebe20d1e22b384af19530",
+      "relationship": "associated",
+      "evidence_paths": [
+        "schemas/service.schema.json",
+        "internal/cli/deploy_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "schemas/service.schema.json",
+        "internal/cli/deploy_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/6f7954b8d31b52a7909ebe20d1e22b384af19530",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/6f7954b8d31b52a7909ebe20d1e22b384af19530/schemas/service.schema.json",
+        "https://github.com/alekpopovic/orch/blob/6f7954b8d31b52a7909ebe20d1e22b384af19530/internal/cli/deploy_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/43-deployment-yaml-schema-and-validation.md",
+      "prompt_sha256": "257c02c08a42da95ab9f1e746210653a776a618040e3ea89b5c0297e226abef3",
+      "verified_changed_paths": [
+        "schemas/service.schema.json",
+        "internal/cli/deploy_test.go"
+      ]
+    },
+    {
+      "prompt_id": "44",
+      "path": "prompts/44-config-management-hardening.md",
+      "title": "44. Config management hardening",
+      "commit_sha": "a4844c571a0ddf33879556413a62d49a408609e3",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/config/config.go",
+        "internal/config/config_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/config/config.go",
+        "internal/config/config_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/a4844c571a0ddf33879556413a62d49a408609e3",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/a4844c571a0ddf33879556413a62d49a408609e3/internal/config/config.go",
+        "https://github.com/alekpopovic/orch/blob/a4844c571a0ddf33879556413a62d49a408609e3/internal/config/config_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/44-config-management-hardening.md",
+      "prompt_sha256": "49831fb6d249f7a18b191fa5074869238e6c2a04443404a987e194739d81232f",
+      "verified_changed_paths": [
+        "internal/config/config.go",
+        "internal/config/config_test.go"
+      ]
+    },
+    {
+      "prompt_id": "45",
+      "path": "prompts/45-structured-error-model.md",
+      "title": "45. Structured error model",
+      "commit_sha": "b5d4573f8fa5d56a5dcfde609e3794e93644a39d",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/apperrors/errors.go",
+        "internal/apperrors/errors_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/apperrors/errors.go",
+        "internal/apperrors/errors_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/b5d4573f8fa5d56a5dcfde609e3794e93644a39d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/b5d4573f8fa5d56a5dcfde609e3794e93644a39d/internal/apperrors/errors.go",
+        "https://github.com/alekpopovic/orch/blob/b5d4573f8fa5d56a5dcfde609e3794e93644a39d/internal/apperrors/errors_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/45-structured-error-model.md",
+      "prompt_sha256": "7a1e02fcfa4db273d530cd8b9d0343e1665403268a9b843effbe50185e7081de",
+      "verified_changed_paths": [
+        "internal/apperrors/errors.go",
+        "internal/apperrors/errors_test.go"
+      ]
+    },
+    {
+      "prompt_id": "46",
+      "path": "prompts/46-audit-logging.md",
+      "title": "46. Audit logging",
+      "commit_sha": "7935c334dcd264e70abb9e795889010b9ecdb03b",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/audit/audit.go",
+        "migrations/000008_audit_logs.up.sql"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/audit/audit.go",
+        "migrations/000008_audit_logs.up.sql"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7935c334dcd264e70abb9e795889010b9ecdb03b",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7935c334dcd264e70abb9e795889010b9ecdb03b/internal/audit/audit.go",
+        "https://github.com/alekpopovic/orch/blob/7935c334dcd264e70abb9e795889010b9ecdb03b/migrations/000008_audit_logs.up.sql"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/46-audit-logging.md",
+      "prompt_sha256": "5376b4a7b02a7c86defe9bc6d4cbaaa758f18adb6a73b3111747fab6ad8627eb",
+      "verified_changed_paths": [
+        "internal/audit/audit.go",
+        "migrations/000008_audit_logs.up.sql"
+      ]
+    },
+    {
+      "prompt_id": "47",
+      "path": "prompts/47-prometheus-alert-rules.md",
+      "title": "47. Prometheus alert rules",
+      "commit_sha": "357903ef7cb95a7d6d8fad5f426a48ed48bc0b76",
+      "relationship": "associated",
+      "evidence_paths": [
+        "deploy/monitoring/prometheus-rules.yaml"
+      ],
+      "snapshot_evidence_paths": [
+        "deploy/monitoring/prometheus-rules.yaml"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/357903ef7cb95a7d6d8fad5f426a48ed48bc0b76",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/357903ef7cb95a7d6d8fad5f426a48ed48bc0b76/deploy/monitoring/prometheus-rules.yaml"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/47-prometheus-alert-rules.md",
+      "prompt_sha256": "8ac19b8083d0d04454e67a9b93073a241c416f495c309507140710cbb294c1d1",
+      "verified_changed_paths": [
+        "deploy/monitoring/prometheus-rules.yaml"
+      ]
+    },
+    {
+      "prompt_id": "48",
+      "path": "prompts/48-grafana-dashboard-json.md",
+      "title": "48. Grafana dashboard JSON",
+      "commit_sha": "aa44e586fd79147173588f0bf86763814bd23ec4",
+      "relationship": "associated",
+      "evidence_paths": [
+        "deploy/monitoring/grafana/orchestrator-dashboard.json"
+      ],
+      "snapshot_evidence_paths": [
+        "deploy/monitoring/grafana/orchestrator-dashboard.json"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/aa44e586fd79147173588f0bf86763814bd23ec4",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/aa44e586fd79147173588f0bf86763814bd23ec4/deploy/monitoring/grafana/orchestrator-dashboard.json"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/48-grafana-dashboard-json.md",
+      "prompt_sha256": "502fc88ad0a8655a4df21ad6da2357cd94b6e3abd3b59f14d0578287f998cce3",
+      "verified_changed_paths": [
+        "deploy/monitoring/grafana/orchestrator-dashboard.json"
+      ]
+    },
+    {
+      "prompt_id": "49",
+      "path": "prompts/49-backup-and-restore-runbook.md",
+      "title": "49. Backup and restore runbook",
+      "commit_sha": "64abe001e83932cba294831424557dfd16f77c8c",
+      "relationship": "associated",
+      "evidence_paths": [
+        "scripts/backup-db.sh",
+        "docs/BACKUP_RESTORE.md"
+      ],
+      "snapshot_evidence_paths": [
+        "scripts/backup-db.sh",
+        "docs/BACKUP_RESTORE.md"
+      ],
+      "note": "Database-only backup; cannot preserve default server live memory state or Docker volumes.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/64abe001e83932cba294831424557dfd16f77c8c",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/64abe001e83932cba294831424557dfd16f77c8c/scripts/backup-db.sh",
+        "https://github.com/alekpopovic/orch/blob/64abe001e83932cba294831424557dfd16f77c8c/docs/BACKUP_RESTORE.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/49-backup-and-restore-runbook.md",
+      "prompt_sha256": "0c1a0dbef66dbf5d52ca640891e30a6d162217fac5574bdc55864167b3fd173e",
+      "verified_changed_paths": [
+        "scripts/backup-db.sh",
+        "docs/BACKUP_RESTORE.md"
+      ]
+    },
+    {
+      "prompt_id": "50",
+      "path": "prompts/50-production-deployment-manifest.md",
+      "title": "50. Production deployment manifest",
+      "commit_sha": "18fcf32524007ba7d8a71acd70e5acc48f758e49",
+      "relationship": "associated",
+      "evidence_paths": [
+        "deployments/production/docker-compose.yml",
+        "docs/PRODUCTION_DEPLOYMENT.md"
+      ],
+      "snapshot_evidence_paths": [
+        "deployments/production/docker-compose.yml",
+        "docs/PRODUCTION_DEPLOYMENT.md"
+      ],
+      "note": "Production-shaped examples are not production readiness certification.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/18fcf32524007ba7d8a71acd70e5acc48f758e49",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/18fcf32524007ba7d8a71acd70e5acc48f758e49/deployments/production/docker-compose.yml",
+        "https://github.com/alekpopovic/orch/blob/18fcf32524007ba7d8a71acd70e5acc48f758e49/docs/PRODUCTION_DEPLOYMENT.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/50-production-deployment-manifest.md",
+      "prompt_sha256": "2bc2e4035948d7ac4af304f6c32b9db787ff233e97466346fdacfe581a75332b",
+      "verified_changed_paths": [
+        "deployments/production/docker-compose.yml",
+        "docs/PRODUCTION_DEPLOYMENT.md"
+      ]
+    },
+    {
+      "prompt_id": "51",
+      "path": "prompts/51-security-review.md",
+      "title": "51. Security review",
+      "commit_sha": "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7",
+      "relationship": "associated",
+      "evidence_paths": [
+        "docs/SECURITY_REVIEW.md",
+        "internal/agent/agent_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/SECURITY_REVIEW.md",
+        "internal/agent/agent_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7/docs/SECURITY_REVIEW.md",
+        "https://github.com/alekpopovic/orch/blob/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7/internal/agent/agent_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/51-security-review.md",
+      "prompt_sha256": "c8826ebbef32ac25d1cd0f0c5e499f701299c987dcfffdc77c31b651ba40b3fc",
+      "verified_changed_paths": [
+        "docs/SECURITY_REVIEW.md",
+        "internal/agent/agent_test.go"
+      ]
+    },
+    {
+      "prompt_id": "52",
+      "path": "prompts/52-container-security-policy.md",
+      "title": "52. Container security policy",
+      "commit_sha": "a140c4190af17969d207b5738cc7527e4ad96075",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/policy/policy.go",
+        "internal/policy/policy_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/policy/policy.go",
+        "internal/policy/policy_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/a140c4190af17969d207b5738cc7527e4ad96075",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/a140c4190af17969d207b5738cc7527e4ad96075/internal/policy/policy.go",
+        "https://github.com/alekpopovic/orch/blob/a140c4190af17969d207b5738cc7527e4ad96075/internal/policy/policy_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/52-container-security-policy.md",
+      "prompt_sha256": "0462cd340e040e188cad7795af2ccdc759135d36dc65cee572408b8520a80b05",
+      "verified_changed_paths": [
+        "internal/policy/policy.go",
+        "internal/policy/policy_test.go"
+      ]
+    },
+    {
+      "prompt_id": "53",
+      "path": "prompts/53-healthcheck-ssrf-protection.md",
+      "title": "53. Healthcheck SSRF protection",
+      "commit_sha": "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081/internal/health/health.go",
+        "https://github.com/alekpopovic/orch/blob/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081/internal/health/health_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/53-healthcheck-ssrf-protection.md",
+      "prompt_sha256": "da91d7c651bd770d2b585d986a3ba3aa37f0ab28a1fd5495a42ab76a5c18825e",
+      "verified_changed_paths": [
+        "internal/health/health.go",
+        "internal/health/health_test.go"
+      ]
+    },
+    {
+      "prompt_id": "54",
+      "path": "prompts/54-autoscaling-design-doc.md",
+      "title": "54. Autoscaling design doc",
+      "commit_sha": "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/AUTOSCALING_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/AUTOSCALING_DESIGN.md"
+      ],
+      "note": "Design request; subsequent controller module in prompt 55.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2/docs/AUTOSCALING_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/54-autoscaling-design-doc.md",
+      "prompt_sha256": "53cfd78e4d6eb38049bb7924cbde8902e8396530e037172222b61ba60a63b9a0",
+      "verified_changed_paths": [
+        "docs/AUTOSCALING_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "55",
+      "path": "prompts/55-autoscaling-mvp-implementation.md",
+      "title": "55. Autoscaling MVP implementation",
+      "commit_sha": "b575252d6c5ff0918439e2f209af9d9695eebbb6",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/autoscaler/autoscaler.go",
+        "internal/autoscaler/autoscaler_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/autoscaler/autoscaler.go",
+        "internal/autoscaler/autoscaler_test.go"
+      ],
+      "note": "Controller + fake provider implemented; not started by default server; no production Prometheus provider; stabilization field not fully enforced.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/b575252d6c5ff0918439e2f209af9d9695eebbb6",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/b575252d6c5ff0918439e2f209af9d9695eebbb6/internal/autoscaler/autoscaler.go",
+        "https://github.com/alekpopovic/orch/blob/b575252d6c5ff0918439e2f209af9d9695eebbb6/internal/autoscaler/autoscaler_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/55-autoscaling-mvp-implementation.md",
+      "prompt_sha256": "2bb1077e78a5d28d758371faef7ee76247b90ea24e4d1c7017a4c23ba1e5d01b",
+      "verified_changed_paths": [
+        "internal/autoscaler/autoscaler.go",
+        "internal/autoscaler/autoscaler_test.go"
+      ]
+    },
+    {
+      "prompt_id": "56",
+      "path": "prompts/56-ha-control-plane-design.md",
+      "title": "56. HA control plane design",
+      "commit_sha": "b29a6fe91e90f74721e5175e43bf12aed6410f19",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/HA_CONTROL_PLANE_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/HA_CONTROL_PLANE_DESIGN.md"
+      ],
+      "note": "HA design; later elector package is prompt 57, not a fully wired HA runtime.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/b29a6fe91e90f74721e5175e43bf12aed6410f19",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/b29a6fe91e90f74721e5175e43bf12aed6410f19/docs/HA_CONTROL_PLANE_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/56-ha-control-plane-design.md",
+      "prompt_sha256": "27ae0b2e42c3057c653c727ee078e1f8d406d0e16f28b65e35eb8344aa4c9a14",
+      "verified_changed_paths": [
+        "docs/HA_CONTROL_PLANE_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "57",
+      "path": "prompts/57-controller-leader-election-mvp.md",
+      "title": "57. Controller leader election MVP",
+      "commit_sha": "eb3a07c20c550a533afaf36f414ede1ba6c00f78",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/leadership/postgres.go",
+        "internal/leadership/leadership_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/leadership/postgres.go",
+        "internal/leadership/leadership_test.go"
+      ],
+      "note": "Elector/module + tests implemented; default server loops do not use leadership gating.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/eb3a07c20c550a533afaf36f414ede1ba6c00f78",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/eb3a07c20c550a533afaf36f414ede1ba6c00f78/internal/leadership/postgres.go",
+        "https://github.com/alekpopovic/orch/blob/eb3a07c20c550a533afaf36f414ede1ba6c00f78/internal/leadership/leadership_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/57-controller-leader-election-mvp.md",
+      "prompt_sha256": "173c28b7c2b47b40fa118e4a4280c8b4b77657df72c6b15ef4da311daef749c7",
+      "verified_changed_paths": [
+        "internal/leadership/postgres.go",
+        "internal/leadership/leadership_test.go"
+      ]
+    },
+    {
+      "prompt_id": "58",
+      "path": "prompts/58-multi-agent-load-test.md",
+      "title": "58. Multi-agent load test",
+      "commit_sha": "7fcdaf5877145b77bb484b2bc7cabae8eb75acab",
+      "relationship": "associated",
+      "evidence_paths": [
+        "cmd/orch-loadtest/main.go",
+        "docs/LOAD_TESTING.md"
+      ],
+      "snapshot_evidence_paths": [
+        "cmd/orch-loadtest/main.go",
+        "docs/LOAD_TESTING.md"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7fcdaf5877145b77bb484b2bc7cabae8eb75acab",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7fcdaf5877145b77bb484b2bc7cabae8eb75acab/cmd/orch-loadtest/main.go",
+        "https://github.com/alekpopovic/orch/blob/7fcdaf5877145b77bb484b2bc7cabae8eb75acab/docs/LOAD_TESTING.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/58-multi-agent-load-test.md",
+      "prompt_sha256": "b1e88dbc1a9b0bf8b268bd5ffbaf04c2e5699208060b8df03c12a7500413babb",
+      "verified_changed_paths": [
+        "cmd/orch-loadtest/main.go",
+        "docs/LOAD_TESTING.md"
+      ]
+    },
+    {
+      "prompt_id": "59",
+      "path": "prompts/59-chaos-testing-scenarios.md",
+      "title": "59. Chaos testing scenarios",
+      "commit_sha": "fe385251b7a2051b10af3dd6caaad8bb4821fa21",
+      "relationship": "associated",
+      "evidence_paths": [
+        "internal/e2e/chaos_test.go",
+        "docs/CHAOS_TESTING.md"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/e2e/chaos_test.go",
+        "docs/CHAOS_TESTING.md"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/fe385251b7a2051b10af3dd6caaad8bb4821fa21",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/fe385251b7a2051b10af3dd6caaad8bb4821fa21/internal/e2e/chaos_test.go",
+        "https://github.com/alekpopovic/orch/blob/fe385251b7a2051b10af3dd6caaad8bb4821fa21/docs/CHAOS_TESTING.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/59-chaos-testing-scenarios.md",
+      "prompt_sha256": "1a93ea4f79d48dafb579e1882ba1b0b5e6cee808714b0514100a4a12f7934f4a",
+      "verified_changed_paths": [
+        "internal/e2e/chaos_test.go",
+        "docs/CHAOS_TESTING.md"
+      ]
+    },
+    {
+      "prompt_id": "60",
+      "path": "prompts/60-release-hardening-v0-2-0.md",
+      "title": "60. Release hardening v0.2.0",
+      "commit_sha": "1116845fdcc0abd051ddf65a31197f8b63e0c086",
+      "relationship": "associated",
+      "evidence_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ],
+      "snapshot_evidence_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ],
+      "note": "Release document changes only; local clone has no 0.2.0 tag; no executed gate output in this review.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/1116845fdcc0abd051ddf65a31197f8b63e0c086",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/1116845fdcc0abd051ddf65a31197f8b63e0c086/CHANGELOG.md",
+        "https://github.com/alekpopovic/orch/blob/1116845fdcc0abd051ddf65a31197f8b63e0c086/RELEASE_NOTES.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/60-release-hardening-v0-2-0.md",
+      "prompt_sha256": "ee78e3a14db8445802b16be42515da6164567cc6e538ee9ae9aa4b4f0ef86075",
+      "verified_changed_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ]
+    },
+    {
+      "prompt_id": "61",
+      "path": "prompts/61-openapi-specification-and-generated-clients.md",
+      "title": "61. OpenAPI specification and generated clients",
+      "commit_sha": "f94414db486b96e7088fccc8c4c502a1fa616d38",
+      "relationship": "associated",
+      "evidence_paths": [
+        "api/openapi.yaml",
+        "pkg/client/client.go"
+      ],
+      "snapshot_evidence_paths": [
+        "api/openapi.yaml",
+        "pkg/client/client.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f94414db486b96e7088fccc8c4c502a1fa616d38",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f94414db486b96e7088fccc8c4c502a1fa616d38/api/openapi.yaml",
+        "https://github.com/alekpopovic/orch/blob/f94414db486b96e7088fccc8c4c502a1fa616d38/pkg/client/client.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/61-openapi-specification-and-generated-clients.md",
+      "prompt_sha256": "79baff2fb84c9a6ad02d2a0d053f2de2fe0212e975060e1e2d81ea8440a69ed4",
+      "verified_changed_paths": [
+        "api/openapi.yaml",
+        "pkg/client/client.go"
+      ]
+    },
+    {
+      "prompt_id": "62",
+      "path": "prompts/62-api-versioning-strategy.md",
+      "title": "62. API versioning strategy",
+      "commit_sha": "9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/api/versioning.go",
+        "internal/api/versioning_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/api/versioning.go",
+        "internal/api/versioning_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/internal/api/versioning.go",
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/internal/api/versioning_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/62-api-versioning-strategy.md",
+      "prompt_sha256": "bd0e0bdeeb53672d1252b02fd95d9f8261a95b2dc3ae947fb1b120f5b583cc2b",
+      "verified_changed_paths": [
+        "internal/api/versioning.go",
+        "internal/api/versioning_test.go"
+      ]
+    },
+    {
+      "prompt_id": "63",
+      "path": "prompts/63-policy-engine-design.md",
+      "title": "63. Policy engine design",
+      "commit_sha": "9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/POLICY_ENGINE_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/POLICY_ENGINE_DESIGN.md"
+      ],
+      "note": "Policy design; static admission is prompt 64; OPA/Rego integration remains future work.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/docs/POLICY_ENGINE_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/63-policy-engine-design.md",
+      "prompt_sha256": "f45d549d9567ee0e25d49e2d8188a7409a23406b63df6976b9f548639a70dd42",
+      "verified_changed_paths": [
+        "docs/POLICY_ENGINE_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "64",
+      "path": "prompts/64-admission-controller-mvp.md",
+      "title": "64. Admission controller MVP",
+      "commit_sha": "9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/admission/admission.go",
+        "internal/admission/admission_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/admission/admission.go",
+        "internal/admission/admission_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/internal/admission/admission.go",
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/internal/admission/admission_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/64-admission-controller-mvp.md",
+      "prompt_sha256": "ad5f4f7038f53c1f500dc49e2ab46f98b723a196fa27d37813c7f20367238b70",
+      "verified_changed_paths": [
+        "internal/admission/admission.go",
+        "internal/admission/admission_test.go"
+      ]
+    },
+    {
+      "prompt_id": "65",
+      "path": "prompts/65-namespaces-projects.md",
+      "title": "65. Namespaces / projects",
+      "commit_sha": "9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/namespace/context.go",
+        "migrations/000011_namespaces.up.sql"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/namespace/context.go",
+        "migrations/000011_namespaces.up.sql"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/9e78fed31df03d7a985a9f4ceae4770739b05014",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/internal/namespace/context.go",
+        "https://github.com/alekpopovic/orch/blob/9e78fed31df03d7a985a9f4ceae4770739b05014/migrations/000011_namespaces.up.sql"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/65-namespaces-projects.md",
+      "prompt_sha256": "47f809fc64b072051f180dbaefedee560bd25de76259360c9a47bc4e211bc809",
+      "verified_changed_paths": [
+        "internal/namespace/context.go",
+        "migrations/000011_namespaces.up.sql"
+      ]
+    },
+    {
+      "prompt_id": "66",
+      "path": "prompts/66-resource-quotas.md",
+      "title": "66. Resource quotas",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/quota/quota.go",
+        "internal/controlplane/quota_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/quota/quota.go",
+        "internal/controlplane/quota_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/quota/quota.go",
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/controlplane/quota_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/66-resource-quotas.md",
+      "prompt_sha256": "855d1f00f3603ee45b63da48548e48307ced42cd7f24fd5f42b13fadd32f65a0",
+      "verified_changed_paths": [
+        "internal/quota/quota.go",
+        "internal/controlplane/quota_test.go"
+      ]
+    },
+    {
+      "prompt_id": "67",
+      "path": "prompts/67-image-tag-immutability-and-digest-pinning.md",
+      "title": "67. Image tag immutability and digest pinning",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/image/reference.go",
+        "internal/controlplane/image_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/image/reference.go",
+        "internal/controlplane/image_test.go"
+      ],
+      "note": "ParserResolver parses supplied references; does not fetch remote registry digests. Explicit digest pinning supported.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/image/reference.go",
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/controlplane/image_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/67-image-tag-immutability-and-digest-pinning.md",
+      "prompt_sha256": "c18b7f89526d926735873a170b9475a9fc3ca2fc261a4d482a4df0c4b320f2a6",
+      "verified_changed_paths": [
+        "internal/image/reference.go",
+        "internal/controlplane/image_test.go"
+      ]
+    },
+    {
+      "prompt_id": "68",
+      "path": "prompts/68-image-signing-design.md",
+      "title": "68. Image signing design",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/IMAGE_SIGNING_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/IMAGE_SIGNING_DESIGN.md"
+      ],
+      "note": "Design-only: no signing/verification enforcement.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/docs/IMAGE_SIGNING_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/68-image-signing-design.md",
+      "prompt_sha256": "f95e33e5e4e3cd20370dfb7166b0ec62e08b948f3457f6d2b371b6b37a856a29",
+      "verified_changed_paths": [
+        "docs/IMAGE_SIGNING_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "69",
+      "path": "prompts/69-sbom-and-vulnerability-scanning-design.md",
+      "title": "69. SBOM and vulnerability scanning design",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md"
+      ],
+      "note": "Design-only: no SBOM/scanner enforcement.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/69-sbom-and-vulnerability-scanning-design.md",
+      "prompt_sha256": "6239665d53e5463dce987c1c9bf770de4d36e2154b02d5244b3f67a674fcf886",
+      "verified_changed_paths": [
+        "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "70",
+      "path": "prompts/70-gitops-deployment-flow.md",
+      "title": "70. GitOps deployment flow",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/gitops/gitops.go",
+        "internal/gitops/gitops_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/gitops/gitops.go",
+        "internal/gitops/gitops_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/gitops/gitops.go",
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/gitops/gitops_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/70-gitops-deployment-flow.md",
+      "prompt_sha256": "9f02df527a364840d314d89c3de7eb171e9ccb3c038df080733494be4d982301",
+      "verified_changed_paths": [
+        "internal/gitops/gitops.go",
+        "internal/gitops/gitops_test.go"
+      ]
+    },
+    {
+      "prompt_id": "71",
+      "path": "prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md",
+      "title": "71. Drift detection between GitOps desired state and cluster state",
+      "commit_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/gitops/gitops.go",
+        "docs/GITOPS.md"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/gitops/gitops.go",
+        "docs/GITOPS.md"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/gitops/gitops.go",
+        "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/docs/GITOPS.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md",
+      "prompt_sha256": "7d6fc0f60d67dc302f8aba8e60eef2545a3cd58dd73a784e273774a2ebea419c",
+      "verified_changed_paths": [
+        "internal/gitops/gitops.go",
+        "docs/GITOPS.md"
+      ]
+    },
+    {
+      "prompt_id": "72",
+      "path": "prompts/72-cron-jobs-and-one-shot-jobs-design.md",
+      "title": "72. Cron jobs and one-shot jobs design",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/JOBS_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/JOBS_DESIGN.md"
+      ],
+      "note": "Jobs design; implementation follows in 73\u201374 in same batched commit.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/docs/JOBS_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/72-cron-jobs-and-one-shot-jobs-design.md",
+      "prompt_sha256": "6a9a791332cb16c80bb8e82b949a1d712a3ca64aceeb462faefd5b1facc36ed3",
+      "verified_changed_paths": [
+        "docs/JOBS_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "73",
+      "path": "prompts/73-one-shot-jobs-mvp.md",
+      "title": "73. One-shot jobs MVP",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/controlplane/workloads_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/controlplane/workloads_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/controlplane/workloads.go",
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/controlplane/workloads_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/73-one-shot-jobs-mvp.md",
+      "prompt_sha256": "69c5887d2b274c9ac43368e39e1ead5ea10497c5a5a77d933cdd2954e4e45702",
+      "verified_changed_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/controlplane/workloads_test.go"
+      ]
+    },
+    {
+      "prompt_id": "74",
+      "path": "prompts/74-cron-jobs-mvp.md",
+      "title": "74. Cron jobs MVP",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/cronjobs/cronjobs.go",
+        "internal/cronjobs/cronjobs_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/cronjobs/cronjobs.go",
+        "internal/cronjobs/cronjobs_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/cronjobs/cronjobs.go",
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/cronjobs/cronjobs_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/74-cron-jobs-mvp.md",
+      "prompt_sha256": "a3517b049a8f6aef34dea8826a80a3754e695276b629d37f91bb52dee069c66d",
+      "verified_changed_paths": [
+        "internal/cronjobs/cronjobs.go",
+        "internal/cronjobs/cronjobs_test.go"
+      ]
+    },
+    {
+      "prompt_id": "75",
+      "path": "prompts/75-stateful-workloads-design.md",
+      "title": "75. Stateful workloads design",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/STATEFUL_WORKLOADS_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/STATEFUL_WORKLOADS_DESIGN.md"
+      ],
+      "note": "Design-only stateful ordering/identity/safe replacement; local volume MVP is not distributed stateful orchestration.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/docs/STATEFUL_WORKLOADS_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/75-stateful-workloads-design.md",
+      "prompt_sha256": "ff7c3bcf9ba373f5385d14e3feb7de0a2272e6d5e6586dc5355931c1e4f96c68",
+      "verified_changed_paths": [
+        "docs/STATEFUL_WORKLOADS_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "76",
+      "path": "prompts/76-persistent-volume-abstraction.md",
+      "title": "76. Persistent volume abstraction",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/scheduler/workloads_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/scheduler/workloads_test.go"
+      ],
+      "note": "Local Docker volumes/claims/attachments MVP; no replicated/distributed storage or snapshot orchestration.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/controlplane/workloads.go",
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/scheduler/workloads_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/76-persistent-volume-abstraction.md",
+      "prompt_sha256": "7db72a9ce13e3b377c587a9deb36aafac48bb2f7e60802486016f690d65ffdb6",
+      "verified_changed_paths": [
+        "internal/controlplane/workloads.go",
+        "internal/scheduler/workloads_test.go"
+      ]
+    },
+    {
+      "prompt_id": "77",
+      "path": "prompts/77-cni-advanced-networking-design.md",
+      "title": "77. CNI / advanced networking design",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/NETWORKING_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/NETWORKING_DESIGN.md"
+      ],
+      "note": "Design-only overlay/CNI/network policy; host ports + optional DNS/Traefik are current scope.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/docs/NETWORKING_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/77-cni-advanced-networking-design.md",
+      "prompt_sha256": "388221a2d56abcdac688e1fee358690860ae8f110916077d92d445b840c58ed2",
+      "verified_changed_paths": [
+        "docs/NETWORKING_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "78",
+      "path": "prompts/78-internal-dns-mvp.md",
+      "title": "78. Internal DNS MVP",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/dns/server.go",
+        "internal/dns/server_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/dns/server.go",
+        "internal/dns/server_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/dns/server.go",
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/dns/server_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/78-internal-dns-mvp.md",
+      "prompt_sha256": "367e5e321a07e76675a1ebf00870b4398866d254d591e4dd7f9ae9a694eebd80",
+      "verified_changed_paths": [
+        "internal/dns/server.go",
+        "internal/dns/server_test.go"
+      ]
+    },
+    {
+      "prompt_id": "79",
+      "path": "prompts/79-plugin-system-design.md",
+      "title": "79. Plugin system design",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "design",
+      "evidence_paths": [
+        "docs/PLUGIN_SYSTEM_DESIGN.md"
+      ],
+      "snapshot_evidence_paths": [
+        "docs/PLUGIN_SYSTEM_DESIGN.md"
+      ],
+      "note": "Design-only external plugin execution/ABI.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/docs/PLUGIN_SYSTEM_DESIGN.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/79-plugin-system-design.md",
+      "prompt_sha256": "f0da7e65cdf6fc0d81c0b30edbe1b8b182973cef4e34aef0ffc61c7d680a14a2",
+      "verified_changed_paths": [
+        "docs/PLUGIN_SYSTEM_DESIGN.md"
+      ]
+    },
+    {
+      "prompt_id": "80",
+      "path": "prompts/80-notification-sinks.md",
+      "title": "80. Notification sinks",
+      "commit_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/notifications/notifications.go",
+        "internal/notifications/notifications_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/notifications/notifications.go",
+        "internal/notifications/notifications_test.go"
+      ],
+      "note": "Webhook dispatch implemented; runtime sink state in memory. Write-only signing secret is not durable-encrypted persistence proof.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/notifications/notifications.go",
+        "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/notifications/notifications_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/80-notification-sinks.md",
+      "prompt_sha256": "34e6ea60e83f757f5a614080707443dfb488e5c491f0c6e574102a3ce989a298",
+      "verified_changed_paths": [
+        "internal/notifications/notifications.go",
+        "internal/notifications/notifications_test.go"
+      ]
+    },
+    {
+      "prompt_id": "81",
+      "path": "prompts/81-maintenance-windows.md",
+      "title": "81. Maintenance windows",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/maintenance/maintenance.go",
+        "internal/maintenance/maintenance_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/maintenance/maintenance.go",
+        "internal/maintenance/maintenance_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/maintenance/maintenance.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/maintenance/maintenance_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/81-maintenance-windows.md",
+      "prompt_sha256": "cd23362cf6d715a091eabfa9759d6db9814a2d0ebf15a5b26fc1b390fae7e96d",
+      "verified_changed_paths": [
+        "internal/maintenance/maintenance.go",
+        "internal/maintenance/maintenance_test.go"
+      ]
+    },
+    {
+      "prompt_id": "82",
+      "path": "prompts/82-cluster-upgrade-framework.md",
+      "title": "82. Cluster upgrade framework",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/version/version.go",
+        "internal/controlplane/version_compatibility_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/version/version.go",
+        "internal/controlplane/version_compatibility_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/version/version.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/controlplane/version_compatibility_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/82-cluster-upgrade-framework.md",
+      "prompt_sha256": "c0e23afa368a2b5577c9a951ec837603625450dace29fbd57b6110c4ba829b6a",
+      "verified_changed_paths": [
+        "internal/version/version.go",
+        "internal/controlplane/version_compatibility_test.go"
+      ]
+    },
+    {
+      "prompt_id": "83",
+      "path": "prompts/83-database-migration-safety.md",
+      "title": "83. Database migration safety",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/migrations/manager.go",
+        "internal/migrations/manager_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/migrations/manager.go",
+        "internal/migrations/manager_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/migrations/manager.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/migrations/manager_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/83-database-migration-safety.md",
+      "prompt_sha256": "ce9f3ac00c157dc59b41d4b9aeb3353929023bb9592d62d9f6bae7e3f93b2052",
+      "verified_changed_paths": [
+        "internal/migrations/manager.go",
+        "internal/migrations/manager_test.go"
+      ]
+    },
+    {
+      "prompt_id": "84",
+      "path": "prompts/84-data-retention-and-pruning.md",
+      "title": "84. Data retention and pruning",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/controlplane/operations.go",
+        "internal/controlplane/operations_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/operations.go",
+        "internal/controlplane/operations_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/controlplane/operations.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/controlplane/operations_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/84-data-retention-and-pruning.md",
+      "prompt_sha256": "9a8cf60cd17b0b4a222fa28e73818d3da34811083af04ac40eda835fc96dbb6e",
+      "verified_changed_paths": [
+        "internal/controlplane/operations.go",
+        "internal/controlplane/operations_test.go"
+      ]
+    },
+    {
+      "prompt_id": "85",
+      "path": "prompts/85-tenant-aware-billing-export-report.md",
+      "title": "85. Tenant-aware billing/export report",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/controlplane/operations.go",
+        "docs/MULTI_TENANCY.md"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/controlplane/operations.go",
+        "docs/MULTI_TENANCY.md"
+      ],
+      "note": "Usage/export of requested resources, not payments/invoicing or verified billable usage.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/controlplane/operations.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/docs/MULTI_TENANCY.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/85-tenant-aware-billing-export-report.md",
+      "prompt_sha256": "f185af7fc3de16b129a3e6f61393de4659f26080558e3682ca83f98c4ab288f5",
+      "verified_changed_paths": [
+        "internal/controlplane/operations.go",
+        "docs/MULTI_TENANCY.md"
+      ]
+    },
+    {
+      "prompt_id": "86",
+      "path": "prompts/86-fuzz-tests-for-parsers-and-validators.md",
+      "title": "86. Fuzz tests for parsers and validators",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "pkg/types/fuzz_test.go",
+        "internal/api/fuzz_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "pkg/types/fuzz_test.go",
+        "internal/api/fuzz_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/pkg/types/fuzz_test.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/api/fuzz_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/86-fuzz-tests-for-parsers-and-validators.md",
+      "prompt_sha256": "a2053c1955171258c753d92e0d971483ec5cd5b2b9aed2772ff9b1b65c4e9a04",
+      "verified_changed_paths": [
+        "pkg/types/fuzz_test.go",
+        "internal/api/fuzz_test.go"
+      ]
+    },
+    {
+      "prompt_id": "87",
+      "path": "prompts/87-property-tests-for-scheduler.md",
+      "title": "87. Property tests for scheduler",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/scheduler/property_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/scheduler/property_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/scheduler/property_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/87-property-tests-for-scheduler.md",
+      "prompt_sha256": "6fd44711f57b7725520bf52ba0982722fae79576a66ffaf4227fe58f3c62845a",
+      "verified_changed_paths": [
+        "internal/scheduler/property_test.go"
+      ]
+    },
+    {
+      "prompt_id": "88",
+      "path": "prompts/88-performance-profiling.md",
+      "title": "88. Performance profiling",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "internal/api/debug.go",
+        "internal/api/benchmark_test.go"
+      ],
+      "snapshot_evidence_paths": [
+        "internal/api/debug.go",
+        "internal/api/benchmark_test.go"
+      ],
+      "note": "Association demonstrates relevant file changes; not certification that every requested acceptance criterion passed.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/api/debug.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/api/benchmark_test.go"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/88-performance-profiling.md",
+      "prompt_sha256": "57cdb0e6bc06c61def410e1ab0a2c8d87c565fa92ab76609fd7c5e3ea314ed3e",
+      "verified_changed_paths": [
+        "internal/api/debug.go",
+        "internal/api/benchmark_test.go"
+      ]
+    },
+    {
+      "prompt_id": "89",
+      "path": "prompts/89-scale-test-1000-services-with-fake-agents.md",
+      "title": "89. Scale test: 1,000 services with fake agents",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "cmd/orch-loadtest/scale_test.go",
+        "docs/SCALE_TESTING.md"
+      ],
+      "snapshot_evidence_paths": [
+        "cmd/orch-loadtest/scale_test.go",
+        "docs/SCALE_TESTING.md"
+      ],
+      "note": "In-process fake-node/task workload; does not measure real containers or PostgreSQL throughput.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/cmd/orch-loadtest/scale_test.go",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/docs/SCALE_TESTING.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/89-scale-test-1000-services-with-fake-agents.md",
+      "prompt_sha256": "ebe4c1469f15a86667ed84ea28a1aa229a6c81d9988c03402c42b2a896f18282",
+      "verified_changed_paths": [
+        "cmd/orch-loadtest/scale_test.go",
+        "docs/SCALE_TESTING.md"
+      ]
+    },
+    {
+      "prompt_id": "90",
+      "path": "prompts/90-v0-3-0-release-hardening.md",
+      "title": "90. v0.3.0 release hardening",
+      "commit_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "relationship": "batched",
+      "evidence_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ],
+      "snapshot_evidence_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ],
+      "note": "Batched release preparation; follow-up formatting fix and doc commit are outside tracker matching commit.",
+      "evidence_commit_url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "evidence_urls": [
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/CHANGELOG.md",
+        "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/RELEASE_NOTES.md"
+      ],
+      "prompt_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/90-v0-3-0-release-hardening.md",
+      "prompt_sha256": "09221ddd58396a6a334bb69c00dba50744c222a477ba76b7a3cbcee9197f3746",
+      "verified_changed_paths": [
+        "CHANGELOG.md",
+        "RELEASE_NOTES.md"
+      ]
+    }
+  ]
+}

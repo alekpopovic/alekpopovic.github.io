@@ -1,0 +1,995 @@
+commit 525ff908b2fe238b241735f2abcc32dc72067f54
+Date: 2026-07-14T19:13:24+02:00
+Subject: Refresh project branding and docs
+
+
+---
+ CHANGELOG.md                     |   1 +
+ README.md                        | 204 ++++++++++++++++++++++++---------------
+ RELEASE_NOTES.md                 |   1 +
+ docs/BRAND.md                    |  52 ++++++++++
+ docs/CHARTS.md                   |  69 +++++++++++++
+ docs/GITHUB_PAGES.md             |   5 +
+ docs/assets/docs.css             |  96 ++++++++++++++++++
+ docs/assets/docs.js              | 106 +++++++++++++-------
+ docs/assets/orch-mark.svg        |  34 +++++++
+ docs/assets/orch-social-card.svg |  65 +++++++++++++
+ docs/assets/orch-wordmark.svg    |  38 ++++++++
+ docs/index.html                  |  46 ++++++---
+ 12 files changed, 587 insertions(+), 130 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 91dcc12..f6e7cd6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -16,6 +16,7 @@ Production-hardening release for the MVP orchestrator.
+ - HA control-plane design and PostgreSQL advisory-lock leader election MVP.
+ - Multi-agent load test command and chaos-style integration scenarios.
+ - GitHub Pages documentation portal with release docs, OpenAPI access, sidebar navigation, and auto/light/dark theme support.
++- Branded docs refresh with a unique SVG logo system, colorful README landing page, icons, and Mermaid charts.
+ 
+ ### Changed
+ 
+diff --git a/README.md b/README.md
+index b306881..f32dcd9 100644
+--- a/README.md
++++ b/README.md
+@@ -1,42 +1,80 @@
+-# orch
+-
+-[![CI](https://github.com/alekpopovic/orch/actions/workflows/ci.yml/badge.svg)](https://github.com/alekpopovic/orch/actions/workflows/ci.yml)
+-
+-`orch` is a Go container orchestrator for small, Docker-based clusters. It provides a control-plane API, a worker agent, and a CLI for deploying services, scaling replicas, assigning tasks to nodes, running Docker containers, checking health, streaming logs, and recording events.
+-
+-The project is production-shaped but still an MVP. Package boundaries, tests, migrations, and interfaces are designed for production evolution; the default `orch-server` binary currently wires the in-memory control plane, so process restart recovery is not production-safe until the PostgreSQL-backed store is connected to the server runtime.
+-
+-## What It Solves
+-
+-- Deploy a named service from YAML or REST.
+-- Keep service replica count converged through task creation and stop directives.
+-- Assign pending tasks to ready nodes with deterministic scheduling.
+-- Run tasks as Docker containers through the Docker Engine API.
+-- Register agents, heartbeat nodes, and poll assigned tasks.
+-- Perform HTTP/TCP health checks and report healthy/unhealthy task state.
+-- Start rolling updates and rollbacks through asynchronous deployment objects.
+-- Stream task logs through the server from the owning agent.
+-- Emit event records through the active control plane implementation.
+-- Expose Prometheus metrics for the server and agent.
+-
+-## What It Does Not Solve Yet
+-
+-- The shipped `orch-server` process does not yet use PostgreSQL for its control-plane state.
+-- There is no HA leader election implementation; the reconciler has an abstraction only.
+-- Abrupt node loss is not marked offline by heartbeat expiry yet.
+-- Networking is Docker host/port based; there is no overlay network or service discovery.
+-- Secrets are represented as references, not a complete secret storage system.
+-- There is no multi-tenant isolation model.
+-- Agent authentication is token based; mTLS is documented as roadmap.
+-- Containerd support is a future runtime target.
+-
+-## Binaries
++<p align="center">
++  <img src="docs/assets/orch-wordmark.svg" alt="orch Docker-first orchestration" width="520" />
++</p>
++
++<p align="center">
++  <strong>Docker-first orchestration for small clusters — API, agents, scheduling, rollouts, observability, and production-shaped docs.</strong>
++</p>
++
++<p align="center">
++  <a href="https://github.com/alekpopovic/orch/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/alekpopovic/orch/actions/workflows/ci.yml/badge.svg" /></a>
++  <a href="https://github.com/alekpopovic/orch/actions/workflows/pages.yml"><img alt="Docs Pages" src="https://github.com/alekpopovic/orch/actions/workflows/pages.yml/badge.svg" /></a>
++  <img alt="Go" src="https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white" />
++  <img alt="Docker" src="https://img.shields.io/badge/runtime-Docker-2496ED?logo=docker&logoColor=white" />
++  <img alt="OpenAPI" src="https://img.shields.io/badge/API-OpenAPI-6BA539?logo=openapiinitiative&logoColor=white" />
++</p>
++
++<p align="center">
++  <a href="docs/GITHUB_PAGES.md">📚 Docs site</a> ·
++  <a href="docs/API.md">🔌 API</a> ·
++  <a href="docs/PRODUCTION_DEPLOYMENT.md">🚢 Deploy</a> ·
++  <a href="docs/SECURITY.md">🛡️ Security</a> ·
++  <a href="api/openapi.yaml">🧾 OpenAPI</a>
++</p>
++
++<p align="center">
++  <img src="docs/assets/orch-social-card.svg" alt="orch project preview" width="900" />
++</p>
++
++## ✨ Why orch
++
++`orch` is a Go container orchestrator for small, Docker-based clusters. It gives operators a control-plane API, a worker agent, and a CLI for deploying services, scaling replicas, assigning tasks to nodes, running Docker containers, checking health, streaming logs, recording events, and coordinating rollouts.
++
++The project is still MVP-era, but intentionally production-shaped: package boundaries, tests, migrations, metrics, docs, interfaces, and runtime seams are designed so the Docker-first core can evolve toward durable multi-node operation.
++
++| Capability | What you get |
++| --- | --- |
++| ⚡ **Control plane** | REST API with request IDs, stable JSON errors, auth/RBAC boundaries, and OpenAPI docs. |
++| 🧭 **Deterministic scheduling** | Scheduler and reconciler logic that stays testable without Docker, PostgreSQL, or real time. |
++| 🐳 **Docker runtime** | Idempotent container operations through the Docker Engine API with orch labels and safe convergence. |
++| 🚀 **Rollouts** | Rolling update and rollback coordination with service versions, deployment objects, and events. |
++| 📈 **Observability** | Prometheus metrics, Grafana dashboard, structured logs, events, audit logs, and load/chaos testing docs. |
++| 🛡️ **Hardening** | Security contexts, secret redaction, SSRF-safe healthchecks, registry credentials, and policy hooks. |
++
++## 🧬 System map
++
++```mermaid
++flowchart LR
++    cli["🖥️ orch CLI"] --> api["⚡ orch-server API"]
++    user["👤 Operator"] --> cli
++    api --> cp["🧠 Control plane"]
++    cp --> scheduler["🧭 Scheduler"]
++    cp --> reconciler["🔁 Reconciler"]
++    cp --> rollout["🚀 Rollout controller"]
++    cp --> store[("🗄️ PostgreSQL-ready store")]
++    scheduler --> tasks["📦 Tasks"]
++    reconciler --> tasks
++    rollout --> tasks
++    agent["🐳 orch-agent"] --> docker["Docker Engine"]
++    agent --> api
++    tasks --> agent
++    api --> metrics["📈 Metrics / Events / Audit"]
++```
+ 
+-- `orch-server`: REST API server and rollout controller.
+-- `orch-agent`: worker node process that talks to Docker and the server.
+-- `orch`: Cobra CLI for operators and scripts.
++## 📊 Release signal
++
++```mermaid
++pie showData
++    title v0.2.0 hardening focus
++    "Security + policy" : 24
++    "Observability" : 18
++    "Backup + operations" : 16
++    "Autoscaling" : 15
++    "HA design" : 14
++    "Load + chaos testing" : 13
++```
+ 
+-## Quickstart
++## 🚀 Quickstart
+ 
+ Prerequisites:
+ 
+@@ -57,8 +95,6 @@ Apply migrations:
+ ./scripts/migrate-up.sh
+ ```
+ 
+-The migration script is safe to rerun for the local initial schema. Migrations prepare PostgreSQL for the store package and integration tests; the current local `orch-server` still uses in-memory state.
+-
+ Point the CLI at the server:
+ 
+ ```sh
+@@ -66,15 +102,10 @@ export ORCH_SERVER_URL=http://localhost:8080
+ go run ./cmd/orch node ls
+ ```
+ 
+-Deploy the demo service:
++Deploy and operate the demo service:
+ 
+ ```sh
+ ./scripts/demo-deploy.sh
+-```
+-
+-Operate it:
+-
+-```sh
+ go run ./cmd/orch service ls
+ go run ./cmd/orch service ps http-api
+ go run ./cmd/orch scale http-api --replicas 2
+@@ -90,25 +121,16 @@ Stop local services:
+ ./scripts/dev-down.sh
+ ```
+ 
+-## Build And Test
+-
+-```sh
+-make build
+-make test
+-make lint
+-```
++## 🧰 Binaries
+ 
+-`make lint` requires `golangci-lint` on your `PATH`.
++| Binary | Role |
++| --- | --- |
++| `orch-server` | REST API server and rollout controller. |
++| `orch-agent` | Worker node process that talks to Docker and the server. |
++| `orch` | Cobra CLI for operators and automation scripts. |
++| `orch-loadtest` | Fake multi-agent load test runner for scheduler/control-plane pressure. |
+ 
+-Useful direct commands:
+-
+-```sh
+-go test ./...
+-go vet ./...
+-go build ./...
+-```
+-
+-## Go API Client
++## 🔌 Go API client
+ 
+ The public REST contract lives in `api/openapi.yaml`. Go programs can use the hand-written client in `pkg/client`:
+ 
+@@ -124,7 +146,25 @@ if err != nil {
+ fmt.Println(len(services))
+ ```
+ 
+-## CLI Configuration
++## 🧪 Build and test
++
++```sh
++make build
++make test
++make lint
++```
++
++`make lint` requires `golangci-lint` on your `PATH`.
++
++Useful direct commands:
++
++```sh
++go test ./...
++go vet ./...
++go build ./...
++```
++
++## ⚙️ CLI configuration
+ 
+ The CLI resolves the server URL in this order:
+ 
+@@ -171,19 +211,25 @@ placement:
+     role: app
+ ```
+ 
+-## Documentation
+-
+-- [GitHub Pages documentation site](docs/GITHUB_PAGES.md)
+-- [Architecture](docs/ARCHITECTURE.md)
+-- [API](docs/API.md)
+-- [State machines](docs/STATE_MACHINES.md)
+-- [Agent](docs/AGENT.md)
+-- [Scheduler](docs/SCHEDULER.md)
+-- [Reconciler](docs/RECONCILER.md)
+-- [Rollouts](docs/ROLLOUTS.md)
+-- [Health checks](docs/HEALTHCHECKS.md)
+-- [Security](docs/SECURITY.md)
+-- [Observability](docs/OBSERVABILITY.md)
+-- [Reliability](docs/RELIABILITY.md)
+-- [Operations](docs/OPERATIONS.md)
+-- [Development](docs/DEVELOPMENT.md)
++## 🧱 Current boundaries
++
++| ✅ Works today | 🚧 Still future work |
++| --- | --- |
++| In-memory control plane for local dev and tests. | Default server runtime is not yet PostgreSQL-backed. |
++| PostgreSQL migrations and store implementation. | Restart-safe production server state wiring. |
++| Agent registration, heartbeat, task polling, and Docker reconciliation. | mTLS node identity. |
++| Scheduler, reconciler, rollouts, logs, events, metrics, auth, and CLI. | Overlay networking and containerd runtime support. |
++| Security context policy, registry credentials, secret references, audit logs. | Full multi-tenant isolation model. |
++
++## 📚 Documentation
++
++| Area | Docs |
++| --- | --- |
++| 🌈 Brand + site | [GitHub Pages documentation site](docs/GITHUB_PAGES.md), [Brand kit](docs/BRAND.md), [Charts](docs/CHARTS.md) |
++| 🏗️ Architecture | [Architecture](docs/ARCHITECTURE.md), [State machines](docs/STATE_MACHINES.md) |
++| 🔌 API | [API](docs/API.md), [OpenAPI](api/openapi.yaml) |
++| 🐳 Runtime | [Agent](docs/AGENT.md), [Service spec](docs/SERVICE_SPEC.md), [Resources](docs/RESOURCES.md) |
++| 🧭 Control loops | [Scheduler](docs/SCHEDULER.md), [Reconciler](docs/RECONCILER.md), [Rollouts](docs/ROLLOUTS.md) |
++| 🛡️ Security | [Security](docs/SECURITY.md), [Security review](docs/SECURITY_REVIEW.md), [Secrets](docs/SECRETS.md), [Registries](docs/REGISTRIES.md) |
++| 📈 Operations | [Observability](docs/OBSERVABILITY.md), [Reliability](docs/RELIABILITY.md), [Operations](docs/OPERATIONS.md), [Production deployment](docs/PRODUCTION_DEPLOYMENT.md) |
++| 🧪 Testing | [Load testing](docs/LOAD_TESTING.md), [Chaos testing](docs/CHAOS_TESTING.md), [Development](docs/DEVELOPMENT.md) |
+diff --git a/RELEASE_NOTES.md b/RELEASE_NOTES.md
+index af0093a..35d1e00 100644
+--- a/RELEASE_NOTES.md
++++ b/RELEASE_NOTES.md
+@@ -73,6 +73,7 @@ This is the first release; no upgrade path is required. For future releases, run
+ - Added HA control-plane design and PostgreSQL advisory-lock leader election primitives.
+ - Added multi-agent load testing and chaos-style integration scenarios.
+ - Added a GitHub Pages documentation portal with release docs, OpenAPI access, left-sidebar navigation, and auto/light/dark theme support.
++- Added a branded README/docs refresh with a unique SVG logo, colorful cards, icons, and Mermaid chart rendering.
+ 
+ ### Compatibility Notes
+ 
+diff --git a/docs/BRAND.md b/docs/BRAND.md
+new file mode 100644
+index 0000000..75c89cb
+--- /dev/null
++++ b/docs/BRAND.md
+@@ -0,0 +1,52 @@
++# orch Brand Kit
++
++`orch` uses a bright orbit-and-node identity: a control plane that keeps small Docker clusters moving in sync.
++
++## Logo
++
++The mark is an orbital `o` with three container nodes. It is intentionally compact so it works in the CLI docs, GitHub Pages sidebar, cards, favicon, and release material.
++
++![orch logo mark](assets/orch-mark.svg)
++
++The wordmark pairs the mark with a heavy lowercase `orch` logotype and the `Docker-first orchestration` tagline.
++
++![orch wordmark](assets/orch-wordmark.svg)
++
++## Color System
++
++| Token | Hex | Use |
++| --- | --- | --- |
++| Orbit Cyan | `#22d3ee` | Highlights, charts, discovery, live signals |
++| Control Blue | `#2374e1` | Primary actions, links, active navigation |
++| Rollout Violet | `#8b5cf6` | Rollouts, releases, async workflows |
++| Success Mint | `#a7f3d0` | Healthy tasks, policy pass, safe states |
++| Deep Space | `#020617` | Dark theme background and contrast |
++| Slate Text | `#0f172a` | Primary light theme text |
++
++## Visual Language
++
++- 🌈 **Colorful, not noisy:** gradients identify the product, while docs content stays readable.
++- 🧭 **Operational:** icons map to real concepts such as scheduling, agents, rollouts, metrics, and security.
++- 📈 **Chart-friendly:** architecture and release charts use Mermaid so GitHub and Pages stay source-controlled.
++- 🛡️ **Production-shaped:** the dark palette emphasizes operations consoles, alerts, and control-plane status.
++
++## Assets
++
++| Asset | Purpose |
++| --- | --- |
++| `docs/assets/orch-mark.svg` | Favicon, sidebar mark, compact identity |
++| `docs/assets/orch-wordmark.svg` | README hero, docs hero, release pages |
++| `docs/assets/orch-social-card.svg` | GitHub/social preview and release hero |
++
++## Icon Map
++
++| Icon | Meaning |
++| --- | --- |
++| ⚡ | API and fast control-plane actions |
++| 🧭 | Scheduling and placement decisions |
++| 🔁 | Reconciliation loops |
++| 🚀 | Rollouts and releases |
++| 🐳 | Docker runtime execution |
++| 📈 | Metrics, dashboards, and trends |
++| 🛡️ | Security, policy, and safe defaults |
++| 🌪️ | Chaos testing and resilience exercises |
+diff --git a/docs/CHARTS.md b/docs/CHARTS.md
+new file mode 100644
+index 0000000..c121a41
+--- /dev/null
++++ b/docs/CHARTS.md
+@@ -0,0 +1,69 @@
++# Charts
++
++The docs site renders Mermaid charts directly from Markdown. This keeps diagrams reviewable in pull requests and versioned with the release notes.
++
++## Control Plane Flow
++
++```mermaid
++flowchart LR
++    operator["👤 Operator"] --> cli["🖥️ orch CLI"]
++    cli --> api["⚡ API server"]
++    api --> control["🧠 Control plane"]
++    control --> scheduler["🧭 Scheduler"]
++    control --> reconciler["🔁 Reconciler"]
++    control --> rollout["🚀 Rollout controller"]
++    scheduler --> tasks["📦 Desired tasks"]
++    reconciler --> tasks
++    rollout --> tasks
++    tasks --> agent["🤖 Agent"]
++    agent --> docker["🐳 Docker Engine"]
++    api --> telemetry["📈 Metrics + events + audit"]
++```
++
++## v0.2.0 Release Mix
++
++```mermaid
++pie showData
++    title Production hardening focus
++    "Security + policy" : 24
++    "Observability" : 18
++    "Backup + operations" : 16
++    "Autoscaling" : 15
++    "HA control plane" : 14
++    "Load + chaos testing" : 13
++```
++
++## Runtime Status Funnel
++
++```mermaid
++flowchart TB
++    pending["pending"] --> assigned["assigned"]
++    assigned --> pulling["pulling"]
++    pulling --> created["created"]
++    created --> running["running"]
++    running --> healthy["healthy"]
++    running --> unhealthy["unhealthy"]
++    unhealthy --> failed["failed"]
++    running --> stopping["stopping"]
++    stopping --> stopped["stopped"]
++    stopped --> removed["removed"]
++```
++
++## Operator Feedback Loop
++
++```mermaid
++sequenceDiagram
++    participant O as Operator
++    participant C as CLI
++    participant A as API
++    participant S as Scheduler
++    participant W as Agent
++    participant D as Docker
++    O->>C: orch deploy service.yaml
++    C->>A: POST /v1/services
++    A->>S: place pending tasks
++    W->>A: poll assigned tasks
++    W->>D: pull/create/start container
++    W->>A: report task status
++    A-->>C: service + events + logs
++```
+diff --git a/docs/GITHUB_PAGES.md b/docs/GITHUB_PAGES.md
+index e05bf55..3b6f475 100644
+--- a/docs/GITHUB_PAGES.md
++++ b/docs/GITHUB_PAGES.md
+@@ -11,6 +11,7 @@ The Pages workflow publishes:
+ - All Markdown files from `docs/`.
+ - `README.md`, `CHANGELOG.md`, and `RELEASE_NOTES.md` for release-oriented pages.
+ - `api/openapi.yaml` as `openapi.yaml` for the API contract page.
++- SVG brand assets and Mermaid chart pages for a colorful release portal.
+ 
+ ## Theme Modes
+ 
+@@ -22,6 +23,10 @@ The site supports three theme modes:
+ 
+ The selected mode is stored in local browser storage.
+ 
++## Charts
++
++The site loads Mermaid and renders fenced `mermaid` code blocks from Markdown. README and `CHARTS.md` use this for architecture, release-focus, and lifecycle diagrams.
++
+ ## Deployment
+ 
+ GitHub Actions deploys the site through `.github/workflows/pages.yml` on pushes to `main` that touch documentation, release notes, the OpenAPI spec, or the Pages workflow.
+diff --git a/docs/assets/docs.css b/docs/assets/docs.css
+index 4decd56..e190437 100644
+--- a/docs/assets/docs.css
++++ b/docs/assets/docs.css
+@@ -6,6 +6,82 @@
+   color-scheme: dark;
+ }
+ 
++.brand-panel {
++  background:
++    radial-gradient(circle at 20% 0%, rgb(34 211 238 / 0.18), transparent 36%),
++    radial-gradient(circle at 100% 20%, rgb(139 92 246 / 0.16), transparent 38%),
++    rgb(255 255 255 / 0.86);
++}
++
++.dark .brand-panel {
++  background:
++    radial-gradient(circle at 20% 0%, rgb(34 211 238 / 0.12), transparent 36%),
++    radial-gradient(circle at 100% 20%, rgb(139 92 246 / 0.14), transparent 38%),
++    rgb(15 23 42 / 0.78);
++}
++
++.metric-card {
++  align-items: flex-start;
++  background: linear-gradient(135deg, rgb(255 255 255 / 0.92), rgb(239 246 255 / 0.84));
++  border: 1px solid rgb(191 219 254 / 0.72);
++  border-radius: 1.25rem;
++  box-shadow: 0 16px 45px -34px rgb(15 23 42 / 0.45);
++  display: grid;
++  gap: 0.2rem;
++  padding: 1rem;
++  transition: all 180ms ease;
++}
++
++.metric-card:hover {
++  border-color: rgb(35 116 225 / 0.5);
++  box-shadow: 0 24px 55px -34px rgb(35 116 225 / 0.6);
++  transform: translateY(-2px);
++}
++
++.metric-card span {
++  font-size: 1.45rem;
++}
++
++.metric-card strong {
++  color: rgb(15 23 42);
++}
++
++.metric-card small {
++  color: rgb(100 116 139);
++}
++
++.dark .metric-card {
++  background: linear-gradient(135deg, rgb(15 23 42 / 0.86), rgb(30 41 59 / 0.72));
++  border-color: rgb(51 65 85);
++}
++
++.dark .metric-card strong {
++  color: rgb(248 250 252);
++}
++
++.dark .metric-card small {
++  color: rgb(148 163 184);
++}
++
++.mini-stat {
++  border-radius: 1rem;
++  display: grid;
++  padding: 0.8rem;
++}
++
++.mini-stat strong {
++  font-size: 1.35rem;
++  line-height: 1;
++}
++
++.mini-stat span {
++  font-size: 0.75rem;
++  font-weight: 700;
++  margin-top: 0.3rem;
++  opacity: 0.76;
++  text-transform: uppercase;
++}
++
+ .quick-link {
+   border-radius: 0.875rem;
+   border: 1px solid rgb(226 232 240);
+@@ -236,3 +312,23 @@
+   background: rgb(15 23 42);
+   color: rgb(241 245 249);
+ }
++
++.doc-content .mermaid {
++  background:
++    radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.1), transparent 34%),
++    radial-gradient(circle at 100% 10%, rgb(139 92 246 / 0.1), transparent 36%),
++    rgb(248 250 252);
++  border: 1px solid rgb(226 232 240);
++  border-radius: 1.25rem;
++  margin-top: 1.2rem;
++  overflow-x: auto;
++  padding: 1rem;
++}
++
++.dark .doc-content .mermaid {
++  background:
++    radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.08), transparent 34%),
++    radial-gradient(circle at 100% 10%, rgb(139 92 246 / 0.08), transparent 36%),
++    rgb(15 23 42);
++  border-color: rgb(30 41 59);
++}
+diff --git a/docs/assets/docs.js b/docs/assets/docs.js
+index f123702..d59a777 100644
+--- a/docs/assets/docs.js
++++ b/docs/assets/docs.js
+@@ -2,67 +2,69 @@ const docsNav = [
+   {
+     group: 'Release',
+     items: [
+-      { title: 'Overview', path: 'README.md', fallbacks: ['../README.md'] },
+-      { title: 'Release notes', path: 'RELEASE_NOTES.md', fallbacks: ['../RELEASE_NOTES.md'] },
+-      { title: 'Changelog', path: 'CHANGELOG.md', fallbacks: ['../CHANGELOG.md'] },
+-      { title: 'GitHub Pages', path: 'GITHUB_PAGES.md' }
++      { title: 'Overview', path: 'README.md', icon: '🌈', fallbacks: ['../README.md'] },
++      { title: 'Brand kit', path: 'BRAND.md', icon: '🎨' },
++      { title: 'Charts', path: 'CHARTS.md', icon: '📊' },
++      { title: 'Release notes', path: 'RELEASE_NOTES.md', icon: '🎉', fallbacks: ['../RELEASE_NOTES.md'] },
++      { title: 'Changelog', path: 'CHANGELOG.md', icon: '🗓️', fallbacks: ['../CHANGELOG.md'] },
++      { title: 'GitHub Pages', path: 'GITHUB_PAGES.md', icon: '🚀' }
+     ]
+   },
+   {
+     group: 'API and Operations',
+     items: [
+-      { title: 'API', path: 'API.md' },
+-      { title: 'OpenAPI YAML', path: 'openapi.yaml', fallbacks: ['../api/openapi.yaml'], format: 'code' },
+-      { title: 'Configuration', path: 'CONFIGURATION.md' },
+-      { title: 'Production deployment', path: 'PRODUCTION_DEPLOYMENT.md' },
+-      { title: 'Operations', path: 'OPERATIONS.md' },
+-      { title: 'Backup and restore', path: 'BACKUP_RESTORE.md' }
++      { title: 'API', path: 'API.md', icon: '🔌' },
++      { title: 'OpenAPI YAML', path: 'openapi.yaml', icon: '🧾', fallbacks: ['../api/openapi.yaml'], format: 'code' },
++      { title: 'Configuration', path: 'CONFIGURATION.md', icon: '⚙️' },
++      { title: 'Production deployment', path: 'PRODUCTION_DEPLOYMENT.md', icon: '🚢' },
++      { title: 'Operations', path: 'OPERATIONS.md', icon: '🧰' },
++      { title: 'Backup and restore', path: 'BACKUP_RESTORE.md', icon: '💾' }
+     ]
+   },
+   {
+     group: 'Architecture',
+     items: [
+-      { title: 'Architecture', path: 'ARCHITECTURE.md' },
+-      { title: 'State machines', path: 'STATE_MACHINES.md' },
+-      { title: 'Scheduler', path: 'SCHEDULER.md' },
+-      { title: 'Reconciler', path: 'RECONCILER.md' },
+-      { title: 'Rollouts', path: 'ROLLOUTS.md' },
+-      { title: 'HA control plane', path: 'HA_CONTROL_PLANE_DESIGN.md' }
++      { title: 'Architecture', path: 'ARCHITECTURE.md', icon: '🏗️' },
++      { title: 'State machines', path: 'STATE_MACHINES.md', icon: '🔀' },
++      { title: 'Scheduler', path: 'SCHEDULER.md', icon: '🧭' },
++      { title: 'Reconciler', path: 'RECONCILER.md', icon: '🔁' },
++      { title: 'Rollouts', path: 'ROLLOUTS.md', icon: '🚀' },
++      { title: 'HA control plane', path: 'HA_CONTROL_PLANE_DESIGN.md', icon: '👑' }
+     ]
+   },
+   {
+     group: 'Runtime',
+     items: [
+-      { title: 'Agent', path: 'AGENT.md' },
+-      { title: 'Service spec', path: 'SERVICE_SPEC.md' },
+-      { title: 'Resources', path: 'RESOURCES.md' },
+-      { title: 'Health checks', path: 'HEALTHCHECKS.md' },
+-      { title: 'Logs', path: 'LOGS.md' },
+-      { title: 'Events', path: 'EVENTS.md' }
++      { title: 'Agent', path: 'AGENT.md', icon: '🤖' },
++      { title: 'Service spec', path: 'SERVICE_SPEC.md', icon: '📦' },
++      { title: 'Resources', path: 'RESOURCES.md', icon: '🧮' },
++      { title: 'Health checks', path: 'HEALTHCHECKS.md', icon: '🫀' },
++      { title: 'Logs', path: 'LOGS.md', icon: '📜' },
++      { title: 'Events', path: 'EVENTS.md', icon: '⚡' }
+     ]
+   },
+   {
+     group: 'Networking and Security',
+     items: [
+-      { title: 'Networking', path: 'NETWORKING.md' },
+-      { title: 'Service discovery', path: 'SERVICE_DISCOVERY.md' },
+-      { title: 'Traefik', path: 'TRAEFIK.md' },
+-      { title: 'Secrets', path: 'SECRETS.md' },
+-      { title: 'Registries', path: 'REGISTRIES.md' },
+-      { title: 'Security', path: 'SECURITY.md' },
+-      { title: 'Security review', path: 'SECURITY_REVIEW.md' }
++      { title: 'Networking', path: 'NETWORKING.md', icon: '🕸️' },
++      { title: 'Service discovery', path: 'SERVICE_DISCOVERY.md', icon: '🔎' },
++      { title: 'Traefik', path: 'TRAEFIK.md', icon: '🚦' },
++      { title: 'Secrets', path: 'SECRETS.md', icon: '🔐' },
++      { title: 'Registries', path: 'REGISTRIES.md', icon: '🗃️' },
++      { title: 'Security', path: 'SECURITY.md', icon: '🛡️' },
++      { title: 'Security review', path: 'SECURITY_REVIEW.md', icon: '🧪' }
+     ]
+   },
+   {
+     group: 'Reliability',
+     items: [
+-      { title: 'Observability', path: 'OBSERVABILITY.md' },
+-      { title: 'Reliability', path: 'RELIABILITY.md' },
+-      { title: 'Autoscaling', path: 'AUTOSCALING.md' },
+-      { title: 'Autoscaling design', path: 'AUTOSCALING_DESIGN.md' },
+-      { title: 'Load testing', path: 'LOAD_TESTING.md' },
+-      { title: 'Chaos testing', path: 'CHAOS_TESTING.md' },
+-      { title: 'Development', path: 'DEVELOPMENT.md' }
++      { title: 'Observability', path: 'OBSERVABILITY.md', icon: '📈' },
++      { title: 'Reliability', path: 'RELIABILITY.md', icon: '🪢' },
++      { title: 'Autoscaling', path: 'AUTOSCALING.md', icon: '📊' },
++      { title: 'Autoscaling design', path: 'AUTOSCALING_DESIGN.md', icon: '🧠' },
++      { title: 'Load testing', path: 'LOAD_TESTING.md', icon: '🏋️' },
++      { title: 'Chaos testing', path: 'CHAOS_TESTING.md', icon: '🌪️' },
++      { title: 'Development', path: 'DEVELOPMENT.md', icon: '🛠️' }
+     ]
+   }
+ ]
+@@ -91,6 +93,9 @@ function applyTheme(mode) {
+ function setTheme(mode) {
+   localStorage.setItem('orch-docs-theme', mode)
+   applyTheme(mode)
++  if (content.querySelector('.mermaid')) {
++    loadDoc()
++  }
+ }
+ 
+ function normalizeRoute(route) {
+@@ -119,7 +124,7 @@ function renderNav(filter = '') {
+           <div class="mt-2 space-y-1">
+             ${items.map((item) => `
+               <a class="nav-link ${item.path === current ? 'active' : ''}" href="#${encodeURIComponent(item.path)}">
+-                <span class="h-1.5 w-1.5 rounded-full bg-current opacity-50"></span>
++                <span class="grid h-6 w-6 place-items-center rounded-lg bg-slate-100 text-sm dark:bg-slate-900">${escapeHTML(item.icon || '•')}</span>
+                 <span>${escapeHTML(item.title)}</span>
+               </a>
+             `).join('')}
+@@ -168,6 +173,7 @@ async function loadDoc() {
+       content.innerHTML = `<pre><code>${escapeHTML(loaded.text)}</code></pre>`
+     }
+     wireContentLinks()
++    await renderMermaidDiagrams()
+     closeSidebar()
+     window.scrollTo({ top: 0, behavior: 'smooth' })
+   } catch (error) {
+@@ -179,6 +185,32 @@ async function loadDoc() {
+   }
+ }
+ 
++async function renderMermaidDiagrams() {
++  if (!window.mermaid) return
++  const blocks = Array.from(content.querySelectorAll('pre code.language-mermaid'))
++  if (!blocks.length) return
++  mermaid.initialize({
++    startOnLoad: false,
++    securityLevel: 'strict',
++    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
++    themeVariables: {
++      primaryColor: '#dbeafe',
++      primaryBorderColor: '#2374e1',
++      primaryTextColor: '#0f172a',
++      lineColor: '#64748b',
++      secondaryColor: '#ede9fe',
++      tertiaryColor: '#ecfeff'
++    }
++  })
++  blocks.forEach((block) => {
++    const diagram = document.createElement('div')
++    diagram.className = 'mermaid'
++    diagram.textContent = block.textContent
++    block.closest('pre').replaceWith(diagram)
++  })
++  await mermaid.run({ nodes: content.querySelectorAll('.mermaid') })
++}
++
+ function wireContentLinks() {
+   content.querySelectorAll('a[href]').forEach((link) => {
+     const href = link.getAttribute('href') || ''
+diff --git a/docs/assets/orch-mark.svg b/docs/assets/orch-mark.svg
+new file mode 100644
+index 0000000..1c17659
+--- /dev/null
++++ b/docs/assets/orch-mark.svg
+@@ -0,0 +1,34 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
++  <title id="title">orch logo mark</title>
++  <desc id="desc">A modern orbit-shaped O mark with three connected container nodes.</desc>
++  <defs>
++    <linearGradient id="bg" x1="34" y1="24" x2="222" y2="232" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#22d3ee"/>
++      <stop offset="0.45" stop-color="#2374e1"/>
++      <stop offset="1" stop-color="#8b5cf6"/>
++    </linearGradient>
++    <linearGradient id="ring" x1="52" y1="42" x2="206" y2="214" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#ffffff"/>
++      <stop offset="0.52" stop-color="#dff7ff"/>
++      <stop offset="1" stop-color="#a7f3d0"/>
++    </linearGradient>
++    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
++      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.28"/>
++    </filter>
++  </defs>
++  <rect width="256" height="256" rx="64" fill="#07111f"/>
++  <rect x="14" y="14" width="228" height="228" rx="54" fill="url(#bg)" filter="url(#shadow)"/>
++  <path d="M54 129c0-43.6 31.7-76 75.2-76 42.4 0 72.8 30.2 72.8 72.2 0 43.8-31.5 77.8-74.9 77.8C84 203 54 172.6 54 129Z" fill="none" stroke="url(#ring)" stroke-width="22" stroke-linecap="round"/>
++  <path d="M94 163c12.7 11 27.8 14.3 45.2 9.8 16.9-4.3 27.9-15.2 33.1-32.8" fill="none" stroke="#07111f" stroke-opacity="0.6" stroke-width="10" stroke-linecap="round"/>
++  <path d="M74 74c43.8-23.1 84.6-18.8 122.5 13" fill="none" stroke="#a7f3d0" stroke-width="7" stroke-linecap="round" stroke-dasharray="3 18" opacity="0.95"/>
++  <g fill="#07111f" stroke="#e0f2fe" stroke-width="7">
++    <circle cx="77" cy="78" r="17"/>
++    <circle cx="188" cy="90" r="17"/>
++    <circle cx="129" cy="192" r="17"/>
++  </g>
++  <g fill="#ffffff">
++    <rect x="69" y="73" width="16" height="10" rx="3"/>
++    <rect x="180" y="85" width="16" height="10" rx="3"/>
++    <rect x="121" y="187" width="16" height="10" rx="3"/>
++  </g>
++</svg>
+diff --git a/docs/assets/orch-social-card.svg b/docs/assets/orch-social-card.svg
+new file mode 100644
+index 0000000..56c6374
+--- /dev/null
++++ b/docs/assets/orch-social-card.svg
+@@ -0,0 +1,65 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
++  <title id="title">orch social preview card</title>
++  <desc id="desc">A colorful preview card for orch with runtime, API, scheduler, rollout, and observability nodes.</desc>
++  <defs>
++    <radialGradient id="glowA" cx="18%" cy="18%" r="70%">
++      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.55"/>
++      <stop offset="0.56" stop-color="#2374e1" stop-opacity="0.18"/>
++      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
++    </radialGradient>
++    <radialGradient id="glowB" cx="86%" cy="25%" r="58%">
++      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.5"/>
++      <stop offset="0.65" stop-color="#14b8a6" stop-opacity="0.18"/>
++      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
++    </radialGradient>
++    <linearGradient id="panel" x1="134" y1="92" x2="1058" y2="543" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#0f172a" stop-opacity="0.92"/>
++      <stop offset="1" stop-color="#111827" stop-opacity="0.72"/>
++    </linearGradient>
++    <linearGradient id="logoBg" x1="147" y1="126" x2="273" y2="264" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#22d3ee"/>
++      <stop offset="0.5" stop-color="#2374e1"/>
++      <stop offset="1" stop-color="#8b5cf6"/>
++    </linearGradient>
++    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
++      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#000" flood-opacity="0.45"/>
++    </filter>
++  </defs>
++  <rect width="1200" height="630" fill="#020617"/>
++  <rect width="1200" height="630" fill="url(#glowA)"/>
++  <rect width="1200" height="630" fill="url(#glowB)"/>
++  <path d="M0 565C170 470 310 503 480 530c173 28 334-20 500-93 82-36 158-52 220-46v239H0Z" fill="#0f172a" opacity="0.9"/>
++  <rect x="86" y="70" width="1028" height="490" rx="48" fill="url(#panel)" stroke="#334155" filter="url(#shadow)"/>
++  <g transform="translate(138 120)">
++    <rect width="156" height="156" rx="42" fill="#07111f"/>
++    <rect x="10" y="10" width="136" height="136" rx="34" fill="url(#logoBg)"/>
++    <path d="M36 79c0-26 18.8-45.3 44.7-45.3 25.2 0 43.3 18 43.3 43 0 26.1-18.7 46.4-44.6 46.4C53.7 123.1 36 105 36 79Z" fill="none" stroke="#eff6ff" stroke-width="14" stroke-linecap="round"/>
++    <path d="M51 42c26-13.8 50.2-11.2 72.9 7.8" fill="none" stroke="#a7f3d0" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 11"/>
++    <g fill="#07111f" stroke="#e0f2fe" stroke-width="5">
++      <circle cx="51" cy="45" r="10"/>
++      <circle cx="121" cy="53" r="10"/>
++      <circle cx="80" cy="124" r="10"/>
++    </g>
++  </g>
++  <text x="330" y="174" fill="#f8fafc" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="82" font-weight="950" letter-spacing="-5">orch</text>
++  <text x="333" y="224" fill="#93c5fd" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="27" font-weight="800" letter-spacing="3">DOCKER-FIRST CONTROL PLANE</text>
++  <text x="142" y="348" fill="#e2e8f0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="42" font-weight="850" letter-spacing="-1.5">Deploy services, schedule tasks, roll forward safely.</text>
++  <text x="145" y="400" fill="#94a3b8" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="25" font-weight="600">REST API · worker agents · scheduler · rollouts · metrics · docs</text>
++  <g transform="translate(144 455)" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-weight="800" font-size="20">
++    <rect width="146" height="50" rx="18" fill="#0ea5e9" opacity="0.95"/>
++    <text x="25" y="32" fill="#fff">⚡ API</text>
++    <rect x="164" width="184" height="50" rx="18" fill="#22c55e" opacity="0.95"/>
++    <text x="190" y="32" fill="#052e16">🧭 Scheduler</text>
++    <rect x="366" width="156" height="50" rx="18" fill="#a78bfa" opacity="0.95"/>
++    <text x="392" y="32" fill="#2e1065">🚀 Rollouts</text>
++    <rect x="540" width="178" height="50" rx="18" fill="#f59e0b" opacity="0.95"/>
++    <text x="566" y="32" fill="#451a03">📈 Metrics</text>
++  </g>
++  <g transform="translate(806 148)">
++    <rect width="210" height="270" rx="30" fill="#020617" opacity="0.48" stroke="#475569"/>
++    <path d="M38 219V94M82 219V54M126 219V122M170 219V76" stroke="#1e293b" stroke-width="24" stroke-linecap="round"/>
++    <path d="M38 219V128M82 219V86M126 219V151M170 219V105" stroke="#22d3ee" stroke-width="24" stroke-linecap="round"/>
++    <path d="M36 64c33 35 58 51 89 47 20-3 37-14 53-34" fill="none" stroke="#a78bfa" stroke-width="8" stroke-linecap="round"/>
++    <text x="35" y="252" fill="#cbd5e1" font-family="Inter, ui-sans-serif, system-ui" font-size="18" font-weight="800">cluster signals</text>
++  </g>
++</svg>
+diff --git a/docs/assets/orch-wordmark.svg b/docs/assets/orch-wordmark.svg
+new file mode 100644
+index 0000000..6ec3d83
+--- /dev/null
++++ b/docs/assets/orch-wordmark.svg
+@@ -0,0 +1,38 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 180" role="img" aria-labelledby="title desc">
++  <title id="title">orch wordmark</title>
++  <desc id="desc">The orch logo mark with a modern lowercase wordmark and Docker-first orchestration tagline.</desc>
++  <defs>
++    <linearGradient id="markBg" x1="22" y1="16" x2="158" y2="164" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#22d3ee"/>
++      <stop offset="0.48" stop-color="#2374e1"/>
++      <stop offset="1" stop-color="#8b5cf6"/>
++    </linearGradient>
++    <linearGradient id="markRing" x1="44" y1="36" x2="138" y2="148" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#ffffff"/>
++      <stop offset="0.54" stop-color="#dff7ff"/>
++      <stop offset="1" stop-color="#a7f3d0"/>
++    </linearGradient>
++    <linearGradient id="word" x1="205" y1="39" x2="493" y2="126" gradientUnits="userSpaceOnUse">
++      <stop offset="0" stop-color="#0f172a"/>
++      <stop offset="1" stop-color="#2374e1"/>
++    </linearGradient>
++  </defs>
++  <rect x="14" y="14" width="152" height="152" rx="42" fill="#07111f"/>
++  <rect x="23" y="23" width="134" height="134" rx="34" fill="url(#markBg)"/>
++  <path d="M49 91c0-25.8 18.8-45 44.5-45 25.1 0 43.1 17.9 43.1 42.8 0 25.9-18.6 46.1-44.4 46.1C66.8 134.9 49 116.9 49 91Z" fill="none" stroke="url(#markRing)" stroke-width="14" stroke-linecap="round"/>
++  <path d="M63 54c25.8-13.7 50.1-11.1 72.5 7.7" fill="none" stroke="#a7f3d0" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 11"/>
++  <g fill="#07111f" stroke="#e0f2fe" stroke-width="5">
++    <circle cx="63" cy="57" r="10"/>
++    <circle cx="132" cy="64" r="10"/>
++    <circle cx="94" cy="128" r="10"/>
++  </g>
++  <text x="202" y="104" fill="url(#word)" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="86" font-weight="900" letter-spacing="-5">orch</text>
++  <text x="207" y="139" fill="#64748b" font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="700" letter-spacing="2.2">DOCKER-FIRST ORCHESTRATION</text>
++  <g transform="translate(548 54)">
++    <rect width="136" height="72" rx="24" fill="#eff6ff" stroke="#bfdbfe"/>
++    <circle cx="35" cy="36" r="10" fill="#22d3ee"/>
++    <circle cx="68" cy="36" r="10" fill="#2374e1"/>
++    <circle cx="101" cy="36" r="10" fill="#8b5cf6"/>
++    <path d="M45 36h13M78 36h13" stroke="#94a3b8" stroke-width="4" stroke-linecap="round"/>
++  </g>
++</svg>
+diff --git a/docs/index.html b/docs/index.html
+index ecb9da4..5ab3118 100644
+--- a/docs/index.html
++++ b/docs/index.html
+@@ -6,6 +6,7 @@
+     <meta name="color-scheme" content="light dark" />
+     <title>orch Documentation</title>
+     <meta name="description" content="Release and operator documentation for orch, a Docker-first Go container orchestrator." />
++    <link rel="icon" href="assets/orch-mark.svg" type="image/svg+xml" />
+     <script src="https://cdn.tailwindcss.com"></script>
+     <script>
+       tailwind.config = {
+@@ -18,7 +19,8 @@
+                 100: '#d9edff',
+                 500: '#2374e1',
+                 600: '#1d5fc0',
+-                700: '#194d9a'
++                700: '#194d9a',
++                950: '#06142b'
+               }
+             },
+             boxShadow: {
+@@ -29,6 +31,7 @@
+       }
+     </script>
+     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
++    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+     <link rel="stylesheet" href="assets/docs.css" />
+   </head>
+   <body class="bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+@@ -43,7 +46,7 @@
+           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+         </button>
+         <a href="#README.md" class="flex items-center gap-2 font-semibold tracking-tight">
+-          <span class="grid h-8 w-8 place-items-center rounded-xl bg-orch-600 text-white shadow-glow">o</span>
++          <img class="h-9 w-9 rounded-xl shadow-glow" src="assets/orch-mark.svg" alt="" />
+           <span>orch docs</span>
+         </a>
+         <select id="theme-select-mobile" class="rounded-xl border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-800 dark:bg-slate-900" aria-label="Theme">
+@@ -59,10 +62,10 @@
+     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-80 -translate-x-full flex-col border-r border-slate-200 bg-white/95 shadow-2xl backdrop-blur-xl transition-transform dark:border-slate-800 dark:bg-slate-950/95 lg:translate-x-0 lg:shadow-none">
+       <div class="flex h-20 items-center justify-between border-b border-slate-200 px-5 dark:border-slate-800">
+         <a href="#README.md" class="flex items-center gap-3">
+-          <span class="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-orch-500 to-cyan-400 text-lg font-black text-white shadow-glow">o</span>
++          <img class="h-11 w-11 rounded-2xl shadow-glow" src="assets/orch-mark.svg" alt="" />
+           <span>
+             <span class="block text-base font-bold tracking-tight">orch docs</span>
+-            <span class="block text-xs text-slate-500 dark:text-slate-400">release + operator guide</span>
++            <span class="block text-xs text-slate-500 dark:text-slate-400">colorful operator cockpit</span>
+           </span>
+         </a>
+         <button id="sidebar-close" class="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900 lg:hidden" aria-label="Close navigation">
+@@ -86,30 +89,45 @@
+       <nav id="nav" class="flex-1 space-y-6 overflow-y-auto px-4 py-5"></nav>
+ 
+       <div class="border-t border-slate-200 p-5 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
++        <div class="mb-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-orch-50 p-3 dark:border-slate-800 dark:from-slate-900 dark:to-orch-950/30">
++          <p class="font-semibold text-slate-700 dark:text-slate-200">✨ Brand kit</p>
++          <p class="mt-1">Orbit logo, neon accents, Mermaid charts, and readable ops docs.</p>
++        </div>
+         <p>Built from Markdown in <code class="rounded bg-slate-100 px-1 dark:bg-slate-900">docs/</code>.</p>
+         <a class="mt-2 inline-flex font-medium text-orch-600 hover:text-orch-700 dark:text-orch-400" href="https://github.com/alekpopovic/orch">View on GitHub →</a>
+       </div>
+     </aside>
+ 
+     <main class="lg:pl-80">
+-      <section class="border-b border-slate-200 bg-white/60 px-6 py-10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/30 sm:px-10 lg:px-12">
++      <section class="relative overflow-hidden border-b border-slate-200 bg-white/60 px-6 py-10 backdrop-blur dark:border-slate-800 dark:bg-slate-950/30 sm:px-10 lg:px-12">
++        <div class="absolute -right-24 top-6 hidden h-72 w-72 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-500/10 lg:block"></div>
+         <div class="mx-auto max-w-5xl">
+           <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-orch-500/20 bg-orch-50 px-3 py-1 text-sm font-medium text-orch-700 dark:border-orch-400/20 dark:bg-orch-500/10 dark:text-orch-200">
+             <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+-            v0.2.0 production-hardening docs
++            v0.2.0 production-hardening docs · branded cockpit
+           </div>
+-          <div class="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-end">
++          <div class="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-end">
+             <div>
+-              <h1 class="text-4xl font-black tracking-tight text-slate-950 dark:text-white sm:text-5xl">orch documentation</h1>
+-              <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300">A GitHub Pages documentation hub for release notes, API contracts, operations, security, scheduling, rollouts, and production workflows.</p>
++              <img class="mb-7 h-auto w-full max-w-md" src="assets/orch-wordmark.svg" alt="orch Docker-first orchestration" />
++              <h1 class="text-4xl font-black tracking-tight text-slate-950 dark:text-white sm:text-5xl">a colorful control-plane handbook</h1>
++              <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300">Release notes, API contracts, operations, security, scheduler internals, rollouts, Mermaid charts, and production workflows in one bright GitHub Pages portal.</p>
++              <div class="mt-7 grid gap-3 sm:grid-cols-3">
++                <a class="metric-card" href="#API.md"><span>🔌</span><strong>OpenAPI</strong><small>public API contract</small></a>
++                <a class="metric-card" href="#PRODUCTION_DEPLOYMENT.md"><span>🚢</span><strong>Deploy</strong><small>production runbooks</small></a>
++                <a class="metric-card" href="#OBSERVABILITY.md"><span>📈</span><strong>Signals</strong><small>metrics + dashboards</small></a>
++              </div>
+             </div>
+-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
++            <div class="brand-panel rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Quick links</p>
+               <div class="mt-4 grid gap-2 text-sm">
+-                <a class="quick-link" href="#RELEASE_NOTES.md">Release notes</a>
+-                <a class="quick-link" href="#API.md">API guide</a>
+-                <a class="quick-link" href="#PRODUCTION_DEPLOYMENT.md">Production deploy</a>
+-                <a class="quick-link" href="#openapi.yaml">OpenAPI YAML</a>
++                <a class="quick-link" href="#RELEASE_NOTES.md">🎉 Release notes</a>
++                <a class="quick-link" href="#BRAND.md">🎨 Brand kit</a>
++                <a class="quick-link" href="#CHARTS.md">📊 Charts</a>
++                <a class="quick-link" href="#API.md">🔌 API guide</a>
++              </div>
++              <div class="mt-5 grid grid-cols-2 gap-3">
++                <div class="mini-stat bg-cyan-500/10 text-cyan-700 dark:text-cyan-200"><strong>36</strong><span>doc pages</span></div>
++                <div class="mini-stat bg-violet-500/10 text-violet-700 dark:text-violet-200"><strong>v0.2</strong><span>hardened</span></div>
+               </div>
+             </div>
+           </div>

@@ -1,0 +1,13 @@
+	service, ok := s.services[serviceID]
+	if !ok || service.Status != types.ServiceDeleting {
+		return
+	}
+	for _, task := range s.tasks {
+		if task.ServiceID != serviceID {
+			continue
+		}
+		if task.ActualStatus != types.TaskRemoved {
+			return
+		}
+	}
+	if err := types.ValidateServiceTransition(service.Status, types.ServiceDeleted); err != nil {

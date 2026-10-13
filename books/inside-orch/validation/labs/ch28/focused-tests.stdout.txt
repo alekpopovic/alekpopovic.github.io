@@ -1,0 +1,15 @@
+?   	github.com/alekpopovic/orch/internal/quota	[no test files]
+=== RUN   TestUsageSnapshotAggregation
+--- PASS: TestUsageSnapshotAggregation (0.00s)
+=== RUN   TestResourceQuotaAllowsAndDeniesUsage
+--- PASS: TestResourceQuotaAllowsAndDeniesUsage (0.00s)
+=== RUN   TestConcurrentScaleCannotExceedQuota
+--- PASS: TestConcurrentScaleCannotExceedQuota (0.00s)
+=== RUN   TestSecretAndRegistryCredentialQuotas
+--- PASS: TestSecretAndRegistryCredentialQuotas (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/controlplane	0.019s
+=== RUN   TestQuotaAPIProducesStructuredConflict
+--- PASS: TestQuotaAPIProducesStructuredConflict (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/api	0.012s

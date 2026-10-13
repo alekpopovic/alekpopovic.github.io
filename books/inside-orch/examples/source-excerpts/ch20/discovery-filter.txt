@@ -1,0 +1,13 @@
+func includeTask(task types.Task, includeUnhealthy bool) bool {
+	if task.DesiredStatus != types.TaskRunning {
+		return false
+	}
+	switch task.ActualStatus {
+	case types.TaskRunning, types.TaskHealthy:
+		return true
+	case types.TaskUnhealthy:
+		return includeUnhealthy
+	default:
+		return false
+	}
+}

@@ -1,0 +1,14 @@
+func endpointURL(endpoint discovery.Endpoint) (string, bool) {
+	if endpoint.PublicHostPort <= 0 {
+		return "", false
+	}
+	nodeAddress := strings.TrimSpace(endpoint.NodeAddress)
+	if nodeAddress == "" {
+		return "", false
+	}
+	host := addressHost(nodeAddress)
+	if host == "" {
+		return "", false
+	}
+	return "http://" + net.JoinHostPort(host, strconv.Itoa(endpoint.PublicHostPort)), true
+}

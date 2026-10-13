@@ -1,0 +1,348 @@
+commit a5cb0c5fb4cab92130b1cdfd15df88256267bcb7
+Date: 2026-07-14T18:20:03+02:00
+Subject: Add security review and healthcheck hardening
+
+
+---
+ docs/HEALTHCHECKS.md         |  15 +++--
+ docs/SECURITY.md             |   6 ++
+ docs/SECURITY_REVIEW.md      | 150 +++++++++++++++++++++++++++++++++++++++++++
+ internal/agent/agent.go      |  25 +++++---
+ internal/agent/agent_test.go |  41 ++++++++++++
+ prompts/EXECUTION_TRACKER.md |   8 +--
+ 6 files changed, 227 insertions(+), 18 deletions(-)
+
+diff --git a/docs/HEALTHCHECKS.md b/docs/HEALTHCHECKS.md
+index 4041e23..e1491af 100644
+--- a/docs/HEALTHCHECKS.md
++++ b/docs/HEALTHCHECKS.md
+@@ -4,8 +4,8 @@ Services may define an optional healthcheck. Health checks are performed by agen
+ 
+ ## Supported Types
+ 
+-- `http`: sends `GET` to the configured path and port.
+-- `tcp`: opens a TCP connection to the configured port.
++- `http`: sends `GET` to the configured path and an assigned published TCP task port.
++- `tcp`: opens a TCP connection to an assigned published TCP task port.
+ - `none`: disables active probing.
+ 
+ Example deploy YAML:
+@@ -25,10 +25,13 @@ healthcheck:
+ The server includes healthcheck metadata in task poll responses. For each running task:
+ 
+ 1. The agent waits for the configured interval plus jitter.
+-2. It performs the HTTP or TCP check with context cancellation and timeout.
+-3. It tracks consecutive successes and failures in memory.
+-4. It reports `healthy` after `healthyThreshold` consecutive successes.
+-5. It reports `unhealthy` after `unhealthyThreshold` consecutive failures.
++2. It verifies that the healthcheck port matches one of the task's assigned published TCP container or host ports.
++3. It performs the HTTP or TCP check against `127.0.0.1:<published-port>` with context cancellation and timeout.
++4. If the service specified a container port, the agent resolves it to the assigned published host port before probing.
++5. If the healthcheck port is not assigned, published, and TCP, the probe is skipped instead of probing an arbitrary host-local port.
++6. It tracks consecutive successes and failures in memory.
++7. It reports `healthy` after `healthyThreshold` consecutive successes.
++8. It reports `unhealthy` after `unhealthyThreshold` consecutive failures.
+ 
+ The agent does not restart containers because of health failures.
+ 
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 37cf62f..9e0bba9 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -2,6 +2,8 @@
+ 
+ `orch` separates user authentication from agent authentication. The current model is appropriate for local and controlled environments; production hardening requires the roadmap items listed below.
+ 
++The latest repository security review is documented in `docs/SECURITY_REVIEW.md`.
++
+ ## User API Authentication
+ 
+ User-facing REST API endpoints support JWT authentication when `ORCH_JWT_SECRET` is configured on `orch-server`.
+@@ -65,6 +67,10 @@ Recommended controls:
+ - Do not expose the Docker socket to service containers.
+ - Monitor Docker operation error metrics and audit task events.
+ 
++## Healthcheck SSRF Controls
++
++Agents run HTTP and TCP healthchecks from the node. To avoid service specs causing arbitrary host-local probes, healthchecks are only performed against published TCP ports assigned to the task. A configured container port is resolved to the assigned published host port before probing. Unassigned, unpublished, or UDP-only ports are skipped.
++
+ ## Secret Handling
+ 
+ Service specs support secret references for environment variables. Secret values are encrypted at rest with the local envelope provider and are returned to agents only in assigned task payloads when needed to start containers. Do not put secret values in service names, labels, route hostnames, logs, or events.
+diff --git a/docs/SECURITY_REVIEW.md b/docs/SECURITY_REVIEW.md
+new file mode 100644
+index 0000000..64619b1
+--- /dev/null
++++ b/docs/SECURITY_REVIEW.md
+@@ -0,0 +1,150 @@
++# Security Review
++
++Date: 2026-07-14
++
++Scope: Docker socket exposure, agent authentication, user authentication, RBAC, secrets and registry credentials, API input validation, audit logging, log redaction, path traversal, command injection, SSRF through healthchecks, unsafe container options, privilege escalation, and default container security profile.
++
++## Executive Summary
++
++One high-risk issue was found and fixed in this review: service-defined healthchecks could cause agents to probe arbitrary host-local TCP ports on `127.0.0.1`. The fix restricts healthchecks to ports assigned to the task.
++
++No direct command-injection or path-traversal issue was found in the reviewed code. The remaining material risks are mostly architectural production-hardening items: Docker socket exposure, bootstrap-token based agent log access, and local-development auth defaults.
++
++## Prioritized Findings
++
++### High: Healthcheck Host-Local SSRF
++
++Before this review, an operator-controlled service spec could define a healthcheck port that was unrelated to the task's assigned ports. The agent built probes against `127.0.0.1:<port>`, so a compromised operator account could make every agent probe host-local services such as admin HTTP endpoints, local metadata proxies, or an accidentally exposed Docker TCP API.
++
++Exploit scenario:
++
++1. Attacker obtains an operator JWT or compromises an operator workflow.
++2. Attacker deploys a service with a healthcheck targeting a sensitive host-local port, for example `2375` or an internal admin service.
++3. Agents perform repeated HTTP/TCP probes to `127.0.0.1:<target>`.
++4. Even with GET-only HTTP probes, the attacker can discover port availability and potentially trigger unsafe local endpoints.
++
++Minimal fix:
++
++- The agent now accepts healthcheck probes only when the requested port matches the task's assigned published TCP container or host port.
++- Container ports are resolved to the assigned published host port before probing.
++- Unassigned, unpublished, or UDP-only healthcheck ports are skipped instead of probed.
++
++Tests:
++
++- `internal/agent/agent_test.go` includes `TestHealthProbeRequiresAssignedPort`.
++- Existing healthcheck threshold tests now include assigned ports and continue to pass.
++
++Documentation updates:
++
++- `docs/HEALTHCHECKS.md` documents assigned-port enforcement.
++
++### Medium: Docker Socket Exposure
++
++The agent requires Docker Engine access. Access to `/var/run/docker.sock` is equivalent to broad host control in most deployments.
++
++Minimal fix:
++
++- No code-only fix is appropriate without replacing the runtime isolation model.
++- Production examples and docs warn about this explicitly and restrict the agent to trusted nodes.
++
++Recommended tests:
++
++- Add integration tests for a future restricted runtime adapter or authorization proxy.
++
++Documentation updates:
++
++- `docs/SECURITY.md`, `docs/PRODUCTION_DEPLOYMENT.md`, and `docs/AGENT.md` describe the risk.
++
++### Medium: Bootstrap Token Used For Agent Log Endpoint
++
++The server proxies logs from agents using the registration/bootstrap token. If this token leaks, it can be reused against agent log endpoints until rotated.
++
++Minimal fix:
++
++- Replace bootstrap-token log access with mTLS or a short-lived server-to-agent credential scoped to log streaming.
++- Restrict agent ports to the control-plane network until that change lands.
++
++Recommended tests:
++
++- Add tests for credential expiry, wrong-node rejection, and token rotation for server-to-agent log streaming.
++
++Documentation updates:
++
++- `docs/LOGS.md` already calls out the limitation.
++
++### Medium: User Auth Is Optional In Development Defaults
++
++If `ORCH_JWT_SECRET` is empty, user-facing API auth is disabled. This is useful locally but unsafe for exposed environments.
++
++Minimal fix:
++
++- Keep the developer default, but require production manifests and runbooks to set `ORCH_JWT_SECRET`.
++- Consider adding an explicit `ORCH_ENV=production` guard that refuses to start without JWT auth.
++
++Recommended tests:
++
++- Add config validation tests for a future production mode.
++
++Documentation updates:
++
++- `docs/SECURITY.md` and `docs/PRODUCTION_DEPLOYMENT.md` require JWT auth in production.
++
++### Medium: Secret And Registry Credential Blast Radius
++
++The server decrypts secrets and registry credentials for agents when a task needs them. A compromised agent can read secrets for tasks assigned to that node.
++
++Minimal fix:
++
++- Keep least-privilege secret references per service.
++- Use registry-scoped robot credentials.
++- Prefer a secret manager and node-bound delivery in future work.
++
++Recommended tests:
++
++- Continue regression tests proving API responses never return plaintext secrets or registry passwords.
++
++Documentation updates:
++
++- `docs/SECRETS.md`, `docs/REGISTRIES.md`, and `docs/SECURITY.md` describe handling rules.
++
++### Low: Unsafe Container Options
++
++The current service spec does not expose privileged mode, host networking, host PID/IPC, arbitrary mounts, additional capabilities, or device mappings. Docker container creation sets no privileged flags and uses explicit resource/port fields.
++
++Minimal fix:
++
++- Keep these options out of the public service spec unless a future security policy gate is added.
++
++Recommended tests:
++
++- Add regression tests if container security policy becomes configurable.
++
++### Low: Command Injection And Path Traversal
++
++No direct shell execution was found for orchestration operations. File path usage in the CLI is limited to user-selected local config/deploy files. The Docker runtime uses typed API calls rather than shell commands.
++
++Minimal fix:
++
++- Continue avoiding shell execution for orchestration.
++- Keep path-taking features scoped to explicitly provided files.
++
++### Low: Audit Logging
++
++Audit logs are stored separately from operational events and redact sensitive metadata. The current implementation is best-effort for write operations.
++
++Minimal fix:
++
++- For high-compliance deployments, make audit append failures fail closed for selected admin operations after durable store wiring is complete.
++
++## Fixes Implemented In This Review
++
++- Restricted agent healthchecks to task-assigned ports.
++- Added regression coverage for rejected arbitrary host-local healthcheck ports.
++- Updated healthcheck documentation to explain the SSRF control.
++
++## Follow-Up Backlog
++
++1. Replace bootstrap-token log streaming with mTLS or scoped short-lived credentials.
++2. Add a production-mode config guard requiring JWT auth, non-default secret keys, and non-default bootstrap tokens.
++3. Add a container security policy before exposing advanced Docker options.
++4. Add current-state metrics for node and task counts so dashboards and alerts no longer rely on scrape status/counters as proxies.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 391d454..072ff46 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -513,14 +513,8 @@ func (r *Runner) healthJitter(interval time.Duration) time.Duration {
+ }
+ 
+ func healthProbe(check types.Healthcheck, ports []types.Port) (health.Check, bool) {
+-	port := check.Port
+-	if port == 0 && len(ports) > 0 {
+-		port = ports[0].PublishedPort
+-		if port == 0 {
+-			port = ports[0].ContainerPort
+-		}
+-	}
+-	if port == 0 {
++	port, ok := healthcheckProbePort(check.Port, ports)
++	if !ok {
+ 		return health.Check{}, false
+ 	}
+ 	timeout := check.Timeout
+@@ -542,6 +536,21 @@ func healthProbe(check types.Healthcheck, ports []types.Port) (health.Check, boo
+ 	}
+ }
+ 
++func healthcheckProbePort(requested int, ports []types.Port) (int, bool) {
++	for _, port := range ports {
++		if port.Protocol != types.PortTCP || port.PublishedPort <= 0 {
++			continue
++		}
++		if requested == 0 || requested == port.PublishedPort {
++			return port.PublishedPort, true
++		}
++		if requested == port.ContainerPort {
++			return port.PublishedPort, true
++		}
++	}
++	return 0, false
++}
++
+ func (r *Runner) cleanupUnassigned(ctx context.Context, nodeID types.NodeID, assigned map[types.TaskID]types.Task) error {
+ 	containers, err := r.runtime.ListManagedContainers(ctx, map[string]string{orchdocker.NodeIDLabel: string(nodeID)})
+ 	if err != nil {
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 8fe81b9..11509e3 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -538,6 +538,11 @@ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ 			HealthyThreshold:   2,
+ 			UnhealthyThreshold: 2,
+ 		},
++		Ports: []types.Port{{
++			ContainerPort: 8080,
++			PublishedPort: 18080,
++			Protocol:      types.PortTCP,
++		}},
+ 	}
+ 	client := &fakeAgentClient{tasks: []api.AgentTask{task}}
+ 	runtime := orchdocker.NewFakeRuntime()
+@@ -566,6 +571,42 @@ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ 	}
+ }
+ 
++func TestHealthProbeRequiresAssignedPort(t *testing.T) {
++	check := types.Healthcheck{
++		Type: types.HealthcheckHTTP,
++		Path: "/health",
++		Port: 2375,
++	}
++	ports := []types.Port{{
++		ContainerPort: 8080,
++		PublishedPort: 18080,
++		Protocol:      types.PortTCP,
++	}}
++
++	if _, ok := healthProbe(check, ports); ok {
++		t.Fatalf("expected health probe for unassigned host port to be rejected")
++	}
++
++	check.Port = 9090
++	if _, ok := healthProbe(check, []types.Port{{ContainerPort: 9090, Protocol: types.PortTCP}}); ok {
++		t.Fatalf("expected health probe without a published port to be rejected")
++	}
++
++	check.Port = 5353
++	if _, ok := healthProbe(check, []types.Port{{ContainerPort: 5353, PublishedPort: 15353, Protocol: types.PortUDP}}); ok {
++		t.Fatalf("expected health probe for UDP-only port to be rejected")
++	}
++
++	check.Port = 8080
++	probe, ok := healthProbe(check, ports)
++	if !ok {
++		t.Fatalf("expected health probe for assigned container port")
++	}
++	if probe.Target != "http://127.0.0.1:18080/health" {
++		t.Fatalf("expected probe to use published port, got %q", probe.Target)
++	}
++}
++
+ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+ 	logStarted := make(chan struct{})
+ 	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeLogBlock(logStarted))
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index c532fea..955c6fc 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `50-production-deployment-manifest.md`
+-- Last matching commit: `same commit: Add production deployment manifests`
+-- Completed prompt range: `00` through `50`
+-- Next prompt to execute: `51-security-review.md`
++- Last executed prompt: `51-security-review.md`
++- Last matching commit: `same commit: Add security review and healthcheck hardening`
++- Completed prompt range: `00` through `51`
++- Next prompt to execute: `52-container-security-policy.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

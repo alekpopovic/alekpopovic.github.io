@@ -1,0 +1,188 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "generated_at_utc": "2026-10-13T01:37:47.416671+00:00",
+  "scope": "Scoped examples owned by lab_foundation; source agent merges into global manifest under075.",
+  "examples": [
+    {
+      "id": "case-parser",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/case-parser/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/case-parser/main.go": "84978b46ea8f71e61617b1b11e5498ba7c48c3dca6980079c860d5bdcf7d0ca6"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-case-parser",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/specs"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/intake/case-study-parse.json",
+      "status": "passed",
+      "scope": "Actual deploy parser for three Atlas fixtures plus expected unknown-field rejection; no deployment.",
+      "readme": "examples/teaching-extensions/case-parser/README.md",
+      "validation_target": "validation/intake/case-study-parse.json"
+    },
+    {
+      "id": "ch10",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch10/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch10/main.go": "5bb589ee97f1be7d3a32481a611fc8ccfca2e22165bc054aa081ce3360337176"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-scheduler"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch10/hand-plan.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch10/README.md",
+      "validation_target": "validation/labs/ch10/hand-plan.json"
+    },
+    {
+      "id": "ch15",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch15/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch15/main.go": "49aa9bc70dd40425a260515f020636c26547cf06f263618c82851b2637ffa905"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-events"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch15/atlas-events-corrected.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch15/README.md",
+      "validation_target": "validation/labs/ch15/atlas-events-corrected.json"
+    },
+    {
+      "id": "ch29",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch29/contract.py",
+        "examples/teaching-extensions/ch29/test_contract.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch29/contract.py": "ace5e25e5bc410bdbc734322b5cb2df98d893bd073fd40e248cb75e57c74371f",
+        "examples/teaching-extensions/ch29/test_contract.py": "de1256f6ed77622d24c192c1a3e31b6fb421703bb53ef6825038cd18f2e163bd"
+      },
+      "command": [
+        "python3",
+        "-B",
+        "test_contract.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch29",
+      "evidence_log": "validation/labs/ch29/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch29/README.md",
+      "validation_target": "validation/labs/ch29/teaching-fixture.json"
+    },
+    {
+      "id": "ch30",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch30/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch30/main.go": "813e3d419db02c75e8f15f39f46cffcb9b2e5991efa427bf17e03e2608678648"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-gitops"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch30/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch30/README.md",
+      "validation_target": "validation/labs/ch30/teaching-fixture.json"
+    },
+    {
+      "id": "ch31",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch31/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch31/main.go": "40c6e84ab36900dc10fc97e27a05903c4f3461c2e27314bd2c65b2f89002ef78"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-cron"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch31/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch31/README.md",
+      "validation_target": "validation/labs/ch31/teaching-fixture.json"
+    },
+    {
+      "id": "lab06",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab06/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab06/main.go": "3ae90e46300f117f707155b7aac5afd673e743238714df442a8b93332bc434c6"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/namespaces-quotas",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/06-namespaces-quotas/fixtures"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/lab06-canonical-fixtures.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/lab06/README.md",
+      "validation_target": "validation/labs/06-check.json"
+    },
+    {
+      "id": "lab07",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab07/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab07/main.go": "0bcdbafe50168e0392cc8c7446716171a70be96a9813585db29de66b957c1f85"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/gitops-jobs-cron",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/07-gitops-jobs-cron/fixtures"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/lab07-canonical-fixtures.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/lab07/README.md",
+      "validation_target": "validation/labs/07-check.json"
+    }
+  ]
+}

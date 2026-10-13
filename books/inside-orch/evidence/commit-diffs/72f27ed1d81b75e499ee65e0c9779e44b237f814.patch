@@ -1,0 +1,1116 @@
+commit 72f27ed1d81b75e499ee65e0c9779e44b237f814
+Date: 2026-06-11T14:51:30+02:00
+Subject: Initialize Go orchestrator scaffold
+
+
+---
+ .env.example                            |  7 +++
+ Makefile                                | 16 ++++++
+ README.md                               | 46 ++++++++++++++++
+ cmd/orch-agent/main.go                  | 52 ++++++++++++++++++
+ cmd/orch-server/main.go                 | 63 +++++++++++++++++++++
+ cmd/orch/main.go                        | 49 +++++++++++++++++
+ deployments/examples/.env.local.example |  5 ++
+ deployments/examples/Dockerfile         | 15 +++++
+ docker-compose.yml                      | 52 ++++++++++++++++++
+ docs/ARCHITECTURE.md                    |  2 +-
+ docs/DEVELOPMENT.md                     | 51 +++++++++++++++++
+ go.mod                                  |  3 +
+ internal/api/api.go                     | 49 +++++++++++++++++
+ internal/api/api_test.go                | 20 +++++++
+ internal/auth/auth.go                   | 11 ++++
+ internal/config/config.go               | 97 +++++++++++++++++++++++++++++++++
+ internal/config/config_test.go          | 26 +++++++++
+ internal/docker/docker.go               | 21 +++++++
+ internal/events/events.go               | 17 ++++++
+ internal/health/health.go               | 29 ++++++++++
+ internal/logging/logging.go             | 26 +++++++++
+ internal/node/node.go                   | 16 ++++++
+ internal/reconciler/reconciler.go       | 36 ++++++++++++
+ internal/reconciler/reconciler_test.go  | 33 +++++++++++
+ internal/rollout/rollout.go             | 22 ++++++++
+ internal/scheduler/scheduler.go         | 43 +++++++++++++++
+ internal/scheduler/scheduler_test.go    | 22 ++++++++
+ internal/store/store.go                 | 12 ++++
+ internal/task/task.go                   |  7 +++
+ migrations/.gitkeep                     |  1 +
+ pkg/types/types.go                      | 37 +++++++++++++
+ 31 files changed, 885 insertions(+), 1 deletion(-)
+
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..6f9f2c2
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,7 @@
++DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
++ORCH_SERVER_ADDR=:8080
++ORCH_SERVER_URL=http://localhost:8080
++ORCH_NODE_ID=local-node
++ORCH_LOG_LEVEL=info
++ORCH_AGENT_HEARTBEAT_INTERVAL=5s
++ORCH_SHUTDOWN_TIMEOUT=10s
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..06270d6
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,16 @@
++.PHONY: build test lint run-server run-agent
++
++build:
++	go build ./...
++
++test:
++	go test ./...
++
++lint:
++	golangci-lint run ./...
++
++run-server:
++	go run ./cmd/orch-server
++
++run-agent:
++	go run ./cmd/orch-agent
+diff --git a/README.md b/README.md
+index 42630f1..7af33a8 100644
+--- a/README.md
++++ b/README.md
+@@ -1 +1,47 @@
+ # orch
++
++`orch` is a production-shaped Go container orchestrator scaffold. It targets multi-node Docker deployments through the Docker Engine API first, with package boundaries that can later support other runtimes.
++
++## Quickstart
++
++Build and test:
++
++```sh
++make build
++make test
++```
++
++Run the control plane API server:
++
++```sh
++cp .env.example .env
++make run-server
++```
++
++In another shell, run an agent:
++
++```sh
++make run-agent
++```
++
++Start local PostgreSQL:
++
++```sh
++docker compose up postgres
++```
++
++Start PostgreSQL plus optional local orchestrator services:
++
++```sh
++docker compose --profile local-orch up --build
++```
++
++## Binaries
++
++- `orch`: operator CLI
++- `orch-server`: control plane API server
++- `orch-agent`: worker node agent
++
++## Development
++
++See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development commands and local workflow.
+diff --git a/cmd/orch-agent/main.go b/cmd/orch-agent/main.go
+new file mode 100644
+index 0000000..aac04b4
+--- /dev/null
++++ b/cmd/orch-agent/main.go
+@@ -0,0 +1,52 @@
++package main
++
++import (
++	"context"
++	"log/slog"
++	"os"
++	"os/signal"
++	"syscall"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/config"
++	"github.com/alekpopovic/orch/internal/logging"
++)
++
++func main() {
++	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
++	defer stop()
++
++	cfg := config.LoadAgent()
++	logger := logging.NewLogger(cfg.LogLevel)
++	if err := run(ctx, logger, cfg); err != nil {
++		logger.Error("agent stopped", "error", err)
++		os.Exit(1)
++	}
++}
++
++func run(ctx context.Context, logger *slog.Logger, cfg config.AgentConfig) error {
++	if err := cfg.Validate(); err != nil {
++		return err
++	}
++
++	logger.Info("starting agent", "node_id", cfg.NodeID, "server_url", cfg.ServerURL)
++
++	ticker := time.NewTicker(cfg.HeartbeatInterval)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-ctx.Done():
++			logger.Info("shutting down agent", "node_id", cfg.NodeID)
++			shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
++			defer cancel()
++			return shutdown(shutdownCtx)
++		case checkedAt := <-ticker.C:
++			logger.Info("agent heartbeat", "node_id", cfg.NodeID, "checked_at", checkedAt.UTC())
++		}
++	}
++}
++
++func shutdown(ctx context.Context) error {
++	return ctx.Err()
++}
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+new file mode 100644
+index 0000000..9c8ed84
+--- /dev/null
++++ b/cmd/orch-server/main.go
+@@ -0,0 +1,63 @@
++package main
++
++import (
++	"context"
++	"errors"
++	"log/slog"
++	"net/http"
++	"os"
++	"os/signal"
++	"syscall"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/config"
++	"github.com/alekpopovic/orch/internal/logging"
++)
++
++func main() {
++	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
++	defer stop()
++
++	cfg := config.LoadServer()
++	logger := logging.NewLogger(cfg.LogLevel)
++	if err := run(ctx, logger, cfg); err != nil {
++		logger.Error("server stopped", "error", err)
++		os.Exit(1)
++	}
++}
++
++func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) error {
++	if err := cfg.Validate(); err != nil {
++		return err
++	}
++
++	server := &http.Server{
++		Addr:              cfg.Addr,
++		Handler:           api.NewHandler(logger),
++		ReadHeaderTimeout: 5 * time.Second,
++	}
++
++	errCh := make(chan error, 1)
++	go func() {
++		logger.Info("starting server", "addr", cfg.Addr)
++		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
++			errCh <- err
++			return
++		}
++		errCh <- nil
++	}()
++
++	select {
++	case err := <-errCh:
++		return err
++	case <-ctx.Done():
++		logger.Info("shutting down server")
++		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
++		defer cancel()
++		if err := server.Shutdown(shutdownCtx); err != nil {
++			return err
++		}
++		return nil
++	}
++}
+diff --git a/cmd/orch/main.go b/cmd/orch/main.go
+new file mode 100644
+index 0000000..54ecedf
+--- /dev/null
++++ b/cmd/orch/main.go
+@@ -0,0 +1,49 @@
++package main
++
++import (
++	"context"
++	"fmt"
++	"log/slog"
++	"os"
++	"os/signal"
++	"syscall"
++
++	"github.com/alekpopovic/orch/internal/logging"
++)
++
++func main() {
++	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
++	defer stop()
++
++	logger := logging.NewLogger(os.Getenv("ORCH_LOG_LEVEL"))
++	if err := run(ctx, logger, os.Args[1:]); err != nil {
++		logger.Error("command failed", "error", err)
++		os.Exit(1)
++	}
++}
++
++func run(ctx context.Context, logger *slog.Logger, args []string) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++
++	command := "help"
++	if len(args) > 0 {
++		command = args[0]
++	}
++
++	switch command {
++	case "help", "-h", "--help":
++		fmt.Println("orch is the CLI for the orch container orchestrator.")
++		fmt.Println()
++		fmt.Println("Usage:")
++		fmt.Println("  orch help")
++		return nil
++	case "version":
++		fmt.Println("orch dev")
++		return nil
++	default:
++		logger.Info("unknown command", "command", command)
++		return fmt.Errorf("unknown command %q", command)
++	}
++}
+diff --git a/deployments/examples/.env.local.example b/deployments/examples/.env.local.example
+new file mode 100644
+index 0000000..81ab1cf
+--- /dev/null
++++ b/deployments/examples/.env.local.example
+@@ -0,0 +1,5 @@
++DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
++ORCH_SERVER_ADDR=:8080
++ORCH_SERVER_URL=http://localhost:8080
++ORCH_NODE_ID=local-node
++ORCH_LOG_LEVEL=debug
+diff --git a/deployments/examples/Dockerfile b/deployments/examples/Dockerfile
+new file mode 100644
+index 0000000..0e25b73
+--- /dev/null
++++ b/deployments/examples/Dockerfile
+@@ -0,0 +1,15 @@
++FROM golang:1.23-alpine AS build
++
++ARG TARGET=orch-server
++WORKDIR /src
++COPY go.mod ./
++COPY cmd ./cmd
++COPY internal ./internal
++COPY pkg ./pkg
++RUN go build -o /out/${TARGET} ./cmd/${TARGET}
++
++FROM alpine:3.20
++
++ARG TARGET=orch-server
++COPY --from=build /out/${TARGET} /usr/local/bin/orch-service
++ENTRYPOINT ["/usr/local/bin/orch-service"]
+diff --git a/docker-compose.yml b/docker-compose.yml
+new file mode 100644
+index 0000000..0e092ab
+--- /dev/null
++++ b/docker-compose.yml
+@@ -0,0 +1,52 @@
++services:
++  postgres:
++    image: postgres:16-alpine
++    environment:
++      POSTGRES_DB: orch
++      POSTGRES_USER: orch
++      POSTGRES_PASSWORD: orch
++    ports:
++      - "5432:5432"
++    volumes:
++      - postgres-data:/var/lib/postgresql/data
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U orch -d orch"]
++      interval: 5s
++      timeout: 3s
++      retries: 10
++
++  orch-server:
++    build:
++      context: .
++      dockerfile: deployments/examples/Dockerfile
++      args:
++        TARGET: orch-server
++    profiles: ["local-orch"]
++    env_file:
++      - .env
++    environment:
++      DATABASE_URL: postgres://orch:orch@postgres:5432/orch?sslmode=disable
++      ORCH_SERVER_ADDR: :8080
++    ports:
++      - "8080:8080"
++    depends_on:
++      postgres:
++        condition: service_healthy
++
++  orch-agent:
++    build:
++      context: .
++      dockerfile: deployments/examples/Dockerfile
++      args:
++        TARGET: orch-agent
++    profiles: ["local-orch"]
++    env_file:
++      - .env
++    environment:
++      ORCH_SERVER_URL: http://orch-server:8080
++      ORCH_NODE_ID: local-agent-1
++    depends_on:
++      - orch-server
++
++volumes:
++  postgres-data:
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index df750b8..cf23d79 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -10,7 +10,7 @@ The system has three primary binaries:
+ - `orch-agent`: worker node agent that reports node state, runs local reconciliation against assigned tasks, performs health checks, and streams node events.
+ - `orch`: Cobra-based CLI for operators and automation.
+ 
+-PostgreSQL stores durable desired state, observed state, deployment history, events, and rollout metadata. Prometheus metrics expose control plane, agent, scheduler, reconciler, runtime, and health check behavior.
++PostgreSQL stores durable desired state, observed state, deployment history, events, and rollout metadata. Prometheus metrics will expose control plane, agent, scheduler, reconciler, runtime, and health check behavior as the implementation grows.
+ 
+ ## Core Components
+ 
+diff --git a/docs/DEVELOPMENT.md b/docs/DEVELOPMENT.md
+new file mode 100644
+index 0000000..505d8e5
+--- /dev/null
++++ b/docs/DEVELOPMENT.md
+@@ -0,0 +1,51 @@
++# Development
++
++## Prerequisites
++
++- Go 1.23 or newer
++- Docker Engine
++- Docker Compose
++- PostgreSQL for integration work
++- `golangci-lint` for linting
++
++## Common Commands
++
++```sh
++go mod tidy
++make build
++make test
++make lint
++make run-server
++make run-agent
++```
++
++Start local PostgreSQL:
++
++```sh
++docker compose up postgres
++```
++
++Start PostgreSQL plus the local orchestrator services:
++
++```sh
++cp .env.example .env
++docker compose --profile local-orch up --build
++```
++
++## Testing
++
++Fast unit tests must run with:
++
++```sh
++go test ./...
++```
++
++Integration tests that require Docker or PostgreSQL should document prerequisites and be separable from fast unit tests.
++
++## Coding Notes
++
++- Keep packages small and cohesive.
++- Keep external systems behind interfaces.
++- Make scheduler and reconciler logic deterministic.
++- Ensure every long-running loop accepts context cancellation.
++- Store and emit timestamps in UTC.
+diff --git a/go.mod b/go.mod
+new file mode 100644
+index 0000000..80e94ab
+--- /dev/null
++++ b/go.mod
+@@ -0,0 +1,3 @@
++module github.com/alekpopovic/orch
++
++go 1.23
+diff --git a/internal/api/api.go b/internal/api/api.go
+new file mode 100644
+index 0000000..c704181
+--- /dev/null
++++ b/internal/api/api.go
+@@ -0,0 +1,49 @@
++package api
++
++import (
++	"encoding/json"
++	"log/slog"
++	"net/http"
++	"time"
++)
++
++type HealthResponse struct {
++	Status string    `json:"status"`
++	Time   time.Time `json:"time"`
++}
++
++func NewHandler(logger *slog.Logger) http.Handler {
++	mux := http.NewServeMux()
++	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
++		writeJSON(w, http.StatusOK, HealthResponse{
++			Status: "ok",
++			Time:   time.Now().UTC(),
++		})
++	})
++	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
++		writeJSON(w, http.StatusOK, HealthResponse{
++			Status: "ready",
++			Time:   time.Now().UTC(),
++		})
++	})
++
++	return loggingMiddleware(logger, mux)
++}
++
++func writeJSON(w http.ResponseWriter, status int, value any) {
++	w.Header().Set("Content-Type", "application/json")
++	w.WriteHeader(status)
++	_ = json.NewEncoder(w).Encode(value)
++}
++
++func loggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
++	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		started := time.Now().UTC()
++		next.ServeHTTP(w, r)
++		logger.Info("http request",
++			"method", r.Method,
++			"path", r.URL.Path,
++			"duration_ms", time.Since(started).Milliseconds(),
++		)
++	})
++}
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+new file mode 100644
+index 0000000..0a6a3c8
+--- /dev/null
++++ b/internal/api/api_test.go
+@@ -0,0 +1,20 @@
++package api
++
++import (
++	"log/slog"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++)
++
++func TestHealthz(t *testing.T) {
++	handler := NewHandler(slog.Default())
++	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
++	rec := httptest.NewRecorder()
++
++	handler.ServeHTTP(rec, req)
++
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
++	}
++}
+diff --git a/internal/auth/auth.go b/internal/auth/auth.go
+new file mode 100644
+index 0000000..fa12636
+--- /dev/null
++++ b/internal/auth/auth.go
+@@ -0,0 +1,11 @@
++package auth
++
++import "context"
++
++type Principal struct {
++	Subject string
++}
++
++type Authorizer interface {
++	Authorize(ctx context.Context, principal Principal, action string, resource string) error
++}
+diff --git a/internal/config/config.go b/internal/config/config.go
+new file mode 100644
+index 0000000..0e895f2
+--- /dev/null
++++ b/internal/config/config.go
+@@ -0,0 +1,97 @@
++package config
++
++import (
++	"fmt"
++	"os"
++	"strconv"
++	"time"
++)
++
++type ServerConfig struct {
++	Addr                string
++	DatabaseURL         string
++	LogLevel            string
++	GracefulShutdownTTL time.Duration
++}
++
++type AgentConfig struct {
++	NodeID              string
++	ServerURL           string
++	LogLevel            string
++	HeartbeatInterval   time.Duration
++	GracefulShutdownTTL time.Duration
++}
++
++func LoadServer() ServerConfig {
++	return ServerConfig{
++		Addr:                getenv("ORCH_SERVER_ADDR", ":8080"),
++		DatabaseURL:         getenv("DATABASE_URL", "postgres://orch:orch@localhost:5432/orch?sslmode=disable"),
++		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
++		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
++	}
++}
++
++func LoadAgent() AgentConfig {
++	return AgentConfig{
++		NodeID:              getenv("ORCH_NODE_ID", "local-node"),
++		ServerURL:           getenv("ORCH_SERVER_URL", "http://localhost:8080"),
++		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
++		HeartbeatInterval:   durationFromEnv("ORCH_AGENT_HEARTBEAT_INTERVAL", 5*time.Second),
++		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
++	}
++}
++
++func getenv(key, fallback string) string {
++	value := os.Getenv(key)
++	if value == "" {
++		return fallback
++	}
++	return value
++}
++
++func durationFromEnv(key string, fallback time.Duration) time.Duration {
++	value := os.Getenv(key)
++	if value == "" {
++		return fallback
++	}
++
++	duration, err := time.ParseDuration(value)
++	if err == nil {
++		return duration
++	}
++
++	seconds, err := strconv.Atoi(value)
++	if err != nil {
++		return fallback
++	}
++	return time.Duration(seconds) * time.Second
++}
++
++func (cfg ServerConfig) Validate() error {
++	if cfg.Addr == "" {
++		return fmt.Errorf("server address is required")
++	}
++	if cfg.DatabaseURL == "" {
++		return fmt.Errorf("database URL is required")
++	}
++	if cfg.GracefulShutdownTTL <= 0 {
++		return fmt.Errorf("shutdown timeout must be positive")
++	}
++	return nil
++}
++
++func (cfg AgentConfig) Validate() error {
++	if cfg.NodeID == "" {
++		return fmt.Errorf("node ID is required")
++	}
++	if cfg.ServerURL == "" {
++		return fmt.Errorf("server URL is required")
++	}
++	if cfg.HeartbeatInterval <= 0 {
++		return fmt.Errorf("heartbeat interval must be positive")
++	}
++	if cfg.GracefulShutdownTTL <= 0 {
++		return fmt.Errorf("shutdown timeout must be positive")
++	}
++	return nil
++}
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+new file mode 100644
+index 0000000..1c6fa54
+--- /dev/null
++++ b/internal/config/config_test.go
+@@ -0,0 +1,26 @@
++package config
++
++import "testing"
++
++func TestLoadServerDefaultsAreValid(t *testing.T) {
++	t.Setenv("ORCH_SERVER_ADDR", "")
++	t.Setenv("DATABASE_URL", "")
++	t.Setenv("ORCH_SHUTDOWN_TIMEOUT", "")
++
++	cfg := LoadServer()
++	if err := cfg.Validate(); err != nil {
++		t.Fatalf("expected default server config to be valid: %v", err)
++	}
++}
++
++func TestLoadAgentDefaultsAreValid(t *testing.T) {
++	t.Setenv("ORCH_NODE_ID", "")
++	t.Setenv("ORCH_SERVER_URL", "")
++	t.Setenv("ORCH_AGENT_HEARTBEAT_INTERVAL", "")
++	t.Setenv("ORCH_SHUTDOWN_TIMEOUT", "")
++
++	cfg := LoadAgent()
++	if err := cfg.Validate(); err != nil {
++		t.Fatalf("expected default agent config to be valid: %v", err)
++	}
++}
+diff --git a/internal/docker/docker.go b/internal/docker/docker.go
+new file mode 100644
+index 0000000..21e740b
+--- /dev/null
++++ b/internal/docker/docker.go
+@@ -0,0 +1,21 @@
++package docker
++
++import "context"
++
++type Runtime interface {
++	EnsureContainer(ctx context.Context, spec ContainerSpec) error
++	RemoveContainer(ctx context.Context, name string) error
++}
++
++type ContainerSpec struct {
++	Name  string
++	Image string
++	Ports []PortBinding
++	Env   map[string]string
++}
++
++type PortBinding struct {
++	ContainerPort int
++	HostPort      int
++	Protocol      string
++}
+diff --git a/internal/events/events.go b/internal/events/events.go
+new file mode 100644
+index 0000000..0668019
+--- /dev/null
++++ b/internal/events/events.go
+@@ -0,0 +1,17 @@
++package events
++
++import (
++	"context"
++	"time"
++)
++
++type Event struct {
++	Type       string
++	ResourceID string
++	Message    string
++	OccurredAt time.Time
++}
++
++type Sink interface {
++	Publish(ctx context.Context, event Event) error
++}
+diff --git a/internal/health/health.go b/internal/health/health.go
+new file mode 100644
+index 0000000..f300616
+--- /dev/null
++++ b/internal/health/health.go
+@@ -0,0 +1,29 @@
++package health
++
++import (
++	"context"
++	"time"
++)
++
++type ProbeType string
++
++const (
++	HTTPProbe ProbeType = "http"
++	TCPProbe  ProbeType = "tcp"
++)
++
++type Check struct {
++	Type    ProbeType
++	Target  string
++	Timeout time.Duration
++}
++
++type Result struct {
++	Healthy   bool
++	CheckedAt time.Time
++	Message   string
++}
++
++type Checker interface {
++	Check(ctx context.Context, check Check) (Result, error)
++}
+diff --git a/internal/logging/logging.go b/internal/logging/logging.go
+new file mode 100644
+index 0000000..83028ac
+--- /dev/null
++++ b/internal/logging/logging.go
+@@ -0,0 +1,26 @@
++package logging
++
++import (
++	"log/slog"
++	"os"
++	"strings"
++)
++
++// NewLogger creates the process logger used by binaries in this repository.
++func NewLogger(level string) *slog.Logger {
++	opts := &slog.HandlerOptions{Level: parseLevel(level)}
++	return slog.New(slog.NewJSONHandler(os.Stdout, opts))
++}
++
++func parseLevel(level string) slog.Leveler {
++	switch strings.ToLower(strings.TrimSpace(level)) {
++	case "debug":
++		return slog.LevelDebug
++	case "warn", "warning":
++		return slog.LevelWarn
++	case "error":
++		return slog.LevelError
++	default:
++		return slog.LevelInfo
++	}
++}
+diff --git a/internal/node/node.go b/internal/node/node.go
+new file mode 100644
+index 0000000..887be75
+--- /dev/null
++++ b/internal/node/node.go
+@@ -0,0 +1,16 @@
++package node
++
++import "github.com/alekpopovic/orch/pkg/types"
++
++type Status string
++
++const (
++	StatusUnknown  Status = "unknown"
++	StatusReady    Status = "ready"
++	StatusDraining Status = "draining"
++)
++
++type Record struct {
++	Node   types.Node
++	Status Status
++}
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+new file mode 100644
+index 0000000..84236ac
+--- /dev/null
++++ b/internal/reconciler/reconciler.go
+@@ -0,0 +1,36 @@
++package reconciler
++
++import "context"
++
++type DesiredState struct {
++	Tasks []TaskIntent
++}
++
++type TaskIntent struct {
++	ID    string
++	Image string
++}
++
++type Runtime interface {
++	EnsureTask(ctx context.Context, task TaskIntent) error
++}
++
++type Reconciler struct {
++	runtime Runtime
++}
++
++func New(runtime Runtime) *Reconciler {
++	return &Reconciler{runtime: runtime}
++}
++
++func (r *Reconciler) Reconcile(ctx context.Context, desired DesiredState) error {
++	for _, task := range desired.Tasks {
++		if err := ctx.Err(); err != nil {
++			return err
++		}
++		if err := r.runtime.EnsureTask(ctx, task); err != nil {
++			return err
++		}
++	}
++	return nil
++}
+diff --git a/internal/reconciler/reconciler_test.go b/internal/reconciler/reconciler_test.go
+new file mode 100644
+index 0000000..a186773
+--- /dev/null
++++ b/internal/reconciler/reconciler_test.go
+@@ -0,0 +1,33 @@
++package reconciler
++
++import (
++	"context"
++	"testing"
++)
++
++type fakeRuntime struct {
++	seen []TaskIntent
++}
++
++func (f *fakeRuntime) EnsureTask(_ context.Context, task TaskIntent) error {
++	f.seen = append(f.seen, task)
++	return nil
++}
++
++func TestReconcileEnsuresTasksInOrder(t *testing.T) {
++	runtime := &fakeRuntime{}
++	reconciler := New(runtime)
++
++	err := reconciler.Reconcile(context.Background(), DesiredState{
++		Tasks: []TaskIntent{
++			{ID: "task-1", Image: "nginx:latest"},
++			{ID: "task-2", Image: "redis:latest"},
++		},
++	})
++	if err != nil {
++		t.Fatalf("reconcile returned error: %v", err)
++	}
++	if len(runtime.seen) != 2 {
++		t.Fatalf("expected 2 reconciled tasks, got %d", len(runtime.seen))
++	}
++}
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+new file mode 100644
+index 0000000..858661b
+--- /dev/null
++++ b/internal/rollout/rollout.go
+@@ -0,0 +1,22 @@
++package rollout
++
++import "context"
++
++type Plan struct {
++	ServiceID string
++	Image     string
++	BatchSize int
++}
++
++type Manager struct{}
++
++func NewManager() *Manager {
++	return &Manager{}
++}
++
++func (m *Manager) Start(ctx context.Context, plan Plan) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	return nil
++}
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+new file mode 100644
+index 0000000..fda1cfb
+--- /dev/null
++++ b/internal/scheduler/scheduler.go
+@@ -0,0 +1,43 @@
++package scheduler
++
++import (
++	"sort"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Assignment struct {
++	TaskID types.TaskID
++	NodeID types.NodeID
++}
++
++type Scheduler struct{}
++
++func New() *Scheduler {
++	return &Scheduler{}
++}
++
++func (s *Scheduler) Schedule(tasks []types.Task, nodes []types.Node) []Assignment {
++	orderedTasks := append([]types.Task(nil), tasks...)
++	orderedNodes := append([]types.Node(nil), nodes...)
++
++	sort.Slice(orderedTasks, func(i, j int) bool {
++		return orderedTasks[i].ID < orderedTasks[j].ID
++	})
++	sort.Slice(orderedNodes, func(i, j int) bool {
++		return orderedNodes[i].ID < orderedNodes[j].ID
++	})
++
++	if len(orderedNodes) == 0 {
++		return nil
++	}
++
++	assignments := make([]Assignment, 0, len(orderedTasks))
++	for i, task := range orderedTasks {
++		assignments = append(assignments, Assignment{
++			TaskID: task.ID,
++			NodeID: orderedNodes[i%len(orderedNodes)].ID,
++		})
++	}
++	return assignments
++}
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+new file mode 100644
+index 0000000..1c10f66
+--- /dev/null
++++ b/internal/scheduler/scheduler_test.go
+@@ -0,0 +1,22 @@
++package scheduler
++
++import (
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestScheduleIsDeterministic(t *testing.T) {
++	scheduler := New()
++	tasks := []types.Task{{ID: "task-b"}, {ID: "task-a"}}
++	nodes := []types.Node{{ID: "node-b"}, {ID: "node-a"}}
++
++	got := scheduler.Schedule(tasks, nodes)
++
++	if len(got) != 2 {
++		t.Fatalf("expected 2 assignments, got %d", len(got))
++	}
++	if got[0].TaskID != "task-a" || got[0].NodeID != "node-a" {
++		t.Fatalf("unexpected first assignment: %#v", got[0])
++	}
++}
+diff --git a/internal/store/store.go b/internal/store/store.go
+new file mode 100644
+index 0000000..95c6848
+--- /dev/null
++++ b/internal/store/store.go
+@@ -0,0 +1,12 @@
++package store
++
++import (
++	"context"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Store interface {
++	SaveNode(ctx context.Context, node types.Node) error
++	SaveTask(ctx context.Context, task types.Task) error
++}
+diff --git a/internal/task/task.go b/internal/task/task.go
+new file mode 100644
+index 0000000..57c9818
+--- /dev/null
++++ b/internal/task/task.go
+@@ -0,0 +1,7 @@
++package task
++
++import "github.com/alekpopovic/orch/pkg/types"
++
++type DesiredState struct {
++	Task types.Task
++}
+diff --git a/migrations/.gitkeep b/migrations/.gitkeep
+new file mode 100644
+index 0000000..8b13789
+--- /dev/null
++++ b/migrations/.gitkeep
+@@ -0,0 +1 @@
++
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+new file mode 100644
+index 0000000..4d0f43d
+--- /dev/null
++++ b/pkg/types/types.go
+@@ -0,0 +1,37 @@
++package types
++
++import "time"
++
++type NodeID string
++type TaskID string
++type ServiceID string
++
++type Node struct {
++	ID        NodeID            `json:"id"`
++	Labels    map[string]string `json:"labels,omitempty"`
++	Capacity  Resources         `json:"capacity"`
++	UpdatedAt time.Time         `json:"updated_at"`
++}
++
++type Resources struct {
++	CPU    int64 `json:"cpu"`
++	Memory int64 `json:"memory"`
++}
++
++type Task struct {
++	ID        TaskID    `json:"id"`
++	ServiceID ServiceID `json:"service_id"`
++	Image     string    `json:"image"`
++	NodeID    NodeID    `json:"node_id,omitempty"`
++	Desired   TaskState `json:"desired"`
++	UpdatedAt time.Time `json:"updated_at"`
++}
++
++type TaskState string
++
++const (
++	TaskPending TaskState = "pending"
++	TaskRunning TaskState = "running"
++	TaskStopped TaskState = "stopped"
++	TaskFailed  TaskState = "failed"
++)

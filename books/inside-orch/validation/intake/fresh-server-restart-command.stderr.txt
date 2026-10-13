@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py", line 71, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py", line 57, in main
+    node=request('/v1/agent/register',{'node_name':'book-http-node','advertise_address':'http://127.0.0.1:1','capacity':{'cpu':4000,'memory':1073741824},'allocatable':{'cpu':4000,'memory':1073741824},'agent_version':'0.3.0'})['node']
+         ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py", line 31, in request
+    with urllib.request.urlopen(req,timeout=2) as r: return json.load(r)
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/urllib/request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/urllib/request.py", line 493, in open
+    response = meth(req, response)
+  File "/usr/lib/python3.14/urllib/request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "/usr/lib/python3.14/urllib/request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/lib/python3.14/urllib/request.py", line 464, in _call_chain
+    result = func(*args)
+  File "/usr/lib/python3.14/urllib/request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 401: Unauthorized

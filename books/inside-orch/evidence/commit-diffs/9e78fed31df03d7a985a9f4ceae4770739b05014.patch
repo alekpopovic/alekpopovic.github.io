@@ -1,0 +1,3926 @@
+commit 9e78fed31df03d7a985a9f4ceae4770739b05014
+Date: 2026-08-21T13:07:47+02:00
+Subject: Implement API policies and namespaces
+
+
+---
+ README.md                               |   4 +-
+ api/openapi.yaml                        | 106 ++++++++++-
+ docs/API.md                             |   2 +
+ docs/API_VERSIONING.md                  |  25 +++
+ docs/CONFIGURATION.md                   |  18 +-
+ docs/MULTI_TENANCY.md                   |  47 +++++
+ docs/POLICY_ENGINE_DESIGN.md            |  56 ++++++
+ docs/SECURITY.md                        |  14 ++
+ docs/SERVICE_SPEC.md                    |   4 +-
+ docs/assets/docs.js                     |   7 +-
+ internal/admission/admission.go         | 186 ++++++++++++++++++
+ internal/admission/admission_test.go    |  85 +++++++++
+ internal/api/api.go                     | 186 +++++++++++++-----
+ internal/api/namespace_test.go          |  65 +++++++
+ internal/api/versioning.go              |  34 ++++
+ internal/api/versioning_test.go         |  36 ++++
+ internal/audit/audit.go                 |   2 +
+ internal/auth/auth.go                   |  31 ++-
+ internal/autoscaler/autoscaler.go       |   1 +
+ internal/cli/client.go                  |  31 +++
+ internal/cli/output.go                  |  12 ++
+ internal/cli/root.go                    |  91 ++++++++-
+ internal/cli/root_test.go               |  31 +++
+ internal/config/config.go               |  68 +++++++
+ internal/controlplane/admission_test.go |  47 +++++
+ internal/controlplane/controlplane.go   | 322 +++++++++++++++++++++++++++-----
+ internal/controlplane/namespace_test.go |  62 ++++++
+ internal/events/events.go               |   1 +
+ internal/namespace/context.go           |  55 ++++++
+ internal/policy/policy.go               |  36 +++-
+ internal/reconciler/reconciler.go       |   4 +
+ internal/rollout/rollout.go             |   6 +
+ internal/scheduler/scheduler.go         |   1 +
+ internal/store/postgres.go              | 217 ++++++++++++++-------
+ internal/store/postgres_test.go         |  47 ++++-
+ internal/store/store.go                 |   7 +
+ migrations/000011_namespaces.down.sql   |  31 +++
+ migrations/000011_namespaces.up.sql     |  30 +++
+ pkg/client/client.go                    |  34 ++++
+ pkg/client/types.go                     |  13 ++
+ pkg/types/types.go                      |  15 ++
+ scripts/migrate-down.sh                 |  26 ++-
+ scripts/migrate-up.sh                   |  52 +++++-
+ 43 files changed, 1952 insertions(+), 196 deletions(-)
+
+diff --git a/README.md b/README.md
+index 955a9fb..a52ffd7 100644
+--- a/README.md
++++ b/README.md
+@@ -227,9 +227,9 @@ placement:
+ | --- | --- |
+ | 🌈 Brand + site | [GitHub Pages documentation site](https://alekpopovic.github.io/orch/#GITHUB_PAGES.md), [Brand kit](https://alekpopovic.github.io/orch/#BRAND.md), [Charts](https://alekpopovic.github.io/orch/#CHARTS.md) |
+ | 🏗️ Architecture | [Architecture](https://alekpopovic.github.io/orch/#ARCHITECTURE.md), [State machines](https://alekpopovic.github.io/orch/#STATE_MACHINES.md) |
+-| 🔌 API | [API](https://alekpopovic.github.io/orch/#API.md), [OpenAPI](https://alekpopovic.github.io/orch/#openapi.yaml) |
++| 🔌 API | [API](https://alekpopovic.github.io/orch/#API.md), [API versioning](https://alekpopovic.github.io/orch/#API_VERSIONING.md), [OpenAPI](https://alekpopovic.github.io/orch/#openapi.yaml) |
+ | 🐳 Runtime | [Agent](https://alekpopovic.github.io/orch/#AGENT.md), [Service spec](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), [Resources](https://alekpopovic.github.io/orch/#RESOURCES.md) |
+ | 🧭 Control loops | [Scheduler](https://alekpopovic.github.io/orch/#SCHEDULER.md), [Reconciler](https://alekpopovic.github.io/orch/#RECONCILER.md), [Rollouts](https://alekpopovic.github.io/orch/#ROLLOUTS.md) |
+-| 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Security review](https://alekpopovic.github.io/orch/#SECURITY_REVIEW.md), [Secrets](https://alekpopovic.github.io/orch/#SECRETS.md), [Registries](https://alekpopovic.github.io/orch/#REGISTRIES.md) |
++| 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Policy engine](https://alekpopovic.github.io/orch/#POLICY_ENGINE_DESIGN.md), [Multi-tenancy](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md), [Secrets](https://alekpopovic.github.io/orch/#SECRETS.md), [Registries](https://alekpopovic.github.io/orch/#REGISTRIES.md) |
+ | 📈 Operations | [Observability](https://alekpopovic.github.io/orch/#OBSERVABILITY.md), [Reliability](https://alekpopovic.github.io/orch/#RELIABILITY.md), [Operations](https://alekpopovic.github.io/orch/#OPERATIONS.md), [Production deployment](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md) |
+ | 🧪 Testing | [Load testing](https://alekpopovic.github.io/orch/#LOAD_TESTING.md), [Chaos testing](https://alekpopovic.github.io/orch/#CHAOS_TESTING.md), [Development](https://alekpopovic.github.io/orch/#DEVELOPMENT.md) |
+diff --git a/api/openapi.yaml b/api/openapi.yaml
+index 8171ca2..0dca484 100644
+--- a/api/openapi.yaml
++++ b/api/openapi.yaml
+@@ -2,7 +2,7 @@ openapi: 3.0.3
+ info:
+   title: orch API
+   version: v1
+-  description: Public user-facing API for the orch control plane.
++  description: Public user-facing API for the orch control plane. Workload APIs use the optional X-Orch-Namespace header and default to `default`.
+ servers:
+   - url: http://localhost:8080
+ security:
+@@ -30,6 +30,53 @@ paths:
+             application/json:
+               schema:
+                 $ref: "#/components/schemas/HealthResponse"
++  /v1/version:
++    get:
++      summary: Get stable API version metadata
++      responses:
++        "200":
++          description: API version
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/APIVersionResponse"
++  /v1/namespaces:
++    get:
++      summary: List namespaces
++      responses:
++        "200":
++          description: Namespace list
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/ListNamespacesResponse"
++    post:
++      summary: Create namespace
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: "#/components/schemas/CreateNamespaceRequest"
++      responses:
++        "201":
++          description: Created namespace
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/NamespaceResponse"
++  /v1/namespaces/{name}:
++    delete:
++      summary: Delete an empty namespace
++      parameters:
++        - name: name
++          in: path
++          required: true
++          schema:
++            type: string
++      responses:
++        "204":
++          description: Namespace deleted
+   /v1/nodes:
+     get:
+       summary: List nodes
+@@ -450,6 +497,14 @@ components:
+       required: true
+       schema:
+         type: string
++    Namespace:
++      name: X-Orch-Namespace
++      in: header
++      required: false
++      description: Workload namespace; defaults to `default`.
++      schema:
++        type: string
++        default: default
+   schemas:
+     HealthResponse:
+       type: object
+@@ -460,6 +515,43 @@ components:
+         time:
+           type: string
+           format: date-time
++    APIVersionResponse:
++      type: object
++      required: [version, status]
++      properties:
++        version:
++          type: string
++          enum: [v1]
++        status:
++          type: string
++          enum: [stable]
++    Namespace:
++      type: object
++      required: [name, created_at]
++      properties:
++        name:
++          type: string
++        created_at:
++          type: string
++          format: date-time
++    CreateNamespaceRequest:
++      type: object
++      required: [name]
++      properties:
++        name:
++          type: string
++    NamespaceResponse:
++      type: object
++      properties:
++        namespace:
++          $ref: "#/components/schemas/Namespace"
++    ListNamespacesResponse:
++      type: object
++      properties:
++        namespaces:
++          type: array
++          items:
++            $ref: "#/components/schemas/Namespace"
+     ErrorResponse:
+       type: object
+       required: [error]
+@@ -626,6 +718,8 @@ components:
+       properties:
+         id:
+           type: string
++        namespace:
++          type: string
+         spec:
+           $ref: "#/components/schemas/ServiceSpec"
+         status:
+@@ -643,6 +737,8 @@ components:
+       properties:
+         id:
+           type: string
++        namespace:
++          type: string
+         service_id:
+           type: string
+         node_id:
+@@ -688,6 +784,8 @@ components:
+       properties:
+         id:
+           type: string
++        namespace:
++          type: string
+         service_id:
+           type: string
+         from_version:
+@@ -707,6 +805,8 @@ components:
+       properties:
+         id:
+           type: string
++        namespace:
++          type: string
+         type:
+           type: string
+         severity:
+@@ -726,6 +826,8 @@ components:
+       properties:
+         name:
+           type: string
++        namespace:
++          type: string
+         key_id:
+           type: string
+         created_at:
+@@ -739,6 +841,8 @@ components:
+       properties:
+         id:
+           type: string
++        namespace:
++          type: string
+         registry:
+           type: string
+         username:
+diff --git a/docs/API.md b/docs/API.md
+index 69d83dc..e5305a1 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -4,6 +4,8 @@
+ 
+ All responses use UTC timestamps.
+ 
++Workload routes select a namespace with `X-Orch-Namespace` and default to `default`. See [MULTI_TENANCY.md](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md). API compatibility and deprecation rules are defined in [API_VERSIONING.md](https://alekpopovic.github.io/orch/#API_VERSIONING.md).
++
+ The canonical public API contract is `api/openapi.yaml`. It is also published in the GitHub Pages documentation portal as `openapi.yaml`. It documents the user-facing health, node, service, task, event, log, rollout, secret, registry credential, and audit log endpoints. Agent-only routes are intentionally excluded from that public spec.
+ 
+ Validate the OpenAPI document with:
+diff --git a/docs/API_VERSIONING.md b/docs/API_VERSIONING.md
+new file mode 100644
+index 0000000..63d8680
+--- /dev/null
++++ b/docs/API_VERSIONING.md
+@@ -0,0 +1,25 @@
++# API Versioning
++
++The public control-plane contract is versioned in the URL. The current stable API is `/v1`; health, readiness, and metrics endpoints are unversioned because they are operational probes rather than workload contracts.
++
++Every `/v1` response includes `API-Version: v1`. `GET /v1/version` exposes machine-readable stability metadata. The router registers v1 routes through one version boundary so a future version can be implemented without changing v1 handlers in place.
++
++## Compatibility Rules
++
++A backward-compatible change may add an optional request field, add a response field, add an endpoint, add an enum value where clients are required to tolerate unknown values, or improve behavior without changing documented semantics. Clients must ignore unknown JSON response fields.
++
++A breaking change includes removing or renaming a field or endpoint, changing a field type or meaning, making an optional field required, narrowing accepted input, changing authentication requirements, changing a stable error code for the same condition, or changing namespace isolation behavior. Breaking changes require a new URL version.
++
++A deprecated field or endpoint remains functional for the supported lifetime of its API version. Deprecated endpoints return `Deprecation: true`; when known, they also return an HTTP-date `Sunset` header and a `Link` with `rel="deprecation"` pointing to migration guidance. Deprecation must be reflected in OpenAPI and release notes.
++
++A removed endpoint is never silently removed from a supported version. It is removed only in a new major API version or after the entire old version reaches end of support.
++
++## Introducing v2
++
++A future `/v2` must have a separate route registration boundary, OpenAPI contract, compatibility tests, client methods, and migration guide. Shared domain logic may be reused, but v2 request/response DTOs must not be aliases that accidentally change v1 JSON. Both versions should run side-by-side during migration. `/v1` remains the default used by existing CLI and agent releases until their compatibility window closes.
++
++No `/v2` routes exist today; requests to them return `404`.
++
++## Verification
++
++Compatibility tests assert that selected v1 routes retain their status and response envelope, every v1 route exposes its version header, v2 is not accidentally registered, and deprecation metadata uses standard response headers. The canonical contract is `api/openapi.yaml`.
+diff --git a/docs/CONFIGURATION.md b/docs/CONFIGURATION.md
+index 9c92ee6..eb5d859 100644
+--- a/docs/CONFIGURATION.md
++++ b/docs/CONFIGURATION.md
+@@ -42,10 +42,25 @@ secret_key: change-me
+ graceful_shutdown_ttl: 10s
+ heartbeat_timeout: 30s
+ node_monitor_interval: 5s
++cluster_policy:
++  require_resource_requests: true
++  require_resource_limits: true
++  allow_privileged: false
++  allow_host_network: false
++  allow_host_pid: false
++  allowed_image_registries: [registry.example.com]
++  block_latest_tag: true
++  require_healthcheck: true
++  allowed_host_path_prefixes: [/srv/orch]
++  allowed_capabilities: [NET_BIND_SERVICE]
++  max_replicas_per_service: 20
++  max_public_ports_per_service: 4
+ ```
+ 
+ Common server flags mirror config keys: `--addr`, `--database-url`, `--log-level`, `--bootstrap-token`, `--jwt-secret`, `--users`, `--secret-key`, `--shutdown-timeout`, `--node-heartbeat-timeout`, and `--node-monitor-interval`.
+ 
++Admission policy can also be supplied through `ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS`, `ORCH_POLICY_REQUIRE_RESOURCE_LIMITS`, `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_IMAGE_REGISTRIES`, `ORCH_POLICY_BLOCK_LATEST_TAG`, `ORCH_POLICY_REQUIRE_HEALTHCHECK`, `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, `ORCH_POLICY_MAX_REPLICAS_PER_SERVICE`, and `ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE`. List values are comma-separated.
++
+ ## Agent
+ 
+ Run with a YAML config file:
+@@ -80,13 +95,14 @@ Common agent flags mirror config keys: `--node-name`, `--advertise-address`, `--
+ 
+ ## CLI
+ 
+-The CLI reads `--server` and `--token` flags, `ORCH_SERVER_URL` and `ORCH_TOKEN`, then its YAML config file. The default config path is the OS user config directory under `orch/config.yaml`.
++The CLI reads `--server`, `--token`, and `--namespace` (`-n`) flags, `ORCH_SERVER_URL`, `ORCH_TOKEN`, and `ORCH_NAMESPACE`, then its YAML config file. The default config path is the OS user config directory under `orch/config.yaml`. The namespace defaults to `default`.
+ 
+ Example CLI config:
+ 
+ ```yaml
+ server_url: http://localhost:8080
+ token: eyJ...
++namespace: default
+ ```
+ 
+ ## Redaction
+diff --git a/docs/MULTI_TENANCY.md b/docs/MULTI_TENANCY.md
+new file mode 100644
+index 0000000..b68b62f
+--- /dev/null
++++ b/docs/MULTI_TENANCY.md
+@@ -0,0 +1,47 @@
++# Namespaces and Workload Isolation
++
++Namespaces provide logical workload isolation. `default` always exists and preserves compatibility for clients and data created before namespace support.
++
++Services, tasks, deployments, events, secrets, registry credentials, and audit logs carry a namespace. Service names, secret names, and registry credential IDs are unique within a namespace, so two teams may both deploy a service named `api`. Nodes remain cluster-scoped.
++
++## API and CLI
++
++The API selects a namespace from `X-Orch-Namespace`; if absent it uses `default`. Cross-namespace object IDs are returned as `404` to avoid leaking existence.
++
++```sh
++orch namespace create payments
++orch namespace ls
++orch --namespace payments deploy deployments/examples/http-api.yaml
++orch -n payments service ls
++orch namespace delete payments
++```
++
++The CLI resolves its namespace from `--namespace`, then `ORCH_NAMESPACE`, then `namespace` in its config file, and finally `default`.
++
++Namespace deletion is allowed only when the namespace contains no workload resources or namespace-scoped history. The `default` namespace cannot be deleted.
++
++## RBAC
++
++Legacy JWT `role` remains a cluster-wide role. Namespace-scoped tokens may instead use `namespace_roles`:
++
++```json
++{
++  "sub": "alice",
++  "namespace_roles": {
++    "payments": "operator",
++    "observability": "viewer"
++  }
++}
++```
++
++Namespace roles are hierarchical (`viewer`, `operator`, `admin`) only inside the named namespace. Namespace creation/list/deletion requires a cluster-wide admin role.
++
++## Secret Boundaries
++
++Secret and registry credential references resolve only in the workload namespace. A service cannot reference a same-named object from another namespace. Explicit cross-namespace grants are intentionally not implemented; adding them requires a separately authorized grant model and audit trail.
++
++## Persistence and Migration
++
++Migration `000011_namespaces` creates the namespace table, assigns existing rows to `default`, replaces global name uniqueness with namespace-local keys, and adds namespace indexes. The down migration removes non-default data before restoring global uniqueness and is therefore intended only for controlled rollback.
++
++Namespaces are a logical isolation boundary, not yet a complete hostile multi-tenant security boundary. Docker nodes, host networking, scheduler capacity, and the current in-memory server process remain shared. Production multi-tenancy still requires PostgreSQL server wiring, network isolation, per-namespace quotas, and stronger agent identity.
+diff --git a/docs/POLICY_ENGINE_DESIGN.md b/docs/POLICY_ENGINE_DESIGN.md
+new file mode 100644
+index 0000000..4b9e6e1
+--- /dev/null
++++ b/docs/POLICY_ENGINE_DESIGN.md
+@@ -0,0 +1,56 @@
++# Policy Engine Design
++
++## Goals
++
++The policy engine gives `orch` one deterministic admission boundary for workload safety and organizational rules. It evaluates a normalized service spec together with actor, operation, namespace, and cluster policy before state is persisted or changed. Decisions are structured, auditable, testable without Docker or PostgreSQL, and reusable by create, update, rollout, and scale flows.
++
++The initial controls cover required resource requests/limits, privileged containers, host namespaces, Linux capabilities, approved image registries, mutable tags, healthchecks, host paths, replica ceilings, and public-port ceilings.
++
++## Non-goals
++
++The engine does not replace schema/domain validation, runtime authorization, image scanning, network policy, secret encryption, or agent-side defense in depth. It is not a general workflow engine and the MVP does not execute Rego or make network calls during admission.
++
++## Enforcement Points
++
++| Operation | Required decision |
++| --- | --- |
++| Service create/update | Validate the complete normalized candidate before persistence. |
++| Rollout | Copy the current spec, apply the candidate image, then admit it before creating a deployment. |
++| Scale | Copy the current spec, apply candidate replicas, then enforce replica policy. |
++| Node drain | Future dynamic policy may restrict disruption windows or protected workloads. |
++| Secret usage | Resolve references only inside the service namespace; future rules can allow named cross-namespace grants. |
++| Registry credentials | Resolve credentials only inside the service namespace and validate registry policy independently. |
++| Agent execution | Agents revalidate security-sensitive task settings before Docker execution as defense in depth. |
++
++Schema validation runs first. Admission then returns all policy violations, each with stable `field`, `rule`, and `message` values. A rejected request is not persisted and writes a redacted `admission.<operation>` failure record to the audit log.
++
++## Example Policies
++
++```yaml
++cluster_policy:
++  require_resource_requests: true
++  require_resource_limits: true
++  allow_privileged: false
++  allow_host_network: false
++  allow_host_pid: false
++  allowed_image_registries: [ghcr.io, registry.example.com]
++  block_latest_tag: true
++  require_healthcheck: true
++  allowed_host_path_prefixes: [/var/lib/orch-volumes]
++  max_replicas_per_service: 50
++  max_public_ports_per_service: 4
++```
++
++This requires CPU/memory requests and limits, blocks privileged and host-namespace access, accepts only approved registries, rejects implicit or explicit `latest`, requires a healthcheck, confines host mounts, and bounds replicas/public ports.
++
++## Static and Dynamic Policy
++
++Static policy is loaded with server configuration, has no external dependency, and is the authoritative MVP path. A future dynamic provider may select policy by namespace, actor, labels, or environment. Dynamic decisions need bounded timeouts, cached last-known-good bundles, revision identifiers in audit records, and an explicit fail-open/fail-closed setting; production security policy should default to fail closed.
++
++## OPA/Rego Evolution
++
++OPA integration should implement the same admission evaluator boundary. Input is a versioned document containing actor, operation, namespace, normalized service spec, and non-secret cluster facts. Output is a list of the same structured violations plus policy revision. Secrets and registry passwords are never policy input. Rego bundles must be signed, validated, and activated atomically.
++
++## Audit and Testing
++
++Audit records contain actor, namespace, operation, service name, outcome, and violated rule IDs—never secret values or credentials. Unit tests cover each built-in rule, allowlist boundaries, path-prefix traversal, image parsing, multiple simultaneous violations, and rejection auditing. Control-plane tests prove create/scale/rollout cannot bypass admission; API tests verify stable structured errors. Future OPA adapters need conformance tests against the built-in decision contract.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index e1d58f8..7ff0f5e 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -16,6 +16,8 @@ JWTs use HMAC SHA-256 (`HS256`) and should include:
+ - `role`: `admin`, `operator`, or `viewer`.
+ - `exp`: expiration timestamp.
+ 
++Tokens may use `namespace_roles` instead of a cluster-wide `role`. Each map entry grants `viewer`, `operator`, or `admin` only in that namespace. Namespace administration itself still requires a cluster-wide admin.
++
+ Example claims:
+ 
+ ```json
+@@ -96,14 +98,26 @@ cluster_policy:
+     - NET_BIND_SERVICE
+   allowed_host_path_prefixes:
+     - /var/lib/orch-volumes
++  allowed_image_registries:
++    - ghcr.io
++  block_latest_tag: true
++  require_healthcheck: true
++  require_resource_requests: true
++  require_resource_limits: true
++  max_replicas_per_service: 50
++  max_public_ports_per_service: 4
+ ```
+ 
++The admission controller applies these rules on service creation, rollout, and scale. Rejections return structured rule violations and emit a redacted audit record. See `docs/POLICY_ENGINE_DESIGN.md`.
++
+ Equivalent environment variables are `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, and `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`.
+ 
+ ## Secret Handling
+ 
+ Service specs support secret references for environment variables. Secret values are encrypted at rest with the local envelope provider and are returned to agents only in assigned task payloads when needed to start containers. Do not put secret values in service names, labels, route hostnames, logs, or events.
+ 
++Secrets and registry credentials are namespace-scoped. Workloads cannot resolve a reference from another namespace.
++
+ Roadmap:
+ 
+ - Integrate a secret manager.
+diff --git a/docs/SERVICE_SPEC.md b/docs/SERVICE_SPEC.md
+index 1e6422e..b9fa628 100644
+--- a/docs/SERVICE_SPEC.md
++++ b/docs/SERVICE_SPEC.md
+@@ -4,6 +4,8 @@
+ 
+ The canonical machine-readable schema is `schemas/service.schema.json`.
+ 
++The namespace is request metadata, not a field in the deployment YAML. Select it with `orch --namespace <name> deploy ...`, `ORCH_NAMESPACE`, CLI config, or the API `X-Orch-Namespace` header.
++
+ ## Required Fields
+ 
+ - `name`: stable service name.
+@@ -84,4 +86,4 @@ orch validate deployments/examples/http-api.yaml
+ 
+ Healthcheck `path` must start with a single `/` and must not be a full URL. Healthcheck `scheme` defaults to `http` and may be `http` or `https`.
+ 
+-The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, invalid security context paths or capabilities, and malformed secret references. The server additionally applies the cluster container security policy before creating a service.
++The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, invalid security context paths or capabilities, and malformed secret references. The server additionally runs centralized admission for create, rollout, and scale. Depending on cluster policy it can require requests/limits and healthchecks, restrict registries and host paths, block `latest`, and cap replicas or public ports. Rejections include stable rule IDs in `error.details.violations`.
+diff --git a/docs/assets/docs.js b/docs/assets/docs.js
+index dafdf9d..ebf7e89 100644
+--- a/docs/assets/docs.js
++++ b/docs/assets/docs.js
+@@ -14,6 +14,7 @@ const docsNav = [
+     group: 'API and Operations',
+     items: [
+       { title: 'API', path: 'API.md', icon: '🔌' },
++      { title: 'API versioning', path: 'API_VERSIONING.md', icon: '🧬' },
+       { title: 'OpenAPI YAML', path: 'openapi.yaml', icon: '🧾', fallbacks: ['../api/openapi.yaml'], format: 'code' },
+       { title: 'Configuration', path: 'CONFIGURATION.md', icon: '⚙️' },
+       { title: 'Production deployment', path: 'PRODUCTION_DEPLOYMENT.md', icon: '🚢' },
+@@ -29,7 +30,8 @@ const docsNav = [
+       { title: 'Scheduler', path: 'SCHEDULER.md', icon: '🧭' },
+       { title: 'Reconciler', path: 'RECONCILER.md', icon: '🔁' },
+       { title: 'Rollouts', path: 'ROLLOUTS.md', icon: '🚀' },
+-      { title: 'HA control plane', path: 'HA_CONTROL_PLANE_DESIGN.md', icon: '👑' }
++      { title: 'HA control plane', path: 'HA_CONTROL_PLANE_DESIGN.md', icon: '👑' },
++      { title: 'Policy engine', path: 'POLICY_ENGINE_DESIGN.md', icon: '📜' }
+     ]
+   },
+   {
+@@ -52,7 +54,8 @@ const docsNav = [
+       { title: 'Secrets', path: 'SECRETS.md', icon: '🔐' },
+       { title: 'Registries', path: 'REGISTRIES.md', icon: '🗃️' },
+       { title: 'Security', path: 'SECURITY.md', icon: '🛡️' },
+-      { title: 'Security review', path: 'SECURITY_REVIEW.md', icon: '🧪' }
++      { title: 'Security review', path: 'SECURITY_REVIEW.md', icon: '🧪' },
++      { title: 'Multi-tenancy', path: 'MULTI_TENANCY.md', icon: '🏘️' }
+     ]
+   },
+   {
+diff --git a/internal/admission/admission.go b/internal/admission/admission.go
+new file mode 100644
+index 0000000..8d8ce1e
+--- /dev/null
++++ b/internal/admission/admission.go
+@@ -0,0 +1,186 @@
++package admission
++
++import (
++	"context"
++	"fmt"
++	"path/filepath"
++	"strings"
++
++	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Operation string
++
++const (
++	OperationCreate  Operation = "create"
++	OperationUpdate  Operation = "update"
++	OperationRollout Operation = "rollout"
++	OperationScale   Operation = "scale"
++)
++
++type Actor struct {
++	ID   string `json:"id"`
++	Role string `json:"role,omitempty"`
++}
++
++type Request struct {
++	Actor     Actor
++	Operation Operation
++	Namespace string
++	Spec      types.ServiceSpec
++	Policy    policy.ClusterPolicy
++}
++
++type Violation struct {
++	Field   string `json:"field"`
++	Rule    string `json:"rule"`
++	Message string `json:"message"`
++}
++
++type Error struct {
++	Operation  Operation   `json:"operation"`
++	Namespace  string      `json:"namespace"`
++	Violations []Violation `json:"violations"`
++}
++
++func (e *Error) Error() string {
++	if e == nil || len(e.Violations) == 0 {
++		return "admission rejected"
++	}
++	return fmt.Sprintf("admission rejected: %s", e.Violations[0].Message)
++}
++
++type Rejection struct {
++	Actor      Actor
++	Operation  Operation
++	Namespace  string
++	Service    string
++	Violations []Violation
++}
++
++type AuditSink interface {
++	RecordAdmissionRejection(context.Context, Rejection)
++}
++
++type Controller struct {
++	sink AuditSink
++}
++
++func New(sink AuditSink) *Controller {
++	return &Controller{sink: sink}
++}
++
++func (controller *Controller) Admit(ctx context.Context, request Request) error {
++	violations := Evaluate(request.Spec, request.Policy)
++	if len(violations) == 0 {
++		return nil
++	}
++	if controller != nil && controller.sink != nil {
++		controller.sink.RecordAdmissionRejection(ctx, Rejection{
++			Actor: request.Actor, Operation: request.Operation, Namespace: request.Namespace,
++			Service: request.Spec.Name, Violations: violations,
++		})
++	}
++	return &Error{Operation: request.Operation, Namespace: request.Namespace, Violations: violations}
++}
++
++func Evaluate(spec types.ServiceSpec, clusterPolicy policy.ClusterPolicy) []Violation {
++	violations := make([]Violation, 0)
++	add := func(field, rule, message string) {
++		violations = append(violations, Violation{Field: field, Rule: rule, Message: message})
++	}
++
++	if clusterPolicy.RequireResourceRequests && (spec.ResourceRequirements.Requests.CPU <= 0 || spec.ResourceRequirements.Requests.Memory <= 0) {
++		add("resource_requirements.requests", "resources.requests.required", "CPU and memory resource requests are required")
++	}
++	if clusterPolicy.RequireResourceLimits && (spec.ResourceRequirements.Limits.CPU <= 0 || spec.ResourceRequirements.Limits.Memory <= 0) {
++		add("resource_requirements.limits", "resources.limits.required", "CPU and memory resource limits are required")
++	}
++	if spec.SecurityContext.Privileged && !clusterPolicy.AllowPrivileged {
++		add("security_context.privileged", "security.privileged.denied", "privileged containers are not allowed")
++	}
++	if spec.SecurityContext.HostNetwork && !clusterPolicy.AllowHostNetwork {
++		add("security_context.host_network", "security.host_network.denied", "host networking is not allowed")
++	}
++	if spec.SecurityContext.HostPID && !clusterPolicy.AllowHostPID {
++		add("security_context.host_pid", "security.host_pid.denied", "host PID namespace is not allowed")
++	}
++	for i, capability := range spec.SecurityContext.CapAdd {
++		if !containsFold(clusterPolicy.AllowedCapabilities, strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(capability)), "CAP_")) {
++			add(fmt.Sprintf("security_context.cap_add[%d]", i), "security.capability.denied", fmt.Sprintf("Linux capability %q is not allowed", capability))
++		}
++	}
++	for i, mount := range spec.SecurityContext.HostPathMounts {
++		if !pathAllowed(mount.HostPath, clusterPolicy.AllowedHostPathPrefixes) {
++			add(fmt.Sprintf("security_context.host_path_mounts[%d].host_path", i), "security.host_path.denied", fmt.Sprintf("host path %q is not allowed", mount.HostPath))
++		}
++	}
++	if len(clusterPolicy.AllowedImageRegistries) > 0 {
++		registry := imageRegistry(spec.Image)
++		if !containsFold(clusterPolicy.AllowedImageRegistries, registry) {
++			add("image", "image.registry.denied", fmt.Sprintf("image registry %q is not allowed", registry))
++		}
++	}
++	if clusterPolicy.BlockLatestTag && usesLatestTag(spec.Image) {
++		add("image", "image.latest.denied", "the latest image tag is not allowed")
++	}
++	if clusterPolicy.RequireHealthcheck && spec.Healthcheck == nil {
++		add("healthcheck", "healthcheck.required", "a healthcheck is required")
++	}
++	if clusterPolicy.MaxReplicasPerService > 0 && spec.Replicas > clusterPolicy.MaxReplicasPerService {
++		add("replicas", "replicas.maximum", fmt.Sprintf("replicas cannot exceed %d", clusterPolicy.MaxReplicasPerService))
++	}
++	if clusterPolicy.MaxPublicPortsPerService > 0 {
++		public := 0
++		for _, port := range spec.Ports {
++			if port.PublishedPort > 0 {
++				public++
++			}
++		}
++		if public > clusterPolicy.MaxPublicPortsPerService {
++			add("ports", "ports.public.maximum", fmt.Sprintf("public ports cannot exceed %d", clusterPolicy.MaxPublicPortsPerService))
++		}
++	}
++	return violations
++}
++
++func containsFold(values []string, target string) bool {
++	target = strings.TrimPrefix(strings.ToLower(strings.TrimSpace(target)), "cap_")
++	for _, value := range values {
++		value = strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), "cap_")
++		if value == target {
++			return true
++		}
++	}
++	return false
++}
++
++func pathAllowed(path string, prefixes []string) bool {
++	path = filepath.Clean(path)
++	for _, prefix := range prefixes {
++		prefix = filepath.Clean(strings.TrimSpace(prefix))
++		if strings.HasPrefix(prefix, "/") && (path == prefix || strings.HasPrefix(path, strings.TrimRight(prefix, "/")+"/")) {
++			return true
++		}
++	}
++	return false
++}
++
++func imageRegistry(image string) string {
++	first, _, hasSlash := strings.Cut(strings.TrimSpace(image), "/")
++	if !hasSlash || (!strings.Contains(first, ".") && !strings.Contains(first, ":") && first != "localhost") {
++		return "docker.io"
++	}
++	return strings.ToLower(first)
++}
++
++func usesLatestTag(image string) bool {
++	image = strings.TrimSpace(image)
++	if at := strings.IndexByte(image, '@'); at >= 0 {
++		return false
++	}
++	lastSlash := strings.LastIndexByte(image, '/')
++	lastColon := strings.LastIndexByte(image, ':')
++	return lastColon <= lastSlash || strings.EqualFold(image[lastColon+1:], "latest")
++}
+diff --git a/internal/admission/admission_test.go b/internal/admission/admission_test.go
+new file mode 100644
+index 0000000..4507a6c
+--- /dev/null
++++ b/internal/admission/admission_test.go
+@@ -0,0 +1,85 @@
++package admission
++
++import (
++	"context"
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestAdmissionPolicies(t *testing.T) {
++	base := types.ServiceSpec{
++		Name: "api", Image: "registry.example/api:1.0", Replicas: 2,
++		ResourceRequirements: types.ResourceRequirements{
++			Requests: types.Resources{CPU: 100, Memory: 128},
++			Limits:   types.Resources{CPU: 200, Memory: 256},
++		},
++		Healthcheck: &types.Healthcheck{Type: types.HealthcheckTCP, Port: 8080},
++	}
++	tests := []struct {
++		name   string
++		mutate func(*types.ServiceSpec, *policy.ClusterPolicy)
++		rule   string
++	}{
++		{"requests", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.RequireResourceRequests = true
++			s.ResourceRequirements.Requests = types.Resources{}
++		}, "resources.requests.required"},
++		{"limits", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.RequireResourceLimits = true
++			s.ResourceRequirements.Limits = types.Resources{}
++		}, "resources.limits.required"},
++		{"privileged", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.Privileged = true }, "security.privileged.denied"},
++		{"host network", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.HostNetwork = true }, "security.host_network.denied"},
++		{"host pid", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.HostPID = true }, "security.host_pid.denied"},
++		{"registry", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.AllowedImageRegistries = []string{"approved.example"}
++		}, "image.registry.denied"},
++		{"latest", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.BlockLatestTag = true
++			s.Image = "registry.example/api:latest"
++		}, "image.latest.denied"},
++		{"healthcheck", func(s *types.ServiceSpec, p *policy.ClusterPolicy) { p.RequireHealthcheck = true; s.Healthcheck = nil }, "healthcheck.required"},
++		{"host path", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.AllowedHostPathPrefixes = []string{"/srv/orch"}
++			s.SecurityContext.HostPathMounts = []types.HostPathMount{{HostPath: "/etc", ContainerPath: "/host"}}
++		}, "security.host_path.denied"},
++		{"replicas", func(s *types.ServiceSpec, p *policy.ClusterPolicy) { p.MaxReplicasPerService = 1 }, "replicas.maximum"},
++		{"public ports", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++			p.MaxPublicPortsPerService = 1
++			s.Ports = []types.Port{{PublishedPort: 80}, {PublishedPort: 443}}
++		}, "ports.public.maximum"},
++	}
++	for _, test := range tests {
++		t.Run(test.name, func(t *testing.T) {
++			spec := base
++			clusterPolicy := policy.DefaultClusterPolicy()
++			test.mutate(&spec, &clusterPolicy)
++			violations := Evaluate(spec, clusterPolicy)
++			if len(violations) == 0 || !strings.Contains(violations[0].Rule, test.rule) {
++				t.Fatalf("expected rule %q, got %#v", test.rule, violations)
++			}
++		})
++	}
++}
++
++type recordingSink struct{ rejection Rejection }
++
++func (sink *recordingSink) RecordAdmissionRejection(_ context.Context, rejection Rejection) {
++	sink.rejection = rejection
++}
++
++func TestRejectedAdmissionIsAudited(t *testing.T) {
++	sink := &recordingSink{}
++	controller := New(sink)
++	err := controller.Admit(context.Background(), Request{
++		Actor: Actor{ID: "alice"}, Operation: OperationCreate, Namespace: "prod",
++		Spec:   types.ServiceSpec{Name: "api", Image: "api:latest", SecurityContext: types.SecurityContext{Privileged: true}},
++		Policy: policy.DefaultClusterPolicy(),
++	})
++	if err == nil || sink.rejection.Actor.ID != "alice" || sink.rejection.Namespace != "prod" || len(sink.rejection.Violations) == 0 {
++		t.Fatalf("expected audited rejection, err=%v rejection=%#v", err, sink.rejection)
++	}
++}
+diff --git a/internal/api/api.go b/internal/api/api.go
+index df0d41a..16a0ccb 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -15,12 +15,14 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/admission"
+ 	"github.com/alekpopovic/orch/internal/apperrors"
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/internal/traefik"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -145,49 +147,74 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.Handle("GET /metrics", server.metricsHandler)
+ 	mux.HandleFunc("GET /healthz", server.healthz)
+ 	mux.HandleFunc("GET /readyz", server.readyz)
+-	mux.HandleFunc("POST /v1/agent/register", server.agentRegister)
+-	mux.HandleFunc("POST /v1/agent/heartbeat", server.agentHeartbeat)
+-	mux.HandleFunc("GET /v1/agent/tasks", server.agentListTasks)
+-	mux.HandleFunc("POST /v1/agent/tasks/{task_id}/status", server.agentTaskStatus)
+-	mux.HandleFunc("GET /v1/nodes", server.listNodes)
+-	mux.HandleFunc("GET /v1/nodes/{id}", server.getNode)
+-	mux.HandleFunc("POST /v1/nodes/{id}/drain", server.drainNode)
+-	mux.HandleFunc("POST /v1/nodes/{id}/uncordon", server.uncordonNode)
+-	mux.HandleFunc("GET /v1/nodes/{id}/drain-status", server.getNodeDrainStatus)
+-	mux.HandleFunc("POST /v1/secrets", server.createSecret)
+-	mux.HandleFunc("GET /v1/secrets", server.listSecrets)
+-	mux.HandleFunc("GET /v1/secrets/{name...}", server.getSecret)
+-	mux.HandleFunc("DELETE /v1/secrets/{name...}", server.deleteSecret)
+-	mux.HandleFunc("POST /v1/registry-credentials", server.createRegistryCredential)
+-	mux.HandleFunc("GET /v1/registry-credentials", server.listRegistryCredentials)
+-	mux.HandleFunc("DELETE /v1/registry-credentials/{id}", server.deleteRegistryCredential)
+-	mux.HandleFunc("POST /v1/services", server.createService)
+-	mux.HandleFunc("GET /v1/services", server.listServices)
+-	mux.HandleFunc("GET /v1/services/{id}", server.getService)
+-	mux.HandleFunc("GET /v1/services/{id}/endpoints", server.getServiceEndpoints)
+-	mux.HandleFunc("DELETE /v1/services/{id}", server.deleteService)
+-	mux.HandleFunc("POST /v1/services/{id}/scale", server.scaleService)
+-	mux.HandleFunc("POST /v1/services/{id}/rollout", server.rolloutService)
+-	mux.HandleFunc("GET /v1/services/{id}/rollout", server.getServiceRollout)
+-	mux.HandleFunc("GET /v1/rollouts/{id}", server.getRollout)
+-	mux.HandleFunc("POST /v1/services/{id}/rollback", server.rollbackService)
+-	mux.HandleFunc("GET /v1/tasks", server.listTasks)
+-	mux.HandleFunc("GET /v1/tasks/{id}", server.getTask)
+-	mux.HandleFunc("GET /v1/discovery/services", server.discoveryServices)
+-	mux.HandleFunc("GET /v1/discovery/services/{name}", server.discoveryServiceByName)
+-	mux.HandleFunc("GET /v1/integrations/traefik/config", server.traefikConfig)
+-	mux.HandleFunc("GET /v1/events", server.listEvents)
+-	mux.HandleFunc("GET /v1/audit", server.listAuditLogs)
+-	mux.HandleFunc("GET /v1/logs", server.streamLogs)
++	server.registerV1(mux)
+ 
+ 	return server.middleware(mux)
+ }
+ 
++func (s *Server) registerV1(mux *http.ServeMux) {
++	mux.HandleFunc("GET /v1/version", s.apiVersion)
++	mux.HandleFunc("POST /v1/agent/register", s.agentRegister)
++	mux.HandleFunc("POST /v1/agent/heartbeat", s.agentHeartbeat)
++	mux.HandleFunc("GET /v1/agent/tasks", s.agentListTasks)
++	mux.HandleFunc("POST /v1/agent/tasks/{task_id}/status", s.agentTaskStatus)
++	mux.HandleFunc("GET /v1/nodes", s.listNodes)
++	mux.HandleFunc("GET /v1/nodes/{id}", s.getNode)
++	mux.HandleFunc("POST /v1/nodes/{id}/drain", s.drainNode)
++	mux.HandleFunc("POST /v1/nodes/{id}/uncordon", s.uncordonNode)
++	mux.HandleFunc("GET /v1/nodes/{id}/drain-status", s.getNodeDrainStatus)
++	mux.HandleFunc("POST /v1/secrets", s.createSecret)
++	mux.HandleFunc("GET /v1/secrets", s.listSecrets)
++	mux.HandleFunc("GET /v1/secrets/{name...}", s.getSecret)
++	mux.HandleFunc("DELETE /v1/secrets/{name...}", s.deleteSecret)
++	mux.HandleFunc("POST /v1/registry-credentials", s.createRegistryCredential)
++	mux.HandleFunc("GET /v1/registry-credentials", s.listRegistryCredentials)
++	mux.HandleFunc("DELETE /v1/registry-credentials/{id}", s.deleteRegistryCredential)
++	mux.HandleFunc("POST /v1/services", s.createService)
++	mux.HandleFunc("GET /v1/services", s.listServices)
++	mux.HandleFunc("GET /v1/services/{id}", s.getService)
++	mux.HandleFunc("GET /v1/services/{id}/endpoints", s.getServiceEndpoints)
++	mux.HandleFunc("DELETE /v1/services/{id}", s.deleteService)
++	mux.HandleFunc("POST /v1/services/{id}/scale", s.scaleService)
++	mux.HandleFunc("POST /v1/services/{id}/rollout", s.rolloutService)
++	mux.HandleFunc("GET /v1/services/{id}/rollout", s.getServiceRollout)
++	mux.HandleFunc("GET /v1/rollouts/{id}", s.getRollout)
++	mux.HandleFunc("POST /v1/services/{id}/rollback", s.rollbackService)
++	mux.HandleFunc("GET /v1/tasks", s.listTasks)
++	mux.HandleFunc("GET /v1/tasks/{id}", s.getTask)
++	mux.HandleFunc("GET /v1/discovery/services", s.discoveryServices)
++	mux.HandleFunc("GET /v1/discovery/services/{name}", s.discoveryServiceByName)
++	mux.HandleFunc("GET /v1/integrations/traefik/config", s.traefikConfig)
++	mux.HandleFunc("GET /v1/events", s.listEvents)
++	mux.HandleFunc("GET /v1/audit", s.listAuditLogs)
++	mux.HandleFunc("GET /v1/logs", s.streamLogs)
++	mux.HandleFunc("POST /v1/namespaces", s.createNamespace)
++	mux.HandleFunc("GET /v1/namespaces", s.listNamespaces)
++	mux.HandleFunc("DELETE /v1/namespaces/{name}", s.deleteNamespace)
++}
++
+ type HealthResponse struct {
+ 	Status string    `json:"status"`
+ 	Time   time.Time `json:"time"`
+ }
+ 
++type APIVersionResponse struct {
++	Version string `json:"version"`
++	Status  string `json:"status"`
++}
++
++type CreateNamespaceRequest struct {
++	Name string `json:"name"`
++}
++
++type NamespaceResponse struct {
++	Namespace types.Namespace `json:"namespace"`
++}
++
++type ListNamespacesResponse struct {
++	Namespaces []types.Namespace `json:"namespaces"`
++}
++
+ type ErrorResponse struct {
+ 	Error RequestError `json:"error"`
+ }
+@@ -336,6 +363,45 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {
+ 	writeJSON(w, http.StatusOK, HealthResponse{Status: "ready", Time: time.Now().UTC()})
+ }
+ 
++func (s *Server) apiVersion(w http.ResponseWriter, _ *http.Request) {
++	writeJSON(w, http.StatusOK, APIVersionResponse{Version: "v1", Status: "stable"})
++}
++
++func (s *Server) createNamespace(w http.ResponseWriter, r *http.Request) {
++	var req CreateNamespaceRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	item, err := s.controlPlane.CreateNamespace(r.Context(), req.Name)
++	if err != nil {
++		s.recordAudit(r, "namespace.create", "namespace", req.Name, audit.OutcomeFailure, nil)
++		s.writeError(w, r, err)
++		return
++	}
++	s.recordAudit(r, "namespace.create", "namespace", item.Name, audit.OutcomeSuccess, nil)
++	writeJSON(w, http.StatusCreated, NamespaceResponse{Namespace: item})
++}
++
++func (s *Server) listNamespaces(w http.ResponseWriter, r *http.Request) {
++	items, err := s.controlPlane.ListNamespaces(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListNamespacesResponse{Namespaces: items})
++}
++
++func (s *Server) deleteNamespace(w http.ResponseWriter, r *http.Request) {
++	name := namespace.Normalize(r.PathValue("name"))
++	if err := s.controlPlane.DeleteNamespace(r.Context(), name); err != nil {
++		s.recordAudit(r, "namespace.delete", "namespace", name, audit.OutcomeFailure, nil)
++		s.writeError(w, r, err)
++		return
++	}
++	s.recordAudit(r, "namespace.delete", "namespace", name, audit.OutcomeSuccess, nil)
++	w.WriteHeader(http.StatusNoContent)
++}
++
+ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+ 	if !s.authorizeAgentRegistration(w, r) {
+ 		return
+@@ -647,12 +713,6 @@ func (s *Server) createService(w http.ResponseWriter, r *http.Request) {
+ 	if !s.decodeJSON(w, r, &req) {
+ 		return
+ 	}
+-	normalized, err := types.NormalizeServiceSpec(req.Spec, types.DefaultResourceDefaults())
+-	if err != nil {
+-		s.writeError(w, r, fmt.Errorf("%w: %v", store.ErrInvalidState, err))
+-		return
+-	}
+-	req.Spec = normalized
+ 	if err := req.Spec.Validate(); err != nil {
+ 		s.writeError(w, r, fmt.Errorf("%w: %v", store.ErrInvalidState, err))
+ 		return
+@@ -1021,11 +1081,17 @@ func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) middleware(next http.Handler) http.Handler {
+-	return requestIDMiddleware(s.accessLogMiddleware(s.recoveryMiddleware(s.timeoutMiddleware(s.userAuthMiddleware(next)))))
++	return requestIDMiddleware(apiVersionMiddleware(s.accessLogMiddleware(s.recoveryMiddleware(s.timeoutMiddleware(s.userAuthMiddleware(next))))))
+ }
+ 
+ func (s *Server) userAuthMiddleware(next http.Handler) http.Handler {
+ 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		namespaceName := selectedNamespace(r)
++		if err := namespace.Validate(namespaceName); err != nil {
++			s.writeError(w, r, fmt.Errorf("%w: %v", store.ErrInvalidState, err))
++			return
++		}
++		r = r.WithContext(namespace.WithContext(r.Context(), namespaceName))
+ 		required, ok := requiredRole(r)
+ 		if !ok || s.jwtSecret == "" {
+ 			next.ServeHTTP(w, r)
+@@ -1048,8 +1114,13 @@ func (s *Server) userAuthMiddleware(next http.Handler) http.Handler {
+ 				return
+ 			}
+ 			principal.Role = role
++			principal.NamespaceRoles = nil
++		}
++		role, hasNamespaceRole := principal.RoleForNamespace(namespaceName)
++		if strings.HasPrefix(r.URL.Path, "/v1/namespaces") && !auth.ValidRole(principal.Role) {
++			hasNamespaceRole = false
+ 		}
+-		if !auth.HasRole(principal.Role, required) {
++		if !hasNamespaceRole || !auth.HasRole(role, required) {
+ 			s.writeAuthError(w, r, http.StatusForbidden, "forbidden", "insufficient role")
+ 			return
+ 		}
+@@ -1057,6 +1128,13 @@ func (s *Server) userAuthMiddleware(next http.Handler) http.Handler {
+ 	})
+ }
+ 
++func selectedNamespace(r *http.Request) string {
++	if value := strings.TrimSpace(r.Header.Get("X-Orch-Namespace")); value != "" {
++		return namespace.Normalize(value)
++	}
++	return namespace.Normalize(r.URL.Query().Get("namespace"))
++}
++
+ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	path := r.URL.Path
+ 	if path == "/healthz" || path == "/readyz" || path == "/metrics" || strings.HasPrefix(path, "/v1/agent/") {
+@@ -1064,6 +1142,10 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	}
+ 	if r.Method == http.MethodGet {
+ 		switch {
++		case path == "/v1/version":
++			return auth.RoleViewer, true
++		case path == "/v1/namespaces":
++			return auth.RoleAdmin, true
+ 		case path == "/v1/nodes" || strings.HasPrefix(path, "/v1/nodes/"):
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/secrets" || strings.HasPrefix(path, "/v1/secrets/"):
+@@ -1090,6 +1172,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	}
+ 	if r.Method == http.MethodPost {
+ 		switch {
++		case path == "/v1/namespaces":
++			return auth.RoleAdmin, true
+ 		case strings.HasSuffix(path, "/drain") || strings.HasSuffix(path, "/uncordon"):
+ 			return auth.RoleAdmin, true
+ 		case path == "/v1/secrets":
+@@ -1100,6 +1184,9 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleOperator, true
+ 		}
+ 	}
++	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/namespaces/") {
++		return auth.RoleAdmin, true
++	}
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/secrets/") {
+ 		return auth.RoleOperator, true
+ 	}
+@@ -1181,6 +1268,12 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/healthz", true
+ 	case path == "/readyz":
+ 		return "/readyz", true
++	case path == "/v1/version":
++		return "/v1/version", true
++	case path == "/v1/namespaces":
++		return "/v1/namespaces", true
++	case strings.HasPrefix(path, "/v1/namespaces/"):
++		return "/v1/namespaces/{name}", true
+ 	case path == "/v1/agent/register":
+ 		return "/v1/agent/register", true
+ 	case path == "/v1/agent/heartbeat":
+@@ -1531,6 +1624,7 @@ func (s *Server) recordAuditAs(r *http.Request, actorType audit.ActorType, actor
+ 		return
+ 	}
+ 	log := audit.Log{
++		Namespace:  namespace.FromContext(r.Context()),
+ 		ActorType:  actorType,
+ 		ActorID:    actorID,
+ 		Action:     action,
+@@ -1590,6 +1684,14 @@ func errorStatus(err error) (int, string) {
+ }
+ 
+ func errorAttributes(err error) (int, apperrors.Code, string, map[string]any) {
++	var admissionErr *admission.Error
++	if errors.As(err, &admissionErr) {
++		return http.StatusBadRequest, apperrors.CodeInvalidArgument, admissionErr.Error(), map[string]any{
++			"operation":  admissionErr.Operation,
++			"namespace":  admissionErr.Namespace,
++			"violations": admissionErr.Violations,
++		}
++	}
+ 	code := apperrors.CodeOf(err)
+ 	message := apperrors.MessageOf(err)
+ 	details := apperrors.DetailsOf(err)
+diff --git a/internal/api/namespace_test.go b/internal/api/namespace_test.go
+new file mode 100644
+index 0000000..0be865a
+--- /dev/null
++++ b/internal/api/namespace_test.go
+@@ -0,0 +1,65 @@
++package api
++
++import (
++	"context"
++	"log/slog"
++	"net/http"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/auth"
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestNamespaceScopedViewerCannotReadAnotherNamespace(t *testing.T) {
++	controlPlane := controlplane.NewMemoryService()
++	for _, name := range []string{"team-a", "team-b"} {
++		if _, err := controlPlane.CreateNamespace(context.Background(), name); err != nil {
++			t.Fatal(err)
++		}
++		ctx := namespace.WithContext(context.Background(), name)
++		if _, err := controlPlane.CreateService(ctx, types.ServiceSpec{Name: "api", Image: "nginx:1.27", Replicas: 0}); err != nil {
++			t.Fatal(err)
++		}
++	}
++	handler := NewHandler(slog.Default(), controlPlane, WithUserJWT("test-secret"))
++	token, err := auth.SignJWT(auth.Claims{
++		Subject: "viewer-a", NamespaceRoles: map[string]auth.Role{"team-a": auth.RoleViewer},
++		ExpiresAt: time.Now().Add(time.Hour).Unix(),
++	}, "test-secret")
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	allowed := requestWithHeaders(t, handler, http.MethodGet, "/v1/services", nil, map[string]string{
++		"Authorization": "Bearer " + token, "X-Orch-Namespace": "team-a",
++	})
++	if allowed.Code != http.StatusOK {
++		t.Fatalf("expected team-a access, got %d: %s", allowed.Code, allowed.Body.String())
++	}
++	denied := requestWithHeaders(t, handler, http.MethodGet, "/v1/services", nil, map[string]string{
++		"Authorization": "Bearer " + token, "X-Orch-Namespace": "team-b",
++	})
++	if denied.Code != http.StatusForbidden {
++		t.Fatalf("expected team-b forbidden, got %d: %s", denied.Code, denied.Body.String())
++	}
++}
++
++func TestNamespaceCRUDAPI(t *testing.T) {
++	handler := newTestHandler()
++	created := doRequest(t, handler, http.MethodPost, "/v1/namespaces", `{"name":"payments"}`)
++	if created.Code != http.StatusCreated {
++		t.Fatalf("create namespace: %d %s", created.Code, created.Body.String())
++	}
++	listed := doRequest(t, handler, http.MethodGet, "/v1/namespaces", nil)
++	if listed.Code != http.StatusOK || !strings.Contains(listed.Body.String(), `"name":"payments"`) {
++		t.Fatalf("list namespaces: %d %s", listed.Code, listed.Body.String())
++	}
++	deleted := doRequest(t, handler, http.MethodDelete, "/v1/namespaces/payments", nil)
++	if deleted.Code != http.StatusNoContent {
++		t.Fatalf("delete namespace: %d %s", deleted.Code, deleted.Body.String())
++	}
++}
+diff --git a/internal/api/versioning.go b/internal/api/versioning.go
+new file mode 100644
+index 0000000..dd1407d
+--- /dev/null
++++ b/internal/api/versioning.go
+@@ -0,0 +1,34 @@
++package api
++
++import (
++	"net/http"
++	"strings"
++	"time"
++)
++
++type Deprecation struct {
++	Sunset time.Time
++	Link   string
++}
++
++func apiVersionMiddleware(next http.Handler) http.Handler {
++	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if strings.HasPrefix(r.URL.Path, "/v1/") || r.URL.Path == "/v1" {
++			w.Header().Set("API-Version", "v1")
++		}
++		next.ServeHTTP(w, r)
++	})
++}
++
++func deprecated(handler http.Handler, metadata Deprecation) http.Handler {
++	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		w.Header().Set("Deprecation", "true")
++		if !metadata.Sunset.IsZero() {
++			w.Header().Set("Sunset", metadata.Sunset.UTC().Format(http.TimeFormat))
++		}
++		if strings.TrimSpace(metadata.Link) != "" {
++			w.Header().Add("Link", "<"+strings.TrimSpace(metadata.Link)+">; rel=\"deprecation\"")
++		}
++		handler.ServeHTTP(w, r)
++	})
++}
+diff --git a/internal/api/versioning_test.go b/internal/api/versioning_test.go
+new file mode 100644
+index 0000000..b6f149d
+--- /dev/null
++++ b/internal/api/versioning_test.go
+@@ -0,0 +1,36 @@
++package api
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"testing"
++	"time"
++)
++
++func TestV1RoutingAndVersionMetadata(t *testing.T) {
++	handler := newTestHandler()
++	rec := doRequest(t, handler, http.MethodGet, "/v1/version", nil)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected v1 version status 200, got %d: %s", rec.Code, rec.Body.String())
++	}
++	if rec.Header().Get("API-Version") != "v1" {
++		t.Fatalf("expected API-Version v1, got %q", rec.Header().Get("API-Version"))
++	}
++
++	missing := doRequest(t, handler, http.MethodGet, "/v2/services", nil)
++	if missing.Code != http.StatusNotFound {
++		t.Fatalf("expected v2 to remain unavailable, got %d", missing.Code)
++	}
++}
++
++func TestDeprecatedEndpointHeaders(t *testing.T) {
++	sunset := time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC)
++	handler := deprecated(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++		w.WriteHeader(http.StatusNoContent)
++	}), Deprecation{Sunset: sunset, Link: "https://example.test/migration"})
++	rec := httptest.NewRecorder()
++	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/v1/old", nil))
++	if rec.Header().Get("Deprecation") != "true" || rec.Header().Get("Sunset") == "" || rec.Header().Get("Link") == "" {
++		t.Fatalf("missing deprecation metadata: %#v", rec.Header())
++	}
++}
+diff --git a/internal/audit/audit.go b/internal/audit/audit.go
+index c21d6cd..73f8e58 100644
+--- a/internal/audit/audit.go
++++ b/internal/audit/audit.go
+@@ -24,6 +24,7 @@ const (
+ 
+ type Log struct {
+ 	ID         string            `json:"id"`
++	Namespace  string            `json:"namespace"`
+ 	ActorType  ActorType         `json:"actor_type"`
+ 	ActorID    string            `json:"actor_id"`
+ 	Action     string            `json:"action"`
+@@ -37,6 +38,7 @@ type Log struct {
+ }
+ 
+ type Filter struct {
++	Namespace  string
+ 	ActorType  ActorType
+ 	ActorID    string
+ 	Action     string
+diff --git a/internal/auth/auth.go b/internal/auth/auth.go
+index 878e8f0..64ffbf8 100644
+--- a/internal/auth/auth.go
++++ b/internal/auth/auth.go
+@@ -21,8 +21,9 @@ const (
+ )
+ 
+ type Principal struct {
+-	Subject string
+-	Role    Role
++	Subject        string
++	Role           Role
++	NamespaceRoles map[string]Role
+ }
+ 
+ type contextKey struct{}
+@@ -33,10 +34,11 @@ var (
+ )
+ 
+ type Claims struct {
+-	Subject   string `json:"sub"`
+-	Role      Role   `json:"role"`
+-	ExpiresAt int64  `json:"exp,omitempty"`
+-	IssuedAt  int64  `json:"iat,omitempty"`
++	Subject        string          `json:"sub"`
++	Role           Role            `json:"role,omitempty"`
++	NamespaceRoles map[string]Role `json:"namespace_roles,omitempty"`
++	ExpiresAt      int64           `json:"exp,omitempty"`
++	IssuedAt       int64           `json:"iat,omitempty"`
+ }
+ 
+ func WithPrincipal(ctx context.Context, principal Principal) context.Context {
+@@ -113,13 +115,26 @@ func ValidateJWT(token string, secret string, now time.Time) (Principal, error)
+ 	if err := json.Unmarshal(claimsBytes, &claims); err != nil {
+ 		return Principal{}, ErrInvalidToken
+ 	}
+-	if strings.TrimSpace(claims.Subject) == "" || !ValidRole(claims.Role) {
++	if strings.TrimSpace(claims.Subject) == "" || (!ValidRole(claims.Role) && len(claims.NamespaceRoles) == 0) {
+ 		return Principal{}, ErrInvalidToken
+ 	}
++	for namespace, role := range claims.NamespaceRoles {
++		if strings.TrimSpace(namespace) == "" || !ValidRole(role) {
++			return Principal{}, ErrInvalidToken
++		}
++	}
+ 	if claims.ExpiresAt > 0 && !now.Before(time.Unix(claims.ExpiresAt, 0)) {
+ 		return Principal{}, ErrInvalidToken
+ 	}
+-	return Principal{Subject: claims.Subject, Role: claims.Role}, nil
++	return Principal{Subject: claims.Subject, Role: claims.Role, NamespaceRoles: claims.NamespaceRoles}, nil
++}
++
++func (principal Principal) RoleForNamespace(namespace string) (Role, bool) {
++	if ValidRole(principal.Role) {
++		return principal.Role, true
++	}
++	role, ok := principal.NamespaceRoles[strings.ToLower(strings.TrimSpace(namespace))]
++	return role, ok && ValidRole(role)
+ }
+ 
+ func ValidRole(role Role) bool {
+diff --git a/internal/autoscaler/autoscaler.go b/internal/autoscaler/autoscaler.go
+index b81d9a5..07ebdc5 100644
+--- a/internal/autoscaler/autoscaler.go
++++ b/internal/autoscaler/autoscaler.go
+@@ -191,6 +191,7 @@ func (c *Controller) hasActiveRollout(ctx context.Context, serviceID types.Servi
+ 
+ func (c *Controller) emit(ctx context.Context, service types.Service, eventType string, severity types.EventSeverity, message string, details map[string]string) {
+ 	_ = events.Emit(ctx, c.eventStore, types.Event{
++		Namespace:         service.Namespace,
+ 		Type:              eventType,
+ 		Severity:          severity,
+ 		Source:            "autoscaler",
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 6fe5a97..65399b8 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -27,6 +27,7 @@ type APIClient struct {
+ 	baseURL    string
+ 	httpClient *http.Client
+ 	token      string
++	namespace  string
+ }
+ 
+ type APIError struct {
+@@ -81,6 +82,30 @@ func (c *APIClient) SetToken(token string) {
+ 	c.token = strings.TrimSpace(token)
+ }
+ 
++func (c *APIClient) SetNamespace(namespace string) {
++	c.namespace = strings.TrimSpace(namespace)
++}
++
++func (c *APIClient) CreateNamespace(ctx context.Context, name string) (types.Namespace, error) {
++	var out api.NamespaceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/namespaces", api.CreateNamespaceRequest{Name: name}, &out); err != nil {
++		return types.Namespace{}, err
++	}
++	return out.Namespace, nil
++}
++
++func (c *APIClient) ListNamespaces(ctx context.Context) ([]types.Namespace, error) {
++	var out api.ListNamespacesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/namespaces", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Namespaces, nil
++}
++
++func (c *APIClient) DeleteNamespace(ctx context.Context, name string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/namespaces/"+url.PathEscape(name), nil, nil)
++}
++
+ func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	var out api.ListNodesResponse
+ 	if err := c.do(ctx, http.MethodGet, "/v1/nodes", nil, &out); err != nil {
+@@ -316,6 +341,9 @@ func (c *APIClient) StreamLogs(ctx context.Context, serviceID string, taskID str
+ 	if c.token != "" {
+ 		req.Header.Set("Authorization", "Bearer "+c.token)
+ 	}
++	if c.namespace != "" {
++		req.Header.Set("X-Orch-Namespace", c.namespace)
++	}
+ 	resp, err := c.httpClient.Do(req)
+ 	if err != nil {
+ 		return fmt.Errorf("request logs failed: %w", err)
+@@ -351,6 +379,9 @@ func (c *APIClient) do(ctx context.Context, method string, path string, body any
+ 	if c.token != "" {
+ 		req.Header.Set("Authorization", "Bearer "+c.token)
+ 	}
++	if c.namespace != "" {
++		req.Header.Set("X-Orch-Namespace", c.namespace)
++	}
+ 
+ 	resp, err := c.httpClient.Do(req)
+ 	if err != nil {
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+index 62dd3ab..9e9cecb 100644
+--- a/internal/cli/output.go
++++ b/internal/cli/output.go
+@@ -34,6 +34,18 @@ func writeNodes(w io.Writer, output string, nodes []types.Node) error {
+ 	return tw.Flush()
+ }
+ 
++func writeNamespaces(w io.Writer, output string, namespaces []types.Namespace) error {
++	if output == "json" {
++		return writeValue(w, output, namespaces)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "NAME\tCREATED")
++	for _, item := range namespaces {
++		fmt.Fprintf(tw, "%s\t%s\n", item.Name, item.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
++	}
++	return tw.Flush()
++}
++
+ func writeNode(w io.Writer, output string, node types.Node) error {
+ 	if output == "json" {
+ 		return writeValue(w, output, node)
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index c48d8be..d7b48ac 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -45,6 +45,12 @@ type Client interface {
+ 
+ type Config = config.CLIConfig
+ 
++type NamespaceClient interface {
++	CreateNamespace(ctx context.Context, name string) (types.Namespace, error)
++	ListNamespaces(ctx context.Context) ([]types.Namespace, error)
++	DeleteNamespace(ctx context.Context, name string) error
++}
++
+ type Options struct {
+ 	Out           io.Writer
+ 	Err           io.Writer
+@@ -53,12 +59,13 @@ type Options struct {
+ }
+ 
+ type app struct {
+-	out        io.Writer
+-	serverFlag string
+-	tokenFlag  string
+-	configPath string
+-	output     string
+-	newClient  func(serverURL string) (Client, error)
++	out           io.Writer
++	serverFlag    string
++	tokenFlag     string
++	namespaceFlag string
++	configPath    string
++	output        string
++	newClient     func(serverURL string) (Client, error)
+ }
+ 
+ func NewRootCommand(opts Options) *cobra.Command {
+@@ -103,6 +110,7 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.SetErr(errOut)
+ 	root.PersistentFlags().StringVar(&a.serverFlag, "server", "", "control-plane server URL")
+ 	root.PersistentFlags().StringVar(&a.tokenFlag, "token", "", "user API JWT bearer token")
++	root.PersistentFlags().StringVarP(&a.namespaceFlag, "namespace", "n", "", "workload namespace")
+ 	root.PersistentFlags().StringVar(&a.output, "output", "table", "output format: table or json")
+ 	root.PersistentFlags().StringVar(&a.configPath, "config", a.configPath, "CLI config file")
+ 
+@@ -119,9 +127,69 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.AddCommand(a.eventsCommand())
+ 	root.AddCommand(a.auditCommand())
+ 	root.AddCommand(a.logsCommand())
++	root.AddCommand(a.namespaceCommand())
+ 	return root
+ }
+ 
++func (a *app) namespaceCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "namespace", Short: "Manage namespaces"}
++	cmd.AddCommand(&cobra.Command{
++		Use: "ls", Short: "List namespaces",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			namespaceClient, ok := client.(NamespaceClient)
++			if !ok {
++				return fmt.Errorf("client does not support namespaces")
++			}
++			items, err := namespaceClient.ListNamespaces(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeNamespaces(a.out, a.output, items)
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use: "create <name>", Short: "Create a namespace", Args: cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			namespaceClient, ok := client.(NamespaceClient)
++			if !ok {
++				return fmt.Errorf("client does not support namespaces")
++			}
++			item, err := namespaceClient.CreateNamespace(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			return writeNamespaces(a.out, a.output, []types.Namespace{item})
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use: "delete <name>", Short: "Delete an empty namespace", Args: cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			namespaceClient, ok := client.(NamespaceClient)
++			if !ok {
++				return fmt.Errorf("client does not support namespaces")
++			}
++			if err := namespaceClient.DeleteNamespace(cmd.Context(), args[0]); err != nil {
++				return err
++			}
++			fmt.Fprintf(a.out, "deleted namespace %s\n", args[0])
++			return nil
++		},
++	})
++	return cmd
++}
++
+ func Execute(ctx context.Context, args []string, out io.Writer, errOut io.Writer) error {
+ 	cmd := NewRootCommand(Options{Out: out, Err: errOut})
+ 	cmd.SetArgs(args)
+@@ -633,6 +701,9 @@ func (a *app) client() (Client, error) {
+ 	if apiClient, ok := client.(*APIClient); ok {
+ 		apiClient.SetToken(a.token())
+ 	}
++	if setter, ok := client.(interface{ SetNamespace(string) }); ok {
++		setter.SetNamespace(a.namespace())
++	}
+ 	return client, nil
+ }
+ 
+@@ -655,6 +726,14 @@ func (a *app) token() string {
+ 	return strings.TrimSpace(cfg.Token)
+ }
+ 
++func (a *app) namespace() string {
++	cfg, err := config.LoadCLI(a.configPath, config.CLIOverrides{Namespace: a.namespaceFlag})
++	if err != nil {
++		return "default"
++	}
++	return strings.TrimSpace(cfg.Namespace)
++}
++
+ func defaultConfigPath() string {
+ 	dir, err := os.UserConfigDir()
+ 	if err != nil {
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index 6417c1f..ee6fd26 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -42,6 +42,9 @@ func TestRootCommandConstruction(t *testing.T) {
+ 		"events",
+ 		"audit",
+ 		"logs",
++		"namespace ls",
++		"namespace create",
++		"namespace delete",
+ 	} {
+ 		if _, _, err := root.Find(strings.Fields(path)); err != nil {
+ 			t.Fatalf("expected command %q: %v", path, err)
+@@ -134,6 +137,21 @@ func TestServerURLPrecedence(t *testing.T) {
+ 	}
+ }
+ 
++func TestNamespaceFlagIsAppliedToClient(t *testing.T) {
++	client := &fakeClient{}
++	cmd := NewRootCommand(Options{
++		Out: &bytes.Buffer{}, Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) { return client, nil },
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "--namespace", "payments", "service", "ls"})
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute service ls: %v", err)
++	}
++	if client.namespace != "payments" {
++		t.Fatalf("expected namespace payments, got %q", client.namespace)
++	}
++}
++
+ func TestDeployCommandSendsParsedSpec(t *testing.T) {
+ 	deployPath := filepath.Join(t.TempDir(), "deploy.yaml")
+ 	if err := os.WriteFile(deployPath, []byte(`
+@@ -370,6 +388,7 @@ func TestRolloutStatusResolvesService(t *testing.T) {
+ }
+ 
+ type fakeClient struct {
++	namespace                string
+ 	services                 []types.Service
+ 	created                  types.Service
+ 	scaledID                 string
+@@ -390,6 +409,18 @@ type fakeClient struct {
+ 	endpoints                discovery.ServiceEndpoints
+ }
+ 
++func (f *fakeClient) SetNamespace(namespace string) { f.namespace = namespace }
++
++func (f *fakeClient) CreateNamespace(_ context.Context, name string) (types.Namespace, error) {
++	return types.Namespace{Name: name, CreatedAt: time.Now().UTC()}, nil
++}
++
++func (f *fakeClient) ListNamespaces(context.Context) ([]types.Namespace, error) {
++	return []types.Namespace{{Name: "default", CreatedAt: time.Now().UTC()}}, nil
++}
++
++func (f *fakeClient) DeleteNamespace(context.Context, string) error { return nil }
++
+ func (f *fakeClient) ListNodes(context.Context) ([]types.Node, error) {
+ 	return []types.Node{{ID: "00000000-0000-4000-8000-000000000001", Hostname: "node-1", Status: types.NodeReady}}, nil
+ }
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 6fc5521..adb26fd 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -41,6 +41,7 @@ type AgentConfig struct {
+ type CLIConfig struct {
+ 	ServerURL string `yaml:"server_url" json:"server_url"`
+ 	Token     string `yaml:"token" json:"token"`
++	Namespace string `yaml:"namespace" json:"namespace"`
+ }
+ 
+ type ServerOverrides struct {
+@@ -72,6 +73,7 @@ type AgentOverrides struct {
+ type CLIOverrides struct {
+ 	ServerURL string
+ 	Token     string
++	Namespace string
+ }
+ 
+ func LoadServer() ServerConfig {
+@@ -127,12 +129,21 @@ func LoadCLI(path string, overrides CLIOverrides) (CLIConfig, error) {
+ 	if value := strings.TrimSpace(os.Getenv("ORCH_TOKEN")); value != "" {
+ 		cfg.Token = value
+ 	}
++	if value := strings.TrimSpace(os.Getenv("ORCH_NAMESPACE")); value != "" {
++		cfg.Namespace = value
++	}
+ 	if strings.TrimSpace(overrides.ServerURL) != "" {
+ 		cfg.ServerURL = strings.TrimSpace(overrides.ServerURL)
+ 	}
+ 	if strings.TrimSpace(overrides.Token) != "" {
+ 		cfg.Token = strings.TrimSpace(overrides.Token)
+ 	}
++	if strings.TrimSpace(overrides.Namespace) != "" {
++		cfg.Namespace = strings.TrimSpace(overrides.Namespace)
++	}
++	if strings.TrimSpace(cfg.Namespace) == "" {
++		cfg.Namespace = "default"
++	}
+ 	return cfg, nil
+ }
+ 
+@@ -360,6 +371,19 @@ func applyBool(target *bool, value string) error {
+ 	return nil
+ }
+ 
++func applyInt(target *int, value string) error {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return nil
++	}
++	parsed, err := strconv.Atoi(value)
++	if err != nil {
++		return err
++	}
++	*target = parsed
++	return nil
++}
++
+ func applyCSV(target *[]string, value string) {
+ 	value = strings.TrimSpace(value)
+ 	if value == "" {
+@@ -377,6 +401,12 @@ func applyCSV(target *[]string, value string) {
+ }
+ 
+ func applyClusterPolicyEnv(clusterPolicy *policy.ClusterPolicy) error {
++	if err := applyBool(&clusterPolicy.RequireResourceRequests, os.Getenv("ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.RequireResourceLimits, os.Getenv("ORCH_POLICY_REQUIRE_RESOURCE_LIMITS")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_REQUIRE_RESOURCE_LIMITS: %w", err)
++	}
+ 	if err := applyBool(&clusterPolicy.AllowPrivileged, os.Getenv("ORCH_POLICY_ALLOW_PRIVILEGED")); err != nil {
+ 		return fmt.Errorf("ORCH_POLICY_ALLOW_PRIVILEGED: %w", err)
+ 	}
+@@ -386,12 +416,31 @@ func applyClusterPolicyEnv(clusterPolicy *policy.ClusterPolicy) error {
+ 	if err := applyBool(&clusterPolicy.AllowHostPID, os.Getenv("ORCH_POLICY_ALLOW_HOST_PID")); err != nil {
+ 		return fmt.Errorf("ORCH_POLICY_ALLOW_HOST_PID: %w", err)
+ 	}
++	if err := applyBool(&clusterPolicy.BlockLatestTag, os.Getenv("ORCH_POLICY_BLOCK_LATEST_TAG")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_BLOCK_LATEST_TAG: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.RequireHealthcheck, os.Getenv("ORCH_POLICY_REQUIRE_HEALTHCHECK")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_REQUIRE_HEALTHCHECK: %w", err)
++	}
++	if err := applyInt(&clusterPolicy.MaxReplicasPerService, os.Getenv("ORCH_POLICY_MAX_REPLICAS_PER_SERVICE")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_MAX_REPLICAS_PER_SERVICE: %w", err)
++	}
++	if err := applyInt(&clusterPolicy.MaxPublicPortsPerService, os.Getenv("ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE: %w", err)
++	}
++	applyCSV(&clusterPolicy.AllowedImageRegistries, os.Getenv("ORCH_POLICY_ALLOWED_IMAGE_REGISTRIES"))
+ 	applyCSV(&clusterPolicy.AllowedHostPathPrefixes, os.Getenv("ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES"))
+ 	applyCSV(&clusterPolicy.AllowedCapabilities, os.Getenv("ORCH_POLICY_ALLOWED_CAPABILITIES"))
+ 	return nil
+ }
+ 
+ func mergeClusterPolicy(target *policy.ClusterPolicy, source policy.ClusterPolicy) {
++	if source.RequireResourceRequests {
++		target.RequireResourceRequests = true
++	}
++	if source.RequireResourceLimits {
++		target.RequireResourceLimits = true
++	}
+ 	if source.AllowPrivileged {
+ 		target.AllowPrivileged = true
+ 	}
+@@ -401,6 +450,21 @@ func mergeClusterPolicy(target *policy.ClusterPolicy, source policy.ClusterPolic
+ 	if source.AllowHostPID {
+ 		target.AllowHostPID = true
+ 	}
++	if source.BlockLatestTag {
++		target.BlockLatestTag = true
++	}
++	if source.RequireHealthcheck {
++		target.RequireHealthcheck = true
++	}
++	if source.AllowedImageRegistries != nil {
++		target.AllowedImageRegistries = append([]string(nil), source.AllowedImageRegistries...)
++	}
++	if source.MaxReplicasPerService != 0 {
++		target.MaxReplicasPerService = source.MaxReplicasPerService
++	}
++	if source.MaxPublicPortsPerService != 0 {
++		target.MaxPublicPortsPerService = source.MaxPublicPortsPerService
++	}
+ 	if source.AllowedHostPathPrefixes != nil {
+ 		target.AllowedHostPathPrefixes = append([]string(nil), source.AllowedHostPathPrefixes...)
+ 	}
+@@ -526,6 +590,7 @@ func (cfg CLIConfig) Redacted() map[string]any {
+ 	return map[string]any{
+ 		"server_url": cfg.ServerURL,
+ 		"token":      redact(cfg.Token),
++		"namespace":  cfg.Namespace,
+ 	}
+ }
+ 
+@@ -555,6 +620,9 @@ func (cfg ServerConfig) Validate() error {
+ 	if strings.TrimSpace(cfg.SecretKey) == "" {
+ 		return fmt.Errorf("secret encryption key is required")
+ 	}
++	if cfg.ClusterPolicy.MaxReplicasPerService < 0 || cfg.ClusterPolicy.MaxPublicPortsPerService < 0 {
++		return fmt.Errorf("cluster policy maximums cannot be negative")
++	}
+ 	return nil
+ }
+ 
+diff --git a/internal/controlplane/admission_test.go b/internal/controlplane/admission_test.go
+new file mode 100644
+index 0000000..4f022a0
+--- /dev/null
++++ b/internal/controlplane/admission_test.go
+@@ -0,0 +1,47 @@
++package controlplane
++
++import (
++	"context"
++	"errors"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/admission"
++	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestAdmissionCannotBeBypassedByScaleOrRollout(t *testing.T) {
++	service := NewMemoryService(WithClusterPolicy(policy.ClusterPolicy{
++		MaxReplicasPerService: 2,
++		BlockLatestTag:        true,
++	}))
++	created, err := service.CreateService(context.Background(), types.ServiceSpec{
++		Name: "api", Image: "nginx:1.27", Replicas: 1,
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++
++	if _, err := service.ScaleService(context.Background(), created.ID, 3); err == nil {
++		t.Fatal("expected scale admission rejection")
++	} else {
++		var admissionErr *admission.Error
++		if !errors.As(err, &admissionErr) || admissionErr.Violations[0].Rule != "replicas.maximum" {
++			t.Fatalf("unexpected scale rejection: %v", err)
++		}
++	}
++	if _, err := service.RolloutService(context.Background(), created.ID, RolloutSpec{
++		Image: "nginx:latest", MaxUnavailable: 1, MaxSurge: 1,
++	}); err == nil {
++		t.Fatal("expected rollout admission rejection")
++	}
++
++	logs, err := service.ListAuditLogs(context.Background(), audit.Filter{})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(logs) != 2 || logs[0].Outcome != audit.OutcomeFailure || logs[1].Outcome != audit.OutcomeFailure {
++		t.Fatalf("expected two rejection audit records, got %#v", logs)
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 9ad3132..3f25f71 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -10,8 +10,11 @@ import (
+ 	"sync"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/admission"
+ 	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/internal/policy"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
+@@ -19,6 +22,9 @@ import (
+ )
+ 
+ type Service interface {
++	CreateNamespace(ctx context.Context, name string) (types.Namespace, error)
++	ListNamespaces(ctx context.Context) ([]types.Namespace, error)
++	DeleteNamespace(ctx context.Context, name string) error
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+ 	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
+@@ -154,7 +160,9 @@ type MemoryService struct {
+ 	policy      policy.ClusterPolicy
+ 	events      []types.Event
+ 	auditLogs   []audit.Log
++	namespaces  map[string]types.Namespace
+ 	now         func() time.Time
++	admission   *admission.Controller
+ }
+ 
+ type Option func(*MemoryService)
+@@ -184,6 +192,7 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 		deployments: make(map[types.DeploymentID]types.Deployment),
+ 		secrets:     make(map[string]types.Secret),
+ 		registries:  make(map[string]types.RegistryCredential),
++		namespaces:  make(map[string]types.Namespace),
+ 		envelope:    envelope,
+ 		policy:      policy.DefaultClusterPolicy(),
+ 		now:         now,
+@@ -191,9 +200,95 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 	for _, opt := range opts {
+ 		opt(service)
+ 	}
++	service.namespaces[namespace.Default] = types.Namespace{Name: namespace.Default, CreatedAt: now()}
++	service.admission = admission.New(service)
+ 	return service
+ }
+ 
++func (s *MemoryService) CreateNamespace(ctx context.Context, name string) (types.Namespace, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Namespace{}, err
++	}
++	name = namespace.Normalize(name)
++	if err := namespace.Validate(name); err != nil {
++		return types.Namespace{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if _, exists := s.namespaces[name]; exists {
++		return types.Namespace{}, store.ErrDuplicate
++	}
++	item := types.Namespace{Name: name, CreatedAt: s.now()}
++	s.namespaces[name] = item
++	return item, nil
++}
++
++func (s *MemoryService) ListNamespaces(ctx context.Context) ([]types.Namespace, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	items := make([]types.Namespace, 0, len(s.namespaces))
++	for _, item := range s.namespaces {
++		items = append(items, item)
++	}
++	slices.SortFunc(items, func(a, b types.Namespace) int { return strings.Compare(a.Name, b.Name) })
++	return items, nil
++}
++
++func (s *MemoryService) DeleteNamespace(ctx context.Context, name string) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	name = namespace.Normalize(name)
++	if name == namespace.Default {
++		return fmt.Errorf("%w: default namespace cannot be deleted", store.ErrInvalidState)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if _, exists := s.namespaces[name]; !exists {
++		return store.ErrNotFound
++	}
++	for _, service := range s.services {
++		if service.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, task := range s.tasks {
++		if task.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, deployment := range s.deployments {
++		if deployment.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, secret := range s.secrets {
++		if secret.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, credential := range s.registries {
++		if credential.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, event := range s.events {
++		if event.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	for _, log := range s.auditLogs {
++		if log.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
++	delete(s.namespaces, name)
++	return nil
++}
++
+ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return NodeCommand{}, err
+@@ -418,11 +513,11 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 			continue
+ 		}
+ 		service := s.services[task.ServiceID]
+-		env, err := s.resolveEnvLocked(ctx, service.Spec)
++		env, err := s.resolveEnvLocked(ctx, service.Namespace, service.Spec)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+-		auth, err := s.resolveRegistryAuthLocked(ctx, service.Spec.ImagePullSecret)
++		auth, err := s.resolveRegistryAuthLocked(ctx, service.Namespace, service.Spec.ImagePullSecret)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+@@ -454,10 +549,10 @@ func taskPortsForAgent(task types.Task, service types.Service) []types.Port {
+ 	return append([]types.Port(nil), service.Spec.Ports...)
+ }
+ 
+-func (s *MemoryService) resolveEnvLocked(ctx context.Context, spec types.ServiceSpec) (map[string]string, error) {
++func (s *MemoryService) resolveEnvLocked(ctx context.Context, namespaceName string, spec types.ServiceSpec) (map[string]string, error) {
+ 	env := cloneStringMap(spec.Env)
+ 	for _, ref := range spec.SecretRefs {
+-		secret, ok := s.secrets[strings.TrimSpace(ref.Name)]
++		secret, ok := s.secrets[namespacedKey(namespaceName, ref.Name)]
+ 		if !ok {
+ 			return nil, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
+ 		}
+@@ -487,12 +582,12 @@ func cloneStringMap(values map[string]string) map[string]string {
+ 	return cloned
+ }
+ 
+-func (s *MemoryService) resolveRegistryAuthLocked(ctx context.Context, id string) (*RegistryAuth, error) {
++func (s *MemoryService) resolveRegistryAuthLocked(ctx context.Context, namespaceName string, id string) (*RegistryAuth, error) {
+ 	id = strings.TrimSpace(id)
+ 	if id == "" {
+ 		return nil, nil
+ 	}
+-	credential, ok := s.registries[id]
++	credential, ok := s.registries[namespacedKey(namespaceName, id)]
+ 	if !ok {
+ 		return nil, fmt.Errorf("%w: registry credential %q not found", store.ErrInvalidState, id)
+ 	}
+@@ -680,23 +775,29 @@ func (s *MemoryService) CreateSecret(ctx context.Context, name string, plaintext
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
++	namespaceName := namespace.FromContext(ctx)
++	if _, ok := s.namespaces[namespaceName]; !ok {
++		return types.SecretMetadata{}, store.ErrNotFound
++	}
+ 	now := s.now()
+-	if existing, ok := s.secrets[name]; ok {
++	key := namespacedKey(namespaceName, name)
++	if existing, ok := s.secrets[key]; ok {
+ 		existing.EncryptedValue = append([]byte(nil), ciphertext.Data...)
+ 		existing.KeyID = ciphertext.KeyID
+ 		existing.UpdatedAt = now
+-		s.secrets[name] = existing
++		s.secrets[key] = existing
+ 		return existing.Metadata(), nil
+ 	}
+ 	secret := types.Secret{
+ 		Name:           name,
++		Namespace:      namespaceName,
+ 		EncryptedValue: append([]byte(nil), ciphertext.Data...),
+ 		KeyID:          ciphertext.KeyID,
+ 		CreatedAt:      now,
+ 		UpdatedAt:      now,
+ 	}
+-	s.secrets[name] = secret
+-	s.appendEventLocked(events.TypeSecretCreated, types.EventInfo, "controlplane", "secret created", "secret", "", now)
++	s.secrets[key] = secret
++	s.appendEventLocked(events.TypeSecretCreated, types.EventInfo, "controlplane", "secret created", "secret", key, now)
+ 	return secret.Metadata(), nil
+ }
+ 
+@@ -708,7 +809,11 @@ func (s *MemoryService) ListSecrets(ctx context.Context) ([]types.SecretMetadata
+ 	defer s.mu.RUnlock()
+ 
+ 	items := make([]types.SecretMetadata, 0, len(s.secrets))
++	namespaceName := namespace.FromContext(ctx)
+ 	for _, secret := range s.secrets {
++		if secret.Namespace != namespaceName {
++			continue
++		}
+ 		items = append(items, secret.Metadata())
+ 	}
+ 	slices.SortFunc(items, func(a, b types.SecretMetadata) int {
+@@ -731,7 +836,7 @@ func (s *MemoryService) GetSecret(ctx context.Context, name string) (types.Secre
+ 	s.mu.RLock()
+ 	defer s.mu.RUnlock()
+ 
+-	secret, ok := s.secrets[name]
++	secret, ok := s.secrets[namespacedKey(namespace.FromContext(ctx), name)]
+ 	if !ok {
+ 		return types.SecretMetadata{}, store.ErrNotFound
+ 	}
+@@ -746,11 +851,12 @@ func (s *MemoryService) DeleteSecret(ctx context.Context, name string) error {
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+-	if _, ok := s.secrets[name]; !ok {
++	key := namespacedKey(namespace.FromContext(ctx), name)
++	if _, ok := s.secrets[key]; !ok {
+ 		return store.ErrNotFound
+ 	}
+-	delete(s.secrets, name)
+-	s.appendEventLocked(events.TypeSecretDeleted, types.EventInfo, "controlplane", "secret deleted", "secret", "", s.now())
++	delete(s.secrets, key)
++	s.appendEventLocked(events.TypeSecretDeleted, types.EventInfo, "controlplane", "secret deleted", "secret", key, s.now())
+ 	return nil
+ }
+ 
+@@ -782,17 +888,23 @@ func (s *MemoryService) CreateRegistryCredential(ctx context.Context, spec Regis
+ 	defer s.mu.Unlock()
+ 
+ 	now := s.now()
+-	if existing, ok := s.registries[spec.ID]; ok {
++	namespaceName := namespace.FromContext(ctx)
++	if _, ok := s.namespaces[namespaceName]; !ok {
++		return types.RegistryCredentialMetadata{}, store.ErrNotFound
++	}
++	key := namespacedKey(namespaceName, spec.ID)
++	if existing, ok := s.registries[key]; ok {
+ 		existing.Registry = spec.Registry
+ 		existing.Username = spec.Username
+ 		existing.EncryptedPassword = append([]byte(nil), ciphertext.Data...)
+ 		existing.KeyID = ciphertext.KeyID
+ 		existing.UpdatedAt = now
+-		s.registries[spec.ID] = existing
++		s.registries[key] = existing
+ 		return existing.Metadata(), nil
+ 	}
+ 	credential := types.RegistryCredential{
+ 		ID:                spec.ID,
++		Namespace:         namespaceName,
+ 		Registry:          spec.Registry,
+ 		Username:          spec.Username,
+ 		EncryptedPassword: append([]byte(nil), ciphertext.Data...),
+@@ -800,8 +912,8 @@ func (s *MemoryService) CreateRegistryCredential(ctx context.Context, spec Regis
+ 		CreatedAt:         now,
+ 		UpdatedAt:         now,
+ 	}
+-	s.registries[spec.ID] = credential
+-	s.appendEventLocked(events.TypeRegistryCredCreated, types.EventInfo, "controlplane", "registry credential created", "registry_credential", "", now)
++	s.registries[key] = credential
++	s.appendEventLocked(events.TypeRegistryCredCreated, types.EventInfo, "controlplane", "registry credential created", "registry_credential", key, now)
+ 	return credential.Metadata(), nil
+ }
+ 
+@@ -813,7 +925,11 @@ func (s *MemoryService) ListRegistryCredentials(ctx context.Context) ([]types.Re
+ 	defer s.mu.RUnlock()
+ 
+ 	items := make([]types.RegistryCredentialMetadata, 0, len(s.registries))
++	namespaceName := namespace.FromContext(ctx)
+ 	for _, credential := range s.registries {
++		if credential.Namespace != namespaceName {
++			continue
++		}
+ 		items = append(items, credential.Metadata())
+ 	}
+ 	slices.SortFunc(items, func(a, b types.RegistryCredentialMetadata) int {
+@@ -836,11 +952,12 @@ func (s *MemoryService) DeleteRegistryCredential(ctx context.Context, id string)
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+-	if _, ok := s.registries[id]; !ok {
++	key := namespacedKey(namespace.FromContext(ctx), id)
++	if _, ok := s.registries[key]; !ok {
+ 		return store.ErrNotFound
+ 	}
+-	delete(s.registries, id)
+-	s.appendEventLocked(events.TypeRegistryCredDeleted, types.EventInfo, "controlplane", "registry credential deleted", "registry_credential", "", s.now())
++	delete(s.registries, key)
++	s.appendEventLocked(events.TypeRegistryCredDeleted, types.EventInfo, "controlplane", "registry credential deleted", "registry_credential", key, s.now())
+ 	return nil
+ }
+ 
+@@ -848,6 +965,16 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Service{}, err
+ 	}
++	if err := spec.Validate(); err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	namespaceName := namespace.FromContext(ctx)
++	if err := s.admission.Admit(ctx, admission.Request{
++		Actor: admissionActor(ctx), Operation: admission.OperationCreate,
++		Namespace: namespaceName, Spec: spec, Policy: s.policy,
++	}); err != nil {
++		return types.Service{}, err
++	}
+ 	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
+ 	if err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+@@ -856,25 +983,24 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
+-	if err := s.policy.ValidateServiceSpec(spec); err != nil {
+-		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+-	}
+-
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
++	if _, ok := s.namespaces[namespaceName]; !ok {
++		return types.Service{}, store.ErrNotFound
++	}
+ 	for _, service := range s.services {
+-		if service.Spec.Name == spec.Name {
++		if service.Namespace == namespaceName && service.Spec.Name == spec.Name {
+ 			return types.Service{}, store.ErrDuplicate
+ 		}
+ 	}
+ 	for _, ref := range spec.SecretRefs {
+-		if _, ok := s.secrets[strings.TrimSpace(ref.Name)]; !ok {
++		if _, ok := s.secrets[namespacedKey(namespaceName, ref.Name)]; !ok {
+ 			return types.Service{}, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
+ 		}
+ 	}
+ 	if imagePullSecret := strings.TrimSpace(spec.ImagePullSecret); imagePullSecret != "" {
+-		if _, ok := s.registries[imagePullSecret]; !ok {
++		if _, ok := s.registries[namespacedKey(namespaceName, imagePullSecret)]; !ok {
+ 			return types.Service{}, fmt.Errorf("%w: registry credential %q not found", store.ErrInvalidState, imagePullSecret)
+ 		}
+ 		spec.ImagePullSecret = imagePullSecret
+@@ -883,6 +1009,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	now := s.now()
+ 	service := types.Service{
+ 		ID:                types.ServiceID(newUUID()),
++		Namespace:         namespaceName,
+ 		Spec:              spec,
+ 		Status:            types.ServiceActive,
+ 		DeploymentVersion: 1,
+@@ -905,6 +1032,9 @@ func (s *MemoryService) ListServices(ctx context.Context) ([]types.Service, erro
+ 
+ 	services := make([]types.Service, 0, len(s.services))
+ 	for _, service := range s.services {
++		if !namespace.Matches(ctx, service.Namespace) {
++			continue
++		}
+ 		services = append(services, service)
+ 	}
+ 	slices.SortFunc(services, func(a, b types.Service) int {
+@@ -927,7 +1057,7 @@ func (s *MemoryService) GetService(ctx context.Context, id types.ServiceID) (typ
+ 	defer s.mu.RUnlock()
+ 
+ 	service, ok := s.services[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return types.Service{}, store.ErrNotFound
+ 	}
+ 	return service, nil
+@@ -941,7 +1071,7 @@ func (s *MemoryService) DeleteService(ctx context.Context, id types.ServiceID) e
+ 	defer s.mu.Unlock()
+ 
+ 	service, ok := s.services[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return store.ErrNotFound
+ 	}
+ 	if service.Status == types.ServiceDeleted || service.Status == types.ServiceDeleting {
+@@ -980,11 +1110,26 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 		return types.Service{}, fmt.Errorf("%w: replicas cannot be negative", store.ErrInvalidState)
+ 	}
+ 
++	s.mu.RLock()
++	service, ok := s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
++		s.mu.RUnlock()
++		return types.Service{}, store.ErrNotFound
++	}
++	s.mu.RUnlock()
++	candidate := service.Spec
++	candidate.Replicas = replicas
++	if err := s.admission.Admit(ctx, admission.Request{
++		Actor: admissionActor(ctx), Operation: admission.OperationScale,
++		Namespace: service.Namespace, Spec: candidate, Policy: s.policy,
++	}); err != nil {
++		return types.Service{}, err
++	}
++
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+-
+-	service, ok := s.services[id]
+-	if !ok {
++	service, ok = s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return types.Service{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+@@ -993,7 +1138,9 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 	if active := s.activeDeploymentLocked(id); active.ID != "" {
+ 		return types.Service{}, operationConflict(string(operationForDeployment(active)))
+ 	}
+-	service.Spec.Replicas = replicas
++	candidate = service.Spec
++	candidate.Replicas = replicas
++	service.Spec = candidate
+ 	service.UpdatedAt = s.now()
+ 	s.services[id] = service
+ 	s.reconcileServiceTasksLocked(service, service.UpdatedAt)
+@@ -1019,11 +1166,26 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 		return types.Deployment{}, fmt.Errorf("%w: maxUnavailable and maxSurge cannot both be zero", store.ErrInvalidState)
+ 	}
+ 
++	s.mu.RLock()
++	service, ok := s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
++		s.mu.RUnlock()
++		return types.Deployment{}, store.ErrNotFound
++	}
++	s.mu.RUnlock()
++	candidate := service.Spec
++	candidate.Image = spec.Image
++	if err := s.admission.Admit(ctx, admission.Request{
++		Actor: admissionActor(ctx), Operation: admission.OperationRollout,
++		Namespace: service.Namespace, Spec: candidate, Policy: s.policy,
++	}); err != nil {
++		return types.Deployment{}, err
++	}
++
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+-
+-	service, ok := s.services[id]
+-	if !ok {
++	service, ok = s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+@@ -1048,6 +1210,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 
+ 	deployment := types.Deployment{
+ 		ID:             types.DeploymentID(newUUID()),
++		Namespace:      service.Namespace,
+ 		ServiceID:      id,
+ 		FromVersion:    fromVersion,
+ 		ToVersion:      service.DeploymentVersion,
+@@ -1071,7 +1234,7 @@ func (s *MemoryService) GetDeployment(ctx context.Context, id types.DeploymentID
+ 	defer s.mu.RUnlock()
+ 
+ 	deployment, ok := s.deployments[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, deployment.Namespace) {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	return deployment, nil
+@@ -1084,7 +1247,8 @@ func (s *MemoryService) GetServiceRollout(ctx context.Context, id types.ServiceI
+ 	s.mu.RLock()
+ 	defer s.mu.RUnlock()
+ 
+-	if _, ok := s.services[id]; !ok {
++	service, ok := s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	var latest types.Deployment
+@@ -1111,7 +1275,7 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 	defer s.mu.Unlock()
+ 
+ 	service, ok := s.services[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	if service.Status != "" && service.Status != types.ServiceActive {
+@@ -1137,6 +1301,7 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 
+ 	deployment := types.Deployment{
+ 		ID:             types.DeploymentID(newUUID()),
++		Namespace:      service.Namespace,
+ 		ServiceID:      id,
+ 		FromVersion:    fromVersion,
+ 		ToVersion:      targetVersion,
+@@ -1162,6 +1327,9 @@ func (s *MemoryService) ListTasks(ctx context.Context, filter TaskFilter) ([]typ
+ 
+ 	tasks := make([]types.Task, 0, len(s.tasks))
+ 	for _, task := range s.tasks {
++		if !namespace.Matches(ctx, task.Namespace) {
++			continue
++		}
+ 		if filter.ServiceID != "" && task.ServiceID != filter.ServiceID {
+ 			continue
+ 		}
+@@ -1184,7 +1352,7 @@ func (s *MemoryService) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ 	defer s.mu.RUnlock()
+ 
+ 	task, ok := s.tasks[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, task.Namespace) {
+ 		return types.Task{}, store.ErrNotFound
+ 	}
+ 	return task, nil
+@@ -1213,6 +1381,9 @@ func (s *MemoryService) CreateTask(ctx context.Context, task types.Task) (types.
+ 	if _, ok := s.services[task.ServiceID]; !ok {
+ 		return types.Task{}, store.ErrNotFound
+ 	}
++	if task.Namespace == "" {
++		task.Namespace = s.services[task.ServiceID].Namespace
++	}
+ 	now := s.now()
+ 	if task.ID == "" {
+ 		task.ID = types.TaskID(newUUID())
+@@ -1290,7 +1461,7 @@ func (s *MemoryService) ListDeploymentsByStatus(ctx context.Context, status type
+ 
+ 	deployments := make([]types.Deployment, 0)
+ 	for _, deployment := range s.deployments {
+-		if deployment.Status == status {
++		if deployment.Status == status && namespace.Matches(ctx, deployment.Namespace) {
+ 			deployments = append(deployments, deployment)
+ 		}
+ 	}
+@@ -1320,7 +1491,7 @@ func (s *MemoryService) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 	defer s.mu.Unlock()
+ 
+ 	deployment, ok := s.deployments[id]
+-	if !ok {
++	if !ok || !namespace.Matches(ctx, deployment.Namespace) {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	if !expectedUpdatedAt.IsZero() && !deployment.UpdatedAt.Equal(expectedUpdatedAt) {
+@@ -1354,6 +1525,9 @@ func (s *MemoryService) AppendEvent(ctx context.Context, event types.Event) (typ
+ 	if event.ID == "" {
+ 		event.ID = types.EventID(newUUID())
+ 	}
++	if event.Namespace == "" {
++		event.Namespace = namespace.FromContext(ctx)
++	}
+ 	if event.Timestamp.IsZero() {
+ 		event.Timestamp = s.now()
+ 	}
+@@ -1380,6 +1554,9 @@ func (s *MemoryService) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	events := make([]types.Event, 0, len(s.events))
+ 	for i := len(s.events) - 1; i >= 0; i-- {
+ 		event := s.events[i]
++		if !namespace.Matches(ctx, event.Namespace) || (filter.Namespace != "" && event.Namespace != namespace.Normalize(filter.Namespace)) {
++			continue
++		}
+ 		if filter.ServiceID != "" && (event.RelatedObjectType != "service" || event.RelatedObjectID != string(filter.ServiceID)) {
+ 			continue
+ 		}
+@@ -1414,6 +1591,9 @@ func (s *MemoryService) AppendAuditLog(ctx context.Context, log audit.Log) (audi
+ 	defer s.mu.Unlock()
+ 
+ 	log = audit.Normalize(log, s.now())
++	if log.Namespace == "" {
++		log.Namespace = namespace.FromContext(ctx)
++	}
+ 	if log.ID == "" {
+ 		log.ID = newUUID()
+ 	}
+@@ -1436,6 +1616,9 @@ func (s *MemoryService) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ 	logs := make([]audit.Log, 0, len(s.auditLogs))
+ 	for i := len(s.auditLogs) - 1; i >= 0; i-- {
+ 		log := s.auditLogs[i]
++		if !namespace.Matches(ctx, log.Namespace) || (filter.Namespace != "" && log.Namespace != namespace.Normalize(filter.Namespace)) {
++			continue
++		}
+ 		if filter.ActorType != "" && log.ActorType != filter.ActorType {
+ 			continue
+ 		}
+@@ -1529,6 +1712,7 @@ func upsertTaskCondition(conditions []types.TaskCondition, condition types.TaskC
+ func (s *MemoryService) appendEventLocked(eventType string, severity types.EventSeverity, source string, message string, objectType string, objectID string, timestamp time.Time) {
+ 	s.events = append(s.events, types.Event{
+ 		ID:                types.EventID(newUUID()),
++		Namespace:         s.namespaceForObjectLocked(objectType, objectID),
+ 		Type:              eventType,
+ 		Severity:          severity,
+ 		Source:            source,
+@@ -1539,6 +1723,56 @@ func (s *MemoryService) appendEventLocked(eventType string, severity types.Event
+ 	})
+ }
+ 
++func (s *MemoryService) namespaceForObjectLocked(objectType string, objectID string) string {
++	switch objectType {
++	case "service":
++		return s.services[types.ServiceID(objectID)].Namespace
++	case "task":
++		return s.tasks[types.TaskID(objectID)].Namespace
++	case "deployment", "rollout":
++		return s.deployments[types.DeploymentID(objectID)].Namespace
++	case "secret", "registry_credential":
++		if namespaceName, _, ok := strings.Cut(objectID, "\x00"); ok {
++			return namespaceName
++		}
++	}
++	return namespace.Default
++}
++
++func namespacedKey(namespaceName string, name string) string {
++	return namespace.Normalize(namespaceName) + "\x00" + strings.TrimSpace(name)
++}
++
++func admissionActor(ctx context.Context) admission.Actor {
++	principal, ok := auth.PrincipalFromContext(ctx)
++	if !ok {
++		return admission.Actor{ID: "system", Role: "system"}
++	}
++	role, _ := principal.RoleForNamespace(namespace.FromContext(ctx))
++	return admission.Actor{ID: principal.Subject, Role: string(role)}
++}
++
++func (s *MemoryService) RecordAdmissionRejection(_ context.Context, rejection admission.Rejection) {
++	rules := make([]string, 0, len(rejection.Violations))
++	for _, violation := range rejection.Violations {
++		rules = append(rules, violation.Rule)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	log := audit.Normalize(audit.Log{
++		Namespace:  rejection.Namespace,
++		ActorType:  audit.ActorUser,
++		ActorID:    rejection.Actor.ID,
++		Action:     "admission." + string(rejection.Operation),
++		TargetType: "service",
++		TargetID:   rejection.Service,
++		Outcome:    audit.OutcomeFailure,
++		Metadata:   map[string]string{"rules": strings.Join(rules, ",")},
++	}, s.now())
++	log.ID = newUUID()
++	s.auditLogs = append(s.auditLogs, log)
++}
++
+ func directivesForNode(node types.Node) []AgentDirective {
+ 	switch node.Status {
+ 	case types.NodeDraining:
+@@ -1606,6 +1840,7 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 		node := nodes[len(active)%len(nodes)]
+ 		task := types.Task{
+ 			ID:            types.TaskID(newUUID()),
++			Namespace:     service.Namespace,
+ 			ServiceID:     service.ID,
+ 			NodeID:        node.ID,
+ 			DesiredStatus: types.TaskRunning,
+@@ -1684,6 +1919,7 @@ func (s *MemoryService) reconcileNodeDrainLocked(nodeID types.NodeID, timestamp
+ 			node := readyNodes[len(offNodeActive)%len(readyNodes)]
+ 			task := types.Task{
+ 				ID:            types.TaskID(newUUID()),
++				Namespace:     service.Namespace,
+ 				ServiceID:     service.ID,
+ 				NodeID:        node.ID,
+ 				DesiredStatus: types.TaskRunning,
+diff --git a/internal/controlplane/namespace_test.go b/internal/controlplane/namespace_test.go
+new file mode 100644
+index 0000000..ef3b128
+--- /dev/null
++++ b/internal/controlplane/namespace_test.go
+@@ -0,0 +1,62 @@
++package controlplane
++
++import (
++	"context"
++	"errors"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestNamespaceIsolationAndDuplicateNames(t *testing.T) {
++	service := NewMemoryService()
++	for _, name := range []string{"team-a", "team-b"} {
++		if _, err := service.CreateNamespace(context.Background(), name); err != nil {
++			t.Fatalf("create namespace %s: %v", name, err)
++		}
++	}
++	spec := types.ServiceSpec{Name: "api", Image: "nginx:1.27", Replicas: 0}
++	aCtx := namespace.WithContext(context.Background(), "team-a")
++	bCtx := namespace.WithContext(context.Background(), "team-b")
++	aService, err := service.CreateService(aCtx, spec)
++	if err != nil {
++		t.Fatalf("create team-a service: %v", err)
++	}
++	bService, err := service.CreateService(bCtx, spec)
++	if err != nil {
++		t.Fatalf("same service name should be allowed in team-b: %v", err)
++	}
++	if aService.ID == bService.ID || aService.Namespace != "team-a" || bService.Namespace != "team-b" {
++		t.Fatalf("unexpected namespace services: %#v %#v", aService, bService)
++	}
++	items, err := service.ListServices(aCtx)
++	if err != nil || len(items) != 1 || items[0].ID != aService.ID {
++		t.Fatalf("team-a list leaked namespace: items=%#v err=%v", items, err)
++	}
++	if _, err := service.GetService(aCtx, bService.ID); !errors.Is(err, store.ErrNotFound) {
++		t.Fatalf("cross-namespace read should look not found, got %v", err)
++	}
++}
++
++func TestSecretReferencesCannotCrossNamespace(t *testing.T) {
++	service := NewMemoryService()
++	for _, name := range []string{"team-a", "team-b"} {
++		if _, err := service.CreateNamespace(context.Background(), name); err != nil {
++			t.Fatal(err)
++		}
++	}
++	aCtx := namespace.WithContext(context.Background(), "team-a")
++	bCtx := namespace.WithContext(context.Background(), "team-b")
++	if _, err := service.CreateSecret(aCtx, "database", "secret"); err != nil {
++		t.Fatalf("create secret: %v", err)
++	}
++	_, err := service.CreateService(bCtx, types.ServiceSpec{
++		Name: "api", Image: "nginx:1.27", Replicas: 0,
++		SecretRefs: []types.SecretRef{{Name: "database", Env: "DATABASE_URL"}},
++	})
++	if !errors.Is(err, store.ErrInvalidState) {
++		t.Fatalf("expected cross-namespace secret reference rejection, got %v", err)
++	}
++}
+diff --git a/internal/events/events.go b/internal/events/events.go
+index 6bac976..01d3c5b 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -47,6 +47,7 @@ const (
+ type Event = types.Event
+ 
+ type Filter struct {
++	Namespace string
+ 	ServiceID types.ServiceID
+ 	TaskID    types.TaskID
+ 	NodeID    types.NodeID
+diff --git a/internal/namespace/context.go b/internal/namespace/context.go
+new file mode 100644
+index 0000000..a67036a
+--- /dev/null
++++ b/internal/namespace/context.go
+@@ -0,0 +1,55 @@
++package namespace
++
++import (
++	"context"
++	"fmt"
++	"regexp"
++	"strings"
++)
++
++const Default = "default"
++
++var namePattern = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$`)
++
++type contextKey struct{}
++
++func Normalize(name string) string {
++	name = strings.ToLower(strings.TrimSpace(name))
++	if name == "" {
++		return Default
++	}
++	return name
++}
++
++func Validate(name string) error {
++	name = Normalize(name)
++	if !namePattern.MatchString(name) {
++		return fmt.Errorf("namespace must contain 1-63 lowercase alphanumeric characters or hyphens")
++	}
++	return nil
++}
++
++func WithContext(ctx context.Context, name string) context.Context {
++	return context.WithValue(ctx, contextKey{}, Normalize(name))
++}
++
++func FromContext(ctx context.Context) string {
++	if ctx == nil {
++		return Default
++	}
++	name, _ := ctx.Value(contextKey{}).(string)
++	return Normalize(name)
++}
++
++func Selected(ctx context.Context) (string, bool) {
++	if ctx == nil {
++		return Default, false
++	}
++	name, ok := ctx.Value(contextKey{}).(string)
++	return Normalize(name), ok
++}
++
++func Matches(ctx context.Context, objectNamespace string) bool {
++	selected, explicit := Selected(ctx)
++	return !explicit || selected == Normalize(objectNamespace)
++}
+diff --git a/internal/policy/policy.go b/internal/policy/policy.go
+index 7fb2ab0..29d9a93 100644
+--- a/internal/policy/policy.go
++++ b/internal/policy/policy.go
+@@ -10,11 +10,18 @@ import (
+ )
+ 
+ type ClusterPolicy struct {
+-	AllowPrivileged         bool     `json:"allow_privileged" yaml:"allow_privileged"`
+-	AllowHostNetwork        bool     `json:"allow_host_network" yaml:"allow_host_network"`
+-	AllowHostPID            bool     `json:"allow_host_pid" yaml:"allow_host_pid"`
+-	AllowedHostPathPrefixes []string `json:"allowed_host_path_prefixes,omitempty" yaml:"allowed_host_path_prefixes"`
+-	AllowedCapabilities     []string `json:"allowed_capabilities,omitempty" yaml:"allowed_capabilities"`
++	RequireResourceRequests  bool     `json:"require_resource_requests" yaml:"require_resource_requests"`
++	RequireResourceLimits    bool     `json:"require_resource_limits" yaml:"require_resource_limits"`
++	AllowPrivileged          bool     `json:"allow_privileged" yaml:"allow_privileged"`
++	AllowHostNetwork         bool     `json:"allow_host_network" yaml:"allow_host_network"`
++	AllowHostPID             bool     `json:"allow_host_pid" yaml:"allow_host_pid"`
++	AllowedImageRegistries   []string `json:"allowed_image_registries,omitempty" yaml:"allowed_image_registries"`
++	BlockLatestTag           bool     `json:"block_latest_tag" yaml:"block_latest_tag"`
++	RequireHealthcheck       bool     `json:"require_healthcheck" yaml:"require_healthcheck"`
++	AllowedHostPathPrefixes  []string `json:"allowed_host_path_prefixes,omitempty" yaml:"allowed_host_path_prefixes"`
++	AllowedCapabilities      []string `json:"allowed_capabilities,omitempty" yaml:"allowed_capabilities"`
++	MaxReplicasPerService    int      `json:"max_replicas_per_service,omitempty" yaml:"max_replicas_per_service"`
++	MaxPublicPortsPerService int      `json:"max_public_ports_per_service,omitempty" yaml:"max_public_ports_per_service"`
+ }
+ 
+ func DefaultClusterPolicy() ClusterPolicy {
+@@ -76,13 +83,22 @@ func (policy ClusterPolicy) hostPathAllowed(path string) bool {
+ func (policy ClusterPolicy) Redacted() map[string]any {
+ 	prefixes := append([]string(nil), policy.AllowedHostPathPrefixes...)
+ 	capabilities := append([]string(nil), policy.AllowedCapabilities...)
++	registries := append([]string(nil), policy.AllowedImageRegistries...)
+ 	slices.Sort(prefixes)
+ 	slices.Sort(capabilities)
++	slices.Sort(registries)
+ 	return map[string]any{
+-		"allow_privileged":           policy.AllowPrivileged,
+-		"allow_host_network":         policy.AllowHostNetwork,
+-		"allow_host_pid":             policy.AllowHostPID,
+-		"allowed_host_path_prefixes": prefixes,
+-		"allowed_capabilities":       capabilities,
++		"require_resource_requests":    policy.RequireResourceRequests,
++		"require_resource_limits":      policy.RequireResourceLimits,
++		"allow_privileged":             policy.AllowPrivileged,
++		"allow_host_network":           policy.AllowHostNetwork,
++		"allow_host_pid":               policy.AllowHostPID,
++		"allowed_image_registries":     registries,
++		"block_latest_tag":             policy.BlockLatestTag,
++		"require_healthcheck":          policy.RequireHealthcheck,
++		"allowed_host_path_prefixes":   prefixes,
++		"allowed_capabilities":         capabilities,
++		"max_replicas_per_service":     policy.MaxReplicasPerService,
++		"max_public_ports_per_service": policy.MaxPublicPortsPerService,
+ 	}
+ }
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 7232a24..9190fbe 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -270,6 +270,7 @@ func (r *Reconciler) reconcileDeletingService(ctx context.Context, service types
+ 				return err
+ 			}
+ 			return events.Emit(txCtx, tx, types.Event{
++				Namespace:         updated.Namespace,
+ 				Type:              events.TypeServiceDeleted,
+ 				Severity:          types.EventInfo,
+ 				Source:            "reconciler",
+@@ -396,6 +397,7 @@ func (r *Reconciler) reconcileDeletedServices(ctx context.Context, activeService
+ 
+ func (r *Reconciler) createTask(ctx context.Context, service types.Service, reason string) error {
+ 	task := types.Task{
++		Namespace:     service.Namespace,
+ 		ServiceID:     service.ID,
+ 		DesiredStatus: types.TaskRunning,
+ 		ActualStatus:  types.TaskPending,
+@@ -409,6 +411,7 @@ func (r *Reconciler) createTask(ctx context.Context, service types.Service, reas
+ 			return err
+ 		}
+ 		return events.Emit(txCtx, tx, types.Event{
++			Namespace:         service.Namespace,
+ 			Type:              events.TypeReconcilerTaskCreated,
+ 			Severity:          types.EventInfo,
+ 			Source:            "reconciler",
+@@ -436,6 +439,7 @@ func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason strin
+ 			return err
+ 		}
+ 		if err := events.Emit(txCtx, tx, types.Event{
++			Namespace:         task.Namespace,
+ 			Type:              events.TypeReconcilerTaskStopped,
+ 			Severity:          types.EventInfo,
+ 			Source:            "reconciler",
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index c230169..ea1b9c8 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -166,6 +166,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D
+ 	state.totalActive -= stopped
+ 	if stopped > 0 || created > 0 {
+ 		_ = events.Emit(ctx, c.store, types.Event{
++			Namespace:         service.Namespace,
+ 			Type:              events.TypeRolloutAdvanced,
+ 			Severity:          types.EventInfo,
+ 			Source:            "rollout",
+@@ -193,6 +194,7 @@ func (c *Controller) createNewTasks(ctx context.Context, deployment types.Deploy
+ 		var task types.Task
+ 		err := store.WithTx(ctx, c.store, func(txCtx context.Context, tx Store) error {
+ 			createdTask, err := tx.CreateTask(txCtx, types.Task{
++				Namespace:     service.Namespace,
+ 				ServiceID:     service.ID,
+ 				DesiredStatus: types.TaskRunning,
+ 				ActualStatus:  types.TaskPending,
+@@ -203,6 +205,7 @@ func (c *Controller) createNewTasks(ctx context.Context, deployment types.Deploy
+ 				return err
+ 			}
+ 			if err := events.Emit(txCtx, tx, types.Event{
++				Namespace:         service.Namespace,
+ 				Type:              events.TypeRolloutTaskCreated,
+ 				Severity:          types.EventInfo,
+ 				Source:            "rollout",
+@@ -249,6 +252,7 @@ func (c *Controller) stopOldTasks(ctx context.Context, deployment types.Deployme
+ 				return err
+ 			}
+ 			return events.Emit(txCtx, tx, types.Event{
++				Namespace:         task.Namespace,
+ 				Type:              events.TypeRolloutTaskStopped,
+ 				Severity:          types.EventInfo,
+ 				Source:            "rollout",
+@@ -279,6 +283,7 @@ func (c *Controller) setStatus(ctx context.Context, deployment types.Deployment,
+ 			return err
+ 		}
+ 		return events.Emit(txCtx, tx, types.Event{
++			Namespace:         updated.Namespace,
+ 			Type:              events.TypeRolloutStatusChanged,
+ 			Severity:          severity,
+ 			Source:            "rollout",
+@@ -319,6 +324,7 @@ func (c *Controller) emitControllerError(ctx context.Context, deployment types.D
+ 		"error", apperrors.MessageOf(err),
+ 	)
+ 	_ = events.Emit(ctx, c.store, types.Event{
++		Namespace:         deployment.Namespace,
+ 		Type:              events.TypeControllerError,
+ 		Severity:          types.EventError,
+ 		Source:            "rollout",
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index c8ef49e..67f43d5 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -182,6 +182,7 @@ func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assi
+ 			options = append(options, events.Strict())
+ 		}
+ 		if err := events.Emit(txCtx, tx, types.Event{
++			Namespace:         task.Namespace,
+ 			Type:              events.TypeTaskAssigned,
+ 			Severity:          types.EventInfo,
+ 			Source:            "scheduler",
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 032be73..4b2c8c4 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -11,6 +11,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/jackc/pgx/v5"
+ 	"github.com/jackc/pgx/v5/pgconn"
+@@ -80,6 +81,56 @@ func (s *postgresStore) withTx(ctx context.Context, fn func(*postgresStore) erro
+ 	return mapPostgresError(tx.Commit(ctx))
+ }
+ 
++func (s *postgresStore) CreateNamespace(ctx context.Context, name string) (types.Namespace, error) {
++	name = namespace.Normalize(name)
++	if err := namespace.Validate(name); err != nil {
++		return types.Namespace{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++	var item types.Namespace
++	err := s.db.QueryRow(ctx, `
++		INSERT INTO namespaces (name) VALUES ($1)
++		RETURNING name, created_at`, name,
++	).Scan(&item.Name, &item.CreatedAt)
++	if err != nil {
++		return types.Namespace{}, mapPostgresError(err)
++	}
++	item.CreatedAt = item.CreatedAt.UTC()
++	return item, nil
++}
++
++func (s *postgresStore) ListNamespaces(ctx context.Context) ([]types.Namespace, error) {
++	rows, err := s.db.Query(ctx, `SELECT name, created_at FROM namespaces ORDER BY name`)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++	items := make([]types.Namespace, 0)
++	for rows.Next() {
++		var item types.Namespace
++		if err := rows.Scan(&item.Name, &item.CreatedAt); err != nil {
++			return nil, mapPostgresError(err)
++		}
++		item.CreatedAt = item.CreatedAt.UTC()
++		items = append(items, item)
++	}
++	return items, mapPostgresError(rows.Err())
++}
++
++func (s *postgresStore) DeleteNamespace(ctx context.Context, name string) error {
++	name = namespace.Normalize(name)
++	if name == namespace.Default {
++		return fmt.Errorf("%w: default namespace cannot be deleted", ErrInvalidState)
++	}
++	tag, err := s.db.Exec(ctx, `DELETE FROM namespaces WHERE name = $1`, name)
++	if err != nil {
++		return mapPostgresError(err)
++	}
++	if tag.RowsAffected() == 0 {
++		return ErrNotFound
++	}
++	return nil
++}
++
+ func (s *postgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (types.Node, error) {
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Node{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+@@ -235,7 +286,7 @@ func (s *postgresStore) CreateService(ctx context.Context, spec types.ServiceSpe
+ 
+ 	var service types.Service
+ 	err = s.withTx(ctx, func(tx *postgresStore) error {
+-		created, err := insertService(ctx, tx.db, spec)
++		created, err := insertService(ctx, tx.db, namespace.FromContext(ctx), spec)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -252,7 +303,7 @@ func (s *postgresStore) CreateService(ctx context.Context, spec types.ServiceSpe
+ }
+ 
+ func (s *postgresStore) GetService(ctx context.Context, id types.ServiceID) (types.Service, error) {
+-	row := s.db.QueryRow(ctx, serviceSelectSQL()+` WHERE id = $1`, string(id))
++	row := s.db.QueryRow(ctx, serviceSelectSQL()+` WHERE id = $1 AND namespace = $2`, string(id), namespace.FromContext(ctx))
+ 	service, err := scanService(row)
+ 	if err != nil {
+ 		return types.Service{}, mapPostgresError(err)
+@@ -261,7 +312,7 @@ func (s *postgresStore) GetService(ctx context.Context, id types.ServiceID) (typ
+ }
+ 
+ func (s *postgresStore) ListServices(ctx context.Context) ([]types.Service, error) {
+-	rows, err := s.db.Query(ctx, serviceSelectSQL()+` ORDER BY name, id`)
++	rows, err := s.db.Query(ctx, serviceSelectSQL()+` WHERE namespace = $1 ORDER BY name, id`, namespace.FromContext(ctx))
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -293,7 +344,7 @@ func (s *postgresStore) UpdateService(ctx context.Context, id types.ServiceID, s
+ 
+ 	var service types.Service
+ 	err = s.withTx(ctx, func(tx *postgresStore) error {
+-		updated, err := updateService(ctx, tx.db, id, spec, expectedUpdatedAt)
++		updated, err := updateService(ctx, tx.db, namespace.FromContext(ctx), id, spec, expectedUpdatedAt)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -322,13 +373,14 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 		SET status = $2,
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+-		WHERE id = $1 AND updated_at = $3
+-		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++		WHERE id = $1 AND updated_at = $3 AND namespace = $4
++		RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		string(status),
+ 		expectedUpdatedAt.UTC(),
++		namespace.FromContext(ctx),
+ 	)
+ 	service, err := scanService(row)
+ 	if err != nil {
+@@ -341,6 +393,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ }
+ 
+ func (s *postgresStore) CreateSecret(ctx context.Context, secret types.Secret) (types.Secret, error) {
++	secret.Namespace = namespace.FromContext(ctx)
+ 	secret.Name = strings.TrimSpace(secret.Name)
+ 	if secret.Name == "" {
+ 		return types.Secret{}, fmt.Errorf("%w: secret name is required", ErrInvalidState)
+@@ -352,13 +405,14 @@ func (s *postgresStore) CreateSecret(ctx context.Context, secret types.Secret) (
+ 		return types.Secret{}, fmt.Errorf("%w: secret key id is required", ErrInvalidState)
+ 	}
+ 	row := s.db.QueryRow(ctx, `
+-		INSERT INTO secrets (name, encrypted_value, key_id)
+-		VALUES ($1, $2, $3)
+-		ON CONFLICT (name) DO UPDATE
++		INSERT INTO secrets (namespace, name, encrypted_value, key_id)
++		VALUES ($1, $2, $3, $4)
++		ON CONFLICT (namespace, name) DO UPDATE
+ 		SET encrypted_value = EXCLUDED.encrypted_value,
+ 			key_id = EXCLUDED.key_id,
+ 			updated_at = timezone('utc', now())
+-		RETURNING name, encrypted_value, key_id, created_at, updated_at`,
++		RETURNING namespace, name, encrypted_value, key_id, created_at, updated_at`,
++		secret.Namespace,
+ 		secret.Name,
+ 		secret.EncryptedValue,
+ 		secret.KeyID,
+@@ -372,10 +426,10 @@ func (s *postgresStore) CreateSecret(ctx context.Context, secret types.Secret) (
+ 
+ func (s *postgresStore) GetSecret(ctx context.Context, name string) (types.Secret, error) {
+ 	row := s.db.QueryRow(ctx, `
+-		SELECT name, encrypted_value, key_id, created_at, updated_at
++		SELECT namespace, name, encrypted_value, key_id, created_at, updated_at
+ 		FROM secrets
+-		WHERE name = $1`,
+-		strings.TrimSpace(name),
++		WHERE namespace = $1 AND name = $2`,
++		namespace.FromContext(ctx), strings.TrimSpace(name),
+ 	)
+ 	secret, err := scanSecret(row)
+ 	if err != nil {
+@@ -386,9 +440,9 @@ func (s *postgresStore) GetSecret(ctx context.Context, name string) (types.Secre
+ 
+ func (s *postgresStore) ListSecrets(ctx context.Context) ([]types.Secret, error) {
+ 	rows, err := s.db.Query(ctx, `
+-		SELECT name, encrypted_value, key_id, created_at, updated_at
++		SELECT namespace, name, encrypted_value, key_id, created_at, updated_at
+ 		FROM secrets
+-		ORDER BY name`)
++		WHERE namespace = $1 ORDER BY name`, namespace.FromContext(ctx))
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -409,7 +463,7 @@ func (s *postgresStore) ListSecrets(ctx context.Context) ([]types.Secret, error)
+ }
+ 
+ func (s *postgresStore) DeleteSecret(ctx context.Context, name string) error {
+-	tag, err := s.db.Exec(ctx, `DELETE FROM secrets WHERE name = $1`, strings.TrimSpace(name))
++	tag, err := s.db.Exec(ctx, `DELETE FROM secrets WHERE namespace = $1 AND name = $2`, namespace.FromContext(ctx), strings.TrimSpace(name))
+ 	if err != nil {
+ 		return mapPostgresError(err)
+ 	}
+@@ -420,6 +474,7 @@ func (s *postgresStore) DeleteSecret(ctx context.Context, name string) error {
+ }
+ 
+ func (s *postgresStore) CreateRegistryCredential(ctx context.Context, credential types.RegistryCredential) (types.RegistryCredential, error) {
++	credential.Namespace = namespace.FromContext(ctx)
+ 	credential.ID = strings.TrimSpace(credential.ID)
+ 	credential.Registry = strings.TrimSpace(credential.Registry)
+ 	credential.Username = strings.TrimSpace(credential.Username)
+@@ -439,15 +494,16 @@ func (s *postgresStore) CreateRegistryCredential(ctx context.Context, credential
+ 		return types.RegistryCredential{}, fmt.Errorf("%w: registry credential key id is required", ErrInvalidState)
+ 	}
+ 	row := s.db.QueryRow(ctx, `
+-		INSERT INTO registry_credentials (id, registry, username, encrypted_password, key_id)
+-		VALUES ($1, $2, $3, $4, $5)
+-		ON CONFLICT (id) DO UPDATE
++		INSERT INTO registry_credentials (namespace, id, registry, username, encrypted_password, key_id)
++		VALUES ($1, $2, $3, $4, $5, $6)
++		ON CONFLICT (namespace, id) DO UPDATE
+ 		SET registry = EXCLUDED.registry,
+ 			username = EXCLUDED.username,
+ 			encrypted_password = EXCLUDED.encrypted_password,
+ 			key_id = EXCLUDED.key_id,
+ 			updated_at = timezone('utc', now())
+-		RETURNING id, registry, username, encrypted_password, key_id, created_at, updated_at`,
++		RETURNING namespace, id, registry, username, encrypted_password, key_id, created_at, updated_at`,
++		credential.Namespace,
+ 		credential.ID,
+ 		credential.Registry,
+ 		credential.Username,
+@@ -463,10 +519,10 @@ func (s *postgresStore) CreateRegistryCredential(ctx context.Context, credential
+ 
+ func (s *postgresStore) GetRegistryCredential(ctx context.Context, id string) (types.RegistryCredential, error) {
+ 	row := s.db.QueryRow(ctx, `
+-		SELECT id, registry, username, encrypted_password, key_id, created_at, updated_at
++		SELECT namespace, id, registry, username, encrypted_password, key_id, created_at, updated_at
+ 		FROM registry_credentials
+-		WHERE id = $1`,
+-		strings.TrimSpace(id),
++		WHERE namespace = $1 AND id = $2`,
++		namespace.FromContext(ctx), strings.TrimSpace(id),
+ 	)
+ 	credential, err := scanRegistryCredential(row)
+ 	if err != nil {
+@@ -477,9 +533,9 @@ func (s *postgresStore) GetRegistryCredential(ctx context.Context, id string) (t
+ 
+ func (s *postgresStore) ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredential, error) {
+ 	rows, err := s.db.Query(ctx, `
+-		SELECT id, registry, username, encrypted_password, key_id, created_at, updated_at
++		SELECT namespace, id, registry, username, encrypted_password, key_id, created_at, updated_at
+ 		FROM registry_credentials
+-		ORDER BY id`)
++		WHERE namespace = $1 ORDER BY id`, namespace.FromContext(ctx))
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -500,7 +556,7 @@ func (s *postgresStore) ListRegistryCredentials(ctx context.Context) ([]types.Re
+ }
+ 
+ func (s *postgresStore) DeleteRegistryCredential(ctx context.Context, id string) error {
+-	tag, err := s.db.Exec(ctx, `DELETE FROM registry_credentials WHERE id = $1`, strings.TrimSpace(id))
++	tag, err := s.db.Exec(ctx, `DELETE FROM registry_credentials WHERE namespace = $1 AND id = $2`, namespace.FromContext(ctx), strings.TrimSpace(id))
+ 	if err != nil {
+ 		return mapPostgresError(err)
+ 	}
+@@ -511,6 +567,9 @@ func (s *postgresStore) DeleteRegistryCredential(ctx context.Context, id string)
+ }
+ 
+ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
++	if task.Namespace == "" {
++		task.Namespace = namespace.FromContext(ctx)
++	}
+ 	if task.DesiredStatus == "" {
+ 		task.DesiredStatus = types.TaskRunning
+ 	}
+@@ -530,12 +589,13 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+-			service_id, node_id, container_id, desired_status, actual_status,
++			namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, ports, conditions, restart_count, failure_reason, started_at, finished_at
+ 		)
+-		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, $9, $10, nullif($11, ''), $12, $13)
+-		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++		VALUES ($1, $2, nullif($3, '')::uuid, nullif($4, ''), $5, $6, $7, $8, $9, $10, $11, nullif($12, ''), $13, $14)
++		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++		task.Namespace,
+ 		string(task.ServiceID),
+ 		string(task.NodeID),
+ 		task.ContainerID,
+@@ -562,11 +622,11 @@ func (s *postgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ }
+ 
+ func (s *postgresStore) getTask(ctx context.Context, id types.TaskID, forUpdate bool) (types.Task, error) {
+-	sql := taskSelectSQL() + ` WHERE id = $1`
++	sql := taskSelectSQL() + ` WHERE id = $1 AND namespace = $2`
+ 	if forUpdate {
+ 		sql += ` FOR UPDATE SKIP LOCKED`
+ 	}
+-	row := s.db.QueryRow(ctx, sql, string(id))
++	row := s.db.QueryRow(ctx, sql, string(id), namespace.FromContext(ctx))
+ 	task, err := scanTask(row)
+ 	if err != nil {
+ 		return types.Task{}, mapPostgresError(err)
+@@ -602,7 +662,7 @@ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $5 AND actual_status = 'pending'
+-		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(nodeID),
+@@ -637,7 +697,7 @@ func (s *postgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3 AND desired_status <> $2
+-		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(types.TaskStopped),
+@@ -680,7 +740,7 @@ func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $6
+-		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(desired),
+@@ -700,19 +760,19 @@ func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ }
+ 
+ func (s *postgresStore) ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error) {
+-	return s.listTasks(ctx, taskSelectSQL()+` WHERE service_id = $1 ORDER BY created_at, id`, string(serviceID))
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE namespace = $1 AND service_id = $2 ORDER BY created_at, id`, namespace.FromContext(ctx), string(serviceID))
+ }
+ 
+ func (s *postgresStore) ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
+-	return s.listTasks(ctx, taskSelectSQL()+` WHERE node_id = $1 ORDER BY created_at, id`, string(nodeID))
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE namespace = $1 AND node_id = $2 ORDER BY created_at, id`, namespace.FromContext(ctx), string(nodeID))
+ }
+ 
+ func (s *postgresStore) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
+-	return s.listTasks(ctx, taskSelectSQL()+` WHERE actual_status = $1 ORDER BY created_at, id`, string(status))
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE namespace = $1 AND actual_status = $2 ORDER BY created_at, id`, namespace.FromContext(ctx), string(status))
+ }
+ 
+-func (s *postgresStore) listTasks(ctx context.Context, sql string, arg any) ([]types.Task, error) {
+-	rows, err := s.db.Query(ctx, sql, arg)
++func (s *postgresStore) listTasks(ctx context.Context, sql string, args ...any) ([]types.Task, error) {
++	rows, err := s.db.Query(ctx, sql, args...)
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -733,14 +793,18 @@ func (s *postgresStore) listTasks(ctx context.Context, sql string, arg any) ([]t
+ }
+ 
+ func (s *postgresStore) CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error) {
++	if deployment.Namespace == "" {
++		deployment.Namespace = namespace.FromContext(ctx)
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO deployments (
+-			service_id, from_version, to_version, strategy, status,
++			namespace, service_id, from_version, to_version, strategy, status,
+ 			max_unavailable, max_surge, started_at, completed_at
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+-		RETURNING id, service_id, from_version, to_version, strategy, status,
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
++		RETURNING id, namespace, service_id, from_version, to_version, strategy, status,
+ 			max_unavailable, max_surge, created_at, updated_at, started_at, completed_at`,
++		deployment.Namespace,
+ 		string(deployment.ServiceID),
+ 		deployment.FromVersion,
+ 		deployment.ToVersion,
+@@ -759,7 +823,7 @@ func (s *postgresStore) CreateDeployment(ctx context.Context, deployment types.D
+ }
+ 
+ func (s *postgresStore) GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error) {
+-	row := s.db.QueryRow(ctx, deploymentSelectSQL()+` WHERE id = $1`, string(id))
++	row := s.db.QueryRow(ctx, deploymentSelectSQL()+` WHERE id = $1 AND namespace = $2`, string(id), namespace.FromContext(ctx))
+ 	deployment, err := scanDeployment(row)
+ 	if err != nil {
+ 		return types.Deployment{}, mapPostgresError(err)
+@@ -768,7 +832,7 @@ func (s *postgresStore) GetDeployment(ctx context.Context, id types.DeploymentID
+ }
+ 
+ func (s *postgresStore) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
+-	rows, err := s.db.Query(ctx, deploymentSelectSQL()+` WHERE status = $1 ORDER BY created_at, id`, string(status))
++	rows, err := s.db.Query(ctx, deploymentSelectSQL()+` WHERE namespace = $1 AND status = $2 ORDER BY created_at, id`, namespace.FromContext(ctx), string(status))
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -804,7 +868,7 @@ func (s *postgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3
+-		RETURNING id, service_id, from_version, to_version, strategy, status,
++		RETURNING id, namespace, service_id, from_version, to_version, strategy, status,
+ 			max_unavailable, max_surge, created_at, updated_at, started_at, completed_at`,
+ 		string(id),
+ 		string(status),
+@@ -821,12 +885,16 @@ func (s *postgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ }
+ 
+ func (s *postgresStore) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
++	if event.Namespace == "" {
++		event.Namespace = namespace.FromContext(ctx)
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO events (
+-			type, severity, source, message, related_object_type, related_object_id, details, created_at
++			namespace, type, severity, source, message, related_object_type, related_object_id, details, created_at
+ 		)
+-		VALUES ($1, $2, $3, $4, nullif($5, ''), nullif($6, '')::uuid, $7, COALESCE($8, timezone('utc', now())))
+-		RETURNING id, type, severity, source, message, related_object_type, related_object_id, details, created_at`,
++		VALUES ($1, $2, $3, $4, $5, nullif($6, ''), nullif($7, '')::uuid, $8, COALESCE($9, timezone('utc', now())))
++		RETURNING id, namespace, type, severity, source, message, related_object_type, related_object_id, details, created_at`,
++		event.Namespace,
+ 		event.Type,
+ 		string(event.Severity),
+ 		event.Source,
+@@ -850,7 +918,7 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	}
+ 
+ 	sql := `
+-		SELECT id, type, severity, source, message, related_object_type, related_object_id, details, created_at
++		SELECT id, namespace, type, severity, source, message, related_object_type, related_object_id, details, created_at
+ 		FROM events`
+ 	args := make([]any, 0, 8)
+ 	conditions := make([]string, 0, 8)
+@@ -858,6 +926,11 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 		args = append(args, value)
+ 		conditions = append(conditions, fmt.Sprintf(condition, len(args)))
+ 	}
++	filterNamespace := filter.Namespace
++	if filterNamespace == "" {
++		filterNamespace = namespace.FromContext(ctx)
++	}
++	add("namespace = $%d", namespace.Normalize(filterNamespace))
+ 	if filter.ServiceID != "" {
+ 		add("(related_object_type = 'service' AND related_object_id = $%d)", string(filter.ServiceID))
+ 	}
+@@ -904,12 +977,16 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 
+ func (s *postgresStore) AppendAuditLog(ctx context.Context, log audit.Log) (audit.Log, error) {
+ 	log = audit.Normalize(log, time.Now().UTC())
++	if log.Namespace == "" {
++		log.Namespace = namespace.FromContext(ctx)
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO audit_logs (
+-			actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
++			namespace, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, nullif($6, ''), nullif($7, ''), $8, $9, COALESCE($10, timezone('utc', now())))
+-		RETURNING id, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at`,
++		VALUES ($1, $2, $3, $4, $5, $6, nullif($7, ''), nullif($8, ''), $9, $10, COALESCE($11, timezone('utc', now())))
++		RETURNING id, namespace, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at`,
++		log.Namespace,
+ 		string(log.ActorType),
+ 		log.ActorID,
+ 		log.Action,
+@@ -935,7 +1012,7 @@ func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ 	}
+ 
+ 	sql := `
+-		SELECT id, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
++		SELECT id, namespace, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
+ 		FROM audit_logs`
+ 	args := make([]any, 0, 8)
+ 	conditions := make([]string, 0, 8)
+@@ -943,6 +1020,11 @@ func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ 		args = append(args, value)
+ 		conditions = append(conditions, fmt.Sprintf(condition, len(args)))
+ 	}
++	filterNamespace := filter.Namespace
++	if filterNamespace == "" {
++		filterNamespace = namespace.FromContext(ctx)
++	}
++	add("namespace = $%d", namespace.Normalize(filterNamespace))
+ 	if filter.ActorType != "" {
+ 		add("actor_type = $%d", string(filter.ActorType))
+ 	}
+@@ -990,20 +1072,21 @@ func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ 	return logs, nil
+ }
+ 
+-func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
++func insertService(ctx context.Context, db postgresDB, namespaceName string, spec types.ServiceSpec) (types.Service, error) {
+ 	env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+-			name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++			namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+-		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
++		RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
++		namespaceName,
+ 		spec.Name,
+ 		spec.Image,
+ 		spec.ImagePullSecret,
+@@ -1027,7 +1110,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 	return service, nil
+ }
+ 
+-func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++func updateService(ctx context.Context, db postgresDB, namespaceName string, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+ 	env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+@@ -1052,8 +1135,8 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 				deployment_version = deployment_version + 1,
+ 				updated_at = timezone('utc', now()),
+ 				version = version + 1
+-			WHERE id = $1 AND updated_at = $16
+-			RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++			WHERE id = $1 AND updated_at = $16 AND namespace = $18
++			RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 				resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+@@ -1073,6 +1156,7 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 		constraints,
+ 		expectedUpdatedAt.UTC(),
+ 		routes,
++		namespaceName,
+ 	)
+ 	service, err := scanService(row)
+ 	if err != nil {
+@@ -1100,18 +1184,18 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ }
+ 
+ func serviceSelectSQL() string {
+-	return `SELECT id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++	return `SELECT id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 		resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+ func taskSelectSQL() string {
+-	return `SELECT id, service_id, node_id, container_id, desired_status, actual_status,
++	return `SELECT id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+ 		image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
+ }
+ 
+ func deploymentSelectSQL() string {
+-	return `SELECT id, service_id, from_version, to_version, strategy, status,
++	return `SELECT id, namespace, service_id, from_version, to_version, strategy, status,
+ 		max_unavailable, max_surge, created_at, updated_at, started_at, completed_at FROM deployments`
+ }
+ 
+@@ -1168,6 +1252,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 	var healthcheck []byte
+ 	err := row.Scan(
+ 		&id,
++		&service.Namespace,
+ 		&service.Spec.Name,
+ 		&service.Spec.Image,
+ 		&service.Spec.ImagePullSecret,
+@@ -1211,6 +1296,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	var startedAt, finishedAt *time.Time
+ 	err := row.Scan(
+ 		&id,
++		&task.Namespace,
+ 		&serviceID,
+ 		&nodeID,
+ 		&containerID,
+@@ -1265,6 +1351,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ func scanSecret(row pgx.Row) (types.Secret, error) {
+ 	var secret types.Secret
+ 	err := row.Scan(
++		&secret.Namespace,
+ 		&secret.Name,
+ 		&secret.EncryptedValue,
+ 		&secret.KeyID,
+@@ -1283,6 +1370,7 @@ func scanSecret(row pgx.Row) (types.Secret, error) {
+ func scanRegistryCredential(row pgx.Row) (types.RegistryCredential, error) {
+ 	var credential types.RegistryCredential
+ 	err := row.Scan(
++		&credential.Namespace,
+ 		&credential.ID,
+ 		&credential.Registry,
+ 		&credential.Username,
+@@ -1306,6 +1394,7 @@ func scanDeployment(row pgx.Row) (types.Deployment, error) {
+ 	var startedAt, completedAt *time.Time
+ 	err := row.Scan(
+ 		&id,
++		&deployment.Namespace,
+ 		&serviceID,
+ 		&deployment.FromVersion,
+ 		&deployment.ToVersion,
+@@ -1341,6 +1430,7 @@ func scanEvent(row pgx.Row) (types.Event, error) {
+ 	var details []byte
+ 	err := row.Scan(
+ 		&id,
++		&event.Namespace,
+ 		&event.Type,
+ 		&event.Severity,
+ 		&event.Source,
+@@ -1375,6 +1465,7 @@ func scanAuditLog(row pgx.Row) (audit.Log, error) {
+ 	var metadata []byte
+ 	err := row.Scan(
+ 		&log.ID,
++		&log.Namespace,
+ 		&log.ActorType,
+ 		&log.ActorID,
+ 		&log.Action,
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 25255d5..8938212 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -5,12 +5,15 @@ import (
+ 	"errors"
+ 	"os"
+ 	"path/filepath"
++	"strings"
+ 	"testing"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/jackc/pgx/v5"
+ 	"github.com/jackc/pgx/v5/pgconn"
+ )
+ 
+@@ -131,6 +134,28 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if _, err := store.CreateService(ctx, serviceSpecFixture()); !errors.Is(err, ErrDuplicate) {
+ 		t.Fatalf("expected duplicate service name, got %v", err)
+ 	}
++	if _, err := store.CreateNamespace(ctx, "team-b"); err != nil {
++		t.Fatalf("create namespace: %v", err)
++	}
++	teamBCtx := namespace.WithContext(ctx, "team-b")
++	teamBService, err := store.CreateService(teamBCtx, serviceSpecFixture())
++	if err != nil {
++		t.Fatalf("create same service name in another namespace: %v", err)
++	}
++	if teamBService.Namespace != "team-b" {
++		t.Fatalf("expected team-b namespace, got %q", teamBService.Namespace)
++	}
++	defaultServices, err := store.ListServices(ctx)
++	if err != nil {
++		t.Fatalf("list default namespace services: %v", err)
++	}
++	teamBServices, err := store.ListServices(teamBCtx)
++	if err != nil {
++		t.Fatalf("list team-b namespace services: %v", err)
++	}
++	if len(defaultServices) != 1 || len(teamBServices) != 1 || defaultServices[0].ID == teamBServices[0].ID {
++		t.Fatalf("expected isolated service lists, got default=%#v team-b=%#v", defaultServices, teamBServices)
++	}
+ 
+ 	task, err := store.CreateTask(ctx, types.Task{
+ 		ServiceID:     service.ID,
+@@ -433,20 +458,29 @@ func serviceSpecFixture() types.ServiceSpec {
+ 
+ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
++	var databaseName string
++	if err := pool.QueryRow(ctx, `SELECT current_database()`).Scan(&databaseName); err != nil {
++		t.Fatalf("read integration-test database name: %v", err)
++	}
++	if !strings.HasSuffix(databaseName, "_test") {
++		t.Fatalf("refusing to reset database %q: integration database name must end in _test", databaseName)
++	}
++	if _, err := pool.Exec(ctx, `DROP SCHEMA public CASCADE; CREATE SCHEMA public`); err != nil {
++		t.Fatalf("reset integration-test schema: %v", err)
++	}
+ 
+ 	for _, file := range []string{
+-		"000006_task_conditions.down.sql",
+-		"000005_registry_credentials.down.sql",
+-		"000004_secrets.down.sql",
+-		"000003_service_routes.down.sql",
+-		"000002_task_ports.down.sql",
+-		"000001_initial_schema.down.sql",
+ 		"000001_initial_schema.up.sql",
+ 		"000002_task_ports.up.sql",
+ 		"000003_service_routes.up.sql",
+ 		"000004_secrets.up.sql",
+ 		"000005_registry_credentials.up.sql",
+ 		"000006_task_conditions.up.sql",
++		"000007_event_details.up.sql",
++		"000008_audit_logs.up.sql",
++		"000009_service_security_context.up.sql",
++		"000010_service_autoscaling.up.sql",
++		"000011_namespaces.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+@@ -472,4 +506,5 @@ func portsEqual(left, right []types.Port) bool {
+ 
+ type execer interface {
+ 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
++	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+ }
+diff --git a/internal/store/store.go b/internal/store/store.go
+index e0ceace..a10e573 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -16,6 +16,12 @@ type NodeStore interface {
+ 	ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error)
+ }
+ 
++type NamespaceStore interface {
++	CreateNamespace(ctx context.Context, name string) (types.Namespace, error)
++	ListNamespaces(ctx context.Context) ([]types.Namespace, error)
++	DeleteNamespace(ctx context.Context, name string) error
++}
++
+ type ServiceStore interface {
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+@@ -62,6 +68,7 @@ type RegistryCredentialStore interface {
+ }
+ 
+ type Store interface {
++	NamespaceStore
+ 	NodeStore
+ 	ServiceStore
+ 	TaskStore
+diff --git a/migrations/000011_namespaces.down.sql b/migrations/000011_namespaces.down.sql
+new file mode 100644
+index 0000000..5e77939
+--- /dev/null
++++ b/migrations/000011_namespaces.down.sql
+@@ -0,0 +1,31 @@
++DELETE FROM audit_logs WHERE namespace <> 'default';
++DELETE FROM events WHERE namespace <> 'default';
++DELETE FROM deployments WHERE namespace <> 'default';
++DELETE FROM tasks WHERE namespace <> 'default';
++DELETE FROM service_versions WHERE service_id IN (SELECT id FROM services WHERE namespace <> 'default');
++DELETE FROM services WHERE namespace <> 'default';
++DELETE FROM secrets WHERE namespace <> 'default';
++DELETE FROM registry_credentials WHERE namespace <> 'default';
++
++DROP INDEX IF EXISTS idx_audit_logs_namespace_created_at;
++DROP INDEX IF EXISTS idx_events_namespace_created_at;
++DROP INDEX IF EXISTS idx_deployments_namespace;
++DROP INDEX IF EXISTS idx_tasks_namespace;
++DROP INDEX IF EXISTS idx_services_namespace;
++
++ALTER TABLE registry_credentials DROP CONSTRAINT registry_credentials_pkey;
++ALTER TABLE registry_credentials ADD PRIMARY KEY (id);
++ALTER TABLE secrets DROP CONSTRAINT secrets_pkey;
++ALTER TABLE secrets ADD PRIMARY KEY (name);
++ALTER TABLE services DROP CONSTRAINT services_namespace_name_key;
++ALTER TABLE services ADD UNIQUE (name);
++
++ALTER TABLE audit_logs DROP COLUMN namespace;
++ALTER TABLE registry_credentials DROP COLUMN namespace;
++ALTER TABLE secrets DROP COLUMN namespace;
++ALTER TABLE events DROP COLUMN namespace;
++ALTER TABLE deployments DROP COLUMN namespace;
++ALTER TABLE tasks DROP COLUMN namespace;
++ALTER TABLE services DROP COLUMN namespace;
++
++DROP TABLE namespaces;
+diff --git a/migrations/000011_namespaces.up.sql b/migrations/000011_namespaces.up.sql
+new file mode 100644
+index 0000000..32fd726
+--- /dev/null
++++ b/migrations/000011_namespaces.up.sql
+@@ -0,0 +1,30 @@
++CREATE TABLE namespaces (
++    name TEXT PRIMARY KEY,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    CHECK (name ~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$')
++);
++
++INSERT INTO namespaces (name) VALUES ('default');
++
++ALTER TABLE services ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE tasks ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE deployments ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE events ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE secrets ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE registry_credentials ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++ALTER TABLE audit_logs ADD COLUMN namespace TEXT NOT NULL DEFAULT 'default' REFERENCES namespaces (name);
++
++ALTER TABLE services DROP CONSTRAINT services_name_key;
++ALTER TABLE services ADD CONSTRAINT services_namespace_name_key UNIQUE (namespace, name);
++
++ALTER TABLE secrets DROP CONSTRAINT secrets_pkey;
++ALTER TABLE secrets ADD PRIMARY KEY (namespace, name);
++
++ALTER TABLE registry_credentials DROP CONSTRAINT registry_credentials_pkey;
++ALTER TABLE registry_credentials ADD PRIMARY KEY (namespace, id);
++
++CREATE INDEX idx_services_namespace ON services (namespace, status);
++CREATE INDEX idx_tasks_namespace ON tasks (namespace, actual_status, desired_status);
++CREATE INDEX idx_deployments_namespace ON deployments (namespace, status);
++CREATE INDEX idx_events_namespace_created_at ON events (namespace, created_at DESC);
++CREATE INDEX idx_audit_logs_namespace_created_at ON audit_logs (namespace, created_at DESC);
+diff --git a/pkg/client/client.go b/pkg/client/client.go
+index b831406..eb036cb 100644
+--- a/pkg/client/client.go
++++ b/pkg/client/client.go
+@@ -19,6 +19,7 @@ type Client struct {
+ 	baseURL    string
+ 	httpClient *http.Client
+ 	token      string
++	namespace  string
+ }
+ 
+ type Option func(*Client)
+@@ -37,6 +38,12 @@ func WithBearerToken(token string) Option {
+ 	}
+ }
+ 
++func WithNamespace(namespace string) Option {
++	return func(client *Client) {
++		client.namespace = strings.TrimSpace(namespace)
++	}
++}
++
+ func New(serverURL string, options ...Option) (*Client, error) {
+ 	normalized, err := NormalizeServerURL(serverURL)
+ 	if err != nil {
+@@ -76,6 +83,30 @@ func (c *Client) SetToken(token string) {
+ 	c.token = strings.TrimSpace(token)
+ }
+ 
++func (c *Client) SetNamespace(namespace string) {
++	c.namespace = strings.TrimSpace(namespace)
++}
++
++func (c *Client) CreateNamespace(ctx context.Context, name string) (types.Namespace, error) {
++	var out namespaceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/namespaces", createNamespaceRequest{Name: name}, &out); err != nil {
++		return types.Namespace{}, err
++	}
++	return out.Namespace, nil
++}
++
++func (c *Client) ListNamespaces(ctx context.Context) ([]types.Namespace, error) {
++	var out listNamespacesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/namespaces", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Namespaces, nil
++}
++
++func (c *Client) DeleteNamespace(ctx context.Context, name string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/namespaces/"+url.PathEscape(name), nil, nil)
++}
++
+ func (c *Client) Health(ctx context.Context) (HealthResponse, error) {
+ 	var out HealthResponse
+ 	if err := c.do(ctx, http.MethodGet, "/healthz", nil, &out); err != nil {
+@@ -377,6 +408,9 @@ func (c *Client) authorize(req *http.Request) {
+ 	if c.token != "" {
+ 		req.Header.Set("Authorization", "Bearer "+c.token)
+ 	}
++	if c.namespace != "" {
++		req.Header.Set("X-Orch-Namespace", c.namespace)
++	}
+ }
+ 
+ func decodeAPIError(resp *http.Response) error {
+diff --git a/pkg/client/types.go b/pkg/client/types.go
+index e13e7b3..994efd9 100644
+--- a/pkg/client/types.go
++++ b/pkg/client/types.go
+@@ -151,6 +151,7 @@ func (filter AuditFilter) query() url.Values {
+ 
+ type AuditLog struct {
+ 	ID         string            `json:"id"`
++	Namespace  string            `json:"namespace"`
+ 	ActorType  string            `json:"actor_type"`
+ 	ActorID    string            `json:"actor_id"`
+ 	Action     string            `json:"action"`
+@@ -198,6 +199,18 @@ type createServiceRequest struct {
+ 	Spec types.ServiceSpec `json:"spec"`
+ }
+ 
++type createNamespaceRequest struct {
++	Name string `json:"name"`
++}
++
++type namespaceResponse struct {
++	Namespace types.Namespace `json:"namespace"`
++}
++
++type listNamespacesResponse struct {
++	Namespaces []types.Namespace `json:"namespaces"`
++}
++
+ type scaleServiceRequest struct {
+ 	Replicas int `json:"replicas"`
+ }
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index a421826..b05f53a 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -15,6 +15,11 @@ type ServiceID string
+ type DeploymentID string
+ type EventID string
+ 
++type Namespace struct {
++	Name      string    `json:"name"`
++	CreatedAt time.Time `json:"created_at"`
++}
++
+ type Node struct {
+ 	ID               NodeID            `json:"id"`
+ 	Hostname         string            `json:"hostname"`
+@@ -134,6 +139,7 @@ func (spec NodeSpec) Validate() error {
+ 
+ type Service struct {
+ 	ID                ServiceID     `json:"id"`
++	Namespace         string        `json:"namespace"`
+ 	Spec              ServiceSpec   `json:"spec"`
+ 	Status            ServiceStatus `json:"status"`
+ 	DeploymentVersion int64         `json:"deployment_version"`
+@@ -264,6 +270,7 @@ func (ref SecretRef) EnvName() string {
+ 
+ type Secret struct {
+ 	Name           string    `json:"name"`
++	Namespace      string    `json:"namespace"`
+ 	EncryptedValue []byte    `json:"-"`
+ 	KeyID          string    `json:"key_id,omitempty"`
+ 	CreatedAt      time.Time `json:"created_at"`
+@@ -273,6 +280,7 @@ type Secret struct {
+ func (secret Secret) Metadata() SecretMetadata {
+ 	return SecretMetadata{
+ 		Name:      secret.Name,
++		Namespace: secret.Namespace,
+ 		KeyID:     secret.KeyID,
+ 		CreatedAt: secret.CreatedAt.UTC(),
+ 		UpdatedAt: secret.UpdatedAt.UTC(),
+@@ -281,6 +289,7 @@ func (secret Secret) Metadata() SecretMetadata {
+ 
+ type SecretMetadata struct {
+ 	Name      string    `json:"name"`
++	Namespace string    `json:"namespace"`
+ 	KeyID     string    `json:"key_id,omitempty"`
+ 	CreatedAt time.Time `json:"created_at"`
+ 	UpdatedAt time.Time `json:"updated_at"`
+@@ -288,6 +297,7 @@ type SecretMetadata struct {
+ 
+ type RegistryCredential struct {
+ 	ID                string    `json:"id"`
++	Namespace         string    `json:"namespace"`
+ 	Registry          string    `json:"registry"`
+ 	Username          string    `json:"username"`
+ 	EncryptedPassword []byte    `json:"-"`
+@@ -299,6 +309,7 @@ type RegistryCredential struct {
+ func (credential RegistryCredential) Metadata() RegistryCredentialMetadata {
+ 	return RegistryCredentialMetadata{
+ 		ID:        credential.ID,
++		Namespace: credential.Namespace,
+ 		Registry:  credential.Registry,
+ 		Username:  credential.Username,
+ 		KeyID:     credential.KeyID,
+@@ -309,6 +320,7 @@ func (credential RegistryCredential) Metadata() RegistryCredentialMetadata {
+ 
+ type RegistryCredentialMetadata struct {
+ 	ID        string    `json:"id"`
++	Namespace string    `json:"namespace"`
+ 	Registry  string    `json:"registry"`
+ 	Username  string    `json:"username"`
+ 	KeyID     string    `json:"key_id,omitempty"`
+@@ -695,6 +707,7 @@ const (
+ 
+ type Task struct {
+ 	ID            TaskID          `json:"id"`
++	Namespace     string          `json:"namespace"`
+ 	ServiceID     ServiceID       `json:"service_id"`
+ 	NodeID        NodeID          `json:"node_id,omitempty"`
+ 	ContainerID   string          `json:"container_id,omitempty"`
+@@ -743,6 +756,7 @@ const (
+ 
+ type Deployment struct {
+ 	ID             DeploymentID     `json:"id"`
++	Namespace      string           `json:"namespace"`
+ 	ServiceID      ServiceID        `json:"service_id"`
+ 	FromVersion    int64            `json:"from_version"`
+ 	ToVersion      int64            `json:"to_version"`
+@@ -777,6 +791,7 @@ const (
+ 
+ type Event struct {
+ 	ID                EventID           `json:"id"`
++	Namespace         string            `json:"namespace"`
+ 	Type              string            `json:"type"`
+ 	Severity          EventSeverity     `json:"severity"`
+ 	Source            string            `json:"source"`
+diff --git a/scripts/migrate-down.sh b/scripts/migrate-down.sh
+index e31edbb..88dd540 100755
+--- a/scripts/migrate-down.sh
++++ b/scripts/migrate-down.sh
+@@ -5,7 +5,27 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+ docker compose up -d postgres
+-docker compose exec -T postgres sh -c 'until pg_isready -U orch -d orch >/dev/null 2>&1; do sleep 1; done'
+-docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < migrations/000001_initial_schema.down.sql
++docker compose exec -T postgres sh -c 'until psql -U orch -d orch -tAc "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
+ 
+-echo "Rolled back migrations."
++if ! docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT to_regclass('public.schema_migrations') IS NOT NULL" | grep -q t; then
++  echo "No migration ledger found. Run scripts/migrate-up.sh first."
++  exit 1
++fi
++
++version="$(docker compose exec -T postgres psql -U orch -d orch -tAc 'SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1' | tr -d '[:space:]')"
++if [[ -z "$version" ]]; then
++  echo "No applied migration to roll back."
++  exit 0
++fi
++
++migration="$(find migrations -maxdepth 1 -name "${version}_*.down.sql" -print -quit)"
++if [[ -z "$migration" ]]; then
++  echo "Down migration for $version not found."
++  exit 1
++fi
++
++docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < "$migration"
++docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 -c \
++  "DELETE FROM schema_migrations WHERE version = '$version'" >/dev/null
++
++echo "Rolled back migration $version."
+diff --git a/scripts/migrate-up.sh b/scripts/migrate-up.sh
+index 6ae1316..3abab12 100755
+--- a/scripts/migrate-up.sh
++++ b/scripts/migrate-up.sh
+@@ -5,11 +5,47 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ cd "$ROOT_DIR"
+ 
+ docker compose up -d postgres
+-docker compose exec -T postgres sh -c 'until pg_isready -U orch -d orch >/dev/null 2>&1; do sleep 1; done'
+-if docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT to_regclass('public.nodes') IS NOT NULL" | grep -q t; then
+-  echo "Initial schema already exists; skipping migrations."
+-  exit 0
+-fi
+-docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < migrations/000001_initial_schema.up.sql
+-
+-echo "Applied migrations."
++docker compose exec -T postgres sh -c 'until psql -U orch -d orch -tAc "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
++
++docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 -c \
++  "CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()))" >/dev/null
++
++migration_present() {
++  local version="$1"
++  local check="false"
++  case "$version" in
++    000001) check="to_regclass('public.nodes') IS NOT NULL" ;;
++    000002) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tasks' AND column_name='ports')" ;;
++    000003) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='routes')" ;;
++    000004) check="to_regclass('public.secrets') IS NOT NULL" ;;
++    000005) check="to_regclass('public.registry_credentials') IS NOT NULL" ;;
++    000006) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tasks' AND column_name='conditions')" ;;
++    000007) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='details')" ;;
++    000008) check="to_regclass('public.audit_logs') IS NOT NULL" ;;
++    000009) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='security_context')" ;;
++    000010) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='autoscaling')" ;;
++    000011) check="to_regclass('public.namespaces') IS NOT NULL" ;;
++  esac
++  docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT $check" | grep -q t
++}
++
++for migration in migrations/*.up.sql; do
++  filename="$(basename "$migration")"
++  version="${filename%%_*}"
++  if docker compose exec -T postgres psql -U orch -d orch -tAc \
++    "SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = '$version')" | grep -q t; then
++    continue
++  fi
++  if migration_present "$version"; then
++    docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 -c \
++      "INSERT INTO schema_migrations (version) VALUES ('$version') ON CONFLICT DO NOTHING" >/dev/null
++    echo "Recorded existing migration $version."
++    continue
++  fi
++  docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < "$migration"
++  docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 -c \
++    "INSERT INTO schema_migrations (version) VALUES ('$version')" >/dev/null
++  echo "Applied migration $version."
++done
++
++echo "All migrations are up to date."

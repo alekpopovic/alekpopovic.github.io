@@ -1,0 +1,6 @@
+func (controller *Controller) Sync(ctx context.Context, id string) (types.GitOpsSource, error) {
+	source, err := controller.store.GetGitOpsSource(ctx, id)
+	if err != nil {
+		return types.GitOpsSource{}, err
+	}
+	if err := ValidateSource(source); err != nil {

@@ -1,0 +1,200 @@
+{
+  "lab_id": "05",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/05-security-boundaries/lab.json",
+  "definition_sha256": "9e93040c3f438a886caea4ee29bdb56a19df4c3b2538bbcbbabc08c1355c98ef",
+  "guide": "labs/05-security-boundaries/README.md",
+  "guide_sha256": "8d619a045fa83704d12e56319453e07d89aa936580018e1594a4e28ebe324d25",
+  "configuration_hashes": {
+    "examples/teaching-extensions/security/main.go": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Actual API/issuer/envelope and owned loopback HTTP/TCP checker; thirty cases, redaction scans; no daemon or public network.",
+  "state_continuity": "Fresh issuer/MemoryService/canary; each loopback listener closed by deferred cleanup.",
+  "started_at_utc": "2026-10-13T01:58:04.970105+00:00",
+  "finished_at_utc": "2026-10-13T01:58:05.447379+00:00",
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/security",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/05-forbidden-channels"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:04.970105+00:00",
+      "finished_at_utc": "2026-10-13T01:58:05.447379+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/05-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "case_count": 30,
+    "wrong_key_rejected": true,
+    "wrong_node_unchanged_task": true,
+    "assigned_agent_plaintext_permitted": true,
+    "cleanup": "all local listeners deferred closed; canary/key/token raw values never written",
+    "redacted_channel_results": [
+      {
+        "bytes": 6916,
+        "canary_found": false,
+        "file": "captured-logs.txt",
+        "sha256": "7be4c3899dac67136681fb87779febf5a776eccd583839e0ed7f2ec4a542a1e0"
+      },
+      {
+        "bytes": 184,
+        "canary_found": false,
+        "file": "secret-list-metadata.txt",
+        "sha256": "d8604b48000580d5d806d5d650238bf6174a03f1037dddb5c533c92358bc985e"
+      },
+      {
+        "bytes": 105,
+        "canary_found": false,
+        "file": "secret-namespace-hidden.txt",
+        "sha256": "ef6d482a43a9efd44caf55ebdb82bae67891fd3949192faea9b62231b42cc8cb"
+      },
+      {
+        "bytes": 593,
+        "canary_found": false,
+        "file": "secret-events-redacted.txt",
+        "sha256": "22c1950610a6c359668a045e64d01841ae14f89e182f92b375248f9a58ee37cd"
+      },
+      {
+        "bytes": 131,
+        "canary_found": false,
+        "file": "bootstrap-missing.txt",
+        "sha256": "1607e6add0ba77817c2c5edcd54a839552413b64f83fc2410896d116a6abe7f6"
+      },
+      {
+        "bytes": 6,
+        "canary_found": false,
+        "file": "same-origin-redirect.txt",
+        "sha256": "f9bafc82ba5f8fb02b25020d66f396860604f496ca919480147fa525cb505d88"
+      },
+      {
+        "bytes": 98,
+        "canary_found": false,
+        "file": "cross-origin-blocked.txt",
+        "sha256": "17c5b9b1d22bf8f7299ddba1beeccf7446b322812e09a043db967a9e81d73fce"
+      },
+      {
+        "bytes": 22,
+        "canary_found": false,
+        "file": "wrong-envelope-error.txt",
+        "sha256": "4c33372fb7fe3887de5511c3420bbafb6c49991f08a632c8648e5069da808974"
+      },
+      {
+        "bytes": 113,
+        "canary_found": false,
+        "file": "scoped-operator-cluster-admin-denied.txt",
+        "sha256": "a55525a58c9edab1c822b5fbf138d10153a062fccd695ac70a144834ae9fc7cb"
+      },
+      {
+        "bytes": 123,
+        "canary_found": false,
+        "file": "rotated-old-token-denied.txt",
+        "sha256": "a3c2e5b6058874feef2b423a4290b14e4e95c913a8a47e20f3cef69845b8c0c9"
+      },
+      {
+        "bytes": 60,
+        "canary_found": false,
+        "file": "timeout-unhealthy.txt",
+        "sha256": "c1051aab27ecc7d700e7cfcbbfd9403dc788eaf32c8594207301ee6fe6a17d03"
+      },
+      {
+        "bytes": 113,
+        "canary_found": false,
+        "file": "viewer-mutation-denied.txt",
+        "sha256": "ec0fffd5b5c0b82635f4d59d7e62c1848bd9d160c7315f5158622ae6b083ac61"
+      },
+      {
+        "bytes": 584,
+        "canary_found": false,
+        "file": "scoped-operator-create.txt",
+        "sha256": "5758ca8d1a1abbe2a4d4d07c4604472f064f8c197afa8b63997015dd61a3e77c"
+      },
+      {
+        "bytes": 113,
+        "canary_found": false,
+        "file": "scoped-operator-other-namespace.txt",
+        "sha256": "4f4bd759b024833e06c092591fe9ed0597e3ffface764991df7721f6367fb71d"
+      },
+      {
+        "bytes": 430,
+        "canary_found": false,
+        "file": "admin-audit.txt",
+        "sha256": "a4e2257f82a81d813c0f7bb6cb2aae06a57eca3fbb983a58dfc5b72aae5b70bc"
+      },
+      {
+        "bytes": 181,
+        "canary_found": false,
+        "file": "secret-create-metadata.txt",
+        "sha256": "351c0a964f38a6dc63530afa245536aab23da1758c632ccf088e1cea13cc0ea0"
+      },
+      {
+        "bytes": 161,
+        "canary_found": false,
+        "file": "missing-secret-error.txt",
+        "sha256": "58ac712a99015fb7004f1a451a5dedd44bf34827e1705bd8644d62d07b9f49ab"
+      },
+      {
+        "bytes": 123,
+        "canary_found": false,
+        "file": "wrong-node-credential.txt",
+        "sha256": "eed719e3bad71b22a899d184f533d05ab47f06610f1346e0ca01e1046f83ebe0"
+      },
+      {
+        "bytes": 6,
+        "canary_found": false,
+        "file": "bounded-large-response.txt",
+        "sha256": "f9bafc82ba5f8fb02b25020d66f396860604f496ca919480147fa525cb505d88"
+      },
+      {
+        "bytes": 130,
+        "canary_found": false,
+        "file": "missing-user-token.txt",
+        "sha256": "53e0e0d9a9459be31c9b771503b91e6ac6b079a6867ce88f3a300f4c6234668f"
+      },
+      {
+        "bytes": 16,
+        "canary_found": false,
+        "file": "viewer-read.txt",
+        "sha256": "46fc16cadd09ccf044b65ec3ac398b581731b6afe91fb5400077f730ba08d271"
+      },
+      {
+        "bytes": 181,
+        "canary_found": false,
+        "file": "secret-get-metadata.txt",
+        "sha256": "351c0a964f38a6dc63530afa245536aab23da1758c632ccf088e1cea13cc0ea0"
+      },
+      {
+        "bytes": 796,
+        "canary_found": false,
+        "file": "secret-audit-redacted.txt",
+        "sha256": "c49d13b15912b07127eae3e26fccc6b9af5b6973d82a6818c319f069c5323ff1"
+      }
+    ]
+  },
+  "original_records": [
+    "validation/labs/review076/05-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/05-command.stdout.txt",
+      "sha256": "b72f2b7be743bb1abf2ca15f89379e44197d855ef40963ce861d20558096f7b0",
+      "bytes": 13390
+    },
+    {
+      "path": "validation/labs/review076/05-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

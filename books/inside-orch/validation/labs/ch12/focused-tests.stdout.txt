@@ -1,0 +1,34 @@
+=== RUN   TestCreateContainerAddsRequiredLabels
+--- PASS: TestCreateContainerAddsRequiredLabels (0.00s)
+=== RUN   TestCreateContainerAppliesSecurityContext
+--- PASS: TestCreateContainerAppliesSecurityContext (0.00s)
+=== RUN   TestCreateContainerExistingTaskIsIdempotent
+--- PASS: TestCreateContainerExistingTaskIsIdempotent (0.00s)
+=== RUN   TestStopContainerAlreadyStoppedIsSuccess
+--- PASS: TestStopContainerAlreadyStoppedIsSuccess (0.00s)
+=== RUN   TestRemoveContainerAlreadyRemovedIsSuccess
+--- PASS: TestRemoveContainerAlreadyRemovedIsSuccess (0.00s)
+=== RUN   TestFakeRuntimeRecordsOperationsAndCreatesIdempotently
+--- PASS: TestFakeRuntimeRecordsOperationsAndCreatesIdempotently (0.00s)
+=== RUN   TestFakeRuntimeIsThreadSafeForConcurrentCreates
+--- PASS: TestFakeRuntimeIsThreadSafeForConcurrentCreates (0.00s)
+=== RUN   TestFakeRuntimeFailureInjection
+--- PASS: TestFakeRuntimeFailureInjection (0.00s)
+=== RUN   TestFakeRuntimeCanExitAfterStart
+--- PASS: TestFakeRuntimeCanExitAfterStart (0.00s)
+=== RUN   TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation
+--- PASS: TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/docker	0.006s
+=== RUN   TestReconcileAssignedTaskRecreatesManuallyDeletedContainer
+--- PASS: TestReconcileAssignedTaskRecreatesManuallyDeletedContainer (0.00s)
+=== RUN   TestReconcileAssignedTaskRestartsManuallyStoppedContainer
+--- PASS: TestReconcileAssignedTaskRestartsManuallyStoppedContainer (0.00s)
+=== RUN   TestReconcileAssignedTaskReplacesMismatchedManagedContainer
+--- PASS: TestReconcileAssignedTaskReplacesMismatchedManagedContainer (0.00s)
+=== RUN   TestReconcileIgnoresNonManagedContainers
+--- PASS: TestReconcileIgnoresNonManagedContainers (0.00s)
+=== RUN   TestReconcileDoesNotRemoveNonManagedAssignedContainerID
+--- PASS: TestReconcileDoesNotRemoveNonManagedAssignedContainerID (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/agent	0.007s

@@ -1,0 +1,82 @@
+{
+  "chapter_id": "11",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch11.composition",
+      "statement": "Standalone reconciler is an implemented package not constructed by the default server composition.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 124,
+      "line_end": 180,
+      "associated_commits": [
+        "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+        "a11cec091a69720c14b9713d8be68f38fe6df332",
+        "316ba80ac1ea7ba465f1b0826b655233a651c043"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Default MemoryService immediate convergence is a separate active path; absence established by caller inventory."
+      ]
+    },
+    {
+      "claim_id": "ch11.counting",
+      "statement": "Current nonterminal tasks plus nonrestartable failed tasks determine effective replica count.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 293,
+      "line_end": 345,
+      "associated_commits": [
+        "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+        "a11cec091a69720c14b9713d8be68f38fe6df332",
+        "316ba80ac1ea7ba465f1b0826b655233a651c043"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Healthy availability and restart delay are separate policies."
+      ]
+    },
+    {
+      "claim_id": "ch11.repeated",
+      "statement": "Focused reconciler tests passed repeated convergence and reconstruction over retained fake store state.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 120,
+      "associated_commits": [
+        "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+        "a11cec091a69720c14b9713d8be68f38fe6df332",
+        "316ba80ac1ea7ba465f1b0826b655233a651c043"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch11/focused-tests.json",
+      "limitations": [
+        "Does not prove default fresh-process recovery or multiple-controller global creation uniqueness."
+      ]
+    },
+    {
+      "claim_id": "ch11.stop",
+      "statement": "stopTask no-ops for stopped/removed desired status and uses optimistic StopTask in the transactional callback.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 435,
+      "line_end": 468,
+      "associated_commits": [
+        "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+        "a11cec091a69720c14b9713d8be68f38fe6df332",
+        "316ba80ac1ea7ba465f1b0826b655233a651c043"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Stopping desired state is not proof the host process has already exited."
+      ]
+    }
+  ]
+}

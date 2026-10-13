@@ -218,7 +218,6 @@
 .ai-prose a:hover { color: #e2d7ff; }
 .ai-prose :not(pre) > code { background: #292334; color: #ded0ff; border: 1px solid #443650; border-radius: 5px; font-size: .85em; padding: 2px 5px; overflow-wrap: anywhere; }
 .ai-prose code::before, .ai-prose code::after { content: none; }
-.ai-prose pre { background: #141720; color: #e2d6f7; border: 1px solid #3b354c; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ai-prose table { width: 100%; font-size: 12px; table-layout: fixed; }
 .ai-prose :is(th, td) { border-color: #3b3d4e; padding: 13px 12px; overflow-wrap: anywhere; }
 .ai-prose th:first-child, .ai-prose td:first-child { width: 32%; }

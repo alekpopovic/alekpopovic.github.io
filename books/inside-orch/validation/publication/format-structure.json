@@ -1,0 +1,223 @@
+{
+  "status": "passed",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T03:57:21.091798+00:00",
+  "pdf_sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "pdf_pages": 546,
+  "pdf_bookmarks": 639,
+  "pdf_fonts": [
+    "DM-Bold",
+    "DM",
+    "BookMono",
+    "DM",
+    "DM",
+    "DM",
+    "DM-Bold",
+    "DM",
+    "DM-Bold",
+    "DM",
+    "DM-Bold",
+    "DM-Bold",
+    "BookEmoji",
+    "DM",
+    "DM-Bold",
+    "BookMono-Bold",
+    "DM-Bold"
+  ],
+  "pdf_author": "Aleksandar Popovic",
+  "reading_sections": 47,
+  "epub_text_documents": 199,
+  "section_checks": [
+    {
+      "title": "Preface",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 1 - Why Build a Container Orchestrator?",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 2 - A Repository Built for Reasoning",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 3 - Boot the Lab and Deploy the First Service",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 4 - Domain Models and State Machines",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 5 - Service Specifications, Resources, and Ports",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 6 - Follow One Request Through the Control Plane",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 7 - HTTP Contracts and Compatible APIs",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 8 - A CLI That Operators Can Automate",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 9 - Persistence, Transactions, and Optimistic Concurrency",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 10 - A Deterministic Scheduler",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 11 - Reconciliation as Repeated Convergence",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 12 - Idempotent Docker Operations and Drift",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 13 - Agents, Heartbeats, and Task Reports",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 14 - Health Checks That Respect Trust Boundaries",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 15 - Events, Audits, and Notification Boundaries",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 16 - Log Streaming Without Losing Control",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 18 - Safe Deletion and Resource Cleanup",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 19 - Offline Nodes, Draining, and Rescheduling",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 20 - Endpoint Discovery and Internal DNS",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 21 - Ingress, Host Networking, and the Overlay Roadmap",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 22 - Autoscaling Decisions and Missing Integration",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 23 - Authentication, Authorization, and Node Trust",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 24 - Encrypted Secrets and Configuration Redaction",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 25 - Registry Credentials and Immutable Image Identity",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 26 - Security Contexts, Admission, and Policy",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 27 - Namespaces and the Limits of Multi-Tenancy",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 28 - Quotas and Usage Accounting",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 29 - Supply Chain Designs Without False Guarantees",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 30 - GitOps, Drift, and Controlled Reconciliation",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 31 - Finite Jobs and Time-Based Work",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 32 - Local Volumes, Claims, and Workload Topology",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 33 - Extension Interfaces and a Plugin Roadmap",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 34 - Leader Election and the Durable HA Boundary",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 35 - Upgrades, Migrations, Maintenance, and Retention",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 36 - Fakes, Property Tests, Fuzzing, and Contracts",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 37 - Failure Injection and Recovery Evidence",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 38 - Metrics, Dashboards, and Actionable Signals",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 39 - Performance and Scale Tests That Say What They Measure",
+      "pdf_present": true
+    },
+    {
+      "title": "Chapter 40 - Release a System You Can Honestly Operate",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix A - CLI, API, and Configuration Reference",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix B - Lifecycle States and Invariant Reference",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix D - Worked Exercises and Design Solutions",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix E - Operator Runbooks and Measurement Contracts",
+      "pdf_present": true
+    },
+    {
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index",
+      "pdf_present": true
+    }
+  ],
+  "errors": [],
+  "scope": "Structural/extracted text and embedded-font checks; all-page visual and real EPUB preview remain separate."
+}

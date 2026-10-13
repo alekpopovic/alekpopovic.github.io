@@ -1,0 +1,548 @@
+[
+  {
+    "id": 0,
+    "path": "prompts/00-agents-md-and-architecture-docs.md",
+    "title": "00. AGENTS.md and architecture docs",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/00-agents-md-and-architecture-docs.md"
+  },
+  {
+    "id": 1,
+    "path": "prompts/01-repository-bootstrap.md",
+    "title": "01. Repository bootstrap",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/01-repository-bootstrap.md"
+  },
+  {
+    "id": 2,
+    "path": "prompts/02-core-domain-models.md",
+    "title": "02. Core domain models",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/02-core-domain-models.md"
+  },
+  {
+    "id": 3,
+    "path": "prompts/03-postgresql-schema-and-store-layer.md",
+    "title": "03. PostgreSQL schema and store layer",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/03-postgresql-schema-and-store-layer.md"
+  },
+  {
+    "id": 4,
+    "path": "prompts/04-api-server-v1.md",
+    "title": "04. API server v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/04-api-server-v1.md"
+  },
+  {
+    "id": 5,
+    "path": "prompts/05-cobra-cli.md",
+    "title": "05. Cobra CLI",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/05-cobra-cli.md"
+  },
+  {
+    "id": 6,
+    "path": "prompts/06-docker-engine-runtime-wrapper.md",
+    "title": "06. Docker Engine runtime wrapper",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/06-docker-engine-runtime-wrapper.md"
+  },
+  {
+    "id": 7,
+    "path": "prompts/07-worker-agent-registration-and-heartbeat.md",
+    "title": "07. Worker agent registration and heartbeat",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/07-worker-agent-registration-and-heartbeat.md"
+  },
+  {
+    "id": 8,
+    "path": "prompts/08-task-assignment-between-server-and-agent.md",
+    "title": "08. Task assignment between server and agent",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/08-task-assignment-between-server-and-agent.md"
+  },
+  {
+    "id": 9,
+    "path": "prompts/09-scheduler-v1.md",
+    "title": "09. Scheduler v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/09-scheduler-v1.md"
+  },
+  {
+    "id": 10,
+    "path": "prompts/10-reconciler-v1.md",
+    "title": "10. Reconciler v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/10-reconciler-v1.md"
+  },
+  {
+    "id": 11,
+    "path": "prompts/11-health-checker.md",
+    "title": "11. Health checker",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/11-health-checker.md"
+  },
+  {
+    "id": 12,
+    "path": "prompts/12-logs-support.md",
+    "title": "12. Logs support",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/12-logs-support.md"
+  },
+  {
+    "id": 13,
+    "path": "prompts/13-durable-events-system.md",
+    "title": "13. Durable events system",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/13-durable-events-system.md"
+  },
+  {
+    "id": 14,
+    "path": "prompts/14-rolling-update-v1.md",
+    "title": "14. Rolling update v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/14-rolling-update-v1.md"
+  },
+  {
+    "id": 15,
+    "path": "prompts/15-rollback-v1.md",
+    "title": "15. Rollback v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/15-rollback-v1.md"
+  },
+  {
+    "id": 16,
+    "path": "prompts/16-safe-service-deletion-and-cleanup.md",
+    "title": "16. Safe service deletion and cleanup",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/16-safe-service-deletion-and-cleanup.md"
+  },
+  {
+    "id": 17,
+    "path": "prompts/17-resource-accounting.md",
+    "title": "17. Resource accounting",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/17-resource-accounting.md"
+  },
+  {
+    "id": 18,
+    "path": "prompts/18-user-api-auth-v1.md",
+    "title": "18. User API auth v1",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/18-user-api-auth-v1.md"
+  },
+  {
+    "id": 19,
+    "path": "prompts/19-agent-security-bootstrap.md",
+    "title": "19. Agent security bootstrap",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/19-agent-security-bootstrap.md"
+  },
+  {
+    "id": 20,
+    "path": "prompts/20-prometheus-metrics.md",
+    "title": "20. Prometheus metrics",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/20-prometheus-metrics.md"
+  },
+  {
+    "id": 21,
+    "path": "prompts/21-local-development-environment.md",
+    "title": "21. Local development environment",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/21-local-development-environment.md"
+  },
+  {
+    "id": 22,
+    "path": "prompts/22-end-to-end-tests.md",
+    "title": "22. End-to-end tests",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/22-end-to-end-tests.md"
+  },
+  {
+    "id": 23,
+    "path": "prompts/23-github-actions-ci.md",
+    "title": "23. GitHub Actions CI",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/23-github-actions-ci.md"
+  },
+  {
+    "id": 24,
+    "path": "prompts/24-idempotency-audit.md",
+    "title": "24. Idempotency audit",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/24-idempotency-audit.md"
+  },
+  {
+    "id": 25,
+    "path": "prompts/25-failure-modes-hardening.md",
+    "title": "25. Failure modes hardening",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/25-failure-modes-hardening.md"
+  },
+  {
+    "id": 26,
+    "path": "prompts/26-senior-distributed-systems-review.md",
+    "title": "26. Senior distributed systems review",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/26-senior-distributed-systems-review.md"
+  },
+  {
+    "id": 27,
+    "path": "prompts/27-production-documentation.md",
+    "title": "27. Production documentation",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/27-production-documentation.md"
+  },
+  {
+    "id": 28,
+    "path": "prompts/28-mvp-release-preparation.md",
+    "title": "28. MVP release preparation",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/28-mvp-release-preparation.md"
+  },
+  {
+    "id": 29,
+    "path": "prompts/29-freeze-api-and-state-machine-contract.md",
+    "title": "29. Freeze API and state-machine contract",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/29-freeze-api-and-state-machine-contract.md"
+  },
+  {
+    "id": 30,
+    "path": "prompts/30-transaction-boundaries-audit.md",
+    "title": "30. Transaction boundaries audit",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/30-transaction-boundaries-audit.md"
+  },
+  {
+    "id": 31,
+    "path": "prompts/31-scheduler-concurrency-safety.md",
+    "title": "31. Scheduler concurrency safety",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/31-scheduler-concurrency-safety.md"
+  },
+  {
+    "id": 32,
+    "path": "prompts/32-reconciler-idempotency-under-restart.md",
+    "title": "32. Reconciler idempotency under restart",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/32-reconciler-idempotency-under-restart.md"
+  },
+  {
+    "id": 33,
+    "path": "prompts/33-fake-runtime-for-deterministic-tests.md",
+    "title": "33. Fake runtime for deterministic tests",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/33-fake-runtime-for-deterministic-tests.md"
+  },
+  {
+    "id": 34,
+    "path": "prompts/34-port-allocation-and-collision-handling.md",
+    "title": "34. Port allocation and collision handling",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/34-port-allocation-and-collision-handling.md"
+  },
+  {
+    "id": 35,
+    "path": "prompts/35-basic-service-discovery.md",
+    "title": "35. Basic service discovery",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/35-basic-service-discovery.md"
+  },
+  {
+    "id": 36,
+    "path": "prompts/36-traefik-integration.md",
+    "title": "36. Traefik integration",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/36-traefik-integration.md"
+  },
+  {
+    "id": 37,
+    "path": "prompts/37-secrets-mvp.md",
+    "title": "37. Secrets MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/37-secrets-mvp.md"
+  },
+  {
+    "id": 38,
+    "path": "prompts/38-image-registry-authentication.md",
+    "title": "38. Image registry authentication",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/38-image-registry-authentication.md"
+  },
+  {
+    "id": 39,
+    "path": "prompts/39-node-drain-and-reschedule.md",
+    "title": "39. Node drain and reschedule",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/39-node-drain-and-reschedule.md"
+  },
+  {
+    "id": 40,
+    "path": "prompts/40-node-offline-detection-and-recovery.md",
+    "title": "40. Node offline detection and recovery",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/40-node-offline-detection-and-recovery.md"
+  },
+  {
+    "id": 41,
+    "path": "prompts/41-manual-docker-drift-reconciliation.md",
+    "title": "41. Manual Docker drift reconciliation",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/41-manual-docker-drift-reconciliation.md"
+  },
+  {
+    "id": 42,
+    "path": "prompts/42-deployment-lock-and-concurrent-user-operations.md",
+    "title": "42. Deployment lock and concurrent user operations",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/42-deployment-lock-and-concurrent-user-operations.md"
+  },
+  {
+    "id": 43,
+    "path": "prompts/43-deployment-yaml-schema-and-validation.md",
+    "title": "43. Deployment YAML schema and validation",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/43-deployment-yaml-schema-and-validation.md"
+  },
+  {
+    "id": 44,
+    "path": "prompts/44-config-management-hardening.md",
+    "title": "44. Config management hardening",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/44-config-management-hardening.md"
+  },
+  {
+    "id": 45,
+    "path": "prompts/45-structured-error-model.md",
+    "title": "45. Structured error model",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/45-structured-error-model.md"
+  },
+  {
+    "id": 46,
+    "path": "prompts/46-audit-logging.md",
+    "title": "46. Audit logging",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/46-audit-logging.md"
+  },
+  {
+    "id": 47,
+    "path": "prompts/47-prometheus-alert-rules.md",
+    "title": "47. Prometheus alert rules",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/47-prometheus-alert-rules.md"
+  },
+  {
+    "id": 48,
+    "path": "prompts/48-grafana-dashboard-json.md",
+    "title": "48. Grafana dashboard JSON",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/48-grafana-dashboard-json.md"
+  },
+  {
+    "id": 49,
+    "path": "prompts/49-backup-and-restore-runbook.md",
+    "title": "49. Backup and restore runbook",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/49-backup-and-restore-runbook.md"
+  },
+  {
+    "id": 50,
+    "path": "prompts/50-production-deployment-manifest.md",
+    "title": "50. Production deployment manifest",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/50-production-deployment-manifest.md"
+  },
+  {
+    "id": 51,
+    "path": "prompts/51-security-review.md",
+    "title": "51. Security review",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/51-security-review.md"
+  },
+  {
+    "id": 52,
+    "path": "prompts/52-container-security-policy.md",
+    "title": "52. Container security policy",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/52-container-security-policy.md"
+  },
+  {
+    "id": 53,
+    "path": "prompts/53-healthcheck-ssrf-protection.md",
+    "title": "53. Healthcheck SSRF protection",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/53-healthcheck-ssrf-protection.md"
+  },
+  {
+    "id": 54,
+    "path": "prompts/54-autoscaling-design-doc.md",
+    "title": "54. Autoscaling design doc",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/54-autoscaling-design-doc.md"
+  },
+  {
+    "id": 55,
+    "path": "prompts/55-autoscaling-mvp-implementation.md",
+    "title": "55. Autoscaling MVP implementation",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/55-autoscaling-mvp-implementation.md"
+  },
+  {
+    "id": 56,
+    "path": "prompts/56-ha-control-plane-design.md",
+    "title": "56. HA control plane design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/56-ha-control-plane-design.md"
+  },
+  {
+    "id": 57,
+    "path": "prompts/57-controller-leader-election-mvp.md",
+    "title": "57. Controller leader election MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/57-controller-leader-election-mvp.md"
+  },
+  {
+    "id": 58,
+    "path": "prompts/58-multi-agent-load-test.md",
+    "title": "58. Multi-agent load test",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/58-multi-agent-load-test.md"
+  },
+  {
+    "id": 59,
+    "path": "prompts/59-chaos-testing-scenarios.md",
+    "title": "59. Chaos testing scenarios",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/59-chaos-testing-scenarios.md"
+  },
+  {
+    "id": 60,
+    "path": "prompts/60-release-hardening-v0-2-0.md",
+    "title": "60. Release hardening v0.2.0",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/60-release-hardening-v0-2-0.md"
+  },
+  {
+    "id": 61,
+    "path": "prompts/61-openapi-specification-and-generated-clients.md",
+    "title": "61. OpenAPI specification and generated clients",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/61-openapi-specification-and-generated-clients.md"
+  },
+  {
+    "id": 62,
+    "path": "prompts/62-api-versioning-strategy.md",
+    "title": "62. API versioning strategy",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/62-api-versioning-strategy.md"
+  },
+  {
+    "id": 63,
+    "path": "prompts/63-policy-engine-design.md",
+    "title": "63. Policy engine design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/63-policy-engine-design.md"
+  },
+  {
+    "id": 64,
+    "path": "prompts/64-admission-controller-mvp.md",
+    "title": "64. Admission controller MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/64-admission-controller-mvp.md"
+  },
+  {
+    "id": 65,
+    "path": "prompts/65-namespaces-projects.md",
+    "title": "65. Namespaces / projects",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/65-namespaces-projects.md"
+  },
+  {
+    "id": 66,
+    "path": "prompts/66-resource-quotas.md",
+    "title": "66. Resource quotas",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/66-resource-quotas.md"
+  },
+  {
+    "id": 67,
+    "path": "prompts/67-image-tag-immutability-and-digest-pinning.md",
+    "title": "67. Image tag immutability and digest pinning",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/67-image-tag-immutability-and-digest-pinning.md"
+  },
+  {
+    "id": 68,
+    "path": "prompts/68-image-signing-design.md",
+    "title": "68. Image signing design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/68-image-signing-design.md"
+  },
+  {
+    "id": 69,
+    "path": "prompts/69-sbom-and-vulnerability-scanning-design.md",
+    "title": "69. SBOM and vulnerability scanning design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/69-sbom-and-vulnerability-scanning-design.md"
+  },
+  {
+    "id": 70,
+    "path": "prompts/70-gitops-deployment-flow.md",
+    "title": "70. GitOps deployment flow",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/70-gitops-deployment-flow.md"
+  },
+  {
+    "id": 71,
+    "path": "prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md",
+    "title": "71. Drift detection between GitOps desired state and cluster state",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/71-drift-detection-between-gitops-desired-state-and-cluster-state.md"
+  },
+  {
+    "id": 72,
+    "path": "prompts/72-cron-jobs-and-one-shot-jobs-design.md",
+    "title": "72. Cron jobs and one-shot jobs design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/72-cron-jobs-and-one-shot-jobs-design.md"
+  },
+  {
+    "id": 73,
+    "path": "prompts/73-one-shot-jobs-mvp.md",
+    "title": "73. One-shot jobs MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/73-one-shot-jobs-mvp.md"
+  },
+  {
+    "id": 74,
+    "path": "prompts/74-cron-jobs-mvp.md",
+    "title": "74. Cron jobs MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/74-cron-jobs-mvp.md"
+  },
+  {
+    "id": 75,
+    "path": "prompts/75-stateful-workloads-design.md",
+    "title": "75. Stateful workloads design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/75-stateful-workloads-design.md"
+  },
+  {
+    "id": 76,
+    "path": "prompts/76-persistent-volume-abstraction.md",
+    "title": "76. Persistent volume abstraction",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/76-persistent-volume-abstraction.md"
+  },
+  {
+    "id": 77,
+    "path": "prompts/77-cni-advanced-networking-design.md",
+    "title": "77. CNI / advanced networking design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/77-cni-advanced-networking-design.md"
+  },
+  {
+    "id": 78,
+    "path": "prompts/78-internal-dns-mvp.md",
+    "title": "78. Internal DNS MVP",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/78-internal-dns-mvp.md"
+  },
+  {
+    "id": 79,
+    "path": "prompts/79-plugin-system-design.md",
+    "title": "79. Plugin system design",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/79-plugin-system-design.md"
+  },
+  {
+    "id": 80,
+    "path": "prompts/80-notification-sinks.md",
+    "title": "80. Notification sinks",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/80-notification-sinks.md"
+  },
+  {
+    "id": 81,
+    "path": "prompts/81-maintenance-windows.md",
+    "title": "81. Maintenance windows",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/81-maintenance-windows.md"
+  },
+  {
+    "id": 82,
+    "path": "prompts/82-cluster-upgrade-framework.md",
+    "title": "82. Cluster upgrade framework",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/82-cluster-upgrade-framework.md"
+  },
+  {
+    "id": 83,
+    "path": "prompts/83-database-migration-safety.md",
+    "title": "83. Database migration safety",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/83-database-migration-safety.md"
+  },
+  {
+    "id": 84,
+    "path": "prompts/84-data-retention-and-pruning.md",
+    "title": "84. Data retention and pruning",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/84-data-retention-and-pruning.md"
+  },
+  {
+    "id": 85,
+    "path": "prompts/85-tenant-aware-billing-export-report.md",
+    "title": "85. Tenant-aware billing/export report",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/85-tenant-aware-billing-export-report.md"
+  },
+  {
+    "id": 86,
+    "path": "prompts/86-fuzz-tests-for-parsers-and-validators.md",
+    "title": "86. Fuzz tests for parsers and validators",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/86-fuzz-tests-for-parsers-and-validators.md"
+  },
+  {
+    "id": 87,
+    "path": "prompts/87-property-tests-for-scheduler.md",
+    "title": "87. Property tests for scheduler",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/87-property-tests-for-scheduler.md"
+  },
+  {
+    "id": 88,
+    "path": "prompts/88-performance-profiling.md",
+    "title": "88. Performance profiling",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/88-performance-profiling.md"
+  },
+  {
+    "id": 89,
+    "path": "prompts/89-scale-test-1000-services-with-fake-agents.md",
+    "title": "89. Scale test: 1,000 services with fake agents",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/89-scale-test-1000-services-with-fake-agents.md"
+  },
+  {
+    "id": 90,
+    "path": "prompts/90-v0-3-0-release-hardening.md",
+    "title": "90. v0.3.0 release hardening",
+    "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/prompts/90-v0-3-0-release-hardening.md"
+  }
+]

@@ -1,0 +1,4266 @@
+commit 7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d
+Date: 2026-08-21T15:28:46+02:00
+Subject: Harden v0.3 operations and release
+
+
+---
+ CHANGELOG.md                                       |  27 +++
+ README.md                                          |   4 +-
+ RELEASE_NOTES.md                                   | 127 ++---------
+ api/openapi.yaml                                   | 237 ++++++++++++++++++++-
+ api/openapi_test.go                                |   2 +-
+ cmd/orch-loadtest/main.go                          |  24 ++-
+ cmd/orch-loadtest/scale_test.go                    |  19 ++
+ cmd/orch-server/main.go                            | 123 ++++++++++-
+ cmd/orch-server/main_test.go                       |  13 ++
+ docs/API_VERSIONING.md                             |   2 +-
+ docs/CONFIGURATION.md                              |  16 +-
+ docs/LOAD_TESTING.md                               |   3 +
+ docs/MIGRATIONS.md                                 |  16 ++
+ docs/MULTI_TENANCY.md                              |  11 +
+ docs/OPERATIONS.md                                 |  30 +++
+ docs/PERFORMANCE.md                                |  21 ++
+ docs/SCALE_TESTING.md                              |  20 ++
+ docs/TESTING.md                                    |  19 ++
+ docs/UPGRADES.md                                   |  26 +++
+ docs/assets/docs.js                                |   5 +
+ internal/agent/agent.go                            |  13 +-
+ internal/api/api.go                                |  52 +++--
+ internal/api/benchmark_test.go                     |  48 +++++
+ internal/api/debug.go                              |  20 ++
+ internal/api/debug_test.go                         |  35 +++
+ internal/api/fuzz_test.go                          |  25 +++
+ internal/api/operations.go                         |  99 +++++++++
+ internal/api/versioning_test.go                    |   8 +
+ internal/cli/client.go                             |  91 +++++++-
+ internal/cli/fuzz_test.go                          |  10 +
+ internal/cli/operations.go                         | 211 ++++++++++++++++++
+ internal/cli/root.go                               |  65 +++++-
+ internal/cli/root_test.go                          |   2 +-
+ internal/config/config.go                          | 149 +++++++++++--
+ internal/config/config_test.go                     |  10 +
+ internal/controlplane/benchmark_test.go            |  51 +++++
+ internal/controlplane/controlplane.go              | 160 ++++++++++----
+ internal/controlplane/operations.go                | 195 +++++++++++++++++
+ internal/controlplane/operations_test.go           | 103 +++++++++
+ .../controlplane/version_compatibility_test.go     |  40 ++++
+ internal/controlplane/workloads.go                 |  77 +++++++
+ internal/cronjobs/fuzz_test.go                     |  18 ++
+ internal/image/fuzz_test.go                        |  15 ++
+ internal/maintenance/maintenance.go                |  64 ++++++
+ internal/maintenance/maintenance_test.go           |  20 ++
+ internal/migrations/manager.go                     | 237 +++++++++++++++++++++
+ internal/migrations/manager_test.go                |  57 +++++
+ internal/scheduler/benchmark_test.go               |  26 +++
+ internal/scheduler/property_test.go                |  98 +++++++++
+ internal/store/postgres.go                         |  15 +-
+ internal/version/version.go                        |  84 ++++++++
+ internal/version/version_test.go                   |  24 +++
+ migrations/000016_operations_safety.down.sql       |   3 +
+ migrations/000016_operations_safety.up.sql         |  35 +++
+ pkg/types/fuzz_test.go                             |  28 +++
+ pkg/types/operations.go                            |  80 +++++++
+ pkg/types/parsers.go                               |  59 +++++
+ pkg/types/types.go                                 |   1 +
+ scripts/migrate-up.sh                              |   2 +
+ 59 files changed, 2855 insertions(+), 220 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f6e7cd6..b413fd8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,32 @@
+ # Changelog
+ 
++## v0.3.0 - 2026-08-21
++
++Compatibility, policy, multi-tenancy, workload, and operational-hardening release.
++
++### Added
++
++- Stable OpenAPI v1 contract, API-version compatibility headers, and public Go client.
++- Admission policy, namespace isolation, transaction-safe resource quotas, image digest pinning, and GitOps reconciliation/drift controls.
++- One-shot and cron jobs, persistent-volume abstractions, internal DNS, and notification sinks.
++- Maintenance windows with audited emergency bypass, agent/server/schema compatibility metadata, advisory-locked migrations, retention pruning, and namespace usage export.
++- Parser fuzz targets, randomized scheduler invariants, controller/API benchmarks, isolated opt-in pprof, and an optional 1,000-service fake-agent scale scenario.
++
++### Changed
++
++- Agents report their version during registration and heartbeat; agents below `0.2.0` are rejected and versions above `0.3.0` receive a warning.
++- Database schema version is 16; supported startup range is 15–16 when schema checking is enabled.
++- `orch version` now reports `0.3.0`, and cluster/migration preflight commands expose upgrade state.
++
++### Known Boundaries
++
++- The default server still uses an in-memory control plane; PostgreSQL store wiring and restart-safe production state remain future work.
++- Advanced CNI, stateful scheduling, external plugins, image signing, vulnerability scanning, payments, and invoicing remain design-only or out of scope.
++
++### Verification
++
++- `go test ./...`, lint/vet, OpenAPI validation, migration safety tests, and security-sensitive grep checks are release gates.
++
+ ## v0.2.0 - 2026-07-14
+ 
+ Production-hardening release for the MVP orchestrator.
+diff --git a/README.md b/README.md
+index a882eb0..e995813 100644
+--- a/README.md
++++ b/README.md
+@@ -232,5 +232,5 @@ placement:
+ | 🧭 Control loops | [Scheduler](https://alekpopovic.github.io/orch/#SCHEDULER.md), [Reconciler](https://alekpopovic.github.io/orch/#RECONCILER.md), [Rollouts](https://alekpopovic.github.io/orch/#ROLLOUTS.md) |
+ | 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Policy engine](https://alekpopovic.github.io/orch/#POLICY_ENGINE_DESIGN.md), [Multi-tenancy](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md), [Image signing](https://alekpopovic.github.io/orch/#IMAGE_SIGNING_DESIGN.md), [Supply chain](https://alekpopovic.github.io/orch/#SUPPLY_CHAIN_SECURITY_DESIGN.md) |
+ | 🔄 GitOps | [GitOps sources and reconciliation](https://alekpopovic.github.io/orch/#GITOPS.md) |
+-| 📈 Operations | [Observability](https://alekpopovic.github.io/orch/#OBSERVABILITY.md), [Reliability](https://alekpopovic.github.io/orch/#RELIABILITY.md), [Operations](https://alekpopovic.github.io/orch/#OPERATIONS.md), [Production deployment](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md) |
+-| 🧪 Testing | [Load testing](https://alekpopovic.github.io/orch/#LOAD_TESTING.md), [Chaos testing](https://alekpopovic.github.io/orch/#CHAOS_TESTING.md), [Development](https://alekpopovic.github.io/orch/#DEVELOPMENT.md) |
++| 📈 Operations | [Observability](https://alekpopovic.github.io/orch/#OBSERVABILITY.md), [Reliability](https://alekpopovic.github.io/orch/#RELIABILITY.md), [Operations](https://alekpopovic.github.io/orch/#OPERATIONS.md), [Upgrades](https://alekpopovic.github.io/orch/#UPGRADES.md), [Migrations](https://alekpopovic.github.io/orch/#MIGRATIONS.md), [Production deployment](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md) |
++| 🧪 Testing | [Testing](https://alekpopovic.github.io/orch/#TESTING.md), [Performance](https://alekpopovic.github.io/orch/#PERFORMANCE.md), [Scale testing](https://alekpopovic.github.io/orch/#SCALE_TESTING.md), [Load testing](https://alekpopovic.github.io/orch/#LOAD_TESTING.md), [Chaos testing](https://alekpopovic.github.io/orch/#CHAOS_TESTING.md) |
+diff --git a/RELEASE_NOTES.md b/RELEASE_NOTES.md
+index 35d1e00..50dae4d 100644
+--- a/RELEASE_NOTES.md
++++ b/RELEASE_NOTES.md
+@@ -1,119 +1,26 @@
+-# Release Notes
++# orch v0.3.0 Release Notes
+ 
+-## v0.1.0 MVP
++v0.3.0 turns the MVP into a substantially stronger platform contract. The release adds a documented, stable v1 API; namespace-aware policy and quota boundaries; GitOps and scheduled/one-shot workloads; and explicit operational safety for upgrades, migrations, disruptive maintenance, retention, and capacity testing.
+ 
+-This is the first MVP release candidate for `orch`, a Go-based Docker container orchestrator.
++## Highlights
+ 
+-### What Works
++- Namespace isolation covers services, tasks, deployments, events, secrets, registry credentials, audit history, maintenance windows, and usage reports.
++- Admission rejects unsafe workload specs before mutation; quotas account for replicas, requested CPU/memory, public ports, secrets, and registry credentials.
++- GitOps supports deterministic sync, drift reporting, and an opt-in auto-revert policy. Jobs, cron jobs, volume claims, internal DNS, and notification sinks extend the workload surface.
++- `GET /v1/version` and `orch cluster check-upgrade` report server, API, agent, and schema compatibility. Agents report their version on registration and heartbeat.
++- `orch-server migrate status|up|down` records versions, serializes migrations with an advisory lock, and requires explicit authorization for down migrations.
++- Maintenance windows govern rollout, rollback, drain, and scale-down operations. Emergency `--force` bypasses are audited.
++- Retention pruning protects active/unresolved state, while namespace usage snapshots export CPU, memory, replica, service, task-runtime, public-port, and storage-claim measurements as JSON or CSV.
++- New fuzz, scheduler property, benchmark, profiling, and optional 1,000-service scale suites improve confidence and provide reproducible diagnostics.
+ 
+-- `orch-server` starts with structured logs, health endpoints, optional JWT auth, agent auth, request IDs, JSON errors, and Prometheus metrics.
+-- `orch-agent` registers with the server, heartbeats, receives short-lived credentials, polls assigned tasks, and reconciles Docker containers.
+-- `orch` CLI can deploy services from YAML, list/inspect services and nodes, scale services, view tasks, stream logs, list events, start rollouts, request rollback, and delete services.
+-- Services model image, replicas, env, ports, resource requests/limits, healthchecks, restart policy, placement constraints, and deployment version.
+-- Task lifecycle supports pending, assigned, pulling, created, running, healthy, unhealthy, failed, stopped, and removed states.
+-- Scheduler and reconciler packages are deterministic and unit-tested.
+-- Agent Docker execution is idempotent by task/container labels and handles process restart, missing containers, non-zero exits, pull failures, and create/start errors.
+-- Soft service deletion marks services deleting, stops/removes task containers, and finalizes after tasks report removed.
+-- Logs are proxied from the owning agent without unbounded buffering.
+-- Events are queryable through the API and CLI for the active control-plane implementation.
+-- PostgreSQL migrations and store implementation exist for nodes, services, service versions, tasks, deployments, and events.
+-- Local Docker Compose environment starts PostgreSQL, server, and one agent.
++## Compatibility and Upgrade
+ 
+-### Important MVP Limits
++The server version is `0.3.0`, API version is `v1`, and database schema is 16. Supported agents are `0.2.0`–`0.3.0`; newer agents are accepted with an untested-version warning. Supported schema versions are 15–16. Follow [docs/UPGRADES.md](docs/UPGRADES.md) and [docs/MIGRATIONS.md](docs/MIGRATIONS.md), back up PostgreSQL first, migrate before replacing the server, and roll agents node by node.
+ 
+-- The default `orch-server` binary still uses the in-memory control plane. PostgreSQL-backed server state is not wired yet.
+-- Server process restart loses in-memory services, tasks, deployments, events, node credentials, and node status.
+-- No heartbeat-expiry controller marks abruptly lost nodes offline yet.
+-- No HA leader election implementation yet.
+-- Networking is Docker host/port based; no overlay networking or service discovery.
+-- Agent authentication is token based; mTLS is roadmap.
+-- Secrets are represented as references only.
+-- Rollouts do not yet support manual pause/resume, progress deadlines, or automatic rollback.
++## Important Boundary
+ 
+-### Verification For This Candidate
++The default `orch-server` runtime still owns live control-plane state in memory even though the PostgreSQL store and migrations exist. Do not treat v0.3.0 as restart-safe durable orchestration until that store is wired into the server. Advanced networking, stateful scheduling, external plugin execution, signing/scanning enforcement, and billing are not included.
+ 
+-- Full Go test suite: `go test ./...`
+-- Build: `go build ./...`
+-- Vet: `go vet ./...`
+-- Lint target: `make lint`
+-- MVP fake-runtime E2E covers agent registration, service deploy, task creation/assignment, task running, log streaming, events, scale up/down, and delete cleanup.
++## Verification
+ 
+-### Local Demo
+-
+-```sh
+-./scripts/dev-up.sh
+-./scripts/migrate-up.sh
+-export ORCH_SERVER_URL=http://localhost:8080
+-./scripts/demo-deploy.sh
+-go run ./cmd/orch service ps http-api
+-go run ./cmd/orch logs http-api --tail 100
+-go run ./cmd/orch events --service http-api
+-go run ./cmd/orch scale http-api --replicas 2
+-go run ./cmd/orch delete http-api
+-./scripts/dev-down.sh
+-```
+-
+-### Upgrade Notes
+-
+-This is the first release; no upgrade path is required. For future releases, run migrations before deploying binaries that depend on schema changes.
+-
+-## v0.2.0 Production Hardening
+-
+-`orch` v0.2.0 focuses on production hardening around observability, security, backup/restore, deployment manifests, autoscaling foundations, HA controller coordination, and reliability testing.
+-
+-### Highlights
+-
+-- Added Prometheus alert rules and a Grafana dashboard.
+-- Added backup and restore scripts plus operator runbooks.
+-- Added production Docker Compose and systemd deployment examples.
+-- Completed a security review and fixed the high-risk healthcheck host-local SSRF issue.
+-- Added default container security policy enforcement for privileged mode, host network/PID, host paths, and Linux capabilities.
+-- Hardened healthcheck validation and execution with scheme/path-only specs, redirect blocking, assigned-port enforcement, and response body read limits.
+-- Added autoscaling design and CPU-based autoscaler MVP using a metrics provider abstraction.
+-- Added HA control-plane design and PostgreSQL advisory-lock leader election primitives.
+-- Added multi-agent load testing and chaos-style integration scenarios.
+-- Added a GitHub Pages documentation portal with release docs, OpenAPI access, left-sidebar navigation, and auto/light/dark theme support.
+-- Added a branded README/docs refresh with a unique SVG logo, colorful cards, icons, and Mermaid chart rendering.
+-
+-### Compatibility Notes
+-
+-- New migrations add `security_context` and `autoscaling` JSONB fields to `services`.
+-- Existing service specs remain compatible because new fields default to empty safe values.
+-- The default security policy rejects privilege-escalating options unless explicitly allowlisted.
+-- The autoscaler controller uses the existing service scale path and skips active rollouts.
+-
+-### Verification
+-
+-Completed for this candidate:
+-
+-- `go test ./...`
+-- `go build ./...`
+-- `docker compose config`
+-- security-sensitive grep checks for token/secret logging
+-
+-`golangci-lint` was not installed in the local environment, so lint could not be executed locally.
+-
+-### Known Limits
+-
+-- The default server still uses the in-memory control plane.
+-- PostgreSQL store and migration support exist, but full server runtime wiring to durable state remains future work.
+-- Autoscaling includes the controller and fake metrics provider; a production Prometheus provider is not wired yet.
+-- HA leader election primitives are implemented, but production controller wiring still needs DB-backed server state.
+-- GitHub reported existing Dependabot vulnerabilities on push; review the repository security tab before tagging.
+-
+-## v0.1.0 MVP
+-
+-The first MVP release candidate for `orch`, a Go-based Docker container orchestrator.
+-
+-### What Works
+-
+-- `orch-server` starts with structured logs, health endpoints, optional JWT auth, agent auth, request IDs, JSON errors, and Prometheus metrics.
+-- `orch-agent` registers with the server, heartbeats, receives short-lived credentials, polls assigned tasks, and reconciles Docker containers.
+-- `orch` CLI can deploy services from YAML, list/inspect services and nodes, scale services, view tasks, stream logs, list events, start rollouts, request rollback, and delete services.
+-- Services model image, replicas, env, ports, resource requests/limits, healthchecks, restart policy, placement constraints, and deployment version.
+-- Scheduler and reconciler packages are deterministic and unit-tested.
+-- Soft service deletion marks services deleting, stops/removes task containers, and finalizes after tasks report removed.
+-
+-### Upgrade Notes
+-
+-This is the first release series. For future releases, run migrations before deploying binaries that depend on schema changes.
++The release gate covers the full Go suite, vet/lint, OpenAPI parsing and path coverage, migration compatibility/locking/idempotency tests, and secret-sensitive source scans. The optional scale suite remains excluded from normal CI by its `scale` build tag.
+diff --git a/api/openapi.yaml b/api/openapi.yaml
+index ab698f6..24549cf 100644
+--- a/api/openapi.yaml
++++ b/api/openapi.yaml
+@@ -287,6 +287,7 @@ paths:
+       summary: Drain node
+       parameters:
+         - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Force"
+       responses:
+         "200":
+           description: Drained node
+@@ -367,6 +368,7 @@ paths:
+       summary: Scale service
+       parameters:
+         - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Force"
+       requestBody:
+         required: true
+         content:
+@@ -385,6 +387,7 @@ paths:
+       summary: Start service rollout
+       parameters:
+         - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Force"
+       requestBody:
+         required: true
+         content:
+@@ -414,6 +417,7 @@ paths:
+       summary: Start service rollback
+       parameters:
+         - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Force"
+       responses:
+         "202":
+           description: Rollback accepted
+@@ -667,6 +671,90 @@ paths:
+             application/json:
+               schema:
+                 $ref: "#/components/schemas/ListAuditLogsResponse"
++  /v1/maintenance-windows:
++    get:
++      summary: List maintenance windows visible to the selected namespace
++      responses:
++        "200":
++          description: Maintenance windows
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/MaintenanceWindowsResponse"
++    post:
++      summary: Create a namespace or global maintenance window
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: "#/components/schemas/MaintenanceWindow"
++      responses:
++        "201":
++          description: Created maintenance window
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/MaintenanceWindowResponse"
++  /v1/maintenance-windows/{id}:
++    delete:
++      summary: Delete a maintenance window
++      parameters:
++        - $ref: "#/components/parameters/ID"
++      responses:
++        "204":
++          description: Maintenance window deleted
++  /v1/retention:
++    get:
++      summary: Get retention configuration and last pruning result
++      responses:
++        "200":
++          description: Retention status
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/RetentionStatus"
++  /v1/retention/prune:
++    post:
++      summary: Run retention pruning
++      parameters:
++        - name: dry_run
++          in: query
++          schema:
++            type: boolean
++            default: false
++      responses:
++        "200":
++          description: Pruning result
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/PruneResult"
++  /v1/usage:
++    get:
++      summary: Export periodic usage snapshots for a namespace
++      parameters:
++        - name: namespace
++          in: query
++          schema:
++            type: string
++        - name: from
++          in: query
++          schema:
++            type: string
++            format: date-time
++        - name: to
++          in: query
++          schema:
++            type: string
++            format: date-time
++      responses:
++        "200":
++          description: Usage report
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/UsageReport"
+ components:
+   securitySchemes:
+     bearerAuth:
+@@ -688,6 +776,14 @@ components:
+       schema:
+         type: string
+         default: default
++    Force:
++      name: force
++      in: query
++      required: false
++      description: Audit and bypass an applicable maintenance-window restriction.
++      schema:
++        type: boolean
++        default: false
+   schemas:
+     HealthResponse:
+       type: object
+@@ -700,14 +796,24 @@ components:
+           format: date-time
+     APIVersionResponse:
+       type: object
+-      required: [version, status]
++      required: [api_version, server_version, minimum_agent_version, maximum_tested_agent_version, database_schema_version, minimum_schema_version, maximum_schema_version]
+       properties:
+-        version:
++        api_version:
+           type: string
+           enum: [v1]
+-        status:
++        server_version:
++          type: string
++          example: 0.3.0
++        minimum_agent_version:
++          type: string
++        maximum_tested_agent_version:
+           type: string
+-          enum: [stable]
++        database_schema_version:
++          type: integer
++        minimum_schema_version:
++          type: integer
++        maximum_schema_version:
++          type: integer
+     Namespace:
+       type: object
+       required: [name, created_at]
+@@ -1024,6 +1130,8 @@ components:
+         last_heartbeat_at:
+           type: string
+           format: date-time
++        agent_version:
++          type: string
+     Deployment:
+       type: object
+       properties:
+@@ -1321,3 +1429,124 @@ components:
+           type: string
+         service_version:
+           type: integer
++    MaintenanceWindow:
++      type: object
++      required: [name, schedule, timezone, duration, allowed_operations, enabled]
++      properties:
++        id:
++          type: string
++        name:
++          type: string
++        namespace:
++          type: string
++        global:
++          type: boolean
++        schedule:
++          type: string
++          description: Five-field cron schedule.
++        timezone:
++          type: string
++          example: Europe/Belgrade
++        duration:
++          type: integer
++          format: int64
++          description: Duration in nanoseconds.
++        allowed_operations:
++          type: array
++          items:
++            type: string
++            enum: [rollout, rollback, node_drain, autoscaling_scale_down, non_urgent_replacement]
++        enabled:
++          type: boolean
++        created_at:
++          type: string
++          format: date-time
++    MaintenanceWindowResponse:
++      type: object
++      properties:
++        window:
++          $ref: "#/components/schemas/MaintenanceWindow"
++    MaintenanceWindowsResponse:
++      type: object
++      properties:
++        windows:
++          type: array
++          items:
++            $ref: "#/components/schemas/MaintenanceWindow"
++    RetentionConfig:
++      type: object
++      additionalProperties:
++        type: integer
++        format: int64
++      description: Retention durations in nanoseconds keyed by retained resource.
++    PruneResult:
++      type: object
++      properties:
++        dry_run:
++          type: boolean
++        events:
++          type: integer
++        audit_logs:
++          type: integer
++        tasks:
++          type: integer
++        rollouts:
++          type: integer
++        jobs:
++          type: integer
++        gitops_records:
++          type: integer
++    RetentionStatus:
++      type: object
++      properties:
++        config:
++          $ref: "#/components/schemas/RetentionConfig"
++        last_run_at:
++          type: string
++          format: date-time
++        last_result:
++          $ref: "#/components/schemas/PruneResult"
++    UsageSnapshot:
++      type: object
++      properties:
++        id:
++          type: string
++        namespace:
++          type: string
++        timestamp:
++          type: string
++          format: date-time
++        cpu_millicores:
++          type: integer
++          format: int64
++        memory_bytes:
++          type: integer
++          format: int64
++        replicas:
++          type: integer
++        services:
++          type: integer
++        task_runtime_seconds:
++          type: number
++          format: double
++        public_ports:
++          type: integer
++        storage_claims:
++          type: integer
++    UsageReport:
++      type: object
++      properties:
++        namespace:
++          type: string
++        from:
++          type: string
++          format: date-time
++        to:
++          type: string
++          format: date-time
++        snapshots:
++          type: array
++          items:
++            $ref: "#/components/schemas/UsageSnapshot"
++        totals:
++          $ref: "#/components/schemas/UsageSnapshot"
+diff --git a/api/openapi_test.go b/api/openapi_test.go
+index e230b64..3d5c1b1 100644
+--- a/api/openapi_test.go
++++ b/api/openapi_test.go
+@@ -25,7 +25,7 @@ func TestOpenAPISyntax(t *testing.T) {
+ 	if doc.OpenAPI == "" || len(doc.Paths) == 0 || len(doc.Components) == 0 {
+ 		t.Fatalf("invalid OpenAPI shape: openapi=%q paths=%d components=%d", doc.OpenAPI, len(doc.Paths), len(doc.Components))
+ 	}
+-	for _, path := range []string{"/healthz", "/v1/nodes", "/v1/services", "/v1/tasks", "/v1/events", "/v1/logs", "/v1/secrets", "/v1/registry-credentials", "/v1/audit", "/v1/jobs", "/v1/cronjobs", "/v1/volumes", "/v1/volume-claims", "/v1/notification-sinks", "/v1/gitops/status"} {
++	for _, path := range []string{"/healthz", "/v1/version", "/v1/nodes", "/v1/services", "/v1/tasks", "/v1/events", "/v1/logs", "/v1/secrets", "/v1/registry-credentials", "/v1/audit", "/v1/jobs", "/v1/cronjobs", "/v1/volumes", "/v1/volume-claims", "/v1/notification-sinks", "/v1/gitops/status", "/v1/maintenance-windows", "/v1/retention", "/v1/retention/prune", "/v1/usage"} {
+ 		if _, ok := doc.Paths[path]; !ok {
+ 			t.Fatalf("OpenAPI spec missing path %s", path)
+ 		}
+diff --git a/cmd/orch-loadtest/main.go b/cmd/orch-loadtest/main.go
+index e2b7cff..c208026 100644
+--- a/cmd/orch-loadtest/main.go
++++ b/cmd/orch-loadtest/main.go
+@@ -22,12 +22,15 @@ type config struct {
+ }
+ 
+ type summary struct {
+-	TasksCreated           int
+-	TasksRunning           int
+-	TasksFailed            int
+-	AverageConvergenceTime time.Duration
+-	SchedulerErrors        int
+-	ReconcilerErrors       int
++	TasksCreated             int
++	TasksRunning             int
++	TasksFailed              int
++	AverageConvergenceTime   time.Duration
++	SchedulerErrors          int
++	ReconcilerErrors         int
++	SchedulerIterations      int
++	ReconciliationIterations int
++	ConvergenceDuration      time.Duration
+ }
+ 
+ func main() {
+@@ -47,7 +50,7 @@ func main() {
+ func parseFlags(args []string) config {
+ 	cfg := config{
+ 		nodes:       5,
+-		services:    20,
++		services:    1000,
+ 		replicas:    3,
+ 		failureRate: 0.05,
+ 		duration:    10 * time.Second,
+@@ -91,6 +94,7 @@ func run(ctx context.Context, cfg config) (summary, error) {
+ 		return summary{}, err
+ 	}
+ 	var result summary
++	convergenceStarted := time.Now()
+ 	convergence := make([]time.Duration, 0, cfg.services)
+ 	for serviceIndex := 0; serviceIndex < cfg.services; serviceIndex++ {
+ 		start := time.Now()
+@@ -112,9 +116,12 @@ func run(ctx context.Context, cfg config) (summary, error) {
+ 			return result, err
+ 		}
+ 		convergence = append(convergence, time.Since(start))
++		result.ReconciliationIterations++
+ 	}
++	result.ConvergenceDuration = time.Since(convergenceStarted)
+ 	deadline := time.Now().Add(cfg.duration)
+ 	for time.Now().Before(deadline) {
++		result.SchedulerIterations++
+ 		if err := simulateTick(ctx, cp, nodes, rng, cfg.failureRate, &result); err != nil {
+ 			result.ReconcilerErrors++
+ 			return result, err
+@@ -241,4 +248,7 @@ func printSummary(result summary) {
+ 	fmt.Printf("average_convergence_time=%s\n", result.AverageConvergenceTime)
+ 	fmt.Printf("scheduler_errors=%d\n", result.SchedulerErrors)
+ 	fmt.Printf("reconciler_errors=%d\n", result.ReconcilerErrors)
++	fmt.Printf("convergence_duration=%s\n", result.ConvergenceDuration)
++	fmt.Printf("scheduler_iterations=%d\n", result.SchedulerIterations)
++	fmt.Printf("reconciliation_iterations=%d\n", result.ReconciliationIterations)
+ }
+diff --git a/cmd/orch-loadtest/scale_test.go b/cmd/orch-loadtest/scale_test.go
+new file mode 100644
+index 0000000..f1a4463
+--- /dev/null
++++ b/cmd/orch-loadtest/scale_test.go
+@@ -0,0 +1,19 @@
++//go:build scale
++
++package main
++
++import (
++	"context"
++	"testing"
++	"time"
++)
++
++func TestThousandServiceScale(t *testing.T) {
++	result, err := run(context.Background(), config{nodes: 50, services: 1000, replicas: 3, failureRate: 0.01, duration: time.Second, seed: 42})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if result.TasksCreated < 3000 || result.ReconciliationIterations != 1000 {
++		t.Fatalf("unexpected result %#v", result)
++	}
++}
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 6cc4889..8ee00a4 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -9,6 +9,8 @@ import (
+ 	"net/http"
+ 	"os"
+ 	"os/signal"
++	"strconv"
++	"strings"
+ 	"syscall"
+ 	"time"
+ 
+@@ -22,17 +24,26 @@ import (
+ 	"github.com/alekpopovic/orch/internal/gitops"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
++	"github.com/alekpopovic/orch/internal/migrations"
+ 	"github.com/alekpopovic/orch/internal/node"
+ 	"github.com/alekpopovic/orch/internal/notifications"
+ 	"github.com/alekpopovic/orch/internal/rollout"
+ 	"github.com/alekpopovic/orch/internal/scheduler"
+ 	"github.com/alekpopovic/orch/internal/secrets"
++	versioninfo "github.com/alekpopovic/orch/internal/version"
+ 	"gopkg.in/yaml.v3"
+ )
+ 
+ func main() {
+ 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+ 	defer stop()
++	if len(os.Args) > 2 && os.Args[1] == "migrate" {
++		if err := runMigrationCommand(ctx, os.Args[2], os.Args[3:]); err != nil {
++			fmt.Fprintln(os.Stderr, err)
++			os.Exit(1)
++		}
++		return
++	}
+ 
+ 	cfg, printConfig, err := loadConfig(os.Args[1:])
+ 	if err != nil {
+@@ -73,6 +84,15 @@ func loadConfig(args []string) (config.ServerConfig, bool, error) {
+ 	fs.StringVar(&overrides.GracefulShutdownTTL, "shutdown-timeout", "", "graceful shutdown timeout")
+ 	fs.StringVar(&overrides.HeartbeatTimeout, "node-heartbeat-timeout", "", "node heartbeat timeout")
+ 	fs.StringVar(&overrides.NodeMonitorInterval, "node-monitor-interval", "", "node monitor interval")
++	fs.StringVar(&overrides.DebugAddr, "debug-addr", "", "admin debug listener address")
++	fs.Func("enable-pprof", "enable pprof on the admin debug listener", func(raw string) error {
++		value, err := strconv.ParseBool(raw)
++		if err != nil {
++			return fmt.Errorf("enable-pprof: %w", err)
++		}
++		overrides.EnablePprof = &value
++		return nil
++	})
+ 	if err := fs.Parse(args); err != nil {
+ 		return config.ServerConfig{}, false, err
+ 	}
+@@ -84,16 +104,46 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 	if err := cfg.Validate(); err != nil {
+ 		return err
+ 	}
++	if strings.EqualFold(os.Getenv("ORCH_SCHEMA_CHECK"), "true") {
++		runner, err := migrations.Open(ctx, cfg.DatabaseURL, "migrations")
++		if err != nil {
++			return fmt.Errorf("database schema check: %w", err)
++		}
++		status, statusErr := runner.Status(ctx)
++		runner.Close()
++		if statusErr != nil {
++			return statusErr
++		}
++		if err = checkSchemaVersion(status.Current); err != nil {
++			return err
++		}
++	}
+ 	users, err := auth.ParseStaticUsers(cfg.Users)
+ 	if err != nil {
+ 		return err
+ 	}
++	var debugServer *http.Server
++	if cfg.EnablePprof {
++		debugServer = &http.Server{Addr: cfg.DebugAddr, Handler: api.NewDebugHandler(true), ReadHeaderTimeout: 5 * time.Second}
++		go func() {
++			logger.Info("starting admin debug listener", "addr", cfg.DebugAddr)
++			if err := debugServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
++				logger.Error("debug listener stopped", "error", err)
++			}
++		}()
++		go func() {
++			<-ctx.Done()
++			shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
++			defer cancel()
++			_ = debugServer.Shutdown(shutdownCtx)
++		}()
++	}
+ 
+ 	envelope, err := secrets.NewLocalEnvelope(cfg.SecretKey)
+ 	if err != nil {
+ 		return err
+ 	}
+-	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy))
++	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy), controlplane.WithRetentionConfig(cfg.Retention))
+ 	controlPlane.SetNotificationDispatcher(notifications.NewDispatcher(controlPlane, nil))
+ 	serverMetrics := metrics.NewServer()
+ 	if dnsAddress := os.Getenv("ORCH_DNS_ADDR"); dnsAddress != "" {
+@@ -139,6 +189,33 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 			}
+ 		}
+ 	}()
++	go func() {
++		ticker := time.NewTicker(time.Minute)
++		defer ticker.Stop()
++		_, _ = controlPlane.CaptureUsageSnapshots(ctx)
++		for {
++			select {
++			case <-ctx.Done():
++				return
++			case <-ticker.C:
++				_, _ = controlPlane.CaptureUsageSnapshots(ctx)
++			}
++		}
++	}()
++	go func() {
++		ticker := time.NewTicker(24 * time.Hour)
++		defer ticker.Stop()
++		for {
++			select {
++			case <-ctx.Done():
++				return
++			case <-ticker.C:
++				if _, err := controlPlane.PruneRetention(ctx, false); err != nil && !errors.Is(err, context.Canceled) {
++					logger.Warn("retention pruning failed", "error", err)
++				}
++			}
++		}
++	}()
+ 	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+ 		if err := rolloutController.Run(ctx, 5*time.Second); err != nil && !errors.Is(err, context.Canceled) {
+@@ -181,3 +258,47 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 		return nil
+ 	}
+ }
++
++func checkSchemaVersion(value string) error {
++	normalized := strings.TrimLeft(strings.TrimSpace(value), "0")
++	if normalized == "" {
++		normalized = "0"
++	}
++	current, err := strconv.Atoi(normalized)
++	if err != nil {
++		return fmt.Errorf("invalid database schema version %q", value)
++	}
++	return versioninfo.CheckSchema(current)
++}
++
++func runMigrationCommand(ctx context.Context, action string, args []string) error {
++	cfg := config.LoadServer()
++	fs := flag.NewFlagSet("migrate "+action, flag.ContinueOnError)
++	databaseURL := cfg.DatabaseURL
++	allowDown := false
++	fs.StringVar(&databaseURL, "database-url", databaseURL, "PostgreSQL database URL")
++	fs.BoolVar(&allowDown, "allow-down", false, "explicitly allow one down migration")
++	if err := fs.Parse(args); err != nil {
++		return err
++	}
++	runner, err := migrations.Open(ctx, databaseURL, "migrations")
++	if err != nil {
++		return err
++	}
++	defer runner.Close()
++	switch action {
++	case "status":
++		status, err := runner.Status(ctx)
++		if err != nil {
++			return err
++		}
++		fmt.Printf("current=%s latest=%s pending=%d\n", status.Current, status.Latest, len(status.Pending))
++		return nil
++	case "up":
++		return runner.Up(ctx)
++	case "down":
++		return runner.Down(ctx, allowDown)
++	default:
++		return fmt.Errorf("unknown migrate action %q (use status, up, or down)", action)
++	}
++}
+diff --git a/cmd/orch-server/main_test.go b/cmd/orch-server/main_test.go
+index 3e69b42..a993979 100644
+--- a/cmd/orch-server/main_test.go
++++ b/cmd/orch-server/main_test.go
+@@ -55,3 +55,16 @@ func TestServerConfigPrintModeParsesFlags(t *testing.T) {
+ 		t.Fatalf("expected redacted secret, got %#v", redacted)
+ 	}
+ }
++
++func TestStartupRejectsUnsupportedSchemaVersions(t *testing.T) {
++	for _, value := range []string{"000014", "000017"} {
++		if err := checkSchemaVersion(value); err == nil {
++			t.Fatalf("expected schema %s to be rejected", value)
++		}
++	}
++	for _, value := range []string{"000015", "000016"} {
++		if err := checkSchemaVersion(value); err != nil {
++			t.Fatalf("expected schema %s to be accepted: %v", value, err)
++		}
++	}
++}
+diff --git a/docs/API_VERSIONING.md b/docs/API_VERSIONING.md
+index 63d8680..17f71c3 100644
+--- a/docs/API_VERSIONING.md
++++ b/docs/API_VERSIONING.md
+@@ -2,7 +2,7 @@
+ 
+ The public control-plane contract is versioned in the URL. The current stable API is `/v1`; health, readiness, and metrics endpoints are unversioned because they are operational probes rather than workload contracts.
+ 
+-Every `/v1` response includes `API-Version: v1`. `GET /v1/version` exposes machine-readable stability metadata. The router registers v1 routes through one version boundary so a future version can be implemented without changing v1 handlers in place.
++Every `/v1` response includes `API-Version: v1`. `GET /v1/version` exposes machine-readable API/server versions, supported agent range, and supported/expected database schema versions. The router registers v1 routes through one version boundary so a future version can be implemented without changing v1 handlers in place.
+ 
+ ## Compatibility Rules
+ 
+diff --git a/docs/CONFIGURATION.md b/docs/CONFIGURATION.md
+index 1431430..31ea782 100644
+--- a/docs/CONFIGURATION.md
++++ b/docs/CONFIGURATION.md
+@@ -42,6 +42,16 @@ secret_key: change-me
+ graceful_shutdown_ttl: 10s
+ heartbeat_timeout: 30s
+ node_monitor_interval: 5s
++enable_pprof: false
++debug_addr: 127.0.0.1:6060
++retention:
++  events: 720h
++  audit_logs: 2160h
++  completed_tasks: 168h
++  failed_tasks: 720h
++  rollouts: 720h
++  completed_jobs: 168h
++  gitops_records: 720h
+ cluster_policy:
+   require_resource_requests: true
+   require_resource_limits: true
+@@ -60,7 +70,11 @@ cluster_policy:
+   max_public_ports_per_service: 4
+ ```
+ 
+-Common server flags mirror config keys: `--addr`, `--database-url`, `--log-level`, `--bootstrap-token`, `--jwt-secret`, `--users`, `--secret-key`, `--shutdown-timeout`, `--node-heartbeat-timeout`, and `--node-monitor-interval`.
++Common server flags mirror config keys: `--addr`, `--database-url`, `--log-level`, `--bootstrap-token`, `--jwt-secret`, `--users`, `--secret-key`, `--shutdown-timeout`, `--node-heartbeat-timeout`, `--node-monitor-interval`, `--debug-addr`, and `--enable-pprof=true`.
++
++`ORCH_ENABLE_PPROF` and `ORCH_DEBUG_ADDR` control a separate admin-only debug listener. Profiling is disabled by default and is never mounted on the public API listener. See [PERFORMANCE.md](https://alekpopovic.github.io/orch/#PERFORMANCE.md) before enabling it.
++
++Retention durations can also be set with `ORCH_RETENTION_EVENTS`, `ORCH_RETENTION_AUDIT_LOGS`, `ORCH_RETENTION_COMPLETED_TASKS`, `ORCH_RETENTION_FAILED_TASKS`, `ORCH_RETENTION_ROLLOUTS`, `ORCH_RETENTION_COMPLETED_JOBS`, and `ORCH_RETENTION_GITOPS_RECORDS`. Values use Go duration syntax; use hours for day-scale policies.
+ 
+ Admission policy can also be supplied through `ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS`, `ORCH_POLICY_REQUIRE_RESOURCE_LIMITS`, `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_IMAGE_REGISTRIES`, `ORCH_POLICY_BLOCK_LATEST_TAG`, `ORCH_POLICY_REQUIRE_DIGEST`, `ORCH_POLICY_ALLOW_MUTABLE_TAGS`, `ORCH_POLICY_DENY_LATEST_TAG`, `ORCH_POLICY_REQUIRE_HEALTHCHECK`, `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, `ORCH_POLICY_MAX_REPLICAS_PER_SERVICE`, and `ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE`. List values are comma-separated.
+ 
+diff --git a/docs/LOAD_TESTING.md b/docs/LOAD_TESTING.md
+index 333c83e..0ef0f9b 100644
+--- a/docs/LOAD_TESTING.md
++++ b/docs/LOAD_TESTING.md
+@@ -45,5 +45,8 @@ The summary includes:
+ - `average_convergence_time`
+ - `scheduler_errors`
+ - `reconciler_errors`
++- `convergence_duration`
++- `scheduler_iterations`
++- `reconciliation_iterations`
+ 
+ This is a fast local smoke/load tool, not a replacement for PostgreSQL or Docker integration tests.
+diff --git a/docs/MIGRATIONS.md b/docs/MIGRATIONS.md
+new file mode 100644
+index 0000000..a5ea9a4
+--- /dev/null
++++ b/docs/MIGRATIONS.md
+@@ -0,0 +1,16 @@
++# Database Migrations
++
++Migration files are ordered pairs in `migrations/`. Applied versions are recorded in `schema_migrations`; status discovery is deterministic and can be run repeatedly without changing schema state.
++
++```sh
++orch-server migrate status --database-url "$DATABASE_URL"
++orch-server migrate up --database-url "$DATABASE_URL"
++orch-server migrate down --database-url "$DATABASE_URL" --allow-down
++```
++
++`up` creates the version table when needed, takes a cluster-wide PostgreSQL advisory lock, and applies every pending migration in its own transaction. A second invocation skips recorded versions. `down` is rejected unless `--allow-down` is supplied and the latest migration has a down file.
++
++Before applying a production migration, take and test a backup, read both directions, verify compatibility with one still-running server version, and test it against a production-sized copy. Prefer additive columns/tables and bounded backfills. Never rewrite a committed migration. Down migrations that discard operator data require an explicit maintenance decision; rolling a binary back against the additive schema is generally safer.
++
++Set `ORCH_SCHEMA_CHECK=true` for production server startup. The server refuses schema versions outside the range advertised by `/v1/version`; v0.3.0 accepts 15–16 and expects 16. The opt-in remains necessary while the default development server uses its in-memory control plane.
++
+diff --git a/docs/MULTI_TENANCY.md b/docs/MULTI_TENANCY.md
+index e9f6a6c..62cd60c 100644
+--- a/docs/MULTI_TENANCY.md
++++ b/docs/MULTI_TENANCY.md
+@@ -59,3 +59,14 @@ Secret and registry credential references resolve only in the workload namespace
+ Migration `000011_namespaces` creates the namespace table, assigns existing rows to `default`, replaces global name uniqueness with namespace-local keys, and adds namespace indexes. Migration `000012_resource_quotas` adds quota limits. The namespace down migration removes non-default data before restoring global uniqueness and is therefore intended only for controlled rollback.
+ 
+ Namespaces are a logical isolation boundary, not yet a complete hostile multi-tenant security boundary. Docker nodes, host networking, scheduler capacity, and the current in-memory server process remain shared. Production multi-tenancy still requires PostgreSQL server wiring, network isolation, and stronger agent identity.
++
++## Usage Accounting
++
++The control plane periodically snapshots requested CPU and memory, replicas, services, accumulated task runtime, public ports, and storage claims by namespace. Namespace selection applies to both the API and CLI:
++
++```sh
++orch -n payments usage --from 2026-08-01 --to 2026-09-01
++orch -n payments usage export --from 2026-08-01 --to 2026-09-01 --format csv
++```
++
++`GET /v1/usage?namespace=payments&from=...&to=...` returns the source snapshots and aggregate totals. The report is an operational/export boundary only; pricing, payment, and invoicing are outside orch.
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index 3789d0a..3dba8dc 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -82,6 +82,36 @@ Rollback:
+ 
+ Migration files live in `migrations/`.
+ 
++The production-safe runner exposes `orch-server migrate status|up|down`; `down` additionally requires `--allow-down`. See [MIGRATIONS.md](https://alekpopovic.github.io/orch/#MIGRATIONS.md).
++
++## Maintenance Windows
++
++Create namespace-scoped or global windows with a five-field cron schedule, IANA timezone, duration, and allowed operations:
++
++```sh
++orch -n payments maintenance create weekly \
++  --schedule "0 2 * * 0" --timezone Europe/Belgrade --duration 2h \
++  --operations rollout,rollback,node_drain,autoscaling_scale_down
++orch -n payments maintenance ls
++orch -n payments maintenance delete <window-id>
++```
++
++Applicable rollouts, rollbacks, drains, and scale-downs are rejected outside an enabled window. An emergency operator may add `--force`; the bypass is recorded in the audit log. Critical safety replacement is not delayed by default.
++
++## Retention and Usage
++
++The server captures namespace usage every minute and runs the retention pruner daily. Inspect or preview it before manual pruning:
++
++```sh
++orch retention status
++orch retention prune --dry-run
++orch retention prune
++orch usage --namespace payments --from 2026-08-01 --to 2026-09-01
++orch usage export --namespace payments --from 2026-08-01 --to 2026-09-01 --format csv
++```
++
++Retention never removes active services, running tasks, active rollouts, or unresolved failures. Completed pruning emits an audit record. Usage reports accounting measurements only; they do not implement billing, payments, or invoices.
++
+ ## Runbooks
+ 
+ ### Check Cluster Health
+diff --git a/docs/PERFORMANCE.md b/docs/PERFORMANCE.md
+new file mode 100644
+index 0000000..1943379
+--- /dev/null
++++ b/docs/PERFORMANCE.md
+@@ -0,0 +1,21 @@
++# Performance Profiling
++
++Run all benchmarks or a focused benchmark with:
++
++```sh
++go test ./internal/... -run '^$' -bench . -benchmem
++go test ./internal/scheduler -run '^$' -bench BenchmarkSchedulerScoring -cpuprofile /tmp/orch-scheduler.cpu
++go tool pprof /tmp/orch-scheduler.cpu
++```
++
++The suite covers scheduler scoring, reconciliation across many services, event insertion, and the service/task list HTTP handlers. Compare results on the same Go version and host, and record workload size with every baseline.
++
++pprof is disabled by default and is never registered on the public listener. To enable its dedicated admin listener:
++
++```sh
++ORCH_ENABLE_PPROF=true ORCH_DEBUG_ADDR=127.0.0.1:6060 orch-server
++go tool pprof http://127.0.0.1:6060/debug/pprof/profile?seconds=30
++```
++
++Profiles may contain request paths, heap contents, and operational metadata. Bind the debug listener to loopback or a protected management network, require host/network access controls, capture only for the needed interval, and disable it afterward.
++
+diff --git a/docs/SCALE_TESTING.md b/docs/SCALE_TESTING.md
+new file mode 100644
+index 0000000..b848c79
+--- /dev/null
++++ b/docs/SCALE_TESTING.md
+@@ -0,0 +1,20 @@
++# Scale Testing
++
++The optional scale scenario creates 1,000 services with fake nodes and fake task transitions, so no Docker containers are started:
++
++```sh
++go run ./cmd/orch-loadtest \
++  --services 1000 --nodes 50 --replicas 3 \
++  --failure-rate 0.01 --duration 30s --seed 42
++```
++
++The service, node, replica, failure-rate, duration, and seed parameters are configurable. Output reports convergence duration, total/running/failed tasks, scheduler and reconciliation iterations, their error counts, and average per-service convergence time.
++
++An optional test is excluded from normal CI:
++
++```sh
++go test -tags scale ./cmd/orch-loadtest -run TestThousandServiceScale -v
++```
++
++Run PostgreSQL alongside a production-shaped test and apply `orch-server migrate up` before collecting results. The current v0.3 development server still keeps live control-plane state in memory, so this fake-agent command measures scheduler/reconciler behavior rather than PostgreSQL throughput. Use a dedicated database and host for persistence baselines; do not compare these numbers as if they were durable-cluster results.
++
+diff --git a/docs/TESTING.md b/docs/TESTING.md
+new file mode 100644
+index 0000000..4e9b58f
+--- /dev/null
++++ b/docs/TESTING.md
+@@ -0,0 +1,19 @@
++# Testing
++
++Run the deterministic unit and integration-safe suite with:
++
++```sh
++go test ./...
++```
++
++Scheduler property tests generate many node, task, resource, label, and port combinations from fixed seeds. A failure prints the seed so the same cluster state can be reproduced. They assert ready-node placement, capacity, label and host-port constraints, determinism, and unique assignment.
++
++Go fuzz targets cover service YAML, resource quantities, cron expressions, image references, port specs, label selectors, healthcheck paths, and API request bodies. They do not use Docker or the network. Run one target locally, for example:
++
++```sh
++go test ./internal/cli -run '^$' -fuzz FuzzServiceYAML -fuzztime 30s
++go test ./pkg/types -run '^$' -fuzz FuzzParsePortSpec -fuzztime 30s
++go test ./internal/api -run '^$' -fuzz FuzzCreateServiceRequest -fuzztime 30s
++```
++
++Fuzzing is intentionally manual rather than part of normal CI so CI duration remains predictable. Preserve useful minimized inputs as seed corpus entries or regression tests.
+diff --git a/docs/UPGRADES.md b/docs/UPGRADES.md
+new file mode 100644
+index 0000000..1e675be
+--- /dev/null
++++ b/docs/UPGRADES.md
+@@ -0,0 +1,26 @@
++# Cluster Upgrades
++
++orch v0.3.0 publishes the server, API, agent, and database compatibility range at `GET /v1/version`. Before changing any component, run:
++
++```sh
++orch version
++orch cluster check-upgrade
++orch-server migrate status --database-url "$DATABASE_URL"
++```
++
++The v0.3.0 server supports agents from `0.2.0` through `0.3.0`. Older agents are rejected at registration and heartbeat. A newer agent may connect, but receives a `version_warning` directive because the combination has not been tested. The supported database schema range is 15–16.
++
++## Upgrade Order
++
++1. Back up PostgreSQL and verify the restore procedure.
++2. Put disruptive workload operations in an approved maintenance window if required.
++3. Stop all but one control-plane replica from running migrations.
++4. Run `orch-server migrate status`, then `orch-server migrate up`. The migration runner also takes a PostgreSQL advisory lock.
++5. Upgrade the server and check `/readyz` and `/v1/version`.
++6. Roll agents one node at a time: drain, replace the agent binary/image, wait for a healthy heartbeat, then uncordon.
++7. Upgrade the CLI after the server. The v1 API remains backward compatible.
++
++## Rollback
++
++Prefer rolling the server binary back while leaving an additive schema in place. Run a down migration only when its release notes explicitly call it safe, after a backup, and with `orch-server migrate down --allow-down`. If an agent rollback falls below the advertised minimum, restore a compatible server first. A failed server startup caused by an old or future schema must be resolved by applying a supported migration or restoring the matching release; never bypass the compatibility check in production.
++
+diff --git a/docs/assets/docs.js b/docs/assets/docs.js
+index 864bf4d..268d20a 100644
+--- a/docs/assets/docs.js
++++ b/docs/assets/docs.js
+@@ -19,6 +19,8 @@ const docsNav = [
+       { title: 'Configuration', path: 'CONFIGURATION.md', icon: '⚙️' },
+       { title: 'Production deployment', path: 'PRODUCTION_DEPLOYMENT.md', icon: '🚢' },
+       { title: 'Operations', path: 'OPERATIONS.md', icon: '🧰' },
++      { title: 'Upgrades', path: 'UPGRADES.md', icon: '⬆️' },
++      { title: 'Migrations', path: 'MIGRATIONS.md', icon: '🗄️' },
+       { title: 'Backup and restore', path: 'BACKUP_RESTORE.md', icon: '💾' }
+     ]
+   },
+@@ -69,6 +71,9 @@ const docsNav = [
+       { title: 'Autoscaling', path: 'AUTOSCALING.md', icon: '📊' },
+       { title: 'Autoscaling design', path: 'AUTOSCALING_DESIGN.md', icon: '🧠' },
+       { title: 'Load testing', path: 'LOAD_TESTING.md', icon: '🏋️' },
++      { title: 'Scale testing', path: 'SCALE_TESTING.md', icon: '📏' },
++      { title: 'Performance', path: 'PERFORMANCE.md', icon: '⏱️' },
++      { title: 'Testing', path: 'TESTING.md', icon: '🧪' },
+       { title: 'Chaos testing', path: 'CHAOS_TESTING.md', icon: '🌪️' },
+       { title: 'Development', path: 'DEVELOPMENT.md', icon: '🛠️' }
+     ]
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 5418fde..cd511ba 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -20,6 +20,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/health"
++	versioninfo "github.com/alekpopovic/orch/internal/version"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -727,6 +728,7 @@ func (r *Runner) registerWithRetry(ctx context.Context, capacity types.Resources
+ 			Capacity:         capacity,
+ 			Allocatable:      capacity,
+ 			DockerSocketPath: r.cfg.DockerSocketPath,
++			AgentVersion:     versioninfo.Server,
+ 		})
+ 		return err
+ 	})
+@@ -738,11 +740,12 @@ func (r *Runner) heartbeatWithRetry(ctx context.Context, nodeID types.NodeID, ca
+ 	err := retry(ctx, r.rand, func() error {
+ 		var err error
+ 		response, err = r.client.Heartbeat(ctx, api.AgentHeartbeatRequest{
+-			NodeID:      nodeID,
+-			Capacity:    capacity,
+-			Allocatable: capacity,
+-			Labels:      r.cfg.Labels,
+-			Shutdown:    shutdown,
++			NodeID:       nodeID,
++			Capacity:     capacity,
++			Allocatable:  capacity,
++			Labels:       r.cfg.Labels,
++			Shutdown:     shutdown,
++			AgentVersion: versioninfo.Server,
+ 		})
+ 		if err != nil {
+ 			r.metrics.IncHeartbeatFailure()
+diff --git a/internal/api/api.go b/internal/api/api.go
+index a8cf490..3937b1c 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -26,6 +26,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/internal/traefik"
++	versioninfo "github.com/alekpopovic/orch/internal/version"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -232,6 +233,12 @@ func (s *Server) registerV1(mux *http.ServeMux) {
+ 	mux.HandleFunc("GET /v1/notification-sinks", s.listNotificationSinks)
+ 	mux.HandleFunc("DELETE /v1/notification-sinks/{id}", s.deleteNotificationSink)
+ 	mux.HandleFunc("POST /v1/notification-sinks/{id}/test", s.testNotificationSink)
++	mux.HandleFunc("POST /v1/maintenance-windows", s.createMaintenanceWindow)
++	mux.HandleFunc("GET /v1/maintenance-windows", s.listMaintenanceWindows)
++	mux.HandleFunc("DELETE /v1/maintenance-windows/{id}", s.deleteMaintenanceWindow)
++	mux.HandleFunc("GET /v1/retention", s.retentionStatus)
++	mux.HandleFunc("POST /v1/retention/prune", s.pruneRetention)
++	mux.HandleFunc("GET /v1/usage", s.getUsage)
+ }
+ 
+ type HealthResponse struct {
+@@ -240,8 +247,13 @@ type HealthResponse struct {
+ }
+ 
+ type APIVersionResponse struct {
+-	Version string `json:"version"`
+-	Status  string `json:"status"`
++	APIVersion                string `json:"api_version"`
++	ServerVersion             string `json:"server_version"`
++	MinimumAgentVersion       string `json:"minimum_agent_version"`
++	MaximumTestedAgentVersion string `json:"maximum_tested_agent_version"`
++	DatabaseSchemaVersion     int    `json:"database_schema_version"`
++	MinimumSchemaVersion      int    `json:"minimum_schema_version"`
++	MaximumSchemaVersion      int    `json:"maximum_schema_version"`
+ }
+ 
+ type CreateNamespaceRequest struct {
+@@ -300,14 +312,16 @@ type AgentRegisterRequest struct {
+ 	Capacity         types.Resources   `json:"capacity"`
+ 	Allocatable      types.Resources   `json:"allocatable"`
+ 	DockerSocketPath string            `json:"docker_socket_path,omitempty"`
++	AgentVersion     string            `json:"agent_version"`
+ }
+ 
+ type AgentHeartbeatRequest struct {
+-	NodeID      types.NodeID      `json:"node_id"`
+-	Capacity    types.Resources   `json:"capacity"`
+-	Allocatable types.Resources   `json:"allocatable"`
+-	Labels      map[string]string `json:"labels,omitempty"`
+-	Shutdown    bool              `json:"shutdown,omitempty"`
++	NodeID       types.NodeID      `json:"node_id"`
++	Capacity     types.Resources   `json:"capacity"`
++	Allocatable  types.Resources   `json:"allocatable"`
++	Labels       map[string]string `json:"labels,omitempty"`
++	Shutdown     bool              `json:"shutdown,omitempty"`
++	AgentVersion string            `json:"agent_version"`
+ }
+ 
+ type AgentResponse struct {
+@@ -428,7 +442,13 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {
+ }
+ 
+ func (s *Server) apiVersion(w http.ResponseWriter, _ *http.Request) {
+-	writeJSON(w, http.StatusOK, APIVersionResponse{Version: "v1", Status: "stable"})
++	info := versioninfo.Info()
++	writeJSON(w, http.StatusOK, APIVersionResponse{
++		APIVersion: info.APIVersion, ServerVersion: info.ServerVersion,
++		MinimumAgentVersion: info.MinimumAgentVersion, MaximumTestedAgentVersion: info.MaximumTestedAgentVersion,
++		DatabaseSchemaVersion: info.DatabaseSchemaVersion, MinimumSchemaVersion: info.MinimumSchemaVersion,
++		MaximumSchemaVersion: info.MaximumSchemaVersion,
++	})
+ }
+ 
+ func (s *Server) createNamespace(w http.ResponseWriter, r *http.Request) {
+@@ -569,6 +589,7 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+ 		Labels:           req.Labels,
+ 		Capacity:         req.Capacity,
+ 		Allocatable:      req.Allocatable,
++		AgentVersion:     req.AgentVersion,
+ 	})
+ 	if err != nil {
+ 		s.recordAuditAs(r, audit.ActorAgent, req.NodeName, "agent.register", "node", req.NodeName, audit.OutcomeFailure, map[string]string{
+@@ -606,11 +627,12 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	command, err := s.controlPlane.HeartbeatNode(r.Context(), controlplane.NodeHeartbeat{
+-		NodeID:      req.NodeID,
+-		Capacity:    req.Capacity,
+-		Allocatable: req.Allocatable,
+-		Labels:      req.Labels,
+-		Shutdown:    req.Shutdown,
++		NodeID:       req.NodeID,
++		Capacity:     req.Capacity,
++		Allocatable:  req.Allocatable,
++		Labels:       req.Labels,
++		Shutdown:     req.Shutdown,
++		AgentVersion: req.AgentVersion,
+ 	})
+ 	if err != nil {
+ 		s.writeError(w, r, err)
+@@ -705,6 +727,7 @@ func (s *Server) getNode(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) drainNode(w http.ResponseWriter, r *http.Request) {
++	r = withForceRequest(r)
+ 	id, ok := s.pathNodeID(w, r)
+ 	if !ok {
+ 		return
+@@ -940,6 +963,7 @@ func (s *Server) deleteService(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) scaleService(w http.ResponseWriter, r *http.Request) {
++	r = withForceRequest(r)
+ 	id, ok := s.pathServiceID(w, r)
+ 	if !ok {
+ 		return
+@@ -967,6 +991,7 @@ func (s *Server) scaleService(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) rolloutService(w http.ResponseWriter, r *http.Request) {
++	r = withForceRequest(r)
+ 	id, ok := s.pathServiceID(w, r)
+ 	if !ok {
+ 		return
+@@ -1047,6 +1072,7 @@ func (s *Server) getRollout(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) rollbackService(w http.ResponseWriter, r *http.Request) {
++	r = withForceRequest(r)
+ 	id, ok := s.pathServiceID(w, r)
+ 	if !ok {
+ 		return
+diff --git a/internal/api/benchmark_test.go b/internal/api/benchmark_test.go
+new file mode 100644
+index 0000000..6453a38
+--- /dev/null
++++ b/internal/api/benchmark_test.go
+@@ -0,0 +1,48 @@
++package api
++
++import (
++	"context"
++	"fmt"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func BenchmarkServiceListAPI(b *testing.B) {
++	benchmarkListAPI(b, "/v1/services")
++}
++
++func BenchmarkTaskListAPI(b *testing.B) {
++	benchmarkListAPI(b, "/v1/tasks")
++}
++
++func benchmarkListAPI(b *testing.B, path string) {
++	controlPlane := controlplane.NewMemoryService()
++	if _, err := controlPlane.RegisterNode(context.Background(), controlplane.NodeRegistration{
++		Name: "benchmark-node", AdvertiseAddress: "10.0.0.1:7443",
++		Capacity: types.Resources{CPU: 1_000_000, Memory: 1 << 50}, Allocatable: types.Resources{CPU: 1_000_000, Memory: 1 << 50},
++	}); err != nil {
++		b.Fatal(err)
++	}
++	for i := 0; i < 1000; i++ {
++		if _, err := controlPlane.CreateService(context.Background(), types.ServiceSpec{
++			Name: fmt.Sprintf("benchmark-%04d", i), Image: "nginx:1.27", Replicas: 1,
++		}); err != nil {
++			b.Fatal(err)
++		}
++	}
++	handler := NewHandler(nil, controlPlane)
++	request := httptest.NewRequest(http.MethodGet, path, nil)
++	b.ReportAllocs()
++	b.ResetTimer()
++	for i := 0; i < b.N; i++ {
++		recorder := httptest.NewRecorder()
++		handler.ServeHTTP(recorder, request)
++		if recorder.Code != http.StatusOK {
++			b.Fatalf("GET %s returned %d", path, recorder.Code)
++		}
++	}
++}
+diff --git a/internal/api/debug.go b/internal/api/debug.go
+new file mode 100644
+index 0000000..193d076
+--- /dev/null
++++ b/internal/api/debug.go
+@@ -0,0 +1,20 @@
++package api
++
++import (
++	"net/http"
++	"net/http/pprof"
++)
++
++func NewDebugHandler(enabled bool) http.Handler {
++	mux := http.NewServeMux()
++	if !enabled {
++		return mux
++	}
++	mux.HandleFunc("GET /debug/pprof/", pprof.Index)
++	mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
++	mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
++	mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
++	mux.HandleFunc("POST /debug/pprof/symbol", pprof.Symbol)
++	mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
++	return mux
++}
+diff --git a/internal/api/debug_test.go b/internal/api/debug_test.go
+new file mode 100644
+index 0000000..3e226be
+--- /dev/null
++++ b/internal/api/debug_test.go
+@@ -0,0 +1,35 @@
++package api
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++)
++
++func TestPprofDisabledByDefault(t *testing.T) {
++	request := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
++	response := httptest.NewRecorder()
++	NewDebugHandler(false).ServeHTTP(response, request)
++	if response.Code != http.StatusNotFound {
++		t.Fatalf("status=%d", response.Code)
++	}
++}
++
++func TestPprofIsNotMountedOnPublicHandler(t *testing.T) {
++	request := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
++	response := httptest.NewRecorder()
++	NewHandler(nil, controlplane.NewMemoryService()).ServeHTTP(response, request)
++	if response.Code != http.StatusNotFound {
++		t.Fatalf("public handler exposed pprof with status=%d", response.Code)
++	}
++}
++func TestPprofEnabledOnDebugHandler(t *testing.T) {
++	request := httptest.NewRequest(http.MethodGet, "/debug/pprof/", nil)
++	response := httptest.NewRecorder()
++	NewDebugHandler(true).ServeHTTP(response, request)
++	if response.Code != http.StatusOK {
++		t.Fatalf("status=%d", response.Code)
++	}
++}
+diff --git a/internal/api/fuzz_test.go b/internal/api/fuzz_test.go
+new file mode 100644
+index 0000000..c2c39fa
+--- /dev/null
++++ b/internal/api/fuzz_test.go
+@@ -0,0 +1,25 @@
++package api
++
++import (
++	"bytes"
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++)
++
++func FuzzCreateServiceRequest(f *testing.F) {
++	for _, v := range [][]byte{[]byte(`{"spec":{"name":"api","image":"nginx:1.27","replicas":1}}`), []byte(`{}`), []byte(`{"spec":null}`)} {
++		f.Add(v)
++	}
++	handler := NewHandler(nil, controlplane.NewMemoryService())
++	f.Fuzz(func(t *testing.T, v []byte) {
++		request := httptest.NewRequest(http.MethodPost, "/v1/services", bytes.NewReader(v))
++		request.Header.Set("Content-Type", "application/json")
++		response := httptest.NewRecorder()
++		handler.ServeHTTP(response, request)
++		if response.Code < 200 || response.Code > 599 {
++			t.Fatalf("invalid status %d", response.Code)
++		}
++	})
++}
+diff --git a/internal/api/operations.go b/internal/api/operations.go
+new file mode 100644
+index 0000000..b68476d
+--- /dev/null
++++ b/internal/api/operations.go
+@@ -0,0 +1,99 @@
++package api
++
++import (
++	"fmt"
++	"github.com/alekpopovic/orch/internal/maintenance"
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++	"net/http"
++	"strconv"
++	"strings"
++	"time"
++)
++
++type MaintenanceWindowResponse struct {
++	Window types.MaintenanceWindow `json:"window"`
++}
++type MaintenanceWindowsResponse struct {
++	Windows []types.MaintenanceWindow `json:"windows"`
++}
++
++func withForceRequest(r *http.Request) *http.Request {
++	value, _ := strconv.ParseBool(r.URL.Query().Get("force"))
++	if value {
++		return r.WithContext(maintenance.WithForce(r.Context()))
++	}
++	return r
++}
++func (s *Server) createMaintenanceWindow(w http.ResponseWriter, r *http.Request) {
++	var v types.MaintenanceWindow
++	if !s.decodeJSON(w, r, &v) {
++		return
++	}
++	out, err := s.controlPlane.CreateMaintenanceWindow(r.Context(), v)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusCreated, MaintenanceWindowResponse{out})
++}
++func (s *Server) listMaintenanceWindows(w http.ResponseWriter, r *http.Request) {
++	out, err := s.controlPlane.ListMaintenanceWindows(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, MaintenanceWindowsResponse{out})
++}
++func (s *Server) deleteMaintenanceWindow(w http.ResponseWriter, r *http.Request) {
++	if err := s.controlPlane.DeleteMaintenanceWindow(r.Context(), r.PathValue("id")); err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++func (s *Server) retentionStatus(w http.ResponseWriter, r *http.Request) {
++	v, err := s.controlPlane.GetRetentionStatus(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, v)
++}
++func (s *Server) pruneRetention(w http.ResponseWriter, r *http.Request) {
++	dry, _ := strconv.ParseBool(r.URL.Query().Get("dry_run"))
++	v, err := s.controlPlane.PruneRetention(r.Context(), dry)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, v)
++}
++func (s *Server) getUsage(w http.ResponseWriter, r *http.Request) {
++	from, err := parseReportTime(r.URL.Query().Get("from"))
++	if err != nil {
++		s.writeError(w, r, fmt.Errorf("%w: invalid from", store.ErrInvalidState))
++		return
++	}
++	to, err := parseReportTime(r.URL.Query().Get("to"))
++	if err != nil {
++		s.writeError(w, r, fmt.Errorf("%w: invalid to", store.ErrInvalidState))
++		return
++	}
++	v, err := s.controlPlane.GetUsageReport(r.Context(), strings.TrimSpace(r.URL.Query().Get("namespace")), from, to)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, v)
++}
++func parseReportTime(v string) (time.Time, error) {
++	v = strings.TrimSpace(v)
++	if v == "" {
++		return time.Time{}, nil
++	}
++	if parsed, err := time.Parse(time.RFC3339, v); err == nil {
++		return parsed.UTC(), nil
++	}
++	return time.Parse("2006-01-02", v)
++}
+diff --git a/internal/api/versioning_test.go b/internal/api/versioning_test.go
+index b6f149d..5666940 100644
+--- a/internal/api/versioning_test.go
++++ b/internal/api/versioning_test.go
+@@ -1,6 +1,7 @@
+ package api
+ 
+ import (
++	"encoding/json"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"testing"
+@@ -16,6 +17,13 @@ func TestV1RoutingAndVersionMetadata(t *testing.T) {
+ 	if rec.Header().Get("API-Version") != "v1" {
+ 		t.Fatalf("expected API-Version v1, got %q", rec.Header().Get("API-Version"))
+ 	}
++	var version APIVersionResponse
++	if err := json.Unmarshal(rec.Body.Bytes(), &version); err != nil {
++		t.Fatal(err)
++	}
++	if version.ServerVersion != "0.3.0" || version.DatabaseSchemaVersion != 16 || version.MinimumAgentVersion == "" {
++		t.Fatalf("unexpected compatibility metadata: %#v", version)
++	}
+ 
+ 	missing := doRequest(t, handler, http.MethodGet, "/v2/services", nil)
+ 	if missing.Code != http.StatusNotFound {
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 6cf23bf..9451665 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -216,6 +216,57 @@ func (c *APIClient) GetVolume(ctx context.Context, id string) (types.Volume, err
+ 	err := c.do(ctx, http.MethodGet, "/v1/volumes/"+url.PathEscape(id), nil, &out)
+ 	return out.Volume, err
+ }
++func (c *APIClient) CreateMaintenanceWindow(ctx context.Context, v types.MaintenanceWindow) (types.MaintenanceWindow, error) {
++	var out api.MaintenanceWindowResponse
++	err := c.do(ctx, http.MethodPost, "/v1/maintenance-windows", v, &out)
++	return out.Window, err
++}
++func (c *APIClient) ListMaintenanceWindows(ctx context.Context) ([]types.MaintenanceWindow, error) {
++	var out api.MaintenanceWindowsResponse
++	err := c.do(ctx, http.MethodGet, "/v1/maintenance-windows", nil, &out)
++	return out.Windows, err
++}
++func (c *APIClient) DeleteMaintenanceWindow(ctx context.Context, id string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/maintenance-windows/"+url.PathEscape(id), nil, nil)
++}
++func (c *APIClient) GetRetentionStatus(ctx context.Context) (types.RetentionStatus, error) {
++	var out types.RetentionStatus
++	err := c.do(ctx, http.MethodGet, "/v1/retention", nil, &out)
++	return out, err
++}
++func (c *APIClient) PruneRetention(ctx context.Context, dry bool) (types.PruneResult, error) {
++	var out types.PruneResult
++	path := "/v1/retention/prune"
++	if dry {
++		path += "?dry_run=true"
++	}
++	err := c.do(ctx, http.MethodPost, path, nil, &out)
++	return out, err
++}
++func (c *APIClient) GetUsageReport(ctx context.Context, ns string, from, to time.Time) (types.UsageReport, error) {
++	query := url.Values{}
++	if ns != "" {
++		query.Set("namespace", ns)
++	}
++	if !from.IsZero() {
++		query.Set("from", from.Format(time.RFC3339))
++	}
++	if !to.IsZero() {
++		query.Set("to", to.Format(time.RFC3339))
++	}
++	path := "/v1/usage"
++	if len(query) > 0 {
++		path += "?" + query.Encode()
++	}
++	var out types.UsageReport
++	err := c.do(ctx, http.MethodGet, path, nil, &out)
++	return out, err
++}
++func (c *APIClient) GetVersion(ctx context.Context) (types.VersionInfo, error) {
++	var out types.VersionInfo
++	err := c.do(ctx, http.MethodGet, "/v1/version", nil, &out)
++	return out, err
++}
+ 
+ func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	var out api.ListNodesResponse
+@@ -234,8 +285,16 @@ func (c *APIClient) GetNode(ctx context.Context, id string) (types.Node, error)
+ }
+ 
+ func (c *APIClient) DrainNode(ctx context.Context, id string) (types.Node, error) {
++	return c.DrainNodeForce(ctx, id, false)
++}
++
++func (c *APIClient) DrainNodeForce(ctx context.Context, id string, force bool) (types.Node, error) {
+ 	var out api.NodeResponse
+-	if err := c.do(ctx, http.MethodPost, "/v1/nodes/"+id+"/drain", nil, &out); err != nil {
++	path := "/v1/nodes/" + id + "/drain"
++	if force {
++		path += "?force=true"
++	}
++	if err := c.do(ctx, http.MethodPost, path, nil, &out); err != nil {
+ 		return types.Node{}, err
+ 	}
+ 	return out.Node, nil
+@@ -298,16 +357,32 @@ func (c *APIClient) DeleteService(ctx context.Context, id string) error {
+ }
+ 
+ func (c *APIClient) ScaleService(ctx context.Context, id string, replicas int) (types.Service, error) {
++	return c.ScaleServiceForce(ctx, id, replicas, false)
++}
++
++func (c *APIClient) ScaleServiceForce(ctx context.Context, id string, replicas int, force bool) (types.Service, error) {
+ 	var out api.ServiceResponse
+-	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/scale", api.ScaleServiceRequest{Replicas: replicas}, &out); err != nil {
++	path := "/v1/services/" + id + "/scale"
++	if force {
++		path += "?force=true"
++	}
++	if err := c.do(ctx, http.MethodPost, path, api.ScaleServiceRequest{Replicas: replicas}, &out); err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	return out.Service, nil
+ }
+ 
+ func (c *APIClient) RolloutService(ctx context.Context, id string, image string, maxUnavailable int, maxSurge int) (types.Deployment, error) {
++	return c.RolloutServiceForce(ctx, id, image, maxUnavailable, maxSurge, false)
++}
++
++func (c *APIClient) RolloutServiceForce(ctx context.Context, id string, image string, maxUnavailable int, maxSurge int, force bool) (types.Deployment, error) {
+ 	var out api.DeploymentResponse
+-	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollout", api.RolloutServiceRequest{
++	path := "/v1/services/" + id + "/rollout"
++	if force {
++		path += "?force=true"
++	}
++	if err := c.do(ctx, http.MethodPost, path, api.RolloutServiceRequest{
+ 		Image:          image,
+ 		MaxUnavailable: maxUnavailable,
+ 		MaxSurge:       maxSurge,
+@@ -326,8 +401,16 @@ func (c *APIClient) GetServiceRollout(ctx context.Context, id string) (types.Dep
+ }
+ 
+ func (c *APIClient) RollbackService(ctx context.Context, id string) (types.Deployment, error) {
++	return c.RollbackServiceForce(ctx, id, false)
++}
++
++func (c *APIClient) RollbackServiceForce(ctx context.Context, id string, force bool) (types.Deployment, error) {
+ 	var out api.DeploymentResponse
+-	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollback", nil, &out); err != nil {
++	path := "/v1/services/" + id + "/rollback"
++	if force {
++		path += "?force=true"
++	}
++	if err := c.do(ctx, http.MethodPost, path, nil, &out); err != nil {
+ 		return types.Deployment{}, err
+ 	}
+ 	return out.Deployment, nil
+diff --git a/internal/cli/fuzz_test.go b/internal/cli/fuzz_test.go
+new file mode 100644
+index 0000000..af290a5
+--- /dev/null
++++ b/internal/cli/fuzz_test.go
+@@ -0,0 +1,10 @@
++package cli
++
++import "testing"
++
++func FuzzServiceYAML(f *testing.F) {
++	for _, v := range [][]byte{[]byte("name: api\nimage: nginx:1.27\nreplicas: 1\n"), []byte("kind: nope\n"), nil} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v []byte) { _, _ = ParseDeploy(v) })
++}
+diff --git a/internal/cli/operations.go b/internal/cli/operations.go
+new file mode 100644
+index 0000000..fa86bcd
+--- /dev/null
++++ b/internal/cli/operations.go
+@@ -0,0 +1,211 @@
++package cli
++
++import (
++	"encoding/csv"
++	"fmt"
++	"strconv"
++	"strings"
++	"time"
++
++	versioninfo "github.com/alekpopovic/orch/internal/version"
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/spf13/cobra"
++)
++
++func (a *app) maintenanceCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "maintenance", Short: "Manage maintenance windows"}
++	var schedule, tz, operations string
++	var duration time.Duration
++	var global, enabled bool
++	create := &cobra.Command{Use: "create <name>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(MaintenanceClient)
++		if !ok {
++			return fmt.Errorf("client does not support maintenance windows")
++		}
++		ops := []types.MaintenanceOperation{}
++		for _, v := range strings.Split(operations, ",") {
++			if strings.TrimSpace(v) != "" {
++				ops = append(ops, types.MaintenanceOperation(strings.TrimSpace(v)))
++			}
++		}
++		item, err := c.CreateMaintenanceWindow(cmd.Context(), types.MaintenanceWindow{Name: args[0], Schedule: schedule, Timezone: tz, Duration: duration, Global: global, Enabled: enabled, AllowedOperations: ops})
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", item)
++	}}
++	create.Flags().StringVar(&schedule, "schedule", "", "five-field cron schedule")
++	create.Flags().StringVar(&tz, "timezone", "UTC", "IANA timezone")
++	create.Flags().DurationVar(&duration, "duration", time.Hour, "window duration")
++	create.Flags().StringVar(&operations, "operations", "rollout,rollback,node_drain", "comma-separated allowed operations")
++	create.Flags().BoolVar(&global, "global", false, "apply globally")
++	create.Flags().BoolVar(&enabled, "enabled", true, "enable window")
++	_ = create.MarkFlagRequired("schedule")
++	cmd.AddCommand(create)
++	cmd.AddCommand(&cobra.Command{Use: "ls", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(MaintenanceClient)
++		if !ok {
++			return fmt.Errorf("client does not support maintenance windows")
++		}
++		v, err := c.ListMaintenanceWindows(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", v)
++	}})
++	cmd.AddCommand(&cobra.Command{Use: "delete <id>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(MaintenanceClient)
++		if !ok {
++			return fmt.Errorf("client does not support maintenance windows")
++		}
++		if err := c.DeleteMaintenanceWindow(cmd.Context(), args[0]); err != nil {
++			return err
++		}
++		fmt.Fprintf(a.out, "deleted maintenance window %s\n", args[0])
++		return nil
++	}})
++	return cmd
++}
++func (a *app) retentionCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "retention", Short: "Inspect and run retention pruning"}
++	cmd.AddCommand(&cobra.Command{Use: "status", RunE: func(cmd *cobra.Command, _ []string) error {
++		c, err := a.operationsClient()
++		if err != nil {
++			return err
++		}
++		v, err := c.GetRetentionStatus(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", v)
++	}})
++	var dry bool
++	prune := &cobra.Command{Use: "prune", RunE: func(cmd *cobra.Command, _ []string) error {
++		c, err := a.operationsClient()
++		if err != nil {
++			return err
++		}
++		v, err := c.PruneRetention(cmd.Context(), dry)
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", v)
++	}}
++	prune.Flags().BoolVar(&dry, "dry-run", false, "count without deleting")
++	cmd.AddCommand(prune)
++	return cmd
++}
++func (a *app) usageCommand() *cobra.Command {
++	var fromRaw, toRaw string
++	load := func(cmd *cobra.Command) (types.UsageReport, error) {
++		c, err := a.operationsClient()
++		if err != nil {
++			return types.UsageReport{}, err
++		}
++		from, err := parseCLIDate(fromRaw)
++		if err != nil {
++			return types.UsageReport{}, err
++		}
++		to, err := parseCLIDate(toRaw)
++		if err != nil {
++			return types.UsageReport{}, err
++		}
++		return c.GetUsageReport(cmd.Context(), a.namespace(), from, to)
++	}
++	cmd := &cobra.Command{Use: "usage", Short: "Show namespace usage", RunE: func(cmd *cobra.Command, _ []string) error {
++		v, err := load(cmd)
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", v)
++	}}
++	cmd.PersistentFlags().StringVar(&fromRaw, "from", "", "start date or RFC3339")
++	cmd.PersistentFlags().StringVar(&toRaw, "to", "", "end date or RFC3339")
++	var format string
++	export := &cobra.Command{Use: "export", RunE: func(cmd *cobra.Command, _ []string) error {
++		if format != "csv" {
++			return fmt.Errorf("--format must be csv")
++		}
++		v, err := load(cmd)
++		if err != nil {
++			return err
++		}
++		writer := csv.NewWriter(a.out)
++		_ = writer.Write([]string{"namespace", "timestamp", "cpu_millicores", "memory_bytes", "replicas", "services", "task_runtime_seconds", "public_ports", "storage_claims"})
++		for _, x := range v.Snapshots {
++			_ = writer.Write([]string{x.Namespace, x.Timestamp.Format(time.RFC3339), strconv.FormatInt(x.CPUMillicores, 10), strconv.FormatInt(x.MemoryBytes, 10), strconv.Itoa(x.Replicas), strconv.Itoa(x.Services), strconv.FormatFloat(x.TaskRuntimeSeconds, 'f', 3, 64), strconv.Itoa(x.PublicPorts), strconv.Itoa(x.StorageClaims)})
++		}
++		writer.Flush()
++		return writer.Error()
++	}}
++	export.Flags().StringVar(&format, "format", "csv", "export format")
++	cmd.AddCommand(export)
++	return cmd
++}
++func (a *app) clusterCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "cluster", Short: "Cluster operations"}
++	cmd.AddCommand(&cobra.Command{Use: "check-upgrade", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(OperationsClient)
++		if !ok {
++			return fmt.Errorf("client does not support cluster operations")
++		}
++		v, err := c.GetVersion(cmd.Context())
++		if err != nil {
++			return err
++		}
++		nodes, err := client.ListNodes(cmd.Context())
++		if err != nil {
++			return err
++		}
++		status := "compatible"
++		warnings := []string{}
++		for _, node := range nodes {
++			compatibility, checkErr := versioninfo.CheckAgent(node.AgentVersion)
++			if checkErr != nil || compatibility == versioninfo.TooOld {
++				status = "blocked"
++				warnings = append(warnings, fmt.Sprintf("node %s has incompatible agent version %q", node.ID, node.AgentVersion))
++			} else if compatibility == versioninfo.UntestedNewer {
++				warnings = append(warnings, fmt.Sprintf("node %s agent version %q is newer than tested", node.ID, node.AgentVersion))
++			}
++		}
++		return writeValue(a.out, "json", map[string]any{"status": status, "version": v, "warnings": warnings})
++	}})
++	return cmd
++}
++func (a *app) operationsClient() (OperationsClient, error) {
++	client, err := a.client()
++	if err != nil {
++		return nil, err
++	}
++	c, ok := client.(OperationsClient)
++	if !ok {
++		return nil, fmt.Errorf("client does not support cluster operations")
++	}
++	return c, nil
++}
++func parseCLIDate(v string) (time.Time, error) {
++	v = strings.TrimSpace(v)
++	if v == "" {
++		return time.Time{}, nil
++	}
++	if t, err := time.Parse(time.RFC3339, v); err == nil {
++		return t, nil
++	}
++	return time.Parse("2006-01-02", v)
++}
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 1123c8d..56e75b7 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -16,11 +16,12 @@ import (
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/gitops"
++	versioninfo "github.com/alekpopovic/orch/internal/version"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/spf13/cobra"
+ )
+ 
+-const version = "dev"
++const version = versioninfo.Server
+ 
+ type Client interface {
+ 	ListNodes(ctx context.Context) ([]types.Node, error)
+@@ -44,6 +45,13 @@ type Client interface {
+ 	StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error
+ }
+ 
++type ForceOperationsClient interface {
++	DrainNodeForce(context.Context, string, bool) (types.Node, error)
++	ScaleServiceForce(context.Context, string, int, bool) (types.Service, error)
++	RolloutServiceForce(context.Context, string, string, int, int, bool) (types.Deployment, error)
++	RollbackServiceForce(context.Context, string, bool) (types.Deployment, error)
++}
++
+ type Config = config.CLIConfig
+ 
+ type NamespaceClient interface {
+@@ -83,6 +91,17 @@ type VolumeClient interface {
+ 	ListVolumes(context.Context) ([]types.Volume, error)
+ 	GetVolume(context.Context, string) (types.Volume, error)
+ }
++type MaintenanceClient interface {
++	CreateMaintenanceWindow(context.Context, types.MaintenanceWindow) (types.MaintenanceWindow, error)
++	ListMaintenanceWindows(context.Context) ([]types.MaintenanceWindow, error)
++	DeleteMaintenanceWindow(context.Context, string) error
++}
++type OperationsClient interface {
++	GetRetentionStatus(context.Context) (types.RetentionStatus, error)
++	PruneRetention(context.Context, bool) (types.PruneResult, error)
++	GetUsageReport(context.Context, string, time.Time, time.Time) (types.UsageReport, error)
++	GetVersion(context.Context) (types.VersionInfo, error)
++}
+ 
+ type Options struct {
+ 	Out           io.Writer
+@@ -166,6 +185,10 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.AddCommand(a.jobCommand())
+ 	root.AddCommand(a.cronJobCommand())
+ 	root.AddCommand(a.volumeCommand())
++	root.AddCommand(a.maintenanceCommand())
++	root.AddCommand(a.retentionCommand())
++	root.AddCommand(a.usageCommand())
++	root.AddCommand(a.clusterCommand())
+ 	return root
+ }
+ 
+@@ -463,9 +486,15 @@ func (a *app) nodeCommand() *cobra.Command {
+ 			return writeNode(a.out, a.output, node)
+ 		},
+ 	})
+-	cmd.AddCommand(a.nodeActionCommand("drain", "Drain a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
++	var forceDrain bool
++	drain := a.nodeActionCommand("drain", "Drain a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
++		if forced, ok := client.(ForceOperationsClient); ok {
++			return forced.DrainNodeForce(ctx, id, forceDrain)
++		}
+ 		return client.DrainNode(ctx, id)
+-	}))
++	})
++	drain.Flags().BoolVar(&forceDrain, "force", false, "bypass maintenance-window restrictions and audit the override")
++	cmd.AddCommand(drain)
+ 	cmd.AddCommand(a.nodeActionCommand("uncordon", "Uncordon a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
+ 		return client.UncordonNode(ctx, id)
+ 	}))
+@@ -590,6 +619,7 @@ func (a *app) serviceCommand() *cobra.Command {
+ 
+ func (a *app) scaleCommand() *cobra.Command {
+ 	var replicas int
++	var force bool
+ 	cmd := &cobra.Command{
+ 		Use:   "scale <service-name-or-id>",
+ 		Short: "Scale a service",
+@@ -602,7 +632,12 @@ func (a *app) scaleCommand() *cobra.Command {
+ 			if err != nil {
+ 				return err
+ 			}
+-			scaled, err := client.ScaleService(cmd.Context(), string(service.ID), replicas)
++			var scaled types.Service
++			if forced, ok := client.(ForceOperationsClient); ok {
++				scaled, err = forced.ScaleServiceForce(cmd.Context(), string(service.ID), replicas, force)
++			} else {
++				scaled, err = client.ScaleService(cmd.Context(), string(service.ID), replicas)
++			}
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -610,6 +645,7 @@ func (a *app) scaleCommand() *cobra.Command {
+ 		},
+ 	}
+ 	cmd.Flags().IntVar(&replicas, "replicas", -1, "desired replica count")
++	cmd.Flags().BoolVar(&force, "force", false, "bypass maintenance-window restrictions and audit the override")
+ 	_ = cmd.MarkFlagRequired("replicas")
+ 	return cmd
+ }
+@@ -618,6 +654,7 @@ func (a *app) rolloutCommand() *cobra.Command {
+ 	var image string
+ 	var maxUnavailable int
+ 	var maxSurge int
++	var force bool
+ 	cmd := &cobra.Command{
+ 		Use:   "rollout <service-name-or-id>",
+ 		Short: "Roll out a new service image",
+@@ -640,7 +677,12 @@ func (a *app) rolloutCommand() *cobra.Command {
+ 			if maxUnavailable == 0 && maxSurge == 0 {
+ 				return fmt.Errorf("--max-unavailable and --max-surge cannot both be zero")
+ 			}
+-			deployment, err := client.RolloutService(cmd.Context(), string(service.ID), image, maxUnavailable, maxSurge)
++			var deployment types.Deployment
++			if forced, ok := client.(ForceOperationsClient); ok {
++				deployment, err = forced.RolloutServiceForce(cmd.Context(), string(service.ID), image, maxUnavailable, maxSurge, force)
++			} else {
++				deployment, err = client.RolloutService(cmd.Context(), string(service.ID), image, maxUnavailable, maxSurge)
++			}
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -650,6 +692,7 @@ func (a *app) rolloutCommand() *cobra.Command {
+ 	cmd.Flags().StringVar(&image, "image", "", "new image")
+ 	cmd.Flags().IntVar(&maxUnavailable, "max-unavailable", 1, "maximum unavailable replicas during rollout")
+ 	cmd.Flags().IntVar(&maxSurge, "max-surge", 1, "maximum extra replicas during rollout")
++	cmd.Flags().BoolVar(&force, "force", false, "bypass maintenance-window restrictions and audit the override")
+ 	_ = cmd.MarkFlagRequired("image")
+ 	cmd.AddCommand(&cobra.Command{
+ 		Use:   "status <service-name-or-id>",
+@@ -671,7 +714,8 @@ func (a *app) rolloutCommand() *cobra.Command {
+ }
+ 
+ func (a *app) rollbackCommand() *cobra.Command {
+-	return &cobra.Command{
++	var force bool
++	cmd := &cobra.Command{
+ 		Use:   "rollback <service-name-or-id>",
+ 		Short: "Roll back a service",
+ 		Args:  cobra.ExactArgs(1),
+@@ -680,13 +724,20 @@ func (a *app) rollbackCommand() *cobra.Command {
+ 			if err != nil {
+ 				return err
+ 			}
+-			deployment, err := client.RollbackService(cmd.Context(), string(service.ID))
++			var deployment types.Deployment
++			if forced, ok := client.(ForceOperationsClient); ok {
++				deployment, err = forced.RollbackServiceForce(cmd.Context(), string(service.ID), force)
++			} else {
++				deployment, err = client.RollbackService(cmd.Context(), string(service.ID))
++			}
+ 			if err != nil {
+ 				return err
+ 			}
+ 			return writeDeployment(a.out, a.output, deployment)
+ 		},
+ 	}
++	cmd.Flags().BoolVar(&force, "force", false, "bypass maintenance-window restrictions and audit the override")
++	return cmd
+ }
+ 
+ func (a *app) deleteCommand() *cobra.Command {
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index c8dfc78..35ae490 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -111,7 +111,7 @@ func TestVersionCommand(t *testing.T) {
+ 	if err := cmd.ExecuteContext(context.Background()); err != nil {
+ 		t.Fatalf("execute version: %v", err)
+ 	}
+-	if strings.TrimSpace(out.String()) != "orch dev" {
++	if strings.TrimSpace(out.String()) != "orch 0.3.0" {
+ 		t.Fatalf("unexpected output %q", out.String())
+ 	}
+ }
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 22808be..0dd278d 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -8,21 +8,25 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/pkg/types"
+ 	"gopkg.in/yaml.v3"
+ )
+ 
+ type ServerConfig struct {
+-	Addr                string               `json:"addr" yaml:"addr"`
+-	DatabaseURL         string               `json:"database_url" yaml:"database_url"`
+-	LogLevel            string               `json:"log_level" yaml:"log_level"`
+-	BootstrapToken      string               `json:"bootstrap_token" yaml:"bootstrap_token"`
+-	JWTSecret           string               `json:"jwt_secret" yaml:"jwt_secret"`
+-	Users               string               `json:"users" yaml:"users"`
+-	SecretKey           string               `json:"secret_key" yaml:"secret_key"`
+-	GracefulShutdownTTL time.Duration        `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
+-	HeartbeatTimeout    time.Duration        `json:"heartbeat_timeout" yaml:"heartbeat_timeout"`
+-	NodeMonitorInterval time.Duration        `json:"node_monitor_interval" yaml:"node_monitor_interval"`
+-	ClusterPolicy       policy.ClusterPolicy `json:"cluster_policy" yaml:"cluster_policy"`
++	Addr                string                `json:"addr" yaml:"addr"`
++	DatabaseURL         string                `json:"database_url" yaml:"database_url"`
++	LogLevel            string                `json:"log_level" yaml:"log_level"`
++	BootstrapToken      string                `json:"bootstrap_token" yaml:"bootstrap_token"`
++	JWTSecret           string                `json:"jwt_secret" yaml:"jwt_secret"`
++	Users               string                `json:"users" yaml:"users"`
++	SecretKey           string                `json:"secret_key" yaml:"secret_key"`
++	GracefulShutdownTTL time.Duration         `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    time.Duration         `json:"heartbeat_timeout" yaml:"heartbeat_timeout"`
++	NodeMonitorInterval time.Duration         `json:"node_monitor_interval" yaml:"node_monitor_interval"`
++	DebugAddr           string                `json:"debug_addr" yaml:"debug_addr"`
++	EnablePprof         bool                  `json:"enable_pprof" yaml:"enable_pprof"`
++	Retention           types.RetentionConfig `json:"retention" yaml:"retention"`
++	ClusterPolicy       policy.ClusterPolicy  `json:"cluster_policy" yaml:"cluster_policy"`
+ }
+ 
+ type AgentConfig struct {
+@@ -55,6 +59,8 @@ type ServerOverrides struct {
+ 	GracefulShutdownTTL string
+ 	HeartbeatTimeout    string
+ 	NodeMonitorInterval string
++	DebugAddr           string
++	EnablePprof         *bool
+ }
+ 
+ type AgentOverrides struct {
+@@ -157,7 +163,14 @@ func defaultServer() ServerConfig {
+ 		GracefulShutdownTTL: 10 * time.Second,
+ 		HeartbeatTimeout:    30 * time.Second,
+ 		NodeMonitorInterval: 5 * time.Second,
+-		ClusterPolicy:       policy.DefaultClusterPolicy(),
++		DebugAddr:           "127.0.0.1:6060",
++		Retention: types.RetentionConfig{
++			Events: 30 * 24 * time.Hour, AuditLogs: 90 * 24 * time.Hour,
++			CompletedTasks: 7 * 24 * time.Hour, FailedTasks: 30 * 24 * time.Hour,
++			Rollouts: 30 * 24 * time.Hour, CompletedJobs: 7 * 24 * time.Hour,
++			GitOpsRecords: 30 * 24 * time.Hour,
++		},
++		ClusterPolicy: policy.DefaultClusterPolicy(),
+ 	}
+ }
+ 
+@@ -177,17 +190,30 @@ func defaultAgent() AgentConfig {
+ }
+ 
+ type serverFileConfig struct {
+-	Addr                string            `yaml:"addr"`
+-	DatabaseURL         string            `yaml:"database_url"`
+-	LogLevel            string            `yaml:"log_level"`
+-	BootstrapToken      string            `yaml:"bootstrap_token"`
+-	JWTSecret           string            `yaml:"jwt_secret"`
+-	Users               string            `yaml:"users"`
+-	SecretKey           string            `yaml:"secret_key"`
+-	GracefulShutdownTTL string            `yaml:"graceful_shutdown_ttl"`
+-	HeartbeatTimeout    string            `yaml:"heartbeat_timeout"`
+-	NodeMonitorInterval string            `yaml:"node_monitor_interval"`
+-	ClusterPolicy       clusterPolicyFile `yaml:"cluster_policy"`
++	Addr                string              `yaml:"addr"`
++	DatabaseURL         string              `yaml:"database_url"`
++	LogLevel            string              `yaml:"log_level"`
++	BootstrapToken      string              `yaml:"bootstrap_token"`
++	JWTSecret           string              `yaml:"jwt_secret"`
++	Users               string              `yaml:"users"`
++	SecretKey           string              `yaml:"secret_key"`
++	GracefulShutdownTTL string              `yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    string              `yaml:"heartbeat_timeout"`
++	NodeMonitorInterval string              `yaml:"node_monitor_interval"`
++	DebugAddr           string              `yaml:"debug_addr"`
++	EnablePprof         *bool               `yaml:"enable_pprof"`
++	Retention           retentionFileConfig `yaml:"retention"`
++	ClusterPolicy       clusterPolicyFile   `yaml:"cluster_policy"`
++}
++
++type retentionFileConfig struct {
++	Events         string `yaml:"events"`
++	AuditLogs      string `yaml:"audit_logs"`
++	CompletedTasks string `yaml:"completed_tasks"`
++	FailedTasks    string `yaml:"failed_tasks"`
++	Rollouts       string `yaml:"rollouts"`
++	CompletedJobs  string `yaml:"completed_jobs"`
++	GitOpsRecords  string `yaml:"gitops_records"`
+ }
+ 
+ type clusterPolicyFile struct {
+@@ -236,6 +262,10 @@ func applyServerFile(cfg *ServerConfig, path string) error {
+ 	applyString(&cfg.JWTSecret, file.JWTSecret)
+ 	applyString(&cfg.Users, file.Users)
+ 	applyString(&cfg.SecretKey, file.SecretKey)
++	applyString(&cfg.DebugAddr, file.DebugAddr)
++	if file.EnablePprof != nil {
++		cfg.EnablePprof = *file.EnablePprof
++	}
+ 	if err := applyDuration(&cfg.GracefulShutdownTTL, file.GracefulShutdownTTL); err != nil {
+ 		return fmt.Errorf("graceful_shutdown_ttl: %w", err)
+ 	}
+@@ -245,6 +275,9 @@ func applyServerFile(cfg *ServerConfig, path string) error {
+ 	if err := applyDuration(&cfg.NodeMonitorInterval, file.NodeMonitorInterval); err != nil {
+ 		return fmt.Errorf("node_monitor_interval: %w", err)
+ 	}
++	if err := applyRetentionFile(&cfg.Retention, file.Retention); err != nil {
++		return err
++	}
+ 	mergeClusterPolicy(&cfg.ClusterPolicy, file.ClusterPolicy)
+ 	return nil
+ }
+@@ -288,6 +321,13 @@ func applyServerEnv(cfg *ServerConfig) error {
+ 	applyString(&cfg.JWTSecret, os.Getenv("ORCH_JWT_SECRET"))
+ 	applyString(&cfg.Users, os.Getenv("ORCH_USERS"))
+ 	applyString(&cfg.SecretKey, os.Getenv("ORCH_SECRET_KEY"))
++	applyString(&cfg.DebugAddr, os.Getenv("ORCH_DEBUG_ADDR"))
++	if err := applyBool(&cfg.EnablePprof, os.Getenv("ORCH_ENABLE_PPROF")); err != nil {
++		return fmt.Errorf("ORCH_ENABLE_PPROF: %w", err)
++	}
++	if err := applyRetentionEnv(&cfg.Retention); err != nil {
++		return err
++	}
+ 	if err := applyDuration(&cfg.GracefulShutdownTTL, os.Getenv("ORCH_SHUTDOWN_TIMEOUT")); err != nil {
+ 		return fmt.Errorf("ORCH_SHUTDOWN_TIMEOUT: %w", err)
+ 	}
+@@ -339,6 +379,10 @@ func applyServerOverrides(cfg *ServerConfig, overrides ServerOverrides) error {
+ 	applyString(&cfg.JWTSecret, overrides.JWTSecret)
+ 	applyString(&cfg.Users, overrides.Users)
+ 	applyString(&cfg.SecretKey, overrides.SecretKey)
++	applyString(&cfg.DebugAddr, overrides.DebugAddr)
++	if overrides.EnablePprof != nil {
++		cfg.EnablePprof = *overrides.EnablePprof
++	}
+ 	if err := applyDuration(&cfg.GracefulShutdownTTL, overrides.GracefulShutdownTTL); err != nil {
+ 		return fmt.Errorf("shutdown timeout override: %w", err)
+ 	}
+@@ -508,6 +552,49 @@ func applyDuration(target *time.Duration, value string) error {
+ 	return nil
+ }
+ 
++func applyRetentionFile(target *types.RetentionConfig, file retentionFileConfig) error {
++	values := []struct {
++		name  string
++		raw   string
++		value *time.Duration
++	}{
++		{"retention.events", file.Events, &target.Events},
++		{"retention.audit_logs", file.AuditLogs, &target.AuditLogs},
++		{"retention.completed_tasks", file.CompletedTasks, &target.CompletedTasks},
++		{"retention.failed_tasks", file.FailedTasks, &target.FailedTasks},
++		{"retention.rollouts", file.Rollouts, &target.Rollouts},
++		{"retention.completed_jobs", file.CompletedJobs, &target.CompletedJobs},
++		{"retention.gitops_records", file.GitOpsRecords, &target.GitOpsRecords},
++	}
++	for _, item := range values {
++		if err := applyDuration(item.value, item.raw); err != nil {
++			return fmt.Errorf("%s: %w", item.name, err)
++		}
++	}
++	return nil
++}
++
++func applyRetentionEnv(target *types.RetentionConfig) error {
++	values := []struct {
++		name  string
++		value *time.Duration
++	}{
++		{"ORCH_RETENTION_EVENTS", &target.Events},
++		{"ORCH_RETENTION_AUDIT_LOGS", &target.AuditLogs},
++		{"ORCH_RETENTION_COMPLETED_TASKS", &target.CompletedTasks},
++		{"ORCH_RETENTION_FAILED_TASKS", &target.FailedTasks},
++		{"ORCH_RETENTION_ROLLOUTS", &target.Rollouts},
++		{"ORCH_RETENTION_COMPLETED_JOBS", &target.CompletedJobs},
++		{"ORCH_RETENTION_GITOPS_RECORDS", &target.GitOpsRecords},
++	}
++	for _, item := range values {
++		if err := applyDuration(item.value, os.Getenv(item.name)); err != nil {
++			return fmt.Errorf("%s: %w", item.name, err)
++		}
++	}
++	return nil
++}
++
+ func readYAMLFile[T any](path string) (T, error) {
+ 	var value T
+ 	data, err := os.ReadFile(path)
+@@ -589,6 +676,9 @@ func (cfg ServerConfig) Redacted() map[string]any {
+ 		"graceful_shutdown_ttl": cfg.GracefulShutdownTTL.String(),
+ 		"heartbeat_timeout":     cfg.HeartbeatTimeout.String(),
+ 		"node_monitor_interval": cfg.NodeMonitorInterval.String(),
++		"debug_addr":            cfg.DebugAddr,
++		"enable_pprof":          cfg.EnablePprof,
++		"retention":             cfg.Retention,
+ 		"cluster_policy":        cfg.ClusterPolicy.Redacted(),
+ 	}
+ }
+@@ -642,6 +732,19 @@ func (cfg ServerConfig) Validate() error {
+ 	if strings.TrimSpace(cfg.SecretKey) == "" {
+ 		return fmt.Errorf("secret encryption key is required")
+ 	}
++	if cfg.EnablePprof && strings.TrimSpace(cfg.DebugAddr) == "" {
++		return fmt.Errorf("debug address is required when pprof is enabled")
++	}
++	for name, duration := range map[string]time.Duration{
++		"events": cfg.Retention.Events, "audit_logs": cfg.Retention.AuditLogs,
++		"completed_tasks": cfg.Retention.CompletedTasks, "failed_tasks": cfg.Retention.FailedTasks,
++		"rollouts": cfg.Retention.Rollouts, "completed_jobs": cfg.Retention.CompletedJobs,
++		"gitops_records": cfg.Retention.GitOpsRecords,
++	} {
++		if duration < 0 {
++			return fmt.Errorf("retention %s must be positive", name)
++		}
++	}
+ 	if cfg.ClusterPolicy.MaxReplicasPerService < 0 || cfg.ClusterPolicy.MaxPublicPortsPerService < 0 {
+ 		return fmt.Errorf("cluster policy maximums cannot be negative")
+ 	}
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 12f1231..c1996d7 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -13,11 +13,16 @@ func TestLoadServerDefaultsAreValid(t *testing.T) {
+ 	t.Setenv("ORCH_SHUTDOWN_TIMEOUT", "")
+ 	t.Setenv("ORCH_NODE_HEARTBEAT_TIMEOUT", "")
+ 	t.Setenv("ORCH_NODE_MONITOR_INTERVAL", "")
++	t.Setenv("ORCH_ENABLE_PPROF", "")
++	t.Setenv("ORCH_DEBUG_ADDR", "")
+ 
+ 	cfg := LoadServer()
+ 	if err := cfg.Validate(); err != nil {
+ 		t.Fatalf("expected default server config to be valid: %v", err)
+ 	}
++	if cfg.EnablePprof || cfg.DebugAddr != "127.0.0.1:6060" {
++		t.Fatalf("pprof must default to disabled on loopback, got enabled=%t addr=%q", cfg.EnablePprof, cfg.DebugAddr)
++	}
+ }
+ 
+ func TestLoadAgentDefaultsAreValid(t *testing.T) {
+@@ -55,6 +60,8 @@ addr: :9000
+ log_level: warn
+ bootstrap_token: file-token
+ graceful_shutdown_ttl: 20s
++retention:
++  events: 48h
+ cluster_policy:
+   require_digest: true
+   allow_mutable_tags: false
+@@ -83,6 +90,9 @@ cluster_policy:
+ 	if cfg.GracefulShutdownTTL != 20*time.Second {
+ 		t.Fatalf("expected file duration, got %s", cfg.GracefulShutdownTTL)
+ 	}
++	if cfg.Retention.Events != 48*time.Hour {
++		t.Fatalf("expected file retention duration, got %s", cfg.Retention.Events)
++	}
+ 	if !cfg.ClusterPolicy.AllowHostNetwork {
+ 		t.Fatalf("expected env cluster policy host network allowance")
+ 	}
+diff --git a/internal/controlplane/benchmark_test.go b/internal/controlplane/benchmark_test.go
+new file mode 100644
+index 0000000..1399cf6
+--- /dev/null
++++ b/internal/controlplane/benchmark_test.go
+@@ -0,0 +1,51 @@
++package controlplane
++
++import (
++	"context"
++	"fmt"
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/pkg/types"
++	"testing"
++)
++
++func BenchmarkEventInsertion(b *testing.B) {
++	s := NewMemoryService()
++	ctx := context.Background()
++	b.ResetTimer()
++	for i := 0; i < b.N; i++ {
++		_, _ = s.AppendEvent(ctx, types.Event{Type: "benchmark", Message: "event"})
++	}
++}
++func BenchmarkServiceAndTaskLists(b *testing.B) {
++	s := NewMemoryService()
++	ctx := context.Background()
++	_, _ = s.RegisterNode(ctx, NodeRegistration{Name: "node", AdvertiseAddress: "10.0.0.1", Capacity: types.Resources{CPU: 100000, Memory: 1 << 50}, Allocatable: types.Resources{CPU: 100000, Memory: 1 << 50}})
++	for i := 0; i < 1000; i++ {
++		_, _ = s.CreateService(ctx, types.ServiceSpec{Name: fmt.Sprintf("svc-%04d", i), Image: "nginx:1.27", Replicas: 1})
++	}
++	b.Run("services", func(b *testing.B) {
++		for i := 0; i < b.N; i++ {
++			_, _ = s.ListServices(ctx)
++		}
++	})
++	b.Run("tasks", func(b *testing.B) {
++		for i := 0; i < b.N; i++ {
++			_, _ = s.ListTasks(ctx, TaskFilter{})
++		}
++	})
++	b.Run("events", func(b *testing.B) {
++		for i := 0; i < b.N; i++ {
++			_, _ = s.ListEvents(ctx, events.Filter{Limit: 10000})
++		}
++	})
++}
++func BenchmarkReconciliationManyServices(b *testing.B) {
++	for n := 0; n < b.N; n++ {
++		s := NewMemoryService()
++		ctx := context.Background()
++		_, _ = s.RegisterNode(ctx, NodeRegistration{Name: "node", AdvertiseAddress: "10.0.0.1", Capacity: types.Resources{CPU: 100000, Memory: 1 << 50}, Allocatable: types.Resources{CPU: 100000, Memory: 1 << 50}})
++		for i := 0; i < 1000; i++ {
++			_, _ = s.CreateService(ctx, types.ServiceSpec{Name: fmt.Sprintf("svc-%04d", i), Image: "nginx:1.27", Replicas: 1})
++		}
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index d43e0f0..b6c94b9 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -22,6 +22,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
++	versioninfo "github.com/alekpopovic/orch/internal/version"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -57,6 +58,13 @@ type Service interface {
+ 	ListNotificationSinks(ctx context.Context) ([]types.NotificationSink, error)
+ 	GetNotificationSink(ctx context.Context, id string) (types.NotificationSink, error)
+ 	DeleteNotificationSink(ctx context.Context, id string) error
++	CreateMaintenanceWindow(context.Context, types.MaintenanceWindow) (types.MaintenanceWindow, error)
++	ListMaintenanceWindows(context.Context) ([]types.MaintenanceWindow, error)
++	DeleteMaintenanceWindow(context.Context, string) error
++	GetRetentionStatus(context.Context) (types.RetentionStatus, error)
++	PruneRetention(context.Context, bool) (types.PruneResult, error)
++	CaptureUsageSnapshots(context.Context) ([]types.UsageSnapshot, error)
++	GetUsageReport(context.Context, string, time.Time, time.Time) (types.UsageReport, error)
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+ 	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
+@@ -97,14 +105,16 @@ type NodeRegistration struct {
+ 	Labels           map[string]string
+ 	Capacity         types.Resources
+ 	Allocatable      types.Resources
++	AgentVersion     string
+ }
+ 
+ type NodeHeartbeat struct {
+-	NodeID      types.NodeID
+-	Capacity    types.Resources
+-	Allocatable types.Resources
+-	Labels      map[string]string
+-	Shutdown    bool
++	NodeID       types.NodeID
++	Capacity     types.Resources
++	Allocatable  types.Resources
++	Labels       map[string]string
++	Shutdown     bool
++	AgentVersion string
+ }
+ 
+ type NodeCommand struct {
+@@ -201,14 +211,17 @@ type MemoryService struct {
+ 	notificationDispatcher interface {
+ 		Notify(context.Context, types.Event) error
+ 	}
+-	envelope      secrets.Envelope
+-	policy        policy.ClusterPolicy
+-	events        []types.Event
+-	auditLogs     []audit.Log
+-	namespaces    map[string]types.Namespace
+-	now           func() time.Time
+-	admission     *admission.Controller
+-	imageResolver imageinfo.Resolver
++	maintenanceWindows map[string]types.MaintenanceWindow
++	retentionStatus    types.RetentionStatus
++	usageSnapshots     []types.UsageSnapshot
++	envelope           secrets.Envelope
++	policy             policy.ClusterPolicy
++	events             []types.Event
++	auditLogs          []audit.Log
++	namespaces         map[string]types.Namespace
++	now                func() time.Time
++	admission          *admission.Controller
++	imageResolver      imageinfo.Resolver
+ }
+ 
+ type Option func(*MemoryService)
+@@ -227,6 +240,34 @@ func WithClusterPolicy(clusterPolicy policy.ClusterPolicy) Option {
+ 	}
+ }
+ 
++func WithRetentionConfig(value types.RetentionConfig) Option {
++	return func(service *MemoryService) {
++		defaults := defaultRetentionConfig()
++		if value.Events == 0 {
++			value.Events = defaults.Events
++		}
++		if value.AuditLogs == 0 {
++			value.AuditLogs = defaults.AuditLogs
++		}
++		if value.CompletedTasks == 0 {
++			value.CompletedTasks = defaults.CompletedTasks
++		}
++		if value.FailedTasks == 0 {
++			value.FailedTasks = defaults.FailedTasks
++		}
++		if value.Rollouts == 0 {
++			value.Rollouts = defaults.Rollouts
++		}
++		if value.CompletedJobs == 0 {
++			value.CompletedJobs = defaults.CompletedJobs
++		}
++		if value.GitOpsRecords == 0 {
++			value.GitOpsRecords = defaults.GitOpsRecords
++		}
++		service.retentionStatus.Config = value
++	}
++}
++
+ func WithImageResolver(resolver imageinfo.Resolver) Option {
+ 	return func(service *MemoryService) {
+ 		if resolver != nil {
+@@ -239,26 +280,28 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+ 	envelope, _ := secrets.NewLocalEnvelope("dev-secret-key-change-me")
+ 	service := &MemoryService{
+-		nodes:             make(map[types.NodeID]types.Node),
+-		services:          make(map[types.ServiceID]types.Service),
+-		versions:          make(map[types.ServiceID]map[int64]types.ServiceSpec),
+-		tasks:             make(map[types.TaskID]types.Task),
+-		deployments:       make(map[types.DeploymentID]types.Deployment),
+-		secrets:           make(map[string]types.Secret),
+-		registries:        make(map[string]types.RegistryCredential),
+-		quotas:            make(map[string]types.ResourceQuota),
+-		gitops:            make(map[string]types.GitOpsSource),
+-		jobs:              make(map[string]types.Job),
+-		cronJobs:          make(map[string]types.CronJob),
+-		volumes:           make(map[string]types.Volume),
+-		volumeClaims:      make(map[string]types.VolumeClaim),
+-		attachments:       make(map[string]types.VolumeAttachment),
+-		notificationSinks: make(map[string]types.NotificationSink),
+-		namespaces:        make(map[string]types.Namespace),
+-		envelope:          envelope,
+-		policy:            policy.DefaultClusterPolicy(),
+-		imageResolver:     imageinfo.ParserResolver{},
+-		now:               now,
++		nodes:              make(map[types.NodeID]types.Node),
++		services:           make(map[types.ServiceID]types.Service),
++		versions:           make(map[types.ServiceID]map[int64]types.ServiceSpec),
++		tasks:              make(map[types.TaskID]types.Task),
++		deployments:        make(map[types.DeploymentID]types.Deployment),
++		secrets:            make(map[string]types.Secret),
++		registries:         make(map[string]types.RegistryCredential),
++		quotas:             make(map[string]types.ResourceQuota),
++		gitops:             make(map[string]types.GitOpsSource),
++		jobs:               make(map[string]types.Job),
++		cronJobs:           make(map[string]types.CronJob),
++		volumes:            make(map[string]types.Volume),
++		volumeClaims:       make(map[string]types.VolumeClaim),
++		attachments:        make(map[string]types.VolumeAttachment),
++		notificationSinks:  make(map[string]types.NotificationSink),
++		maintenanceWindows: make(map[string]types.MaintenanceWindow),
++		retentionStatus:    types.RetentionStatus{Config: defaultRetentionConfig()},
++		namespaces:         make(map[string]types.Namespace),
++		envelope:           envelope,
++		policy:             policy.DefaultClusterPolicy(),
++		imageResolver:      imageinfo.ParserResolver{},
++		now:                now,
+ 	}
+ 	for _, opt := range opts {
+ 		opt(service)
+@@ -498,6 +541,13 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 	if err := spec.Validate(); err != nil {
+ 		return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
++	compatibility, err := versioninfo.CheckAgent(registration.AgentVersion)
++	if err != nil {
++		return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	if compatibility == versioninfo.TooOld {
++		return NodeCommand{}, fmt.Errorf("%w: agent version %q is below minimum %s", store.ErrInvalidState, registration.AgentVersion, versioninfo.MinimumAgent)
++	}
+ 
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+@@ -509,6 +559,7 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 			node.Labels = registration.Labels
+ 			node.Capacity = registration.Capacity
+ 			node.Allocatable = registration.Allocatable
++			node.AgentVersion = registration.AgentVersion
+ 			if node.Status == types.NodeUnknown || node.Status == types.NodeOffline {
+ 				if err := types.ValidateNodeTransition(node.Status, types.NodeReady); err != nil {
+ 					return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+@@ -520,7 +571,7 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 			s.nodes[id] = node
+ 			s.reconcileAllServicesLocked(now)
+ 			s.appendEventLocked(events.TypeNodeRegistered, types.EventInfo, "controlplane", "node registered", "node", string(id), now)
+-			return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++			return NodeCommand{Node: node, Directives: versionDirectives(node, compatibility)}, nil
+ 		}
+ 	}
+ 
+@@ -536,11 +587,12 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 		LastHeartbeatAt:  now,
+ 		CreatedAt:        now,
+ 		UpdatedAt:        now,
++		AgentVersion:     registration.AgentVersion,
+ 	}
+ 	s.nodes[id] = node
+ 	s.reconcileAllServicesLocked(now)
+ 	s.appendEventLocked(events.TypeNodeRegistered, types.EventInfo, "controlplane", "node registered", "node", string(id), now)
+-	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++	return NodeCommand{Node: node, Directives: versionDirectives(node, compatibility)}, nil
+ }
+ 
+ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error) {
+@@ -550,6 +602,13 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	if heartbeat.NodeID == "" {
+ 		return NodeCommand{}, fmt.Errorf("%w: node id is required", store.ErrInvalidState)
+ 	}
++	compatibility, err := versioninfo.CheckAgent(heartbeat.AgentVersion)
++	if err != nil {
++		return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	if compatibility == versioninfo.TooOld {
++		return NodeCommand{}, fmt.Errorf("%w: incompatible agent version", store.ErrInvalidState)
++	}
+ 
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+@@ -568,6 +627,9 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	if heartbeat.Labels != nil {
+ 		node.Labels = heartbeat.Labels
+ 	}
++	if heartbeat.AgentVersion != "" {
++		node.AgentVersion = heartbeat.AgentVersion
++	}
+ 	if heartbeat.Shutdown {
+ 		if err := types.ValidateNodeTransition(node.Status, types.NodeOffline); err != nil {
+ 			return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+@@ -593,7 +655,15 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 		message = "node graceful shutdown"
+ 	}
+ 	s.appendEventLocked(eventType, types.EventInfo, "controlplane", message, "node", string(node.ID), now)
+-	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
++	return NodeCommand{Node: node, Directives: versionDirectives(node, compatibility)}, nil
++}
++
++func versionDirectives(node types.Node, compatibility versioninfo.Compatibility) []AgentDirective {
++	out := directivesForNode(node)
++	if compatibility == versioninfo.UntestedNewer {
++		out = append(out, AgentDirective{Type: "version_warning", Message: "agent version is newer than maximum tested version"})
++	}
++	return out
+ }
+ 
+ func (s *MemoryService) MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error) {
+@@ -925,6 +995,9 @@ func (s *MemoryService) DrainNode(ctx context.Context, id types.NodeID) (types.N
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Node{}, err
+ 	}
++	if err := s.checkMaintenance(ctx, types.MaintenanceNodeDrain, namespace.Default); err != nil {
++		return types.Node{}, err
++	}
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+@@ -1414,6 +1487,11 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 		return types.Service{}, store.ErrNotFound
+ 	}
+ 	s.mu.RUnlock()
++	if replicas < service.Spec.Replicas {
++		if err := s.checkMaintenance(ctx, types.MaintenanceScaleDown, service.Namespace); err != nil {
++			return types.Service{}, err
++		}
++	}
+ 	candidate := service.Spec
+ 	candidate.Replicas = replicas
+ 	if err := s.admission.Admit(ctx, admission.Request{
+@@ -1479,6 +1557,9 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+ 	s.mu.RUnlock()
++	if err := s.checkMaintenance(ctx, types.MaintenanceRollout, service.Namespace); err != nil {
++		return types.Deployment{}, err
++	}
+ 	candidate := service.Spec
+ 	candidate.Image = spec.Image
+ 	candidate.ImageMetadata = resolved
+@@ -1579,6 +1660,13 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Deployment{}, err
+ 	}
++	serviceForWindow, err := s.GetService(ctx, id)
++	if err != nil {
++		return types.Deployment{}, err
++	}
++	if err = s.checkMaintenance(ctx, types.MaintenanceRollback, serviceForWindow.Namespace); err != nil {
++		return types.Deployment{}, err
++	}
+ 
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+diff --git a/internal/controlplane/operations.go b/internal/controlplane/operations.go
+new file mode 100644
+index 0000000..ed676a3
+--- /dev/null
++++ b/internal/controlplane/operations.go
+@@ -0,0 +1,195 @@
++package controlplane
++
++import (
++	"context"
++	"fmt"
++	"slices"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func defaultRetentionConfig() types.RetentionConfig {
++	return types.RetentionConfig{Events: 30 * 24 * time.Hour, AuditLogs: 90 * 24 * time.Hour, CompletedTasks: 7 * 24 * time.Hour, FailedTasks: 30 * 24 * time.Hour, Rollouts: 30 * 24 * time.Hour, CompletedJobs: 7 * 24 * time.Hour, GitOpsRecords: 30 * 24 * time.Hour}
++}
++func (s *MemoryService) GetRetentionStatus(ctx context.Context) (types.RetentionStatus, error) {
++	if err := ctx.Err(); err != nil {
++		return types.RetentionStatus{}, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	return s.retentionStatus, nil
++}
++func (s *MemoryService) PruneRetention(ctx context.Context, dry bool) (types.PruneResult, error) {
++	if err := ctx.Err(); err != nil {
++		return types.PruneResult{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	now := s.now()
++	cfg := s.retentionStatus.Config
++	result := types.PruneResult{DryRun: dry}
++	keepEvents := s.events[:0]
++	for _, v := range s.events {
++		if v.Timestamp.Before(now.Add(-cfg.Events)) {
++			result.Events++
++			if dry {
++				keepEvents = append(keepEvents, v)
++			}
++		} else {
++			keepEvents = append(keepEvents, v)
++		}
++	}
++	if !dry {
++		s.events = keepEvents
++	}
++	keepAudit := s.auditLogs[:0]
++	for _, v := range s.auditLogs {
++		if v.Timestamp.Before(now.Add(-cfg.AuditLogs)) {
++			result.AuditLogs++
++			if dry {
++				keepAudit = append(keepAudit, v)
++			}
++		} else {
++			keepAudit = append(keepAudit, v)
++		}
++	}
++	if !dry {
++		s.auditLogs = keepAudit
++	}
++	for id, v := range s.tasks {
++		terminal := v.ActualStatus == types.TaskStopped || v.ActualStatus == types.TaskRemoved
++		completedExpired := terminal && v.FinishedAt.Before(now.Add(-cfg.CompletedTasks))
++		failedExpired := v.ActualStatus == types.TaskFailed && v.FinishedAt.Before(now.Add(-cfg.FailedTasks)) && s.failedTaskResolvedLocked(v)
++		if completedExpired || failedExpired {
++			result.Tasks++
++			if !dry {
++				delete(s.tasks, id)
++				s.detachTaskVolumesLocked(id)
++			}
++		}
++	}
++	for id, v := range s.deployments {
++		resolved := v.Status == types.DeploymentSucceeded || v.Status == types.DeploymentRolledBack
++		if resolved && v.UpdatedAt.Before(now.Add(-cfg.Rollouts)) {
++			result.Rollouts++
++			if !dry {
++				delete(s.deployments, id)
++			}
++		}
++	}
++	for id, v := range s.jobs {
++		if v.Status == types.JobSucceeded && v.CompletedAt.Before(now.Add(-cfg.CompletedJobs)) {
++			result.Jobs++
++			if !dry {
++				delete(s.jobs, id)
++			}
++		}
++	}
++	if !dry {
++		s.retentionStatus.LastRunAt = now
++		s.retentionStatus.LastResult = result
++		log := audit.Normalize(audit.Log{Namespace: namespace.FromContext(ctx), ActorType: audit.ActorSystem, ActorID: "retention-controller", Action: "retention.prune", TargetType: "cluster", TargetID: "retention", Outcome: audit.OutcomeSuccess}, now)
++		log.ID = newUUID()
++		s.auditLogs = append(s.auditLogs, log)
++	}
++	return result, nil
++}
++
++func (s *MemoryService) failedTaskResolvedLocked(task types.Task) bool {
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return true
++	}
++	for _, candidate := range s.tasks {
++		if candidate.ID == task.ID || candidate.ServiceID != task.ServiceID || candidate.Version < task.Version {
++			continue
++		}
++		if candidate.ActualStatus == types.TaskRunning || candidate.ActualStatus == types.TaskHealthy {
++			return true
++		}
++	}
++	return false
++}
++func (s *MemoryService) CaptureUsageSnapshots(ctx context.Context) ([]types.UsageSnapshot, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	now := s.now()
++	out := make([]types.UsageSnapshot, 0, len(s.namespaces))
++	for ns := range s.namespaces {
++		usage := s.resourceUsageLocked(ns, "", nil)
++		snapshot := types.UsageSnapshot{ID: newUUID(), Namespace: ns, Timestamp: now, CPUMillicores: usage.CPUMillicores, MemoryBytes: usage.MemoryBytes, Replicas: usage.Replicas, Services: usage.Services, PublicPorts: usage.PublicPorts}
++		for _, claim := range s.volumeClaims {
++			if claim.Namespace == ns {
++				snapshot.StorageClaims++
++			}
++		}
++		for _, task := range s.tasks {
++			if task.Namespace != ns || task.StartedAt.IsZero() {
++				continue
++			}
++			end := now
++			if !task.FinishedAt.IsZero() {
++				end = task.FinishedAt
++			}
++			if end.After(task.StartedAt) {
++				snapshot.TaskRuntimeSeconds += end.Sub(task.StartedAt).Seconds()
++			}
++		}
++		s.usageSnapshots = append(s.usageSnapshots, snapshot)
++		out = append(out, snapshot)
++	}
++	slices.SortFunc(out, func(a, b types.UsageSnapshot) int {
++		if a.Namespace < b.Namespace {
++			return -1
++		}
++		if a.Namespace > b.Namespace {
++			return 1
++		}
++		return 0
++	})
++	return out, nil
++}
++func (s *MemoryService) GetUsageReport(ctx context.Context, ns string, from, to time.Time) (types.UsageReport, error) {
++	if err := ctx.Err(); err != nil {
++		return types.UsageReport{}, err
++	}
++	if ns == "" {
++		ns = namespace.FromContext(ctx)
++	}
++	if !namespace.Matches(ctx, ns) {
++		return types.UsageReport{}, fmt.Errorf("%w: namespace usage", store.ErrNotFound)
++	}
++	ns = namespace.Normalize(ns)
++	if to.IsZero() {
++		to = s.now()
++	}
++	if from.IsZero() {
++		from = to.Add(-24 * time.Hour)
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	report := types.UsageReport{Namespace: ns, From: from.UTC(), To: to.UTC()}
++	for _, v := range s.usageSnapshots {
++		if ns != "" && v.Namespace != ns {
++			continue
++		}
++		if v.Timestamp.Before(from) || v.Timestamp.After(to) {
++			continue
++		}
++		report.Snapshots = append(report.Snapshots, v)
++		report.Totals.CPUMillicores += v.CPUMillicores
++		report.Totals.MemoryBytes += v.MemoryBytes
++		report.Totals.Replicas += v.Replicas
++		report.Totals.Services += v.Services
++		report.Totals.TaskRuntimeSeconds += v.TaskRuntimeSeconds
++		report.Totals.PublicPorts += v.PublicPorts
++		report.Totals.StorageClaims += v.StorageClaims
++	}
++	return report, nil
++}
+diff --git a/internal/controlplane/operations_test.go b/internal/controlplane/operations_test.go
+new file mode 100644
+index 0000000..6988427
+--- /dev/null
++++ b/internal/controlplane/operations_test.go
+@@ -0,0 +1,103 @@
++package controlplane
++
++import (
++	"context"
++	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/maintenance"
++	"github.com/alekpopovic/orch/pkg/types"
++	"testing"
++	"time"
++)
++
++func TestMaintenanceWindowAndForcedBypass(t *testing.T) {
++	s := NewMemoryService()
++	now := time.Date(2026, 8, 21, 4, 0, 0, 0, time.UTC)
++	s.now = func() time.Time { return now }
++	ctx := context.Background()
++	_, err := s.CreateMaintenanceWindow(ctx, types.MaintenanceWindow{Name: "rollouts", Schedule: "0 2 * * *", Timezone: "UTC", Duration: time.Hour, Enabled: true, AllowedOperations: []types.MaintenanceOperation{types.MaintenanceRollout}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	service, err := s.CreateService(ctx, types.ServiceSpec{Name: "api", Image: "nginx:1.27", Replicas: 0})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.RolloutService(ctx, service.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1}); err == nil {
++		t.Fatal("outside-window rollout allowed")
++	}
++	if _, err = s.RolloutService(maintenance.WithForce(ctx), service.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1}); err != nil {
++		t.Fatal(err)
++	}
++	logs, err := s.ListAuditLogs(ctx, audit.Filter{})
++	if err != nil {
++		t.Fatal(err)
++	}
++	found := false
++	for _, log := range logs {
++		if log.Action == "maintenance.bypass" {
++			found = true
++		}
++	}
++	if !found {
++		t.Fatal("forced bypass not audited")
++	}
++}
++func TestRetentionPruneAndDryRun(t *testing.T) {
++	s := NewMemoryService()
++	now := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
++	s.now = func() time.Time { return now }
++	old := now.Add(-100 * 24 * time.Hour)
++	s.events = []types.Event{{ID: "old", Timestamp: old}, {ID: "recent", Timestamp: now}}
++	s.tasks["active"] = types.Task{ID: "active", ActualStatus: types.TaskRunning, UpdatedAt: old}
++	s.tasks["unresolved"] = types.Task{ID: "unresolved", ServiceID: "missing", Version: 1, DesiredStatus: types.TaskRunning, ActualStatus: types.TaskFailed, FinishedAt: old, UpdatedAt: old}
++	s.tasks["resolved"] = types.Task{ID: "resolved", ServiceID: "replaced", Version: 1, DesiredStatus: types.TaskRunning, ActualStatus: types.TaskFailed, FinishedAt: old, UpdatedAt: old}
++	s.tasks["replacement"] = types.Task{ID: "replacement", ServiceID: "replaced", Version: 1, DesiredStatus: types.TaskRunning, ActualStatus: types.TaskRunning, UpdatedAt: now}
++	result, err := s.PruneRetention(context.Background(), true)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if result.Events != 1 || len(s.events) != 2 {
++		t.Fatalf("dry run mutated data: %#v", result)
++	}
++	result, err = s.PruneRetention(context.Background(), false)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if result.Events != 1 || len(s.events) != 1 || s.events[0].ID != "recent" {
++		t.Fatalf("prune result %#v events %#v", result, s.events)
++	}
++	if _, ok := s.tasks["active"]; !ok {
++		t.Fatal("active task pruned")
++	}
++	if _, ok := s.tasks["unresolved"]; !ok {
++		t.Fatal("unresolved failed task pruned")
++	}
++	if _, ok := s.tasks["resolved"]; ok {
++		t.Fatal("resolved failed task was not pruned")
++	}
++}
++func TestUsageSnapshotAggregation(t *testing.T) {
++	s := NewMemoryService()
++	ctx := context.Background()
++	_, err := s.CreateService(ctx, types.ServiceSpec{Name: "api", Image: "nginx:1.27", Replicas: 2, Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 80, PublishedPort: 8080}}, ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: 250, Memory: 128 << 20}, Limits: types.Resources{CPU: 250, Memory: 128 << 20}}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.CreateVolumeClaim(ctx, types.VolumeClaim{Name: "data", AccessMode: types.VolumeReadWriteOnce}); err != nil {
++		t.Fatal(err)
++	}
++	snapshots, err := s.CaptureUsageSnapshots(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(snapshots) != 1 || snapshots[0].CPUMillicores != 500 || snapshots[0].StorageClaims != 1 {
++		t.Fatalf("snapshot %#v", snapshots)
++	}
++	report, err := s.GetUsageReport(ctx, "default", time.Time{}, time.Time{})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if report.Totals.Services != 1 || report.Totals.Replicas != 2 {
++		t.Fatalf("report %#v", report)
++	}
++}
+diff --git a/internal/controlplane/version_compatibility_test.go b/internal/controlplane/version_compatibility_test.go
+new file mode 100644
+index 0000000..65cbd9b
+--- /dev/null
++++ b/internal/controlplane/version_compatibility_test.go
+@@ -0,0 +1,40 @@
++package controlplane
++
++import (
++	"context"
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestAgentVersionCompatibility(t *testing.T) {
++	service := NewMemoryService()
++	registration := NodeRegistration{
++		Name:             "worker-versioned",
++		AdvertiseAddress: "10.0.0.8:7443",
++		Capacity:         types.Resources{CPU: 1000, Memory: 1 << 30},
++		Allocatable:      types.Resources{CPU: 1000, Memory: 1 << 30},
++	}
++
++	registration.AgentVersion = "0.1.9"
++	if _, err := service.RegisterNode(context.Background(), registration); err == nil {
++		t.Fatal("expected an agent older than the compatibility floor to be rejected")
++	}
++
++	registration.AgentVersion = "0.4.0"
++	command, err := service.RegisterNode(context.Background(), registration)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if command.Node.AgentVersion != "0.4.0" {
++		t.Fatalf("agent version was not recorded: %#v", command.Node)
++	}
++	foundWarning := false
++	for _, directive := range command.Directives {
++		foundWarning = foundWarning || directive.Type == "version_warning" || strings.Contains(directive.Message, "newer")
++	}
++	if !foundWarning {
++		t.Fatalf("expected warning directive for untested agent: %#v", command.Directives)
++	}
++}
+diff --git a/internal/controlplane/workloads.go b/internal/controlplane/workloads.go
+index 8fb113c..a8f79f2 100644
+--- a/internal/controlplane/workloads.go
++++ b/internal/controlplane/workloads.go
+@@ -8,7 +8,9 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/gitops"
++	"github.com/alekpopovic/orch/internal/maintenance"
+ 	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -561,3 +563,78 @@ func (s *MemoryService) DeleteNotificationSink(ctx context.Context, id string) e
+ 	delete(s.notificationSinks, id)
+ 	return nil
+ }
++
++func (s *MemoryService) CreateMaintenanceWindow(ctx context.Context, value types.MaintenanceWindow) (types.MaintenanceWindow, error) {
++	if value.Timezone == "" {
++		value.Timezone = "UTC"
++	}
++	if value.Duration == 0 {
++		value.Duration = time.Hour
++	}
++	if err := maintenance.Validate(value); err != nil {
++		return types.MaintenanceWindow{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	if !value.Global {
++		value.Namespace = namespace.FromContext(ctx)
++	} else {
++		value.Namespace = ""
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	for _, item := range s.maintenanceWindows {
++		if item.Name == value.Name && item.Namespace == value.Namespace && item.Global == value.Global {
++			return types.MaintenanceWindow{}, store.ErrDuplicate
++		}
++	}
++	value.ID = newUUID()
++	value.CreatedAt = s.now()
++	s.maintenanceWindows[value.ID] = value
++	return value, nil
++}
++func (s *MemoryService) ListMaintenanceWindows(ctx context.Context) ([]types.MaintenanceWindow, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.MaintenanceWindow{}
++	for _, item := range s.maintenanceWindows {
++		if item.Global || namespace.Matches(ctx, item.Namespace) {
++			out = append(out, item)
++		}
++	}
++	slices.SortFunc(out, func(a, b types.MaintenanceWindow) int { return strings.Compare(a.Name, b.Name) })
++	return out, nil
++}
++func (s *MemoryService) DeleteMaintenanceWindow(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	item, ok := s.maintenanceWindows[id]
++	if !ok || (!item.Global && !namespace.Matches(ctx, item.Namespace)) {
++		return store.ErrNotFound
++	}
++	delete(s.maintenanceWindows, id)
++	return nil
++}
++func (s *MemoryService) checkMaintenance(ctx context.Context, operation types.MaintenanceOperation, namespaceName string) error {
++	s.mu.RLock()
++	relevant := false
++	allowed := false
++	now := s.now()
++	for _, window := range s.maintenanceWindows {
++		if !window.Enabled || (!window.Global && window.Namespace != namespaceName) || !slices.Contains(window.AllowedOperations, operation) {
++			continue
++		}
++		relevant = true
++		if maintenance.Allows(window, operation, now) {
++			allowed = true
++			break
++		}
++	}
++	s.mu.RUnlock()
++	if !relevant || allowed {
++		return nil
++	}
++	if maintenance.Forced(ctx) {
++		_, _ = s.AppendAuditLog(ctx, audit.Log{Namespace: namespaceName, ActorType: audit.ActorUser, ActorID: "api-user", Action: "maintenance.bypass", TargetType: "operation", TargetID: string(operation), Outcome: audit.OutcomeSuccess, Metadata: map[string]string{"force": "true"}})
++		return nil
++	}
++	return fmt.Errorf("%w: operation %s is outside an approved maintenance window", store.ErrConflict, operation)
++}
+diff --git a/internal/cronjobs/fuzz_test.go b/internal/cronjobs/fuzz_test.go
+new file mode 100644
+index 0000000..d2aeb17
+--- /dev/null
++++ b/internal/cronjobs/fuzz_test.go
+@@ -0,0 +1,18 @@
++package cronjobs
++
++import (
++	"testing"
++	"time"
++)
++
++func FuzzCronExpression(f *testing.F) {
++	for _, v := range []string{"* * * * *", "0 2 * * *", "*/5 0-23 * * 1-5", "bad"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) {
++		schedule, err := Parse(v)
++		if err == nil {
++			_ = schedule.Next(time.Unix(0, 0).UTC())
++		}
++	})
++}
+diff --git a/internal/image/fuzz_test.go b/internal/image/fuzz_test.go
+new file mode 100644
+index 0000000..6c08d11
+--- /dev/null
++++ b/internal/image/fuzz_test.go
+@@ -0,0 +1,15 @@
++package image
++
++import "testing"
++
++func FuzzImageReference(f *testing.F) {
++	for _, v := range []string{"nginx:1.27", "ghcr.io/acme/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "", "-bad", "x@@y"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) {
++		metadata, err := Parse(v)
++		if err == nil {
++			_ = PinnedReference(metadata)
++		}
++	})
++}
+diff --git a/internal/maintenance/maintenance.go b/internal/maintenance/maintenance.go
+new file mode 100644
+index 0000000..dbe4692
+--- /dev/null
++++ b/internal/maintenance/maintenance.go
+@@ -0,0 +1,64 @@
++package maintenance
++
++import (
++	"context"
++	"fmt"
++	"slices"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/cronjobs"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type forceKey struct{}
++
++func WithForce(ctx context.Context) context.Context { return context.WithValue(ctx, forceKey{}, true) }
++func Forced(ctx context.Context) bool               { v, _ := ctx.Value(forceKey{}).(bool); return v }
++func Validate(window types.MaintenanceWindow) error {
++	if window.Name == "" {
++		return fmt.Errorf("name is required")
++	}
++	if _, err := cronjobs.Parse(window.Schedule); err != nil {
++		return err
++	}
++	if window.Timezone == "" {
++		window.Timezone = "UTC"
++	}
++	if _, err := time.LoadLocation(window.Timezone); err != nil {
++		return fmt.Errorf("timezone: %w", err)
++	}
++	if window.Duration <= 0 {
++		return fmt.Errorf("duration must be positive")
++	}
++	if len(window.AllowedOperations) == 0 {
++		return fmt.Errorf("allowed operations are required")
++	}
++	valid := []types.MaintenanceOperation{
++		types.MaintenanceRollout,
++		types.MaintenanceRollback,
++		types.MaintenanceNodeDrain,
++		types.MaintenanceScaleDown,
++		types.MaintenanceReplacement,
++	}
++	for _, operation := range window.AllowedOperations {
++		if !slices.Contains(valid, operation) {
++			return fmt.Errorf("unsupported operation %q", operation)
++		}
++	}
++	return nil
++}
++func Allows(window types.MaintenanceWindow, operation types.MaintenanceOperation, now time.Time) bool {
++	if !window.Enabled || !slices.Contains(window.AllowedOperations, operation) {
++		return false
++	}
++	loc, err := time.LoadLocation(window.Timezone)
++	if err != nil {
++		return false
++	}
++	schedule, err := cronjobs.Parse(window.Schedule)
++	if err != nil {
++		return false
++	}
++	localized := now.In(loc)
++	return len(schedule.Between(localized.Add(-window.Duration), localized, 1000)) > 0
++}
+diff --git a/internal/maintenance/maintenance_test.go b/internal/maintenance/maintenance_test.go
+new file mode 100644
+index 0000000..5339f0b
+--- /dev/null
++++ b/internal/maintenance/maintenance_test.go
+@@ -0,0 +1,20 @@
++package maintenance
++
++import (
++	"github.com/alekpopovic/orch/pkg/types"
++	"testing"
++	"time"
++)
++
++func TestAllowsWithFakeTime(t *testing.T) {
++	w := types.MaintenanceWindow{Name: "night", Schedule: "0 2 * * *", Timezone: "UTC", Duration: time.Hour, Enabled: true, AllowedOperations: []types.MaintenanceOperation{types.MaintenanceRollout}}
++	if err := Validate(w); err != nil {
++		t.Fatal(err)
++	}
++	if !Allows(w, types.MaintenanceRollout, time.Date(2026, 8, 21, 2, 30, 0, 0, time.UTC)) {
++		t.Fatal("active window rejected")
++	}
++	if Allows(w, types.MaintenanceRollout, time.Date(2026, 8, 21, 4, 0, 0, 0, time.UTC)) {
++		t.Fatal("closed window allowed")
++	}
++}
+diff --git a/internal/migrations/manager.go b/internal/migrations/manager.go
+new file mode 100644
+index 0000000..714d2b2
+--- /dev/null
++++ b/internal/migrations/manager.go
+@@ -0,0 +1,237 @@
++package migrations
++
++import (
++	"context"
++	"fmt"
++	"github.com/jackc/pgx/v5"
++	"github.com/jackc/pgx/v5/pgxpool"
++	"os"
++	"path/filepath"
++	"sort"
++	"strings"
++)
++
++const AdvisoryLockID int64 = 675784603013
++
++type Status struct {
++	Current string   `json:"current"`
++	Latest  string   `json:"latest"`
++	Pending []string `json:"pending"`
++}
++type Migration struct {
++	Version  string
++	UpPath   string
++	DownPath string
++}
++
++func Discover(directory string) ([]Migration, error) {
++	entries, err := os.ReadDir(directory)
++	if err != nil {
++		return nil, err
++	}
++	byVersion := map[string]*Migration{}
++	for _, entry := range entries {
++		if entry.IsDir() {
++			continue
++		}
++		name := entry.Name()
++		parts := strings.SplitN(name, "_", 2)
++		if len(parts) != 2 {
++			continue
++		}
++		version := parts[0]
++		item := byVersion[version]
++		if item == nil {
++			item = &Migration{Version: version}
++			byVersion[version] = item
++		}
++		path := filepath.Join(directory, name)
++		if strings.HasSuffix(name, ".up.sql") {
++			item.UpPath = path
++		}
++		if strings.HasSuffix(name, ".down.sql") {
++			item.DownPath = path
++		}
++	}
++	out := make([]Migration, 0, len(byVersion))
++	for _, v := range byVersion {
++		if v.UpPath != "" {
++			out = append(out, *v)
++		}
++	}
++	sort.Slice(out, func(i, j int) bool { return out[i].Version < out[j].Version })
++	return out, nil
++}
++
++type Locker interface {
++	Lock(context.Context) error
++	Unlock(context.Context) error
++}
++
++func WithLock(ctx context.Context, locker Locker, fn func() error) (resultErr error) {
++	if err := locker.Lock(ctx); err != nil {
++		return fmt.Errorf("acquire migration lock: %w", err)
++	}
++	defer func() {
++		if err := locker.Unlock(context.Background()); err != nil && resultErr == nil {
++			resultErr = fmt.Errorf("release migration lock: %w", err)
++		}
++	}()
++	return fn()
++}
++
++type Runner struct {
++	pool      *pgxpool.Pool
++	directory string
++}
++
++func Open(ctx context.Context, databaseURL, directory string) (*Runner, error) {
++	pool, err := pgxpool.New(ctx, databaseURL)
++	if err != nil {
++		return nil, err
++	}
++	if err = pool.Ping(ctx); err != nil {
++		pool.Close()
++		return nil, err
++	}
++	return &Runner{pool: pool, directory: directory}, nil
++}
++func (r *Runner) Close() {
++	if r != nil && r.pool != nil {
++		r.pool.Close()
++	}
++}
++func (r *Runner) Status(ctx context.Context) (Status, error) {
++	migrations, err := Discover(r.directory)
++	if err != nil {
++		return Status{}, err
++	}
++	if _, err = r.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc',now()))`); err != nil {
++		return Status{}, err
++	}
++	rows, err := r.pool.Query(ctx, `SELECT version FROM schema_migrations ORDER BY version`)
++	if err != nil {
++		return Status{}, err
++	}
++	defer rows.Close()
++	applied := map[string]struct{}{}
++	current := ""
++	for rows.Next() {
++		var v string
++		if err := rows.Scan(&v); err != nil {
++			return Status{}, err
++		}
++		applied[v] = struct{}{}
++		current = v
++	}
++	status := Status{Current: current}
++	if len(migrations) > 0 {
++		status.Latest = migrations[len(migrations)-1].Version
++	}
++	for _, m := range migrations {
++		if _, ok := applied[m.Version]; !ok {
++			status.Pending = append(status.Pending, m.Version)
++		}
++	}
++	return status, rows.Err()
++}
++func (r *Runner) Up(ctx context.Context) error {
++	conn, err := r.pool.Acquire(ctx)
++	if err != nil {
++		return err
++	}
++	defer conn.Release()
++	return WithLock(ctx, connLocker{conn}, func() error {
++		if _, err := conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc',now()))`); err != nil {
++			return err
++		}
++		migrations, err := Discover(r.directory)
++		if err != nil {
++			return err
++		}
++		for _, m := range migrations {
++			var exists bool
++			if err := conn.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=$1)`, m.Version).Scan(&exists); err != nil {
++				return err
++			}
++			if exists {
++				continue
++			}
++			data, err := os.ReadFile(m.UpPath)
++			if err != nil {
++				return err
++			}
++			tx, err := conn.Begin(ctx)
++			if err != nil {
++				return err
++			}
++			if _, err = tx.Exec(ctx, string(data)); err == nil {
++				_, err = tx.Exec(ctx, `INSERT INTO schema_migrations(version) VALUES($1)`, m.Version)
++			}
++			if err != nil {
++				_ = tx.Rollback(ctx)
++				return fmt.Errorf("apply migration %s: %w", m.Version, err)
++			}
++			if err = tx.Commit(ctx); err != nil {
++				return err
++			}
++		}
++		return nil
++	})
++}
++func (r *Runner) Down(ctx context.Context, allowed bool) error {
++	if !allowed {
++		return fmt.Errorf("down migrations require --allow-down")
++	}
++	conn, err := r.pool.Acquire(ctx)
++	if err != nil {
++		return err
++	}
++	defer conn.Release()
++	return WithLock(ctx, connLocker{conn}, func() error {
++		var version string
++		if err := conn.QueryRow(ctx, `SELECT version FROM schema_migrations ORDER BY version DESC LIMIT 1`).Scan(&version); err != nil {
++			return err
++		}
++		items, err := Discover(r.directory)
++		if err != nil {
++			return err
++		}
++		for _, m := range items {
++			if m.Version != version {
++				continue
++			}
++			if m.DownPath == "" {
++				return fmt.Errorf("migration %s has no safe down path", version)
++			}
++			data, err := os.ReadFile(m.DownPath)
++			if err != nil {
++				return err
++			}
++			tx, err := conn.Begin(ctx)
++			if err != nil {
++				return err
++			}
++			if _, err = tx.Exec(ctx, string(data)); err == nil {
++				_, err = tx.Exec(ctx, `DELETE FROM schema_migrations WHERE version=$1`, version)
++			}
++			if err != nil {
++				_ = tx.Rollback(ctx)
++				return err
++			}
++			return tx.Commit(ctx)
++		}
++		return pgx.ErrNoRows
++	})
++}
++
++type connLocker struct{ conn *pgxpool.Conn }
++
++func (l connLocker) Lock(ctx context.Context) error {
++	_, err := l.conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, AdvisoryLockID)
++	return err
++}
++func (l connLocker) Unlock(ctx context.Context) error {
++	_, err := l.conn.Exec(ctx, `SELECT pg_advisory_unlock($1)`, AdvisoryLockID)
++	return err
++}
+diff --git a/internal/migrations/manager_test.go b/internal/migrations/manager_test.go
+new file mode 100644
+index 0000000..401477b
+--- /dev/null
++++ b/internal/migrations/manager_test.go
+@@ -0,0 +1,57 @@
++package migrations
++
++import (
++	"context"
++	"errors"
++	"os"
++	"path/filepath"
++	"reflect"
++	"testing"
++)
++
++type fakeLocker struct {
++	locked, unlocked int
++	err              error
++}
++
++func TestDiscoverStatusInputIsIdempotent(t *testing.T) {
++	directory := t.TempDir()
++	for _, name := range []string{"000002_second.up.sql", "000001_first.up.sql", "000001_first.down.sql"} {
++		if err := os.WriteFile(filepath.Join(directory, name), []byte("SELECT 1;"), 0o600); err != nil {
++			t.Fatal(err)
++		}
++	}
++	first, err := Discover(directory)
++	if err != nil {
++		t.Fatal(err)
++	}
++	second, err := Discover(directory)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if !reflect.DeepEqual(first, second) || len(first) != 2 || first[0].Version != "000001" {
++		t.Fatalf("non-deterministic migration discovery: %#v / %#v", first, second)
++	}
++}
++
++func (f *fakeLocker) Lock(context.Context) error   { f.locked++; return f.err }
++func (f *fakeLocker) Unlock(context.Context) error { f.unlocked++; return nil }
++func TestMigrationLock(t *testing.T) {
++	f := &fakeLocker{}
++	called := false
++	if err := WithLock(context.Background(), f, func() error { called = true; return nil }); err != nil {
++		t.Fatal(err)
++	}
++	if !called || f.locked != 1 || f.unlocked != 1 {
++		t.Fatalf("lock lifecycle %#v", f)
++	}
++}
++func TestMigrationLockFailure(t *testing.T) {
++	f := &fakeLocker{err: errors.New("busy")}
++	if WithLock(context.Background(), f, func() error { return nil }) == nil {
++		t.Fatal("expected lock failure")
++	}
++	if f.unlocked != 0 {
++		t.Fatal("unlocked without lock")
++	}
++}
+diff --git a/internal/scheduler/benchmark_test.go b/internal/scheduler/benchmark_test.go
+new file mode 100644
+index 0000000..354484f
+--- /dev/null
++++ b/internal/scheduler/benchmark_test.go
+@@ -0,0 +1,26 @@
++package scheduler
++
++import (
++	"fmt"
++	"github.com/alekpopovic/orch/pkg/types"
++	"testing"
++)
++
++func BenchmarkSchedulerScoring(b *testing.B) {
++	nodes := make([]types.Node, 100)
++	for i := range nodes {
++		nodes[i] = types.Node{ID: types.NodeID(fmt.Sprintf("node-%03d", i)), Status: types.NodeReady, Allocatable: types.Resources{CPU: 8000, Memory: 16 << 30}}
++	}
++	services := map[types.ServiceID]types.Service{}
++	tasks := make([]types.Task, 1000)
++	for i := range tasks {
++		id := types.ServiceID(fmt.Sprintf("service-%04d", i))
++		services[id] = types.Service{ID: id, Status: types.ServiceActive, Spec: types.ServiceSpec{Name: string(id), Image: "nginx", ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: 100, Memory: 64 << 20}}}}
++		tasks[i] = types.Task{ID: types.TaskID(fmt.Sprintf("task-%04d", i)), ServiceID: id, ActualStatus: types.TaskPending}
++	}
++	input := PlanInput{PendingTasks: tasks, Nodes: nodes, Services: services}
++	b.ResetTimer()
++	for i := 0; i < b.N; i++ {
++		_ = Plan(input)
++	}
++}
+diff --git a/internal/scheduler/property_test.go b/internal/scheduler/property_test.go
+new file mode 100644
+index 0000000..2e8c5da
+--- /dev/null
++++ b/internal/scheduler/property_test.go
+@@ -0,0 +1,98 @@
++package scheduler
++
++import (
++	"fmt"
++	"github.com/alekpopovic/orch/pkg/types"
++	"math/rand"
++	"reflect"
++	"testing"
++)
++
++func TestSchedulerRandomizedInvariants(t *testing.T) {
++	for _, seed := range []int64{1, 7, 42, 99, 20260821} {
++		t.Run(fmt.Sprintf("seed_%d", seed), func(t *testing.T) {
++			rng := rand.New(rand.NewSource(seed))
++			nodes := make([]types.Node, 5+rng.Intn(10))
++			for i := range nodes {
++				status := types.NodeReady
++				if rng.Intn(4) == 0 {
++					status = []types.NodeStatus{types.NodeDraining, types.NodeOffline}[rng.Intn(2)]
++				}
++				nodes[i] = types.Node{ID: types.NodeID(fmt.Sprintf("n-%02d", i)), Status: status, Labels: map[string]string{"zone": []string{"a", "b"}[rng.Intn(2)]}, Allocatable: types.Resources{CPU: int64(1000 + rng.Intn(4000)), Memory: int64(1+rng.Intn(8)) << 30}}
++			}
++			services := map[types.ServiceID]types.Service{}
++			tasks := []types.Task{}
++			for i := 0; i < 100; i++ {
++				id := types.ServiceID(fmt.Sprintf("s-%03d", i))
++				cpu := int64(50 + rng.Intn(500))
++				memory := int64(32+rng.Intn(512)) << 20
++				constraints := []types.PlacementConstraint{}
++				if rng.Intn(2) == 0 {
++					constraints = append(constraints, types.PlacementConstraint{Key: "zone", Operator: types.ConstraintEquals, Value: []string{"a", "b"}[rng.Intn(2)]})
++				}
++				port := 0
++				if rng.Intn(4) == 0 {
++					port = 30000 + rng.Intn(20)
++				}
++				services[id] = types.Service{ID: id, Status: types.ServiceActive, Spec: types.ServiceSpec{Name: string(id), Image: "nginx", ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: cpu, Memory: memory}}, PlacementConstraints: constraints, Ports: func() []types.Port {
++					if port == 0 {
++						return nil
++					}
++					return []types.Port{{Protocol: types.PortTCP, ContainerPort: 80, PublishedPort: port}}
++				}()}}
++				tasks = append(tasks, types.Task{ID: types.TaskID(fmt.Sprintf("t-%03d", i)), ServiceID: id, ActualStatus: types.TaskPending})
++			}
++			input := PlanInput{PendingTasks: tasks, Nodes: nodes, Services: services}
++			first := Plan(input)
++			second := Plan(input)
++			if !reflect.DeepEqual(first, second) {
++				t.Fatalf("seed %d: nondeterministic", seed)
++			}
++			nodeByID := map[types.NodeID]types.Node{}
++			for _, n := range nodes {
++				nodeByID[n.ID] = n
++			}
++			used := map[types.NodeID]types.Resources{}
++			ports := map[types.NodeID]map[int]struct{}{}
++			seen := map[types.TaskID]struct{}{}
++			for _, a := range first {
++				if _, ok := seen[a.TaskID]; ok {
++					t.Fatalf("seed %d duplicate task %s", seed, a.TaskID)
++				}
++				seen[a.TaskID] = struct{}{}
++				node := nodeByID[a.NodeID]
++				if node.Status != types.NodeReady {
++					t.Fatalf("seed %d assigned to %s", seed, node.Status)
++				}
++				service := services[taskService(tasks, a.TaskID)]
++				if !placementMatches(service.Spec.PlacementConstraints, node.Labels) {
++					t.Fatalf("seed %d placement mismatch", seed)
++				}
++				value := used[node.ID]
++				value.CPU += service.Spec.ResourceRequirements.Requests.CPU
++				value.Memory += service.Spec.ResourceRequirements.Requests.Memory
++				used[node.ID] = value
++				if value.CPU > node.Allocatable.CPU || value.Memory > node.Allocatable.Memory {
++					t.Fatalf("seed %d capacity exceeded", seed)
++				}
++				if ports[node.ID] == nil {
++					ports[node.ID] = map[int]struct{}{}
++				}
++				for _, p := range a.Ports {
++					if _, ok := ports[node.ID][p.PublishedPort]; ok {
++						t.Fatalf("seed %d port conflict", seed)
++					}
++					ports[node.ID][p.PublishedPort] = struct{}{}
++				}
++			}
++		})
++	}
++}
++func taskService(tasks []types.Task, id types.TaskID) types.ServiceID {
++	for _, task := range tasks {
++		if task.ID == id {
++			return task.ServiceID
++		}
++	}
++	return ""
++}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 74b2916..53e42d1 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -366,7 +366,7 @@ func (s *postgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (ty
+ 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, timezone('utc', now()))
+ 		RETURNING id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at`,
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, agent_version, created_at, updated_at`,
+ 		spec.Hostname,
+ 		spec.AdvertiseAddress,
+ 		labels,
+@@ -387,7 +387,7 @@ func (s *postgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Nod
+ 	row := s.db.QueryRow(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, agent_version, created_at, updated_at
+ 		FROM nodes
+ 		WHERE id = $1`,
+ 		string(id),
+@@ -430,12 +430,13 @@ func (s *postgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 			agent_token_hash = nullif($12, ''),
+ 			agent_token_expires_at = $13,
+ 			agent_revoked = $14,
++			agent_version = nullif($15, ''),
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $11
+ 		RETURNING id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at`,
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, agent_version, created_at, updated_at`,
+ 		string(node.ID),
+ 		node.Hostname,
+ 		node.AdvertiseAddress,
+@@ -450,6 +451,7 @@ func (s *postgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 		node.AgentTokenHash,
+ 		nilTime(node.AgentTokenExpiry),
+ 		node.AgentRevoked,
++		node.AgentVersion,
+ 	)
+ 	updated, err := scanNode(row)
+ 	if err != nil {
+@@ -465,7 +467,7 @@ func (s *postgresStore) ListNodesByStatus(ctx context.Context, status types.Node
+ 	rows, err := s.db.Query(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, agent_version, created_at, updated_at
+ 		FROM nodes
+ 		WHERE status = $1
+ 		ORDER BY hostname, id`,
+@@ -1477,6 +1479,7 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 	var labels []byte
+ 	var tokenHash sql.NullString
+ 	var tokenExpiry sql.NullTime
++	var agentVersion sql.NullString
+ 	err := row.Scan(
+ 		&id,
+ 		&node.Hostname,
+@@ -1491,6 +1494,7 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 		&tokenHash,
+ 		&tokenExpiry,
+ 		&node.AgentRevoked,
++		&agentVersion,
+ 		&node.CreatedAt,
+ 		&node.UpdatedAt,
+ 	)
+@@ -1507,6 +1511,9 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 	if tokenExpiry.Valid {
+ 		node.AgentTokenExpiry = tokenExpiry.Time.UTC()
+ 	}
++	if agentVersion.Valid {
++		node.AgentVersion = agentVersion.String
++	}
+ 	node.LastHeartbeatAt = node.LastHeartbeatAt.UTC()
+ 	node.CreatedAt = node.CreatedAt.UTC()
+ 	node.UpdatedAt = node.UpdatedAt.UTC()
+diff --git a/internal/version/version.go b/internal/version/version.go
+new file mode 100644
+index 0000000..76373a7
+--- /dev/null
++++ b/internal/version/version.go
+@@ -0,0 +1,84 @@
++package version
++
++import (
++	"fmt"
++	"strconv"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++const (
++	Server             = "0.3.0"
++	MinimumAgent       = "0.2.0"
++	MaximumTestedAgent = "0.3.0"
++	Schema             = 16
++	MinimumSchema      = 15
++	MaximumSchema      = 16
++)
++
++type Compatibility string
++
++const (
++	Compatible    Compatibility = "compatible"
++	TooOld        Compatibility = "too_old"
++	UntestedNewer Compatibility = "untested_newer"
++)
++
++func Info() types.VersionInfo {
++	return types.VersionInfo{APIVersion: "v1", ServerVersion: Server, MinimumAgentVersion: MinimumAgent, MaximumTestedAgentVersion: MaximumTestedAgent, DatabaseSchemaVersion: Schema, MinimumSchemaVersion: MinimumSchema, MaximumSchemaVersion: MaximumSchema}
++}
++func CheckAgent(value string) (Compatibility, error) {
++	if strings.TrimSpace(value) == "" {
++		value = Server
++	}
++	v, err := parse(value)
++	if err != nil {
++		return "", err
++	}
++	min, _ := parse(MinimumAgent)
++	max, _ := parse(MaximumTestedAgent)
++	if compare(v, min) < 0 {
++		return TooOld, nil
++	}
++	if compare(v, max) > 0 {
++		return UntestedNewer, nil
++	}
++	return Compatible, nil
++}
++func CheckSchema(value int) error {
++	if value < MinimumSchema {
++		return fmt.Errorf("database schema %d is older than minimum supported %d", value, MinimumSchema)
++	}
++	if value > MaximumSchema {
++		return fmt.Errorf("database schema %d is newer than maximum supported %d", value, MaximumSchema)
++	}
++	return nil
++}
++func parse(value string) ([3]int, error) {
++	value = strings.TrimPrefix(strings.TrimSpace(value), "v")
++	parts := strings.Split(value, ".")
++	if len(parts) != 3 {
++		return [3]int{}, fmt.Errorf("version %q must use major.minor.patch", value)
++	}
++	var out [3]int
++	for i, p := range parts {
++		n, err := strconv.Atoi(strings.SplitN(p, "-", 2)[0])
++		if err != nil || n < 0 {
++			return [3]int{}, fmt.Errorf("invalid version %q", value)
++		}
++		out[i] = n
++	}
++	return out, nil
++}
++func compare(a, b [3]int) int {
++	for i := range a {
++		if a[i] < b[i] {
++			return -1
++		}
++		if a[i] > b[i] {
++			return 1
++		}
++	}
++	return 0
++}
+diff --git a/internal/version/version_test.go b/internal/version/version_test.go
+new file mode 100644
+index 0000000..d51bc95
+--- /dev/null
++++ b/internal/version/version_test.go
+@@ -0,0 +1,24 @@
++package version
++
++import "testing"
++
++func TestAgentCompatibility(t *testing.T) {
++	cases := map[string]Compatibility{"0.1.9": TooOld, "0.2.0": Compatible, "0.3.0": Compatible, "0.4.0": UntestedNewer}
++	for input, want := range cases {
++		got, err := CheckAgent(input)
++		if err != nil || got != want {
++			t.Fatalf("%s got=%s err=%v", input, got, err)
++		}
++	}
++}
++func TestSchemaCompatibility(t *testing.T) {
++	if CheckSchema(MinimumSchema) != nil || CheckSchema(MaximumSchema) != nil {
++		t.Fatal("supported schema rejected")
++	}
++	if CheckSchema(MinimumSchema-1) == nil {
++		t.Fatal("old schema accepted")
++	}
++	if CheckSchema(MaximumSchema+1) == nil {
++		t.Fatal("future schema accepted")
++	}
++}
+diff --git a/migrations/000016_operations_safety.down.sql b/migrations/000016_operations_safety.down.sql
+new file mode 100644
+index 0000000..1afeeab
+--- /dev/null
++++ b/migrations/000016_operations_safety.down.sql
+@@ -0,0 +1,3 @@
++DROP TABLE IF EXISTS usage_snapshots;
++DROP TABLE IF EXISTS maintenance_windows;
++ALTER TABLE nodes DROP COLUMN IF EXISTS agent_version;
+diff --git a/migrations/000016_operations_safety.up.sql b/migrations/000016_operations_safety.up.sql
+new file mode 100644
+index 0000000..51e924c
+--- /dev/null
++++ b/migrations/000016_operations_safety.up.sql
+@@ -0,0 +1,35 @@
++CREATE TABLE IF NOT EXISTS schema_migrations (
++    version TEXT PRIMARY KEY,
++    applied_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
++
++ALTER TABLE nodes ADD COLUMN IF NOT EXISTS agent_version TEXT;
++
++CREATE TABLE IF NOT EXISTS maintenance_windows (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    name TEXT NOT NULL,
++    namespace TEXT REFERENCES namespaces(name) ON DELETE CASCADE,
++    global_scope BOOLEAN NOT NULL DEFAULT FALSE,
++    schedule TEXT NOT NULL,
++    timezone TEXT NOT NULL DEFAULT 'UTC',
++    duration_ns BIGINT NOT NULL CHECK (duration_ns > 0),
++    allowed_operations JSONB NOT NULL,
++    enabled BOOLEAN NOT NULL DEFAULT TRUE,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    CHECK (global_scope OR namespace IS NOT NULL),
++    UNIQUE NULLS NOT DISTINCT (namespace, name)
++);
++
++CREATE TABLE IF NOT EXISTS usage_snapshots (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    namespace TEXT NOT NULL REFERENCES namespaces(name) ON DELETE CASCADE,
++    captured_at TIMESTAMPTZ NOT NULL,
++    cpu_millicores BIGINT NOT NULL,
++    memory_bytes BIGINT NOT NULL,
++    replicas INTEGER NOT NULL,
++    services INTEGER NOT NULL,
++    task_runtime_seconds DOUBLE PRECISION NOT NULL,
++    public_ports INTEGER NOT NULL,
++    storage_claims INTEGER NOT NULL
++);
++CREATE INDEX IF NOT EXISTS usage_snapshots_namespace_time ON usage_snapshots(namespace, captured_at);
+diff --git a/pkg/types/fuzz_test.go b/pkg/types/fuzz_test.go
+new file mode 100644
+index 0000000..862f546
+--- /dev/null
++++ b/pkg/types/fuzz_test.go
+@@ -0,0 +1,28 @@
++package types
++
++import "testing"
++
++func FuzzResourceQuantities(f *testing.F) {
++	for _, v := range []string{"500m", "1", "128Mi", "0", "-1", "garbage"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) { _, _ = ParseCPU(v); _, _ = ParseMemory(v) })
++}
++func FuzzPortSpec(f *testing.F) {
++	for _, v := range []string{"8080:80/tcp", "53/udp", "0", "65536", "abc"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) { _, _ = ParsePortSpec(v) })
++}
++func FuzzLabelSelector(f *testing.F) {
++	for _, v := range []string{"region=eu", "disk!=slow", "a=b,c!=d", "bad"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) { _, _ = ParseLabelSelector(v) })
++}
++func FuzzHealthcheckPath(f *testing.F) {
++	for _, v := range []string{"/healthz", "//evil", "http://evil", "/ok?q=1", "\x00"} {
++		f.Add(v)
++	}
++	f.Fuzz(func(t *testing.T, v string) { _ = (&Healthcheck{Type: HealthcheckHTTP, Path: v, Port: 80}).Validate() })
++}
+diff --git a/pkg/types/operations.go b/pkg/types/operations.go
+new file mode 100644
+index 0000000..75f08c7
+--- /dev/null
++++ b/pkg/types/operations.go
+@@ -0,0 +1,80 @@
++package types
++
++import "time"
++
++type MaintenanceOperation string
++
++const (
++	MaintenanceRollout     MaintenanceOperation = "rollout"
++	MaintenanceRollback    MaintenanceOperation = "rollback"
++	MaintenanceNodeDrain   MaintenanceOperation = "node_drain"
++	MaintenanceScaleDown   MaintenanceOperation = "autoscaling_scale_down"
++	MaintenanceReplacement MaintenanceOperation = "non_urgent_replacement"
++)
++
++type MaintenanceWindow struct {
++	ID                string                 `json:"id"`
++	Name              string                 `json:"name"`
++	Namespace         string                 `json:"namespace,omitempty"`
++	Global            bool                   `json:"global"`
++	Schedule          string                 `json:"schedule"`
++	Timezone          string                 `json:"timezone"`
++	Duration          time.Duration          `json:"duration"`
++	AllowedOperations []MaintenanceOperation `json:"allowed_operations"`
++	Enabled           bool                   `json:"enabled"`
++	CreatedAt         time.Time              `json:"created_at"`
++}
++
++type VersionInfo struct {
++	APIVersion                string `json:"api_version"`
++	ServerVersion             string `json:"server_version"`
++	MinimumAgentVersion       string `json:"minimum_agent_version"`
++	MaximumTestedAgentVersion string `json:"maximum_tested_agent_version"`
++	DatabaseSchemaVersion     int    `json:"database_schema_version"`
++	MinimumSchemaVersion      int    `json:"minimum_schema_version"`
++	MaximumSchemaVersion      int    `json:"maximum_schema_version"`
++}
++
++type RetentionConfig struct {
++	Events         time.Duration `json:"events"`
++	AuditLogs      time.Duration `json:"audit_logs"`
++	CompletedTasks time.Duration `json:"completed_tasks"`
++	FailedTasks    time.Duration `json:"failed_tasks"`
++	Rollouts       time.Duration `json:"rollouts"`
++	CompletedJobs  time.Duration `json:"completed_jobs"`
++	GitOpsRecords  time.Duration `json:"gitops_records"`
++}
++type RetentionStatus struct {
++	Config     RetentionConfig `json:"config"`
++	LastRunAt  time.Time       `json:"last_run_at,omitempty"`
++	LastResult PruneResult     `json:"last_result"`
++}
++type PruneResult struct {
++	DryRun        bool `json:"dry_run"`
++	Events        int  `json:"events"`
++	AuditLogs     int  `json:"audit_logs"`
++	Tasks         int  `json:"tasks"`
++	Rollouts      int  `json:"rollouts"`
++	Jobs          int  `json:"jobs"`
++	GitOpsRecords int  `json:"gitops_records"`
++}
++
++type UsageSnapshot struct {
++	ID                 string    `json:"id"`
++	Namespace          string    `json:"namespace"`
++	Timestamp          time.Time `json:"timestamp"`
++	CPUMillicores      int64     `json:"cpu_millicores"`
++	MemoryBytes        int64     `json:"memory_bytes"`
++	Replicas           int       `json:"replicas"`
++	Services           int       `json:"services"`
++	TaskRuntimeSeconds float64   `json:"task_runtime_seconds"`
++	PublicPorts        int       `json:"public_ports"`
++	StorageClaims      int       `json:"storage_claims"`
++}
++type UsageReport struct {
++	Namespace string          `json:"namespace,omitempty"`
++	From      time.Time       `json:"from"`
++	To        time.Time       `json:"to"`
++	Snapshots []UsageSnapshot `json:"snapshots"`
++	Totals    UsageSnapshot   `json:"totals"`
++}
+diff --git a/pkg/types/parsers.go b/pkg/types/parsers.go
+new file mode 100644
+index 0000000..1931b22
+--- /dev/null
++++ b/pkg/types/parsers.go
+@@ -0,0 +1,59 @@
++package types
++
++import (
++	"fmt"
++	"strconv"
++	"strings"
++)
++
++func ParsePortSpec(value string) (Port, error) {
++	protocol := PortTCP
++	main := strings.TrimSpace(value)
++	if before, after, ok := strings.Cut(main, "/"); ok {
++		main = before
++		protocol = PortProtocol(strings.ToLower(after))
++	}
++	parts := strings.Split(main, ":")
++	if len(parts) < 1 || len(parts) > 2 {
++		return Port{}, fmt.Errorf("port must be [published:]container[/protocol]")
++	}
++	containerIndex := len(parts) - 1
++	container, err := strconv.Atoi(parts[containerIndex])
++	if err != nil {
++		return Port{}, fmt.Errorf("container port: %w", err)
++	}
++	published := 0
++	if len(parts) == 2 {
++		published, err = strconv.Atoi(parts[0])
++		if err != nil {
++			return Port{}, fmt.Errorf("published port: %w", err)
++		}
++	}
++	port := Port{Protocol: protocol, ContainerPort: container, PublishedPort: published}
++	return port, port.Validate()
++}
++func ParseLabelSelector(value string) ([]PlacementConstraint, error) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return nil, nil
++	}
++	out := []PlacementConstraint{}
++	for _, part := range strings.Split(value, ",") {
++		operator := ConstraintEquals
++		key, val, ok := strings.Cut(part, "!=")
++		if ok {
++			operator = ConstraintNotEquals
++		} else {
++			key, val, ok = strings.Cut(part, "=")
++		}
++		if !ok {
++			return nil, fmt.Errorf("selector %q requires = or !=", part)
++		}
++		constraint := PlacementConstraint{Key: strings.TrimSpace(key), Operator: operator, Value: strings.TrimSpace(val)}
++		if err := constraint.Validate(); err != nil {
++			return nil, err
++		}
++		out = append(out, constraint)
++	}
++	return out, nil
++}
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 8e135d8..0c0981a 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -82,6 +82,7 @@ type Node struct {
+ 	AgentRevoked     bool              `json:"-"`
+ 	CreatedAt        time.Time         `json:"created_at"`
+ 	UpdatedAt        time.Time         `json:"updated_at"`
++	AgentVersion     string            `json:"agent_version,omitempty"`
+ }
+ 
+ type Resources struct {
+diff --git a/scripts/migrate-up.sh b/scripts/migrate-up.sh
+index 216d18d..28cb425 100755
+--- a/scripts/migrate-up.sh
++++ b/scripts/migrate-up.sh
+@@ -28,6 +28,8 @@ migration_present() {
+     000012) check="to_regclass('public.resource_quotas') IS NOT NULL" ;;
+     000013) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='image_metadata')" ;;
+     000014) check="to_regclass('public.gitops_sources') IS NOT NULL" ;;
++    000015) check="to_regclass('public.jobs') IS NOT NULL AND to_regclass('public.notification_sinks') IS NOT NULL" ;;
++    000016) check="to_regclass('public.maintenance_windows') IS NOT NULL AND to_regclass('public.usage_snapshots') IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='nodes' AND column_name='agent_version')" ;;
+   esac
+   docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT $check" | grep -q t
+ }

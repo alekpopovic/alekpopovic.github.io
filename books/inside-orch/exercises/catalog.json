@@ -1,0 +1,1456 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "exercises": [
+    {
+      "id": "DEV-01",
+      "audience": "developer",
+      "chapter_ids": [
+        "10"
+      ],
+      "chapter_links": [
+        "../chapters/10-a-deterministic-scheduler.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 10 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/scheduler/scheduler.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Two scheduler attempts hold the same pending task snapshot and expected UpdatedAt. Explain why one assignment wins, how the loser is represented, and whether exactly one runtime process is thereby guaranteed.",
+      "required_artifact": "A three-step claim trace and the isolated test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "one successful claim"
+        },
+        {
+          "points": 2,
+          "criterion": "one assignment event"
+        },
+        {
+          "points": 2,
+          "criterion": "physical fencing remains unproven"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Inspect persistAssignment and the fixture\u2019s success/event assertions."
+      ],
+      "worked_solution": "Both attempts plan from the pending snapshot. The first compare-and-write changes NodeID and ActualStatus to assigned; the second stale claim conflicts. The scheduler treats that conflict as a benign non-assignment. The fixture requires exactly one successful assignment and one assignment event, not two. This proves a store/scheduler claim contract for one record. It does not fence a worker after a partition or prove default-server durability. Physical process uniqueness requires a separate execution/fencing design.",
+      "solution_anchor": "dev-01",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/scheduler/scheduler_test.go",
+      "test_filter": "TestConcurrentSchedulerAttemptsAssignTaskOnce",
+      "expected_artifact": {
+        "successful_claims": 1,
+        "assignment_events": 1,
+        "physical_fencing_proven": false
+      },
+      "negative_behavior": "one successful claim intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/scheduler",
+        "-run",
+        "^(TestConcurrentSchedulerAttemptsAssignTaskOnce)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "task": "pending",
+          "expected_updated_at": "t0",
+          "attempts": [
+            "A",
+            "B"
+          ]
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "A",
+            "claim": "assigned",
+            "successful_claims": 1
+          },
+          {
+            "actor": "B",
+            "claim": "conflict",
+            "successful_claims": 1,
+            "assignment_events": 1
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-02",
+      "audience": "developer",
+      "chapter_ids": [
+        "14"
+      ],
+      "chapter_links": [
+        "../chapters/14-health-checks-that-respect-trust-boundaries.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 14 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/controlplane/controlplane.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "An assigned service task reports unhealthy while its policy permits replacement. Trace report status, stored actual state and replacement identity; distinguish a non-restartable service.",
+      "required_artifact": "A status/identity table plus the named local test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "incoming unhealthy retained in trace"
+        },
+        {
+          "points": 2,
+          "criterion": "stored failed for restartable branch"
+        },
+        {
+          "points": 2,
+          "criterion": "new identity instead of resurrection"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Find the policy conversion before task state storage."
+      ],
+      "worked_solution": "The report enters as unhealthy; MemoryService checks service restart policy and converts it to failed when replacement is permitted. Failed is terminal for that task identity. Reconciliation creates distinct replacement work instead of making the same failed task healthy again. With replacement disallowed, unhealthy can remain retryable and later report running or healthy through valid transitions. Do not rewrite the agent\u2019s original report as failed or assume every unhealthy service automatically rolls back.",
+      "solution_anchor": "dev-02",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/controlplane/agent_test.go",
+      "test_filter": "TestUnhealthyRestartableTaskIsMarkedFailed",
+      "expected_artifact": {
+        "incoming": "unhealthy",
+        "stored": "failed",
+        "resurrect_terminal_task": false
+      },
+      "negative_behavior": "incoming unhealthy retained in trace intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestUnhealthyRestartableTaskIsMarkedFailed)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "actual": "running",
+          "desired": "running",
+          "restart_policy": "always"
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "agent",
+            "report": "unhealthy"
+          },
+          {
+            "actor": "MemoryService",
+            "actual": "failed",
+            "replacement_eligible": true
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-03",
+      "audience": "developer",
+      "chapter_ids": [
+        "18"
+      ],
+      "chapter_links": [
+        "../chapters/18-safe-deletion-and-resource-cleanup.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 18 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "pkg/types/lifecycle.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A task is actual failed. Compare a removed report under desired running and desired stopped, then show which evidence completes service deletion.",
+      "required_artifact": "Two guard evaluations and a cleanup trace plus the test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "running-intent removal rejected"
+        },
+        {
+          "points": 2,
+          "criterion": "cleanup-intent removal accepted"
+        },
+        {
+          "points": 2,
+          "criterion": "all actual tasks removed required"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Read AgentCanReportTaskStatus in branch order."
+      ],
+      "worked_solution": "The generic transition helper permits failed to removed, but the agent guard rejects that change while desired remains running because terminal tasks accept only duplicates in that branch. Cleanup intent stopped or removed activates the cleanup report allowance, so removal is accepted. Service finalization still waits for all associated actual tasks to be removed; failed or stopped is insufficient. Label ownership must be checked by the agent before physical deletion.",
+      "solution_anchor": "dev-03",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/controlplane/agent_test.go",
+      "test_filter": "TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion",
+      "expected_artifact": {
+        "running_intent_removed": false,
+        "cleanup_intent_removed": true,
+        "final_state_required": "removed"
+      },
+      "negative_behavior": "running-intent removal rejected intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "actual": "failed",
+          "desired": "running"
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "agent",
+            "report": "removed",
+            "accepted": false
+          },
+          {
+            "actor": "control plane",
+            "desired": "stopped"
+          },
+          {
+            "actor": "agent",
+            "report": "removed",
+            "accepted": true
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-04",
+      "audience": "developer",
+      "chapter_ids": [
+        "17"
+      ],
+      "chapter_links": [
+        "../chapters/17-rolling-updates-and-rollback-invariants.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 17 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/rollout/rollout.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "For desired replicas two, MaxSurge one and MaxUnavailable one, explain why a running new task may not permit old-task retirement or successful completion.",
+      "required_artifact": "A version/status budget table and the rollout test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "active budget 3"
+        },
+        {
+          "points": 2,
+          "criterion": "minimum available 1"
+        },
+        {
+          "points": 2,
+          "criterion": "new running is not newHealthy"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Compare newHealthy with the shared old availability helper."
+      ],
+      "worked_solution": "The active budget is three and the minimum available budget is one. Old availability can count running or healthy, while newHealthy counts only healthy target-version tasks. A running target task does not increment newHealthy. Repeated controller ticks therefore need explicit health transitions before the new population can satisfy the completion predicate. Desired stops and actual removals are separate: even a succeeded model state can precede physical cleanup.",
+      "solution_anchor": "dev-04",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/rollout/rollout_test.go",
+      "test_filter": "TestControllerSuccessfulRollout",
+      "expected_artifact": {
+        "max_active": 3,
+        "min_available": 1,
+        "new_running_counts_healthy": false
+      },
+      "negative_behavior": "active budget3 intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/rollout",
+        "-run",
+        "^(TestControllerSuccessfulRollout)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "target_replicas": 2,
+          "max_unavailable": 0,
+          "max_surge": 1,
+          "old_available": 2,
+          "new_healthy": 0
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "rollout",
+            "action": "create one new task",
+            "active_upper_bound": 3
+          },
+          {
+            "actor": "agent",
+            "report": "healthy",
+            "new_healthy": 1
+          },
+          {
+            "actor": "rollout",
+            "action": "stop one old task",
+            "available_floor": 2
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-05",
+      "audience": "developer",
+      "chapter_ids": [
+        "27"
+      ],
+      "chapter_links": [
+        "../chapters/27-namespaces-and-the-limits-of-multi-tenancy.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 27 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/controlplane/controlplane.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Team A knows Team B\u2019s service UUID. Predict GetService under A\u2019s context, then distinguish this service test from a blanket claim about every workload endpoint.",
+      "required_artifact": "A two-namespace lookup matrix and the namespace test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "A list excludes B"
+        },
+        {
+          "points": 2,
+          "criterion": "B UUID yields not found for A"
+        },
+        {
+          "points": 2,
+          "criterion": "new workload paths require separate review"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Inspect the fixture\u2019s cross-namespace GetService assertion."
+      ],
+      "worked_solution": "Same-name services may exist in separate namespaces with distinct IDs. ListServices under A returns A\u2019s resources. GetService under A with B\u2019s UUID must behave as not found, avoiding existence/metadata disclosure through the identifier. This specific tested service contract does not prove all newer job, volume or operation handlers perform the same lookup checks. Each path must validate namespace before returning a record. Authentication alone cannot replace object-level scope.",
+      "solution_anchor": "dev-05",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/controlplane/namespace_test.go",
+      "test_filter": "TestNamespaceIsolationAndDuplicateNames",
+      "expected_artifact": {
+        "cross_namespace_error": "not_found",
+        "namespace_from_uuid": false,
+        "all_workload_isolation_proven": false
+      },
+      "negative_behavior": "A list excludes B intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestNamespaceIsolationAndDuplicateNames)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "namespace_A": "alpha",
+          "namespace_B": "beta",
+          "service_names_equal": true
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "alpha context",
+            "action": "look up beta service id",
+            "result": "not found"
+          },
+          {
+            "actor": "beta context",
+            "action": "look up beta service id",
+            "result": "owned record"
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-06",
+      "audience": "developer",
+      "chapter_ids": [
+        "28"
+      ],
+      "chapter_links": [
+        "../chapters/28-quotas-and-usage-accounting.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 28 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/controlplane/controlplane.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Two one-replica services share MaxReplicas three. Concurrent requests each scale one service to two. Determine allowed final total and request outcomes without naming the winning service.",
+      "required_artifact": "A race timeline and the quota test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "one success"
+        },
+        {
+          "points": 2,
+          "criterion": "one quota denial"
+        },
+        {
+          "points": 2,
+          "criterion": "final total 3 independent of winner"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "The fixture synchronizes goroutines with a shared start channel."
+      ],
+      "worked_solution": "Starting total is two. Each accepted scale adds one, but the namespace maximum permits only one additional replica. Serialized mutation/accounting admits one request and denies the other with the quota error; final total is three. The winner is nondeterministic and must not be asserted by name. This memory-lock test is a local concurrency guarantee, not a transaction protocol for an unwired durable multi-writer deployment.",
+      "solution_anchor": "dev-06",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/controlplane/quota_test.go",
+      "test_filter": "TestConcurrentScaleCannotExceedQuota",
+      "expected_artifact": {
+        "successes": 1,
+        "quota_denials": 1,
+        "final_replicas": 3
+      },
+      "negative_behavior": "one success intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/controlplane",
+        "-run",
+        "^(TestConcurrentScaleCannotExceedQuota)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "max_replicas": 3,
+          "services": {
+            "first": 1,
+            "second": 1
+          },
+          "current_reserved_replicas": 2,
+          "concurrent_scale_requests": {
+            "first": 2,
+            "second": 2
+          }
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "either first scale",
+            "result": "accepted",
+            "reserved_replicas": 3
+          },
+          {
+            "actor": "other service scale",
+            "result": "quota denied",
+            "reserved_replicas": 3
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-07",
+      "audience": "developer",
+      "chapter_ids": [
+        "30"
+      ],
+      "chapter_links": [
+        "../chapters/30-gitops-drift-and-controlled-reconciliation.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 30 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/gitops/gitops.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A local GitOps source manages api. Re-sync unchanged content, remove its manifest in a new local commit, and explain the prune boundary.",
+      "required_artifact": "A revision/service-version trace and the local Git fixture test log.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "unchanged revision no new version"
+        },
+        {
+          "points": 2,
+          "criterion": "prune limited to managed identity"
+        },
+        {
+          "points": 2,
+          "criterion": "model deletion differs from runtime cleanup"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Separate the previous managed set from the current manifest names."
+      ],
+      "worked_solution": "Initial sync records a revision and the managed api name. A repeated unchanged revision must not increment DeploymentVersion. Removing the manifest and committing a new local revision prunes the previously source-managed service; it does not authorize deleting every unrelated service in the namespace. The fixture creates a temporary local repository, uses no remote credentials and checks the deleted model state. Physical removal of running tasks remains asynchronous in a real agent deployment.",
+      "solution_anchor": "dev-07",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/gitops/gitops_test.go",
+      "test_filter": "TestControllerSyncsLocalFixtureRepositoryAndPrunes",
+      "expected_artifact": {
+        "unchanged_revision_increments_version": false,
+        "pruned_service": "api",
+        "prune_all_namespace": false
+      },
+      "negative_behavior": "unchanged revision no new version intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/gitops",
+        "-run",
+        "^(TestControllerSyncsLocalFixtureRepositoryAndPrunes)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "source": "local owned fixture",
+          "managed_services": [
+            "api",
+            "worker"
+          ],
+          "unmanaged_services": [
+            "manual"
+          ]
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "GitOps",
+            "action": "remove worker manifest and sync with prune",
+            "managed_services": [
+              "api"
+            ],
+            "unmanaged_services": [
+              "manual"
+            ]
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "DEV-08",
+      "audience": "developer",
+      "chapter_ids": [
+        "31"
+      ],
+      "chapter_links": [
+        "../chapters/31-finite-jobs-and-time-based-work.md"
+      ],
+      "estimated_minutes": 35,
+      "prerequisites": [
+        "Read Chapter 31 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence.",
+        "Go 1.25.0 and cached dependencies; Git installed for the GitOps fixture."
+      ],
+      "source": {
+        "path": "internal/cronjobs/cronjobs.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Using the fake-clock fixtures, compare Forbid and Replace with one active job, then explain catch-up with three missed minutes and MissedScheduleLimit two.",
+      "required_artifact": "An occurrence/active-job table and both named test results.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "Forbid no extra job"
+        },
+        {
+          "points": 2,
+          "criterion": "Replace changes identity"
+        },
+        {
+          "points": 2,
+          "criterion": "catch-up jobs 2"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "The cron controller has an explicit Clock seam; do not assume every package does."
+      ],
+      "worked_solution": "Forbid leaves the existing active job and creates no overlapping job. Replace removes/replaces the active job identity in the fixture and creates one new active entry; Allow is a different policy. With creation at 12:00, now 12:03 and a per-minute schedule, the catch-up fixture admits only two jobs because the missed-schedule bound is two. It also records LastScheduleAt and NextScheduleAt. These are scheduling/model results, not proof arbitrary business effects execute exactly once across crashes.",
+      "solution_anchor": "dev-08",
+      "execution_kind": "offline existing tests",
+      "executable": true,
+      "test_path": "internal/cronjobs/cronjobs_test.go",
+      "test_filter": "TestParseAndRunWithFakeClock|TestConcurrencyForbidAndReplace",
+      "expected_artifact": {
+        "forbid_jobs": 1,
+        "replace_preserves_old_id": false,
+        "catchup_jobs": 2
+      },
+      "negative_behavior": "Forbid no extra job intentionally violated",
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./internal/cronjobs",
+        "-run",
+        "^(TestParseAndRunWithFakeClock|TestConcurrencyForbidAndReplace)$"
+      ],
+      "trace": {
+        "class": "source-derived illustrative state trace; test fixture inputs can differ",
+        "initial_state": {
+          "clock": "fake",
+          "schedule": "fixture expression",
+          "active_job": "present"
+        },
+        "expected_transition_sequence": [
+          {
+            "actor": "cron forbid",
+            "action": "due occurrence",
+            "result": "skip overlap"
+          },
+          {
+            "actor": "cron replace",
+            "action": "due occurrence",
+            "result": "cancel old and create new identity"
+          }
+        ],
+        "ownership_boundary": "Local fixture/control-plane store; no remote physical fencing or process durability."
+      }
+    },
+    {
+      "id": "OPS-01",
+      "audience": "devops",
+      "chapter_ids": [
+        "24"
+      ],
+      "chapter_links": [
+        "../chapters/24-encrypted-secrets-and-configuration-redaction.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 24 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/secrets/envelope.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Ciphertext and its database backup survived, but the envelope key was lost. Design the recovery decision and secret-safe evidence collection.",
+      "required_artifact": "A recovery checklist with key/ciphertext ownership and stop conditions.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "matching key required"
+        },
+        {
+          "points": 2,
+          "criterion": "synthetic canary only"
+        },
+        {
+          "points": 2,
+          "criterion": "no automatic plaintext recovery claim"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Separate encryption metadata from recoverable key material."
+      ],
+      "worked_solution": "A ciphertext backup is unusable without the matching envelope key material. KeyID authenticates the envelope context but is not the decrypting key. Recover the exact key through an authorized independent recovery channel, prove decryption with a synthetic canary and never log real plaintext. If the key is irretrievable, record loss and re-provision secrets through application-specific recovery rather than claiming a database restore repaired them. Default MemoryService live secret records were never durable database state.",
+      "solution_anchor": "ops-01",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-02",
+      "audience": "devops",
+      "chapter_ids": [
+        "03"
+      ],
+      "chapter_links": [
+        "../chapters/03-boot-the-lab-and-deploy-the-first-service.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 03 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "cmd/orch-server/main.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A supervisor restarts the default server and /readyz becomes green. Services and node credentials disappeared. Explain the incident and bound the recovery action.",
+      "required_artifact": "A before/after identity inventory and re-enrollment decision record.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "MemoryService named"
+        },
+        {
+          "points": 2,
+          "criterion": "readiness independent of data"
+        },
+        {
+          "points": 2,
+          "criterion": "owned runtime reconciliation before replay"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Start at the constructor rather than the migration directory."
+      ],
+      "worked_solution": "The executable constructs MemoryService, so process restart loses its live maps. A successful listener restart and ready response do not restore desired services or issued credentials. Preserve sanitized pre-restart intent if available, reconcile any surviving owned containers carefully, then re-enroll disposable nodes and reapply reviewed intent in the laboratory. Do not query PostgreSQL as though it owned that lost state. Stop before adopting or deleting containers whose label ownership is uncertain.",
+      "solution_anchor": "ops-02",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-03",
+      "audience": "devops",
+      "chapter_ids": [
+        "39"
+      ],
+      "chapter_links": [
+        "../chapters/39-performance-and-scale-tests-that-say-what-they-measure.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 39 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "cmd/orch-loadtest/main.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-loadtest/main.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A fake-agent run reports high placement throughput. Prepare a report that keeps the result useful while rejecting a Docker or PostgreSQL performance claim.",
+      "required_artifact": "A fully specified measurement sheet with run status and a claim boundary.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "full reproducibility inputs"
+        },
+        {
+          "points": 2,
+          "criterion": "fake-agent scope explicit"
+        },
+        {
+          "points": 2,
+          "criterion": "no Docker/database inference"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Read the runtime constructor used by the load tool."
+      ],
+      "worked_solution": "Record exact flags, seed, source SHA, Go/machine information, workload size, warm-up and duration with raw output. Explain that the tool drives in-memory control-plane behavior with fake agents. It does not pull images, start Docker containers or exercise the PostgreSQL store. Report its denominators and error counts as actually emitted, without deriving unsupported startup latency or durable-cluster capacity. If no run exists, mark the sheet unexecuted and leave measured results absent.",
+      "solution_anchor": "ops-03",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-04",
+      "audience": "devops",
+      "chapter_ids": [
+        "05"
+      ],
+      "chapter_links": [
+        "../chapters/05-service-specifications-resources-and-ports.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 05 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/agent/agent.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "The workload requests 250 millicores and 134217728 bytes. Docker inspection on the ordinary agent path reports both limits zero, while direct adapter construction applies them. Write a triage plan.",
+      "required_artifact": "A field-flow diagram from service through assignment to ContainerSpec and engine inspection.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "missing Resources field identified"
+        },
+        {
+          "points": 2,
+          "criterion": "request/reservation distinct"
+        },
+        {
+          "points": 2,
+          "criterion": "actual inspect boundary retained"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Compare the agent literal with the adapter\u2019s HostConfig mapping."
+      ],
+      "worked_solution": "Trace requested resources separately from runtime limits. The adapter can translate ResourceLimits into Docker Memory and NanoCPUs, but ordinary agent ContainerSpec construction omits that field. Therefore parser/DTO acceptance and adapter unit support do not establish the default end-to-end limit. Retain container IDs and inspect only captured disposable containers. Classify the missing propagation as an integration gap; do not silently patch source or promise enforcement based on quota reservations.",
+      "solution_anchor": "ops-04",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-05",
+      "audience": "devops",
+      "chapter_ids": [
+        "23"
+      ],
+      "chapter_links": [
+        "../chapters/23-authentication-authorization-and-node-trust.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 23 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/api/api.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A heartbeat rotates a node credential, but its response is lost. The worker retries with the old token. Design a bounded diagnosis and enrollment recovery.",
+      "required_artifact": "An authentication timeline with stored-hash/client-token divergence and safe stop condition.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "rotation/receipt separate"
+        },
+        {
+          "points": 2,
+          "criterion": "no token logging"
+        },
+        {
+          "points": 2,
+          "criterion": "bounded authorized recovery"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Treat credential issuance and response receipt as separate events."
+      ],
+      "worked_solution": "After successful server rotation, the stored hash may correspond to the new token while the worker retains the old token. A retry can then fail authentication even though transport delivered the previous heartbeat. Record request IDs and expiry metadata without tokens. Confirm the exact node and laboratory enrollment authority, stop uncontrolled retry/re-enrollment loops, and use a deliberate recovery process. Neither token hashing nor a fifteen-minute TTL makes the response-loss window disappear.",
+      "solution_anchor": "ops-05",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-06",
+      "audience": "devops",
+      "chapter_ids": [
+        "19"
+      ],
+      "chapter_links": [
+        "../chapters/19-offline-nodes-draining-and-rescheduling.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 19 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/controlplane/controlplane.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A node goes offline while hosting stateless Atlas API and stateful local-volume work. Explain replacement choices and how an old worker can still be running.",
+      "required_artifact": "Two task/condition traces and a fencing risk decision.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "stateless replacement trace"
+        },
+        {
+          "points": 2,
+          "criterion": "stateful locality retained"
+        },
+        {
+          "points": 2,
+          "criterion": "no physical fencing inference"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Keep Task conditions independent from actual/desired status."
+      ],
+      "worked_solution": "Stateless tasks receive node_lost metadata and are failed with desired removal so replacement can occur. Stateful tasks retain assignment for manual recovery because node-local data is not replicated or moved by a status update. A partitioned worker can still execute either old process. Offline detection is suspicion based on heartbeat age, not physical shutdown. Do not force stateful failover without a storage and fencing plan; stop if ownership or old-writer quiescence cannot be established.",
+      "solution_anchor": "ops-06",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-07",
+      "audience": "devops",
+      "chapter_ids": [
+        "37"
+      ],
+      "chapter_links": [
+        "../chapters/37-failure-injection-and-recovery-evidence.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 37 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/api/api.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "All /healthz and /readyz requests succeed while work is pending and the database is unavailable. Build an observation plan that distinguishes these facts.",
+      "required_artifact": "A three-layer health table with a verification probe for each layer.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "process/workload/store separated"
+        },
+        {
+          "points": 2,
+          "criterion": "startup check not continuous"
+        },
+        {
+          "points": 2,
+          "criterion": "missing data remains unknown"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Read readyz, then find the actual server store constructor."
+      ],
+      "worked_solution": "Process liveness/readiness confirms the HTTP process\u2019s reported state; the handlers do not prove a database-backed live control plane or workload health. Inspect task assignments, actual/container health and specific operation errors separately. If schema check is enabled, database access can gate startup, but a past startup check is not a continuous durability guarantee. Proposed alerts need configured collectors and tested thresholds. Keep missing workload samples unknown rather than healthy.",
+      "solution_anchor": "ops-07",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "OPS-08",
+      "audience": "devops",
+      "chapter_ids": [
+        "35"
+      ],
+      "chapter_links": [
+        "../chapters/35-upgrades-migrations-maintenance-and-retention.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 35 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/migrations/manager.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/migrations/manager.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Design a future PostgreSQL restore rehearsal for an explicitly wired durable extension while preserving the default-server boundary.",
+      "required_artifact": "A canary/digest recovery plan with key backup, schema, downtime and rollback criteria.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "all 16 schema and canary"
+        },
+        {
+          "points": 2,
+          "criterion": "envelope key retained"
+        },
+        {
+          "points": 2,
+          "criterion": "default memory limit explicit"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Restore completeness is an application-level property as well as a database command result."
+      ],
+      "worked_solution": "Use an owned disposable database, all sixteen migrations, known canary records and an exact dump/restore procedure. Retain the envelope key independently and compare restored record identities and content digests, not just process exit codes. Record restore duration and tolerated data-loss window from defined event origins. Do not claim the default memory server\u2019s live intent is in this database. Stop on schema mismatch, missing keys or canary divergence; never overwrite a production database as an exercise.",
+      "solution_anchor": "ops-08",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-01",
+      "audience": "architect",
+      "chapter_ids": [
+        "17"
+      ],
+      "chapter_links": [
+        "../chapters/17-rolling-updates-and-rollback-invariants.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 17 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/rollout/rollout.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "For desired replicas 5, MaxSurge 2 and MaxUnavailable 1, compute the active and minimum-available budgets and identify which snapshots can violate a real availability promise.",
+      "required_artifact": "A budget calculation and counterexample timeline.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "max active 7"
+        },
+        {
+          "points": 2,
+          "criterion": "min available 4"
+        },
+        {
+          "points": 2,
+          "criterion": "stale observation counterexample"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Separate arithmetic from the freshness of its inputs."
+      ],
+      "worked_solution": "The model allows up to 7 active tasks and requires at least 4 available by its accounting. New target-version running tasks still do not count toward newHealthy. An old task can fail physically after the snapshot but before a stop is applied, making the prior budget stale. Client reachability can fail despite local health. These counters guide controller decisions; they do not establish a continuously enforced service-level objective.",
+      "solution_anchor": "arc-01",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-02",
+      "audience": "architect",
+      "chapter_ids": [
+        "05"
+      ],
+      "chapter_links": [
+        "../chapters/05-service-specifications-resources-and-ports.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 05 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "pkg/types/types.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Five replicas each request 250 millicores and 128 Mi. Compare their reservation with quota 1500 millicores and 700 Mi, then explain why passing arithmetic is not measured capacity.",
+      "required_artifact": "A unit-correct table and an enforcement boundary statement.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "CPU 1250"
+        },
+        {
+          "points": 2,
+          "criterion": "memory 671088640"
+        },
+        {
+          "points": 2,
+          "criterion": "reservation not observed usage"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Use binary Mi=1048576bytes and keep CPU in millicores."
+      ],
+      "worked_solution": "CPU reservation is 1250 millicores. Memory is 5\u00d7134217728=671088640 bytes, equivalent to 640 Mi. Both fit the stated 1500-millicore and 734003200-byte quotas before considering any other services. These are requested reservations, not observed process usage or proof Docker limits are applied. Include existing namespace consumption in a real quota decision and inspect field propagation before promising enforcement.",
+      "solution_anchor": "arc-02",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-03",
+      "audience": "architect",
+      "chapter_ids": [
+        "34"
+      ],
+      "chapter_links": [
+        "../chapters/34-leader-election-and-the-durable-ha-boundary.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 34 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "cmd/orch-server/main.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Propose the minimum composition changes for durable intent and activated leader ownership, including a failure test that could falsify your design.",
+      "required_artifact": "A labeled future-extension dependency graph and crash-test plan.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "live owner replaced"
+        },
+        {
+          "points": 2,
+          "criterion": "leader loss reaches side effects"
+        },
+        {
+          "points": 2,
+          "criterion": "crash-window oracle"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "List callers and ownership changes, not just new packages."
+      ],
+      "worked_solution": "Replace the live state-owner construction with a complete durable service implementation rather than merely opening a pool. Wire controllers to durable transactions, restore identity/operation state and add active leader-loss cancellation tied to side-effect authority. Specify schema, credential and envelope-key recovery. A falsifying test kills the process after durable intent but before runtime/report completion and checks reconstruction plus duplicate suppression. This is future architecture; the current binary does not supply these guarantees.",
+      "solution_anchor": "arc-03",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-04",
+      "audience": "architect",
+      "chapter_ids": [
+        "34"
+      ],
+      "chapter_links": [
+        "../chapters/34-leader-election-and-the-durable-ha-boundary.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 34 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/leadership/postgres.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A canceled lease closes Done and Release returns nil, but another pool cannot acquire until the first pool closes. Explain the session-level failure and design a release test.",
+      "required_artifact": "A two-pool lock ownership diagram and a corrected release contract.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "original session ownership"
+        },
+        {
+          "points": 2,
+          "criterion": "Done not unlock proof"
+        },
+        {
+          "points": 2,
+          "criterion": "two independent pools"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Track database session identity across cancellation and deferred Release."
+      ],
+      "worked_solution": "A session-level advisory lock belongs to its original database connection. Cancellation can release a pooled connection before unlock, allowing a later unlock call to run on another session and falsely appear sufficient. Done closure signals local ownership loss but does not prove remote lock release. Test two independent pools: acquire A, cancel/release A, attempt B before and after closing A\u2019s pool. Repair requires unlocking on the original pinned connection or closing that session; default server HA remains unwired.",
+      "solution_anchor": "arc-04",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-05",
+      "audience": "architect",
+      "chapter_ids": [
+        "26"
+      ],
+      "chapter_links": [
+        "../chapters/26-security-contexts-admission-and-policy.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 26 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/health/health.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/health/health.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "An HTTP probe\u2019s first destination is allowed, but it redirects to loopback metadata-like space. Define a safe synthetic test and the limitation of a URL-only validation check.",
+      "required_artifact": "A resolver/redirect policy diagram with a zero-hit loopback oracle.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "owned fixture only"
+        },
+        {
+          "points": 2,
+          "criterion": "redirect/dial policy evaluated"
+        },
+        {
+          "points": 2,
+          "criterion": "forbidden hits 0"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "The final connection target matters as much as the original URL."
+      ],
+      "worked_solution": "Use only owned loopback fixture servers with synthetic responses and controlled resolution; do not contact live metadata services. Validate destination policy for every connection/redirect path, accounting for DNS rebinding and address changes rather than checking only the initial string. The forbidden listener should observe zero hits. Configuration validation and generic HTTP client behavior are separate boundaries. Retain exact resolver and redirect behavior from the pinned health implementation before claiming SSRF prevention.",
+      "solution_anchor": "arc-05",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-06",
+      "audience": "architect",
+      "chapter_ids": [
+        "27"
+      ],
+      "chapter_links": [
+        "../chapters/27-namespaces-and-the-limits-of-multi-tenancy.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 27 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/controlplane/workloads.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "A newer resource lookup takes only a global ID. Specify the minimum object-level namespace test even if user authentication already requires admin.",
+      "required_artifact": "An authorization matrix for known/unknown/foreign IDs and a test-gap entry.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "foreign lookup matrix"
+        },
+        {
+          "points": 2,
+          "criterion": "mutation coverage separate"
+        },
+        {
+          "points": 2,
+          "criterion": "test gap not hidden"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Separate global role power from the method\u2019s declared tenancy contract."
+      ],
+      "worked_solution": "Create two namespaces and distinct resources, then request each foreign ID under the other namespace context. The result must avoid returning foreign metadata and should match the intended not-found policy rather than disclose existence. Test list, get, delete and mutation paths separately. Admin fallback authentication does not by itself establish namespace-scoped lookup or delete semantics. If the current method lacks a scope check, report the gap instead of extending older service tests to it.",
+      "solution_anchor": "arc-06",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-07",
+      "audience": "architect",
+      "chapter_ids": [
+        "25"
+      ],
+      "chapter_links": [
+        "../chapters/25-registry-credentials-and-immutable-image-identity.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 25 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/image/reference.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "An image string contains a syntactically valid sha256 digest. Explain which supply-chain claims remain unproved and propose additional evidence.",
+      "required_artifact": "A syntax/resolution/content verification ladder.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "syntax support only"
+        },
+        {
+          "points": 2,
+          "criterion": "remote/content evidence distinct"
+        },
+        {
+          "points": 2,
+          "criterion": "future workflow labeled"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "A reference parser does not perform remote registry resolution."
+      ],
+      "worked_solution": "The parser can validate digest form and admission policy can require a digest. That does not prove a remote registry returned the intended manifest, that all referenced layers were verified, or that a tag\u2019s current mapping equals the recorded digest. Propose an explicitly authenticated registry resolution and content-verification workflow with immutable returned digest and provenance records. Keep this future workflow separate from baseline syntax support and do not invent adoption or integrity results.",
+      "solution_anchor": "arc-07",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    },
+    {
+      "id": "ARC-08",
+      "audience": "architect",
+      "chapter_ids": [
+        "38"
+      ],
+      "chapter_links": [
+        "../chapters/38-metrics-dashboards-and-actionable-signals.md"
+      ],
+      "estimated_minutes": 45,
+      "prerequisites": [
+        "Read Chapter 38 and the pinned source mechanism.",
+        "Use only a disposable module copy; never mutate evidence."
+      ],
+      "source": {
+        "path": "internal/metrics/prometheus.go",
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      },
+      "question": "Define a task-convergence latency metric for an experiment with missing reports and restarts. Explain why an unconfigured alert is only a proposal.",
+      "required_artifact": "A measurement contract with start/stop events, clock origin, censoring and scope.",
+      "rubric": [
+        {
+          "points": 2,
+          "criterion": "version-matched event boundaries"
+        },
+        {
+          "points": 2,
+          "criterion": "censored missing data"
+        },
+        {
+          "points": 2,
+          "criterion": "alert proposal explicit"
+        }
+      ],
+      "maximum_points": 6,
+      "hints": [
+        "Define missing data before calculating a percentile."
+      ],
+      "worked_solution": "Start at accepted intent version timestamp and stop at the first authoritative matching task health/required replica observation. Preserve one monotonic process clock for local elapsed durations or document wall-clock skew across processes. Mark missing completion as censored/timeout rather than zero latency, and separate restart-lost records from successful convergence. Specify workload size, warm-up and sample denominator. A dashboard expression and suggested threshold do not become an operational alert until configured and tested.",
+      "solution_anchor": "arc-08",
+      "execution_kind": "operational/architecture artifact",
+      "executable": false,
+      "test_path": null,
+      "test_filter": null,
+      "expected_artifact": null,
+      "negative_behavior": null
+    }
+  ],
+  "chapter_solution_companions": "manuscript/solutions/ch01.md through ch40.md; checked only after final chapter batch exists.",
+  "scope": "Eight offline upstream test analyses, eight operational artifacts, eight architecture/calculation artifacts; no required deployment."
+}

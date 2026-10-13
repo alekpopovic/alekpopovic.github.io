@@ -1,0 +1,28 @@
+commit 36bb28e056fb58e24942eb3c13b1d8336c4d6d8f
+Date: 2026-07-14T15:03:48+02:00
+Subject: Update tracker after prompt 32
+
+
+---
+ prompts/EXECUTION_TRACKER.md | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 88a35d6..f5e8673 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `31-scheduler-concurrency-safety.md`
+-- Last matching commit: `1a1c216 Add scheduler concurrency-safe assignment`
+-- Completed prompt range: `00` through `31`
+-- Next prompt to execute: `32-reconciler-idempotency-under-restart.md`
++- Last executed prompt: `32-reconciler-idempotency-under-restart.md`
++- Last matching commit: `a11cec0 Harden reconciler restart idempotency`
++- Completed prompt range: `00` through `32`
++- Next prompt to execute: `33-fake-runtime-for-deterministic-tests.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

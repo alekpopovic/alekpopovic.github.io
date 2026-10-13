@@ -1,0 +1,648 @@
+commit 6f7954b8d31b52a7909ebe20d1e22b384af19530
+Date: 2026-07-14T16:08:22+02:00
+Subject: Add service spec validation
+
+
+---
+ deployments/examples/private-image.yaml |  11 ++++
+ deployments/examples/routed-api.yaml    |  15 +++++
+ deployments/examples/secrets-api.yaml   |  14 ++++
+ deployments/examples/simple-web.yaml    |  10 +++
+ docs/API.md                             |   2 +
+ docs/SERVICE_SPEC.md                    |  48 ++++++++++++++
+ internal/cli/deploy.go                  |  56 +++++++++++++++-
+ internal/cli/deploy_test.go             | 109 ++++++++++++++++++++++++++++++--
+ internal/cli/root.go                    |  17 +++++
+ internal/cli/root_test.go               |  46 ++++++++++++++
+ pkg/types/types.go                      |  16 +++++
+ pkg/types/validation_test.go            |   9 +++
+ prompts/EXECUTION_TRACKER.md            |   8 +--
+ schemas/service.schema.json             | 101 +++++++++++++++++++++++++++++
+ 14 files changed, 453 insertions(+), 9 deletions(-)
+
+diff --git a/deployments/examples/private-image.yaml b/deployments/examples/private-image.yaml
+new file mode 100644
+index 0000000..fa7b94a
+--- /dev/null
++++ b/deployments/examples/private-image.yaml
+@@ -0,0 +1,11 @@
++name: private-api
++image: ghcr.io/example/private-api:1.0.0
++imagePullSecret: ghcr-prod
++replicas: 2
++ports:
++  - container: 8080
++resources:
++  cpu: 250m
++  memory: 256Mi
++restart:
++  policy: always
+diff --git a/deployments/examples/routed-api.yaml b/deployments/examples/routed-api.yaml
+new file mode 100644
+index 0000000..6e6c661
+--- /dev/null
++++ b/deployments/examples/routed-api.yaml
+@@ -0,0 +1,15 @@
++name: routed-api
++image: ghcr.io/example/api:1.0.0
++replicas: 2
++ports:
++  - container: 8080
++routes:
++  - host: api.example.com
++    pathPrefix: /
++    port: 8080
++    tls: true
++resources:
++  cpu: 250m
++  memory: 256Mi
++restart:
++  policy: always
+diff --git a/deployments/examples/secrets-api.yaml b/deployments/examples/secrets-api.yaml
+new file mode 100644
+index 0000000..024ddd7
+--- /dev/null
++++ b/deployments/examples/secrets-api.yaml
+@@ -0,0 +1,14 @@
++name: secrets-api
++image: ghcr.io/example/api:1.0.0
++replicas: 2
++env:
++  NODE_ENV: production
++  DATABASE_URL:
++    secretRef: prod/database-url
++ports:
++  - container: 8080
++resources:
++  cpu: 250m
++  memory: 256Mi
++restart:
++  policy: always
+diff --git a/deployments/examples/simple-web.yaml b/deployments/examples/simple-web.yaml
+new file mode 100644
+index 0000000..4a18abe
+--- /dev/null
++++ b/deployments/examples/simple-web.yaml
+@@ -0,0 +1,10 @@
++name: simple-web
++image: nginx:1.27-alpine
++replicas: 1
++ports:
++  - container: 80
++resources:
++  cpu: 100m
++  memory: 128Mi
++restart:
++  policy: always
+diff --git a/docs/API.md b/docs/API.md
+index 977503b..a23e7bc 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -137,6 +137,8 @@ Concurrent service operations are guarded per service. Active rollout/rollback b
+ 
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
++The canonical YAML deployment format is documented in [SERVICE_SPEC.md](SERVICE_SPEC.md), with JSON Schema at `schemas/service.schema.json`.
++
+ ## Secrets
+ 
+ ```sh
+diff --git a/docs/SERVICE_SPEC.md b/docs/SERVICE_SPEC.md
+new file mode 100644
+index 0000000..29a3a37
+--- /dev/null
++++ b/docs/SERVICE_SPEC.md
+@@ -0,0 +1,48 @@
++# Service Spec
++
++`orch deploy` accepts a YAML service spec and validates it before sending it to the server. The server repeats validation through the domain `ServiceSpec` model and must not trust CLI input.
++
++The canonical machine-readable schema is `schemas/service.schema.json`.
++
++## Required Fields
++
++- `name`: stable service name.
++- `image`: container image reference without whitespace.
++
++## Common Fields
++
++- `replicas`: desired replica count, `>= 0`; defaulting happens server-side.
++- `imagePullSecret`: registry credential ID created with `orch registry-credential` API/CLI flows.
++- `stateful`: marks workloads that should not be auto-replaced after node loss.
++- `resources.cpu`: CPU request such as `100m`, `0.5`, or `1`.
++- `resources.memory`: memory request such as `128Mi` or `1Gi`.
++- `restart.policy`: `always`, `never`, or `on_failure`.
++
++## Ports And Routes
++
++`ports[].container` is required and must be `1..65535`. `ports[].public` is optional; `0` means dynamically assigned.
++
++Routes require `host`, `pathPrefix` beginning with `/`, and `port` matching the service container port.
++
++## Env And Secrets
++
++`env` values can be literal strings or secret references:
++
++```yaml
++env:
++  NODE_ENV: production
++  DATABASE_URL:
++    secretRef: prod/database-url
++```
++
++An env entry cannot specify both `value` and `secretRef`.
++
++## Validation
++
++Validate locally without creating a service:
++
++```sh
++orch validate deployments/examples/http-api.yaml
++```
++
++The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, and malformed secret references.
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index aaf9c90..952a1ec 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -1,6 +1,7 @@
+ package cli
+ 
+ import (
++	"bytes"
+ 	"fmt"
+ 	"os"
+ 	"sort"
+@@ -98,9 +99,14 @@ func ParseDeployFile(path string) (types.ServiceSpec, error) {
+ 
+ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	var deploy DeployFile
+-	if err := yaml.Unmarshal(data, &deploy); err != nil {
++	decoder := yaml.NewDecoder(bytes.NewReader(data))
++	decoder.KnownFields(true)
++	if err := decoder.Decode(&deploy); err != nil {
+ 		return types.ServiceSpec{}, fmt.Errorf("parse deploy YAML: %w", err)
+ 	}
++	if err := deploy.Validate(); err != nil {
++		return types.ServiceSpec{}, fmt.Errorf("invalid deploy file: %w", err)
++	}
+ 
+ 	requests, err := deploy.Resources.toRequests()
+ 	if err != nil {
+@@ -159,6 +165,54 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	return spec, nil
+ }
+ 
++func (deploy DeployFile) Validate() error {
++	if strings.TrimSpace(deploy.Name) == "" {
++		return fmt.Errorf("name is required")
++	}
++	if strings.TrimSpace(deploy.Image) == "" {
++		return fmt.Errorf("image is required")
++	}
++	if deploy.Replicas < 0 {
++		return fmt.Errorf("replicas cannot be negative")
++	}
++	for i, port := range deploy.Ports {
++		if port.Container < 1 || port.Container > 65535 {
++			return fmt.Errorf("ports[%d].container must be between 1 and 65535", i)
++		}
++		if port.Public < 0 || port.Public > 65535 {
++			return fmt.Errorf("ports[%d].public must be between 0 and 65535", i)
++		}
++	}
++	for key, value := range deploy.Env {
++		if strings.TrimSpace(key) == "" {
++			return fmt.Errorf("env keys must not be empty")
++		}
++		if strings.TrimSpace(value.SecretRef) != "" && strings.TrimSpace(value.Value) != "" {
++			return fmt.Errorf("env %q cannot set both value and secretRef", key)
++		}
++	}
++	for key := range deploy.Placement.Labels {
++		if strings.TrimSpace(key) == "" {
++			return fmt.Errorf("placement label keys must not be empty")
++		}
++	}
++	for i, route := range deploy.Routes {
++		if strings.TrimSpace(route.Host) == "" {
++			return fmt.Errorf("routes[%d].host is required", i)
++		}
++		if strings.TrimSpace(route.PathPrefix) == "" {
++			return fmt.Errorf("routes[%d].pathPrefix is required", i)
++		}
++		if !strings.HasPrefix(strings.TrimSpace(route.PathPrefix), "/") {
++			return fmt.Errorf("routes[%d].pathPrefix must start with /", i)
++		}
++		if route.Port < 1 || route.Port > 65535 {
++			return fmt.Errorf("routes[%d].port must be between 1 and 65535", i)
++		}
++	}
++	return nil
++}
++
+ func (env DeployEnv) toDomain() (map[string]string, []types.SecretRef) {
+ 	if len(env) == 0 {
+ 		return nil, nil
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index e0b2996..e1fd2c8 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -90,13 +90,114 @@ placement:
+ }
+ 
+ func TestParseDeployValidation(t *testing.T) {
+-	_, err := ParseDeploy([]byte(`
++	tests := []struct {
++		name string
++		body string
++	}{
++		{
++			name: "missing required name",
++			body: `
++image: nginx:1.27
++replicas: 1
++`,
++		},
++		{
++			name: "invalid image",
++			body: `
+ name: api
++image: "bad image"
++replicas: 1
++`,
++		},
++		{
++			name: "negative replicas",
++			body: `
++name: api
++image: nginx:1.27
+ replicas: -1
++`,
++		},
++		{
++			name: "invalid port",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++ports:
++  - container: 70000
++`,
++		},
++		{
++			name: "invalid resources",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
+ resources:
+   cpu: nope
+-`))
+-	if err == nil {
+-		t.Fatalf("expected validation error")
++`,
++		},
++		{
++			name: "invalid healthcheck",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++healthcheck:
++  type: http
++  interval: definitely-not-a-duration
++`,
++		},
++		{
++			name: "invalid placement labels",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++placement:
++  labels:
++    "": worker
++`,
++		},
++		{
++			name: "invalid routes",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++routes:
++  - host: api.example.com
++    pathPrefix: api
++    port: 8080
++`,
++		},
++		{
++			name: "invalid secret refs",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++env:
++  DATABASE_URL:
++    value: postgres://db
++    secretRef: prod/database-url
++`,
++		},
++		{
++			name: "unknown field",
++			body: `
++name: api
++image: nginx:1.27
++replicas: 1
++definitelyUnknown: true
++`,
++		},
++	}
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			if _, err := ParseDeploy([]byte(tt.body)); err == nil {
++				t.Fatalf("expected validation error")
++			}
++		})
+ 	}
+ }
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 7e09f09..df4d2d8 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -109,6 +109,7 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.PersistentFlags().StringVar(&a.configPath, "config", a.configPath, "CLI config file")
+ 
+ 	root.AddCommand(a.versionCommand())
++	root.AddCommand(a.validateCommand())
+ 	root.AddCommand(a.nodeCommand())
+ 	root.AddCommand(a.deployCommand())
+ 	root.AddCommand(a.serviceCommand())
+@@ -139,6 +140,22 @@ func (a *app) versionCommand() *cobra.Command {
+ 	}
+ }
+ 
++func (a *app) validateCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "validate <file.yaml>",
++		Short: "Validate a service deployment YAML file",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(_ *cobra.Command, args []string) error {
++			spec, err := ParseDeployFile(args[0])
++			if err != nil {
++				return err
++			}
++			fmt.Fprintf(a.out, "service spec %q is valid\n", spec.Name)
++			return nil
++		},
++	}
++}
++
+ func (a *app) nodeCommand() *cobra.Command {
+ 	cmd := &cobra.Command{Use: "node", Short: "Manage nodes"}
+ 	cmd.AddCommand(&cobra.Command{
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index 28f9815..cd5dd0d 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -22,6 +22,7 @@ func TestRootCommandConstruction(t *testing.T) {
+ 
+ 	for _, path := range []string{
+ 		"version",
++		"validate",
+ 		"node ls",
+ 		"node inspect",
+ 		"node drain",
+@@ -46,6 +47,51 @@ func TestRootCommandConstruction(t *testing.T) {
+ 	}
+ }
+ 
++func TestValidateCommand(t *testing.T) {
++	deployPath := filepath.Join(t.TempDir(), "deploy.yaml")
++	if err := os.WriteFile(deployPath, []byte(`
++name: api
++image: nginx:1.27
++replicas: 1
++ports:
++  - container: 80
++resources:
++  cpu: 100m
++  memory: 128Mi
++`), 0o600); err != nil {
++		t.Fatalf("write deploy file: %v", err)
++	}
++
++	var out bytes.Buffer
++	cmd := NewRootCommand(Options{Out: &out, Err: &bytes.Buffer{}})
++	cmd.SetArgs([]string{"validate", deployPath})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute validate: %v", err)
++	}
++	if !strings.Contains(out.String(), "api") || !strings.Contains(out.String(), "valid") {
++		t.Fatalf("expected validation output, got %q", out.String())
++	}
++}
++
++func TestValidateCommandRejectsInvalidYAML(t *testing.T) {
++	deployPath := filepath.Join(t.TempDir(), "deploy.yaml")
++	if err := os.WriteFile(deployPath, []byte(`
++name: api
++image: bad image
++replicas: 1
++`), 0o600); err != nil {
++		t.Fatalf("write deploy file: %v", err)
++	}
++
++	cmd := NewRootCommand(Options{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
++	cmd.SetArgs([]string{"validate", deployPath})
++
++	if err := cmd.ExecuteContext(context.Background()); err == nil {
++		t.Fatalf("expected validation error")
++	}
++}
++
+ func TestVersionCommand(t *testing.T) {
+ 	var out bytes.Buffer
+ 	cmd := NewRootCommand(Options{Out: &out, Err: &bytes.Buffer{}})
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 11ce1d5..eda8956 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -172,6 +172,9 @@ func (spec ServiceSpec) Validate() error {
+ 	if strings.TrimSpace(spec.Image) == "" {
+ 		return fmt.Errorf("image is required")
+ 	}
++	if !validImageReference(spec.Image) {
++		return fmt.Errorf("image reference is invalid")
++	}
+ 	spec.ImagePullSecret = strings.TrimSpace(spec.ImagePullSecret)
+ 	if spec.Replicas < 0 {
+ 		return fmt.Errorf("replicas cannot be negative")
+@@ -212,6 +215,19 @@ func (spec ServiceSpec) Validate() error {
+ 	return nil
+ }
+ 
++func validImageReference(image string) bool {
++	image = strings.TrimSpace(image)
++	if image == "" || strings.Contains(image, "://") || strings.HasPrefix(image, "-") {
++		return false
++	}
++	for _, char := range image {
++		if char <= ' ' || char == '"' || char == '\'' {
++			return false
++		}
++	}
++	return true
++}
++
+ type SecretRef struct {
+ 	Name string `json:"name"`
+ 	Key  string `json:"key,omitempty"`
+diff --git a/pkg/types/validation_test.go b/pkg/types/validation_test.go
+index aa9f619..bbbcb85 100644
+--- a/pkg/types/validation_test.go
++++ b/pkg/types/validation_test.go
+@@ -135,6 +135,15 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			}(),
+ 			wantErr: "image is required",
+ 		},
++		{
++			name: "image reference invalid",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Image = "bad image"
++				return spec
++			}(),
++			wantErr: "image reference is invalid",
++		},
+ 		{
+ 			name: "replicas cannot be negative",
+ 			spec: func() ServiceSpec {
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 8e3aba9..1ba9beb 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `42-deployment-lock-and-concurrent-user-operations.md`
+-- Last matching commit: `same commit: Add service operation locks`
+-- Completed prompt range: `00` through `42`
+-- Next prompt to execute: `43-deployment-yaml-schema-and-validation.md`
++- Last executed prompt: `43-deployment-yaml-schema-and-validation.md`
++- Last matching commit: `same commit: Add service spec validation`
++- Completed prompt range: `00` through `43`
++- Next prompt to execute: `44-config-management-hardening.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule
+diff --git a/schemas/service.schema.json b/schemas/service.schema.json
+new file mode 100644
+index 0000000..2199c92
+--- /dev/null
++++ b/schemas/service.schema.json
+@@ -0,0 +1,101 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "https://orch.local/schemas/service.schema.json",
++  "title": "orch service deployment YAML",
++  "type": "object",
++  "additionalProperties": false,
++  "required": ["name", "image"],
++  "properties": {
++    "name": {"type": "string", "minLength": 1},
++    "image": {"type": "string", "minLength": 1, "pattern": "^[^\\s'\"]+$"},
++    "imagePullSecret": {"type": "string"},
++    "stateful": {"type": "boolean", "default": false},
++    "replicas": {"type": "integer", "minimum": 0, "default": 1},
++    "ports": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["container"],
++        "properties": {
++          "container": {"type": "integer", "minimum": 1, "maximum": 65535},
++          "public": {"type": "integer", "minimum": 0, "maximum": 65535, "default": 0}
++        }
++      }
++    },
++    "env": {
++      "type": "object",
++      "propertyNames": {"minLength": 1},
++      "additionalProperties": {
++        "oneOf": [
++          {"type": "string"},
++          {
++            "type": "object",
++            "additionalProperties": false,
++            "properties": {
++              "value": {"type": "string"},
++              "secretRef": {"type": "string", "minLength": 1}
++            },
++            "oneOf": [
++              {"required": ["value"]},
++              {"required": ["secretRef"]}
++            ]
++          }
++        ]
++      }
++    },
++    "resources": {
++      "type": "object",
++      "additionalProperties": false,
++      "properties": {
++        "cpu": {"type": "string"},
++        "memory": {"type": "string"}
++      }
++    },
++    "healthcheck": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": ["type"],
++      "properties": {
++        "type": {"enum": ["http", "tcp", "none"]},
++        "path": {"type": "string"},
++        "interval": {"type": "string"},
++        "timeout": {"type": "string"},
++        "healthyThreshold": {"type": "integer", "minimum": 0},
++        "unhealthyThreshold": {"type": "integer", "minimum": 0}
++      }
++    },
++    "restart": {
++      "type": "object",
++      "additionalProperties": false,
++      "properties": {
++        "policy": {"enum": ["always", "never", "on_failure", "on-failure"]}
++      }
++    },
++    "placement": {
++      "type": "object",
++      "additionalProperties": false,
++      "properties": {
++        "labels": {
++          "type": "object",
++          "propertyNames": {"minLength": 1},
++          "additionalProperties": {"type": "string"}
++        }
++      }
++    },
++    "routes": {
++      "type": "array",
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["host", "pathPrefix", "port"],
++        "properties": {
++          "host": {"type": "string", "minLength": 1},
++          "pathPrefix": {"type": "string", "pattern": "^/"},
++          "port": {"type": "integer", "minimum": 1, "maximum": 65535},
++          "tls": {"type": "boolean", "default": false}
++        }
++      }
++    }
++  }
++}

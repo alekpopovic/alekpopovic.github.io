@@ -1,0 +1,1 @@
+{"name":"api","image":"nginx:1.27","replicas":1,"env":{"LAB_TEAM":"overridden-per-tenant"},"ports":[{"protocol":"tcp","container_port":80,"published_port":31080}],"resource_requirements":{"requests":{"cpu":100,"memory":67108864},"limits":{"cpu":100,"memory":67108864}}}

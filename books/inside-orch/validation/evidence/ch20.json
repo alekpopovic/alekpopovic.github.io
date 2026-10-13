@@ -1,0 +1,89 @@
+{
+  "chapter_id": "20",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch20.endpoint-filter",
+      "statement": "HTTP discovery requires desired running and actual running/healthy, optionally unhealthy.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/discovery/discovery.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 98,
+      "line_end": 110,
+      "associated_commits": [
+        "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Does not independently filter node status.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch20.assigned-port",
+      "statement": "Endpoint builder prefers task-assigned ports over service requested ports.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/discovery/discovery.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 112,
+      "line_end": 117,
+      "associated_commits": [
+        "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Endpoint record is not an independent reachability test.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch20.dns-v4",
+      "statement": "DNS returns deduplicated node IPv4 for actual running/healthy tasks without ports.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/dns/server.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 92,
+      "line_end": 123,
+      "associated_commits": [
+        "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Separate filter lacks desired-running check; IPv6 and hostname inputs skipped.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch20.dns-optional",
+      "statement": "DNS startup is enabled by ORCH_DNS_ADDR with configurable positive TTL.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 149,
+      "line_end": 166,
+      "associated_commits": [
+        "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No VIP, overlay, SRV or Kubernetes compatibility inferred.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestBuildServiceEndpointsFiltersByHealth",
+    "TestBuildServiceEndpointsUsesTaskAssignedPorts",
+    "TestResolveHealthyEndpointsAndDNSPacket",
+    "TestResolveRejectsUnsupportedName"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

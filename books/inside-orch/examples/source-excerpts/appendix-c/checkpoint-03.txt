@@ -1,0 +1,6 @@
+func NewPostgresStore(pool *pgxpool.Pool) *PostgresStore {
+	return &PostgresStore{pool: pool}
+}
+
+func ConnectPostgres(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(ctx, databaseURL)

@@ -1,0 +1,275 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "reviewed_paths": [
+    "labs/01-initialization-restart/README.md",
+    "labs/01-initialization-restart/book-http.yaml",
+    "labs/01-initialization-restart/lab.json",
+    "labs/02-scheduler-placement/README.md",
+    "labs/02-scheduler-placement/lab.json",
+    "labs/03-reconciler-drift/README.md",
+    "labs/03-reconciler-drift/lab.json",
+    "labs/04-rollout-rollback/README.md",
+    "labs/04-rollout-rollback/lab.json",
+    "labs/05-security-boundaries/README.md",
+    "labs/05-security-boundaries/lab.json",
+    "labs/06-namespaces-quotas/README.md",
+    "labs/06-namespaces-quotas/lab.json",
+    "labs/07-gitops-jobs-cron/README.md",
+    "labs/07-gitops-jobs-cron/lab.json",
+    "labs/08-recovery-boundaries/README.md",
+    "labs/08-recovery-boundaries/lab.json",
+    "editorial/CAPABILITIES.md",
+    "editorial/QUALITY_GATES.md",
+    "evidence/source-lock.json",
+    "validation/labs/summary.json"
+  ],
+  "reviewer_scope": "Ordered fresh execution coordinated across root and reviewing agent; Lab01/08 root owned daemon/DB executor,02\u201307 reviewer executor. Own06/07 author fixtures explicitly not independent authorship review. All actual command records retained.",
+  "findings": [
+    {
+      "id": "LAB-001",
+      "severity": "major",
+      "target": "Untouched PostgreSQL store fixture",
+      "relevant_claim_ids": [
+        "ch09.fixture-schema"
+      ],
+      "source_evidence": [
+        "validation/intake/postgres-store-owned.json",
+        "migrations/000016_operations_safety.up.sql"
+      ],
+      "recommended_action": "Keep actual missing-column failure; use separately labelled all-sixteen-schema teaching extension for recovery.",
+      "resolution_status": "resolved_book_boundary_preserved"
+    },
+    {
+      "id": "LAB-002",
+      "severity": "minor",
+      "target": "Lab07 CLI manifest harness invocation",
+      "relevant_claim_ids": [
+        "ch31.attempt"
+      ],
+      "source_evidence": [
+        "validation/labs/lab07-gitops-jobs-cron.json",
+        "validation/labs/review076/07-command.json"
+      ],
+      "recommended_action": "Supply explicit parser client/server setup; retain failed author-run command and rerun corrected fixture.",
+      "resolution_status": "resolved_corrected_harness_fresh_pass"
+    },
+    {
+      "id": "LAB-003",
+      "severity": "major",
+      "target": "Baseline lifecycle drift recovery",
+      "relevant_claim_ids": [],
+      "source_evidence": [
+        "validation/labs/review076/03-observed.json",
+        "internal/controlplane/controlplane.go",
+        "pkg/types/lifecycle.go"
+      ],
+      "recommended_action": "Teach missing-running-container transition rejection and possible cleanup-before-later-rejection exactly; do not silently fix baseline or claim recreation succeeded.",
+      "resolution_status": "resolved_book_exposes_failure_boundary"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "--output",
+        "validation/labs/review076/01-fresh-process.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:39:06.250993+00:00",
+      "finished_at_utc": "2026-10-13T01:39:06.393389+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/01-fresh-process-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/docker-boundary"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:39:06.439580+00:00",
+      "finished_at_utc": "2026-10-13T01:39:08.247698+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/01-docker-flow-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/lab02",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:47:20.175977+00:00",
+      "finished_at_utc": "2026-10-13T01:47:20.242141+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/02-model-and-permutations.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-json",
+        "./internal/scheduler",
+        "-run",
+        "TestConcurrentSchedulerAttemptsAssignTaskOnce|TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers|TestRunOnceAccountsForNonTerminalAssignedTasks"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:47:20.286697+00:00",
+      "finished_at_utc": "2026-10-13T01:47:20.543636+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/02-concurrent-claims.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/run_drift_lab.py",
+        "--source-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go-root",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64",
+        "--output-prefix",
+        "validation/labs/review076/03-observed"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:57:38.284217+00:00",
+      "finished_at_utc": "2026-10-13T01:57:38.915385+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/03-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/rollout",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/04-timeline.csv"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:57:47.768451+00:00",
+      "finished_at_utc": "2026-10-13T01:57:48.095720+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/04-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/security",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/05-forbidden-channels"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:04.970105+00:00",
+      "finished_at_utc": "2026-10-13T01:58:05.447379+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/05-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/namespaces-quotas",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/06-namespaces-quotas/fixtures"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:13.381748+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.453933+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/06-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/gitops-jobs-cron",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/07-gitops-jobs-cron/fixtures"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:13.499570+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.639929+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/07-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+        "--container",
+        "inside-orch-book-pg-cbfc94ade5b5",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "--output",
+        "validation/labs/review076/08-recovery.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:47.784188+00:00",
+      "finished_at_utc": "2026-10-13T01:58:49.154617+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/08-recovery-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-loadtest",
+        "--nodes",
+        "3",
+        "--services",
+        "30",
+        "--replicas",
+        "2",
+        "--failure-rate",
+        "0.02",
+        "--duration",
+        "2s",
+        "--seed",
+        "20261013"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:54.824927+00:00",
+      "finished_at_utc": "2026-10-13T01:58:56.837275+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/08-fake-load-command.json",
+      "status": "passed"
+    }
+  ],
+  "overall_status": "passed_scoped_mandatory_labs",
+  "summary": "validation/labs/summary.json",
+  "limitations": [
+    "Fresh authenticated server processes prove map loss; separate actual agent/Docker adapter full service flow, cached image, no published workload port.",
+    "Pure planner permutations and actual scheduler concurrent-claim package tests; memory-placement bypass observed; no database reservation experiment in this lane.",
+    "FakeRuntime agent drift and separate store-backed reconciler test doubles; fifteen asserted cases, no Docker/network/database.",
+    "In-process rollout cohorts and injected health/status; seven checkpoints, failed history, conflicts, rollback; no live traffic measurement.",
+    "Actual API/issuer/envelope and owned loopback HTTP/TCP checker; thirty cases, redaction scans; no daemon or public network.",
+    "Actual in-process tenant API and MemoryService; twenty-eight cases including concurrent quota admission and independently constructed server-state isolation; no database quota/hostile runtime isolation claim.",
+    "Real temporary local Git and actual CLI parsing/control-plane calls; twenty-six cases, injected Job reports/log transport and Cron clock/store including Belgrade DST; no containers/remote hosts.",
+    "Actual dedicated PostgreSQL all-sixteen-schema extension, assignment CAS, pooled-session lease/canary dump/restore; separate fixed-seed fake scheduler/reconciler load, not default runtime durability or cluster throughput."
+  ]
+}

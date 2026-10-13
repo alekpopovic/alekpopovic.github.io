@@ -1,0 +1,108 @@
+{
+  "chapter": "08",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch08.composition",
+      "statement": "Cobra root injects writers/client factory and registers local validation separately from network commands.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 123,
+      "line_end": 194,
+      "associated_commits": [
+        "042a4a44ecfaa884d6173f9d93afafa81a24ea27"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual exact CLI/status lab passed validation/labs/ch08/exact-cli.json; manual authenticated running reports only, not Docker execution. Token precedence source-inspected, not independently multi-token-tested."
+      ]
+    },
+    {
+      "claim_id": "ch08.precedence",
+      "statement": "Nonempty explicit override wins environment then YAML; only namespace has default fallback.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 123,
+      "line_end": 154,
+      "associated_commits": [
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "limitations": [
+        "Actual server/namespace precedence cases; token uses source-inspected same loader, no multi-token auth experiment.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch08.server-required",
+      "statement": "CLI requires explicit/configured server URL and does not silently default localhost.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 968,
+      "line_end": 977,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "limitations": [
+        "Actual missing-server nonzero CLI command, using temporary empty config and scrubbed child environment.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch08.json",
+      "statement": "CLI JSON inspect emits a bare service object and ps emits the task array.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/output.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 174,
+      "line_end": 202,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "limitations": [
+        "Actual CLI inspect/service-ps JSON consumed by checker; manual running reports, no Docker processes.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch08.local",
+      "statement": "Validate parses the deployment file without creating a network client.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 440,
+      "line_end": 456,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "limitations": [
+        "Actual validate without configured server; independent server admission still required.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch08.status-extension",
+      "statement": "Book checker reports current server-observed replica convergence with distinct actionable failures.",
+      "classification": "teaching extension",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 297,
+      "line_end": 300,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "limitations": [
+        "Teaching checker executed against real CLI/server with manual authenticated status reports; additional controlled semantic fixtures separately retained.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ],
+      "extension_path": "examples/teaching-extensions/ch08/atlas_status.py",
+      "extension_sha256": "01400eb20a5d0e5b14850e62aed225e0cc245c3e889a95d4c6d0c1c5c4919d66"
+    }
+  ]
+}

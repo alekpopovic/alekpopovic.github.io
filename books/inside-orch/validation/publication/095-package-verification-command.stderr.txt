@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/verify_release_packages.py", line 57, in <module>
+    main()
+    ~~~~^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/verify_release_packages.py", line 39, in main
+    assert len([n for n in names if n.startswith(prefix + 'answers/') and n.endswith('.md')]) == 40
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

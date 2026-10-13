@@ -1,0 +1,74 @@
+{
+  "chapter_id": "29",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch29.baseline",
+      "statement": "Digest policy is implemented while signing/scanning documents describe proposed systems with explicit non-goals.",
+      "classification": "design only",
+      "source_path": "docs/IMAGE_SIGNING_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 3,
+      "line_end": 21,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No active verifier/scanner inferred from design routes or CLI examples."
+      ]
+    },
+    {
+      "claim_id": "ch29.placement",
+      "statement": "Signing design proposes separate admission, rollout and final agent verification boundaries.",
+      "classification": "design only",
+      "source_path": "docs/IMAGE_SIGNING_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 13,
+      "line_end": 21,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "These are proposed hooks, not runtime-integrated signature enforcement."
+      ]
+    },
+    {
+      "claim_id": "ch29.scanning",
+      "statement": "Supply-chain design proposes digest-keyed metadata, scanner/database versions and expiry decisions.",
+      "classification": "design only",
+      "source_path": "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 3,
+      "line_end": 34,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No SBOM ingestion, external scanner execution or live findings recorded."
+      ]
+    },
+    {
+      "claim_id": "ch29.contract",
+      "statement": "Book-only fake-verdict decision contract passed5test methods and subcases for binding, trust, expiry and narrow pending exception.",
+      "classification": "teaching extension",
+      "source_path": "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 21,
+      "line_end": 38,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch29/teaching-fixture.json",
+      "limitations": [
+        "Actual teaching code examples/teaching-extensions/ch29/contract.py; supplied verdicts do no crypto/network; allow_with_audit does not append an audit record."
+      ]
+    }
+  ]
+}

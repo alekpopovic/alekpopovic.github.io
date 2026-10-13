@@ -1,0 +1,24 @@
+{
+  "id": "ch06-combined-owned-container-restart",
+  "command": [
+    "python3",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch06/observe_container_restart.py",
+    "--working-copy",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "--server",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+    "--output",
+    "validation/labs/ch06/combined-restart.json"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:57:32.753134+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:57:33.387354+00:00",
+  "duration_seconds": 0.634,
+  "stdout": "validation/labs/ch06/combined-restart-command.stdout.txt",
+  "stderr": "validation/labs/ch06/combined-restart-command.stderr.txt"
+}

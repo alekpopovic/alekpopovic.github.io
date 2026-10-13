@@ -1,0 +1,14 @@
+Show latest rollout status
+
+Usage:
+  orch rollout status <service-name-or-id> [flags]
+
+Flags:
+  -h, --help   help for status
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

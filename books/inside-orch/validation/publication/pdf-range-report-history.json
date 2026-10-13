@@ -1,0 +1,20 @@
+{
+  "status": "passed_historical_review_binding",
+  "scope": "Per-range original report hashes in the frozen096visualaggregate identify the actual prior review; final artifact rebind reports retain the same visual coverage. Aggregate and gate remain frozen.",
+  "report_history": [
+    {
+      "path": "validation/publication/pdf-visual-source-review.json",
+      "prior_sha256": "4194b274f6d57c74da21cba0e1cfa8ba00ba3cde52a313311b60a4839abdfb79",
+      "current_sha256": "c20540bdd92db31fa190895bcdac06aefe1f0a6ecd35eea5135f2c6cd2ee967c",
+      "historical_exact_hash_paths": [
+        "validation/publication/prior-notice-rebuild/validation/publication/pdf-visual-source-review.json"
+      ]
+    },
+    {
+      "path": "validation/publication/pdf-visual-lab-review.json",
+      "prior_sha256": "5eb33871452b2fbd4b796a011c9057da0a0ec55c96da8cff5f3f6c7c66dadb1c",
+      "current_sha256": "c5ff37bcc31f663d5ad5f3ed727cd970cac72162d131005da4bd5571f98dc190",
+      "historical_exact_hash_paths": []
+    }
+  ]
+}

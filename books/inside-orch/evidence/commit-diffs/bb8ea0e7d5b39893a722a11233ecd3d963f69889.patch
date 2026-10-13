@@ -1,0 +1,49 @@
+commit bb8ea0e7d5b39893a722a11233ecd3d963f69889
+Date: 2026-06-16T23:43:14Z
+Subject: Bump github.com/docker/go-connections from 0.5.0 to 0.7.0
+
+Bumps [github.com/docker/go-connections](https://github.com/docker/go-connections) from 0.5.0 to 0.7.0.
+- [Commits](https://github.com/docker/go-connections/compare/v0.5.0...v0.7.0)
+
+---
+updated-dependencies:
+- dependency-name: github.com/docker/go-connections
+  dependency-version: 0.7.0
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+---
+ go.mod | 2 +-
+ go.sum | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/go.mod b/go.mod
+index 755e35e..adf3bff 100644
+--- a/go.mod
++++ b/go.mod
+@@ -4,7 +4,7 @@ go 1.25.0
+ 
+ require (
+ 	github.com/docker/docker v27.5.1+incompatible
+-	github.com/docker/go-connections v0.5.0
++	github.com/docker/go-connections v0.7.0
+ 	github.com/jackc/pgx/v5 v5.10.0
+ 	github.com/opencontainers/image-spec v1.1.1
+ 	github.com/prometheus/client_golang v1.23.2
+diff --git a/go.sum b/go.sum
+index 6b13e62..5e9ee56 100644
+--- a/go.sum
++++ b/go.sum
+@@ -18,8 +18,8 @@ github.com/distribution/reference v0.6.0 h1:0IXCQ5g4/QMHHkarYzh5l+u8T3t73zM5Qvfr
+ github.com/distribution/reference v0.6.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
+ github.com/docker/docker v27.5.1+incompatible h1:4PYU5dnBYqRQi0294d1FBECqT9ECWeQAIfE8q4YnPY8=
+ github.com/docker/docker v27.5.1+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+-github.com/docker/go-connections v0.5.0 h1:USnMq7hx7gwdVZq1L49hLXaFtUdTADjXGp+uj1Br63c=
+-github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6GLaXnqyDdmEXc=
++github.com/docker/go-connections v0.7.0 h1:6SsRfJddP22WMrCkj19x9WKjEDTB+ahsdiGYf0mN39c=
++github.com/docker/go-connections v0.7.0/go.mod h1:no1qkHdjq7kLMGUXYAduOhYPSJxxvgWBh7ogVvptn3Q=
+ github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
+ github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
+ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=

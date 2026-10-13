@@ -1,0 +1,90 @@
+{
+  "chapter_id": "19",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch19.monitor-wired",
+      "statement": "Default server starts node monitor with configured timeout/interval.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 225,
+      "line_end": 230,
+      "associated_commits": [
+        "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+        "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Initial error can stop monitor; no supervisor assumed.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch19.cutoff",
+      "statement": "Heartbeat must be strictly before cutoff; zero heartbeat is skipped.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 681,
+      "line_end": 699,
+      "associated_commits": [
+        "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+        "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Cadence adds detection phase and records are volatile.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch19.drain-complete",
+      "statement": "DrainComplete reflects no remaining desired-running tasks, not physical removal.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2500,
+      "line_end": 2540,
+      "associated_commits": [
+        "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+        "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Agent/Docker acknowledgement can lag stop intent.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch19.stateful",
+      "statement": "Lost stateless tasks marked failed/removed; Stateful branch preserves active ownership.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2073,
+      "line_end": 2093,
+      "associated_commits": [
+        "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+        "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No runtime fencing or replicated storage established.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestMarkStaleNodesOfflineReplacesStatelessTaskOnce",
+    "TestMarkStaleNodesOfflineDoesNotReplaceStatefulTask",
+    "TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns",
+    "TestUncordonBeforeDrainCompletion",
+    "TestReturnedNodeRemovesNodeLostUnassignedContainer"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

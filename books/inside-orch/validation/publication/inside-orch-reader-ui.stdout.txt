@@ -1,0 +1,102 @@
+
+Running 4 tests using 2 workers
+
+  ✘  1 tests/inside-orch.spec.js:22:1 › Inside orch connects chapter notes, saved reading and combined post filters (2ms)
+  ✘  2 tests/inside-orch.spec.js:38:1 › Inside orch mobile reading retains keyboard controls and accessible diagrams (2ms)
+  ✘  3 tests/inside-orch.spec.js:52:1 › Inside orch answers and full contents remain readable without JavaScript (2ms)
+  ✘  4 tests/inside-orch.spec.js:68:1 › Inside orch notes still export when browser storage is unavailable (6ms)
+
+
+  1) tests/inside-orch.spec.js:22:1 › Inside orch connects chapter notes, saved reading and combined post filters 
+
+    Error: browserType.launch: Executable doesn't exist at /home/popac/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/chromium/inside-orch-Inside-orch-co-145b0-g-and-combined-post-filters/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chromium/inside-orch-Inside-orch-co-145b0-g-and-combined-post-filters/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chromium/inside-orch-Inside-orch-co-145b0-g-and-combined-post-filters/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/inside-orch.spec.js:38:1 › Inside orch mobile reading retains keyboard controls and accessible diagrams 
+
+    Error: browserType.launch: Executable doesn't exist at /home/popac/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/chromium/inside-orch-Inside-orch-mo-9a692-ols-and-accessible-diagrams/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chromium/inside-orch-Inside-orch-mo-9a692-ols-and-accessible-diagrams/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chromium/inside-orch-Inside-orch-mo-9a692-ols-and-accessible-diagrams/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests/inside-orch.spec.js:52:1 › Inside orch answers and full contents remain readable without JavaScript 
+
+    Error: browserType.launch: Executable doesn't exist at /home/popac/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/chromium/inside-orch-Inside-orch-an-ca95f-readable-without-JavaScript/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chromium/inside-orch-Inside-orch-an-ca95f-readable-without-JavaScript/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chromium/inside-orch-Inside-orch-an-ca95f-readable-without-JavaScript/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests/inside-orch.spec.js:68:1 › Inside orch notes still export when browser storage is unavailable 
+
+    Error: browserType.launch: Executable doesn't exist at /home/popac/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/chromium/inside-orch-Inside-orch-no-c8359-wser-storage-is-unavailable/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chromium/inside-orch-Inside-orch-no-c8359-wser-storage-is-unavailable/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chromium/inside-orch-Inside-orch-no-c8359-wser-storage-is-unavailable/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests/inside-orch.spec.js:22:1 › Inside orch connects chapter notes, saved reading and combined post filters 
+    tests/inside-orch.spec.js:38:1 › Inside orch mobile reading retains keyboard controls and accessible diagrams 
+    tests/inside-orch.spec.js:52:1 › Inside orch answers and full contents remain readable without JavaScript 
+    tests/inside-orch.spec.js:68:1 › Inside orch notes still export when browser storage is unavailable 

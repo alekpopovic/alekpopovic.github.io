@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "scope": "Independent inspection of exact captured containers after owned run; no other Docker resources queried or modified.",
+  "checks": [
+    {
+      "container_id": "684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78",
+      "command": [
+        "docker",
+        "inspect",
+        "684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78"
+      ],
+      "started_at_utc": "2026-10-13T01:40:11.705413+00:00",
+      "finished_at_utc": "2026-10-13T01:40:11.731226+00:00",
+      "exit_code": 1,
+      "absent": true,
+      "stderr": "error: no such object: 684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78\n"
+    },
+    {
+      "container_id": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+      "command": [
+        "docker",
+        "inspect",
+        "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f"
+      ],
+      "started_at_utc": "2026-10-13T01:40:11.731244+00:00",
+      "finished_at_utc": "2026-10-13T01:40:11.757218+00:00",
+      "exit_code": 1,
+      "absent": true,
+      "stderr": "error: no such object: e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f\n"
+    }
+  ]
+}

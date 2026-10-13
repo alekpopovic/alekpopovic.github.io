@@ -1,0 +1,63 @@
+title: Aleksandar Popovic
+description: Software engineer, technical author, and CodePop founder. Practical AI workflows, open-source tools, and books about building reliable systems.
+url: "https://www.alekpopovic.com"
+baseurl: ""
+timezone: Europe/Belgrade
+permalink: /posts/:title/
+
+author:
+  name: Aleksandar Popovic
+  username: alekpopovic
+  location: Serbia
+  company: SpotHopper
+  github: https://github.com/alekpopovic
+  linkedin: https://www.linkedin.com/in/alekpopovic
+  x: https://x.com/alek_popovic
+
+# Public verification token from a Search Console URL-prefix property.
+google_site_verification: "qpmaCoDdV6Otp9NPk6cF277fGMIdSxB-7uAS0DyvxWM"
+# Owner-supplied Google verification resource; publish its exact original bytes.
+google_verification_file: "google2ab5b70940fe5c89.html"
+# Owner-provided GA4 measurement ID. Leave empty to disable the Google tag.
+google_analytics: "G-QCGFECRJDS"
+# Send core field performance metrics through the configured production GA4 tag.
+performance_monitoring: true
+# Optional external email subscription form. RSS works without this setting.
+newsletter_url: ""
+# Enable after creating a Plausible site for this hostname. No requests when empty.
+analytics:
+  domain: ""
+  endpoint: "https://plausible.io/api/event"
+
+exclude:
+  - _site
+  - _site-dev
+  - .venv
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - package.json
+  - package-lock.json
+  - tailwind.config.js
+  - src
+  - README.md
+  - AGENTS.md
+  - alekpopovic
+  - books/modern-ci-book
+  - books/logbranik
+  - books/agentplane-book
+  - books/Secret_Contract_Operator
+  - books/universal-tracking-technical-book
+  - books/ScreenShot Tool -20261010164007.png
+  - logbranik-leanpub-complete-pack.zip
+  - modern-ci-book-open-source.zip
+  - requirements-books.txt
+  - scripts
+  - labs
+  - tests
+  - docs
+  - playwright.config.js
+  - test-results
+  - playwright-report
+  - reports
+  - modern-ci-book.pdf

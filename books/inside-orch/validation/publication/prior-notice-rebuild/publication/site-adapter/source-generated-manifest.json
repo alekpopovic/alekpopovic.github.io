@@ -1,0 +1,2990 @@
+{
+  "checked_at_utc": "2026-10-13T03:33:08.685561+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "source_files": [
+    {
+      "path": "_config.yml",
+      "sha256": "bc3bb9689e3b4e1f845784220d2aaf2c1d80087e4c08548650c97da1b8ecfe62",
+      "bytes": 1920
+    },
+    {
+      "path": "_data/glossary.yml",
+      "sha256": "610afcdc6148ce32955ee1dd5ce6248246d847d9ca2cf2773b95fd4d9ad61495",
+      "bytes": 4219
+    },
+    {
+      "path": "_data/updates.yml",
+      "sha256": "1d884a586feb7017ebdcd648bb6a803234e2aa3e92c2f9449f32831e0c7ae6c7",
+      "bytes": 3995
+    },
+    {
+      "path": "_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md",
+      "sha256": "30c8fc06d0b5f416800188b4a0ed94f854c1e18165564169d70382ead051be91",
+      "bytes": 5067
+    },
+    {
+      "path": "_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md",
+      "sha256": "32b9ca3c7c1e612a530f2f58840d70288b2f56044963068bd4bf341a09bbe8f0",
+      "bytes": 5051
+    },
+    {
+      "path": "_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md",
+      "sha256": "8934cadf4d6ffb7bfb0086a91c68020a192cf6e820bb1b379ceacd489f495426",
+      "bytes": 5171
+    },
+    {
+      "path": "books/inside-orch/book.json",
+      "sha256": "29138080e5528d3843bd0090faa6f230075871437921793172b15725706a2204",
+      "bytes": 3065
+    },
+    {
+      "path": "books/inside-orch/manuscript/00-preface.md",
+      "sha256": "7b4ffbaeac31756c2f2cbd27762e344c5fc05ce443cb8ee16cec040c8ea1bf35",
+      "bytes": 7207
+    },
+    {
+      "path": "books/inside-orch/manuscript/Book.txt",
+      "sha256": "52ed38d5df1486bd3c61d8fe31fa764b464204ca673be87d406f718991538a53",
+      "bytes": 2449
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/a-cli-api-config.md",
+      "sha256": "36077d9631361ab46b881011e6d4622374ee526fc2ea775155987705723de36c",
+      "bytes": 15095
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/b-lifecycle-invariants.md",
+      "sha256": "c9a04d773f4ac4e8ff76d1b828daa460829a6dcdfa611ff97b557d7b128cbced",
+      "bytes": 12708
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/c-annotated-history.md",
+      "sha256": "3fc5d10c55bd7a4b622098ada7a9efc00d4516485d678e35d7316a99e1ede227",
+      "bytes": 16382
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/d-exercises-solutions.md",
+      "sha256": "bf903c344ad490fd329cc794019151ba03c542223de5c1f64e1db2e58627b493",
+      "bytes": 15927
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/e-ops-measurement.md",
+      "sha256": "a2b1cdae1d551ba44d58d49c041cf0d8116093fef69856137c16d30faf65ce16",
+      "bytes": 10809
+    },
+    {
+      "path": "books/inside-orch/manuscript/appendices/f-glossary-bibliography.md",
+      "sha256": "cdecf81711ad0914d052b1de460d4c373a7e81eb744134eeda5be77b81a377c6",
+      "bytes": 36573
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "sha256": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+      "bytes": 14594
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "sha256": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+      "bytes": 14508
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "sha256": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+      "bytes": 16131
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/04-domain-models-and-state-machines.md",
+      "sha256": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+      "bytes": 15333
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "sha256": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+      "bytes": 15342
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "sha256": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+      "bytes": 14697
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "sha256": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+      "bytes": 15526
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "sha256": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+      "bytes": 15250
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "sha256": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+      "bytes": 15514
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/10-a-deterministic-scheduler.md",
+      "sha256": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+      "bytes": 15334
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "sha256": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+      "bytes": 14842
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "sha256": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+      "bytes": 15592
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+      "bytes": 15506
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "sha256": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+      "bytes": 15047
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+      "bytes": 15230
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "sha256": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+      "bytes": 15022
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+      "bytes": 15314
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "sha256": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+      "bytes": 15816
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "sha256": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+      "bytes": 15991
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "sha256": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+      "bytes": 15013
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "sha256": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+      "bytes": 15193
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "sha256": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+      "bytes": 15738
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "sha256": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+      "bytes": 15057
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "sha256": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+      "bytes": 17358
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "sha256": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+      "bytes": 15307
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "sha256": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+      "bytes": 14815
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "sha256": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+      "bytes": 14153
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "sha256": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+      "bytes": 14752
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "sha256": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+      "bytes": 14948
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+      "bytes": 14925
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "sha256": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+      "bytes": 15241
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "sha256": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+      "bytes": 14948
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "sha256": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+      "bytes": 15181
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "sha256": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+      "bytes": 14315
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "sha256": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+      "bytes": 14709
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+      "bytes": 14156
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+      "bytes": 14803
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "sha256": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+      "bytes": 14814
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "sha256": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+      "bytes": 13912
+    },
+    {
+      "path": "books/inside-orch/manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+      "bytes": 14886
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/appendix-d.md",
+      "sha256": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5",
+      "bytes": 14983
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch01.md",
+      "sha256": "7bbb0e70a9f0aa84d4fcf29552ce511550476ee34e1fcd3974c04455f8019167",
+      "bytes": 2318
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch02.md",
+      "sha256": "d9cabcf2182c9ab1be9e59c16ba124b15da28b2751b410b4d5117cc5f5443502",
+      "bytes": 2187
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch03.md",
+      "sha256": "c6748fcef3e669801cdeca9c2cefcc30d86ca99e83f6bbe2aadf114533d35d9c",
+      "bytes": 2371
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch04.md",
+      "sha256": "b246b143e40dd47369a70a913fe2e7c98763677bbd39d5bc0d51e39fb1568c38",
+      "bytes": 2409
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch05.md",
+      "sha256": "863720e99500bdc250ce2a1b26befe4668a46b70aeb0eebdccdfe7826a023c9a",
+      "bytes": 2309
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch06.md",
+      "sha256": "5fee2393dcb98714b004ac6341b66838bb87d77e8ee6aa1d88a422d78936d8f1",
+      "bytes": 2399
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch07.md",
+      "sha256": "3b6922262ec8d4d139e7816742d3ec61f2ac0a405b10e9a0848f8c10be9a65ac",
+      "bytes": 2070
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch08.md",
+      "sha256": "9b5e2b6cfed139ea1ed9b8e5c52775f1f46ea3e43199de603492cad2a77f28a8",
+      "bytes": 2262
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch09.md",
+      "sha256": "e4c3401a4c6c27c2515df8ee41576cb37653ff14008e7f2e70fd9178434f8e6c",
+      "bytes": 3043
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch10.md",
+      "sha256": "95122f8bc6cb1c203d08b2121d58367b7a9635b3e587ae225cdea6878075100c",
+      "bytes": 2854
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch11.md",
+      "sha256": "76c0913a0e084af393848e310b3ee59fdc38d1e676f7e28b2706fb5c16af38d3",
+      "bytes": 2537
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch12.md",
+      "sha256": "56b2fabdd3c804da4d3f1a8b955dd9299408732c5984cc9250067b2c11d3e0c2",
+      "bytes": 2571
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch13.md",
+      "sha256": "b520d820f0fe33c01b03a8a088ee5adf3b402115b501906d50996a420c742a5d",
+      "bytes": 2632
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch14.md",
+      "sha256": "2f696b944bd77a416e109522d77b4e8d307c3fd092909c95599a1be49dd055f2",
+      "bytes": 2428
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch15.md",
+      "sha256": "e050b4657456bf2f607365b9c3506af8fe2363395543532e2976ba42c9457685",
+      "bytes": 2535
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch16.md",
+      "sha256": "2d6b88593d07354a6a6f249b0aaf33d1b10582666d1c552cd06c05ddcd9bdcae",
+      "bytes": 2490
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch17.md",
+      "sha256": "b4add5a7bc435be8e889a14c87a0577b25e949712cdeb260c1de0f83e4443845",
+      "bytes": 1775
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch18.md",
+      "sha256": "86290e17a033fcc709b05fe305b5e6dd255ee2b65518acd4c6089909665526a4",
+      "bytes": 1668
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch19.md",
+      "sha256": "78acaf96bd9daeed912509af7675dbad0c4db7de8dfff96589e81c2843aa4a7f",
+      "bytes": 1608
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch20.md",
+      "sha256": "7ecc54fe7518741f203420ab6a322e10d9cd7b21cd83449f06c637851a11082b",
+      "bytes": 1576
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch21.md",
+      "sha256": "7d5d2ff6433872ff3865904162a209dc21b79d62fada7229471fccbc6c34fe36",
+      "bytes": 1592
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch22.md",
+      "sha256": "310da6dd6bc659629b421fdee3565e644800d6ddadcbc54774b7b00917a38674",
+      "bytes": 1555
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch23.md",
+      "sha256": "9d89f4362ec38b7c9aa5de96ddeb42f745591fa9f9fcb4fd94ffdd91df28a03e",
+      "bytes": 1502
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch24.md",
+      "sha256": "27347a0d00a077438d6c19928f7ef84fcca4ec1c6059d427df2a596c97cab2ea",
+      "bytes": 1629
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch25.md",
+      "sha256": "a88d6b16dd377c88afdcdffd760d3d224b199ede0d151fb5811da9ee680462b9",
+      "bytes": 2291
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch26.md",
+      "sha256": "92d16378694540f21d3a70618b2af9f9ef6cc197b95a28c57a9e7438ef750266",
+      "bytes": 2229
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch27.md",
+      "sha256": "c4f83b83f719872d02942eab9bae809e603200c719cb58eaaab2491b4e3bc029",
+      "bytes": 2196
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch28.md",
+      "sha256": "9f5ef7a15232de197399d574a3d887d103799b70ea65100470e690cff299328b",
+      "bytes": 2333
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch29.md",
+      "sha256": "23a5e437c855674bbb89bd3c2a6410f1c8a245845cf47cba786c388e931339cd",
+      "bytes": 2245
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch30.md",
+      "sha256": "ede55d529ecf7f6f9b82e42e66f6480c9388d889a767c5767db0013bab323fd2",
+      "bytes": 2252
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch31.md",
+      "sha256": "4bf4f11f562895a716f7f5163470b32a8bb39965cf5de45793643c575441f962",
+      "bytes": 2142
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch32.md",
+      "sha256": "db9cac75a455e185666074cc29d5c9f5cd9219b3c96e087b803ab13f0038b658",
+      "bytes": 2310
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch33.md",
+      "sha256": "54a262e2de95c59930a23f18b7061ed20cf6a921db05cb9d2dd2b6a5e50384c2",
+      "bytes": 2561
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch34.md",
+      "sha256": "979bf1195f2fdd41ff245c42bec9cfc134447d74fb2ccebce6d04050a432d520",
+      "bytes": 2474
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch35.md",
+      "sha256": "14df32640f1b1884858d5205f0f13736db6ce083dd3eda1b757bc9d88e973079",
+      "bytes": 2390
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch36.md",
+      "sha256": "db65f04914e1fb9160702d880809427fe08fb45e367235bb2c41b3c367b2e5e3",
+      "bytes": 2462
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch37.md",
+      "sha256": "939612628fd5afb1ee78ac5e2ac3ff60e5b75424eb2573a32885143e18d32ecc",
+      "bytes": 2443
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch38.md",
+      "sha256": "367bf0a4af850366457b0159bc03720e4e9ad9a7dc53558a0fa5df94cc5ece9d",
+      "bytes": 2504
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch39.md",
+      "sha256": "de438215e3bd562d2c3e751452f906c9dd0fb2797eb996eb042d469a04278a88",
+      "bytes": 2593
+    },
+    {
+      "path": "books/inside-orch/manuscript/solutions/ch40.md",
+      "sha256": "407ab7a7dc62845867f88b2314979a8b340df533ae85aa39ff11174efb8f8e31",
+      "bytes": 2801
+    },
+    {
+      "path": "books/inside-orch/publication/NOTICE.md",
+      "sha256": "859f820db254cb8c9bbd9a275dfb1c79e2142c3bd7de5022dbc0e510c9deb26e",
+      "bytes": 4189
+    },
+    {
+      "path": "books/inside-orch/publication/RIGHTS.md",
+      "sha256": "9b23469d1bded8d33b59fc53304505a0978c33094ff0a08c099a27703848be0f",
+      "bytes": 3027
+    },
+    {
+      "path": "books/inside-orch/publication/book-metadata.json",
+      "sha256": "96a131ecd1be22fa9e35cc7cafc422b8b5ed114360473000ac210e965f763751",
+      "bytes": 3989
+    },
+    {
+      "path": "books/inside-orch/publication/cover.png",
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+      "bytes": 309024
+    },
+    {
+      "path": "books/inside-orch/publication/cover.svg",
+      "sha256": "bb8aeda769bd667094c1ddcf879b5f5605358ed4865052690406d8fa241c9e12",
+      "bytes": 67836
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "sha256": "e180b3d65bf650dffffd71dd21b6180767b469a18dd87e1d8552be69bb9ecdf0",
+      "bytes": 2734
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/dejavu-sans-mono-bold.ttf",
+      "sha256": "2d67eed9b325ee2e69f906ce4f3f6264d5105230a13352c8494daad4f17b12c8",
+      "bytes": 334268
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/dejavu-sans-mono.ttf",
+      "sha256": "a54dca07c76d6289e717e75e0a58c0128f6d7269ef3faf76417c9d7d3bba37ab",
+      "bytes": 343140
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/dm-sans-OFL.txt",
+      "sha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+      "bytes": 4482
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/dm-sans.ttf",
+      "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+      "bytes": 240164
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/noto-color-emoji-OFL.txt",
+      "sha256": "7a93e97e1c66391963c255ed6c7759fd73666f06d969051d21e8c6fc1837d27e",
+      "bytes": 4478
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/noto-color-emoji.ttf",
+      "sha256": "9fd0a3d0ce84d77e3185dfbae77bd1abf3926aa49a032e354d076c4f17151f10",
+      "bytes": 11020136
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/passion-one-OFL.txt",
+      "sha256": "36c285c5472c625901d4a13da7e31c5ea6126678d31d56cf95572c49f27c8950",
+      "bytes": 4390
+    },
+    {
+      "path": "books/inside-orch/publication/fonts/passion-one-bold.ttf",
+      "sha256": "3a7249909b2e56e831f8a357a4ee549e9c5945cd003f0e5e3bd8791a76d98b7e",
+      "bytes": 24716
+    },
+    {
+      "path": "books/inside-orch/publication/offline.css",
+      "sha256": "4b5e894ee7df32b8bc527659389dab52ae24d69b425ef5af431ee6c67d53edb5",
+      "bytes": 2534
+    },
+    {
+      "path": "books/inside-orch/publication/print.css",
+      "sha256": "f6b86e08ab3793802a438976de6f90b4c5bed9b8106393aa77452238428e5f27",
+      "bytes": 3236
+    },
+    {
+      "path": "books/inside-orch/scripts/audit_book_examples.py",
+      "sha256": "ab4ff61f792213967ecfe8693f8254ea5d99e0032428f9ed3e61b2ac000bd2a2",
+      "bytes": 6736
+    },
+    {
+      "path": "books/inside-orch/scripts/audit_book_interfaces.py",
+      "sha256": "9204450a4ce3a17e79bd0e2a49f1cecc52afba9fb3f20947c1c5071972c99139",
+      "bytes": 7989
+    },
+    {
+      "path": "books/inside-orch/scripts/audit_editorial_evidence.py",
+      "sha256": "295794d64e6db138fcce4f153cb19f7c2ac9320c6c44bfd44b062d718085e808",
+      "bytes": 7595
+    },
+    {
+      "path": "books/inside-orch/scripts/audit_source_baseline.py",
+      "sha256": "62c0dafbfd2ba2006309e8069bc067dcf5833db6c62ad0e60ba489e13a6ec767",
+      "bytes": 90823
+    },
+    {
+      "path": "books/inside-orch/scripts/build.py",
+      "sha256": "d4b8f42b22ad319ef8355d2bbdfc0fe73857c006efb26b6ab7407348fb1e92bc",
+      "bytes": 20727
+    },
+    {
+      "path": "books/inside-orch/scripts/build_cover.py",
+      "sha256": "8509e60ad78ccb2eae95e8c9d3e00c90ff726a2c94b1a4c8c6a350418ef18b9e",
+      "bytes": 3229
+    },
+    {
+      "path": "books/inside-orch/scripts/build_examples_manifest.py",
+      "sha256": "a473d161c739d285c644c26f363d1e47a7273d80c8fa499d59fb06a1b0d6c41a",
+      "bytes": 9244
+    },
+    {
+      "path": "books/inside-orch/scripts/build_history_reference.py",
+      "sha256": "5e9a2bb602397451e4e185c6c1a21f59a6862c81224a1e9765375aabf15b05f3",
+      "bytes": 7603
+    },
+    {
+      "path": "books/inside-orch/scripts/build_reference_inventory.py",
+      "sha256": "215f16d951ebcb86cc3d3f1018beebe436ba6f1b22e0ed830dcd22d2a6e3d685",
+      "bytes": 10835
+    },
+    {
+      "path": "books/inside-orch/scripts/check_appendix_references.py",
+      "sha256": "a206165e61a95ccb9199bb86d48de936c1bfa8553159610340a214441121deec",
+      "bytes": 4918
+    },
+    {
+      "path": "books/inside-orch/scripts/check_bibliography.py",
+      "sha256": "9740bef8534a5f3c25a9ccf7fcfc85bc330b1fbe30a6aefbbffa14292f34fc54",
+      "bytes": 5634
+    },
+    {
+      "path": "books/inside-orch/scripts/check_chapters_01_08.py",
+      "sha256": "7c4324a6d972129712d5158d5056411b9dab099aa57b22701b461a8349e1cf2b",
+      "bytes": 3673
+    },
+    {
+      "path": "books/inside-orch/scripts/check_chapters_17_24.py",
+      "sha256": "8c1a8c897d671e5ba8ffa7d64c4accf631a9900e18fdfbac4497c94b3298051c",
+      "bytes": 3517
+    },
+    {
+      "path": "books/inside-orch/scripts/check_chapters_33_40.py",
+      "sha256": "fadae1648867f6ec0f152807c0295a4a6dc513854012af790113d977223cb08e",
+      "bytes": 3675
+    },
+    {
+      "path": "books/inside-orch/scripts/check_example_utilities.py",
+      "sha256": "2f82b8b8757f4a2a859d3eccd679bf2bd879c2d4217201b10348859b50fa4acf",
+      "bytes": 1621
+    },
+    {
+      "path": "books/inside-orch/scripts/check_exercises.py",
+      "sha256": "7f8db75e91ea6e74af2058bcbe41924e88b4abc5af39c334adb70b0c8dda87be",
+      "bytes": 3920
+    },
+    {
+      "path": "books/inside-orch/scripts/check_lab_prerequisites.py",
+      "sha256": "77b34b89f9dcaaf7fe6fae260690f0aff210ab236cdb235a02b69912d9c341fb",
+      "bytes": 2354
+    },
+    {
+      "path": "books/inside-orch/scripts/check_manuscript.py",
+      "sha256": "1e5d496dba3c2aaa3574c6e34c0886025c2162bbe66f2472025be023372b5903",
+      "bytes": 3662
+    },
+    {
+      "path": "books/inside-orch/scripts/compile_registered_examples.py",
+      "sha256": "dbeb832048c5e0cbbf8ecb6f403461a990ae103ceb17055e5fb9449cfae7758e",
+      "bytes": 2046
+    },
+    {
+      "path": "books/inside-orch/scripts/copyedit_spacing.py",
+      "sha256": "5e05b0dbfd58a98429ec392a6a50eb85f4a09875b1ea293c1675fef94614cda8",
+      "bytes": 3055
+    },
+    {
+      "path": "books/inside-orch/scripts/extract_snippets.py",
+      "sha256": "b919ffa204a24a2e14896c68d41747db9f9b1dc02713cb7e859e298c2c913b81",
+      "bytes": 1915
+    },
+    {
+      "path": "books/inside-orch/scripts/index_reference_claims.py",
+      "sha256": "030fcdd7eb081d6ff40ea79671e5672367730747f7560ef809447712d229aa6f",
+      "bytes": 4087
+    },
+    {
+      "path": "books/inside-orch/scripts/lock_book_links.py",
+      "sha256": "4c13c96880cc8c94c2603fffdbe916a41162243cd7d7d017f8c887df0c8b2494",
+      "bytes": 12495
+    },
+    {
+      "path": "books/inside-orch/scripts/measure_manuscript.py",
+      "sha256": "eea60a1e9671b4b9f4652116bd649673f9fb96b189df1e53a3d140a16f1c1d37",
+      "bytes": 2605
+    },
+    {
+      "path": "books/inside-orch/scripts/next_prompt.py",
+      "sha256": "5ea5d642ba76faf07069850b0c0a5c4342ded74bbd8a984a064070d875f06030",
+      "bytes": 789
+    },
+    {
+      "path": "books/inside-orch/scripts/observe_database_recovery.py",
+      "sha256": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+      "bytes": 4606
+    },
+    {
+      "path": "books/inside-orch/scripts/observe_process_restart.py",
+      "sha256": "15d1ce9bda8c69a292decf217314bf5a2eeb3d58666ac2c4299a30961dc2dbc5",
+      "bytes": 5227
+    },
+    {
+      "path": "books/inside-orch/scripts/preview_epub.cjs",
+      "sha256": "3b8a935c14057c8884a8d8ba846ca173c682b4b790c7d3fb0740adcb4a350fcd",
+      "bytes": 7812
+    },
+    {
+      "path": "books/inside-orch/scripts/render_pdf_pages.py",
+      "sha256": "145ff88bb15c7b4af7687333f97a4986f00250b9212fae59165b060352799f9d",
+      "bytes": 2109
+    },
+    {
+      "path": "books/inside-orch/scripts/render_style_proof.py",
+      "sha256": "d37909d1c830b3e34d03fb3c83bd8d6c576c56249943fe4745534990c1cc73ef",
+      "bytes": 1875
+    },
+    {
+      "path": "books/inside-orch/scripts/run_database_tests.py",
+      "sha256": "bbc7970ad79dc1b9e3437c06b88616037df8698bc07738f9675ba47461389e7e",
+      "bytes": 3294
+    },
+    {
+      "path": "books/inside-orch/scripts/run_drift_lab.py",
+      "sha256": "8a14a1adf51e6eb3e4d3c0726ec1072a771f4cee889cfe923b9fb83aef51850c",
+      "bytes": 3522
+    },
+    {
+      "path": "books/inside-orch/scripts/run_exercise_checks.py",
+      "sha256": "5768c8e869b4a15c9471a46c0307fbc035d63fa9a44cac798e799363f0b4d0c1",
+      "bytes": 2540
+    },
+    {
+      "path": "books/inside-orch/scripts/run_exercise_mutations.py",
+      "sha256": "49c4c92db209c7f62ff19f8d35c9ec313662a9a9e557e4cc3d7cb6d12f748b1f",
+      "bytes": 4650
+    },
+    {
+      "path": "books/inside-orch/scripts/run_recorded.py",
+      "sha256": "552c3e9ef76864963142098e78b934bba55896a1a4f5a1d0ec1699ddff048825",
+      "bytes": 2467
+    },
+    {
+      "path": "books/inside-orch/scripts/run_reference_inventory.py",
+      "sha256": "34c6cbeb210da24bedaf8f02eadb6a9711e396dc62fb257a1c9dd15afe452ea1",
+      "bytes": 2159
+    },
+    {
+      "path": "books/inside-orch/scripts/update_tracker.py",
+      "sha256": "7875034c31164b454e04e114e45bafa730d8e6d4b898aa8a9a75696079d40d26",
+      "bytes": 1565
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_formats.py",
+      "sha256": "59931608491069e303786bf825ef2f4af045f4420d864c9e2da6258be523cb94",
+      "bytes": 3436
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_lab_records.py",
+      "sha256": "ea0e4cb27b8cb73c0c2672462a34aa40d3abf2d56985a551dd4480194d86913d",
+      "bytes": 5878
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_namespace_workload_labs.py",
+      "sha256": "0137ddd9f993ec4ca7f30fb24cbff00ef3288fe1aaaf81387b7a3a6a913aa6f3",
+      "bytes": 3639
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_native_adapter.py",
+      "sha256": "762a7658044645f1fc4401fd68d18a973cbda491aea1395e83aeb2ab32b67225",
+      "bytes": 1947
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_pack.py",
+      "sha256": "6595e8e703ae7af595d9e2d11b18b45d0aa1b8580d977e70d4e05df8cc3452b8",
+      "bytes": 5126
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_rollout_security_labs.py",
+      "sha256": "da1c63c665903942da5a409f7d674bbe74a057c2afbc302223eab6aa6139dd3e",
+      "bytes": 5525
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_scheduler_lab.py",
+      "sha256": "4189753d12ca31019690bcc3711f7073bfddebd341a519d832cba015c82eb082",
+      "bytes": 4077
+    },
+    {
+      "path": "books/inside-orch/scripts/verify_site_edition.py",
+      "sha256": "eba021f978042717f6cd4be8475b523a03fac9042e62e8b0c61a41b41745808e",
+      "bytes": 4628
+    },
+    {
+      "path": "books/inside-orch/tests/test_lab_database_guard.py",
+      "sha256": "89c91916a96c31b1ecd50bd883b4220de46095ed3a8566efd2dd5e129e2a9ce6",
+      "bytes": 1996
+    },
+    {
+      "path": "books/inside-orch/tests/test_publisher_adapter.py",
+      "sha256": "754236a201b7214eaf9d7238d47cf816850285ef62a83b6dcb36cc12c643812f",
+      "bytes": 6114
+    },
+    {
+      "path": "books/inside-orch/tests/test_recovery_targets.py",
+      "sha256": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d",
+      "bytes": 838
+    },
+    {
+      "path": "scripts/book_catalog.py",
+      "sha256": "64810f4a1b07cad550bbf2e156632f4f2f7df4984222974ff407800f579169ce",
+      "bytes": 15834
+    },
+    {
+      "path": "scripts/build-books.py",
+      "sha256": "cdadf92050d2c15029339473a948b1a97a874c75fff34a6ddb176f7aaf2fd20e",
+      "bytes": 10276
+    },
+    {
+      "path": "scripts/check-performance.mjs",
+      "sha256": "57065457f5152e869ab8ac4cf20f814448e5471c5f5cfde1b643bad3aebb1dcf",
+      "bytes": 5069
+    },
+    {
+      "path": "tests/inside-orch.spec.js",
+      "sha256": "a79c884df613c29b52d6ce8669a45ff9d2c31a31b64a4b9c0b3fbac0b76908cc",
+      "bytes": 4716
+    },
+    {
+      "path": "tests/workspace-editor.spec.js",
+      "sha256": "bec2c044836b8bbf0bdc5cd31f09e07e1ab7315947ed3c83c91e52149cdcf849",
+      "bytes": 12753
+    }
+  ],
+  "generated_files": [
+    {
+      "path": "book-pages/inside-orch/00-preface.html",
+      "sha256": "61c69f5537cfc985c7c0f6ab362948ab675ed6152ba572ceaa79a6bb33a2ecdf",
+      "bytes": 7856
+    },
+    {
+      "path": "book-pages/inside-orch/01-why-build-a-container-orchestrator.html",
+      "sha256": "600c99d2dfdb1c537ccb079b8c95ca95a3373aa18e3e33a198b988fe0d2c13da",
+      "bytes": 16175
+    },
+    {
+      "path": "book-pages/inside-orch/02-a-repository-built-for-reasoning.html",
+      "sha256": "54b185ef966c9bbb5ef7e5f7ef44e2695a3fa969542e547dec6e98c6ff14b28c",
+      "bytes": 15820
+    },
+    {
+      "path": "book-pages/inside-orch/03-boot-the-lab-and-deploy-the-first-service.html",
+      "sha256": "a46900e223e133349b895834a9974def6c6af34ed7b89c591e565c1f0f92e887",
+      "bytes": 17700
+    },
+    {
+      "path": "book-pages/inside-orch/04-domain-models-and-state-machines.html",
+      "sha256": "4736484b5c36aaf3d682853c951d190a3f8c4ed2b94c939c0b8f1cc7aeabbf56",
+      "bytes": 17418
+    },
+    {
+      "path": "book-pages/inside-orch/05-service-specifications-resources-and-ports.html",
+      "sha256": "60a855e04b4a00b971f63d2242eb8444dede7c051e5f3b0a0b4fdd150192c587",
+      "bytes": 17169
+    },
+    {
+      "path": "book-pages/inside-orch/06-follow-one-request-through-the-control-plane.html",
+      "sha256": "be5c6784ebf4bf99f04280c57a4ce6350283c2af83214348e9789fec155e0a2b",
+      "bytes": 16272
+    },
+    {
+      "path": "book-pages/inside-orch/07-http-contracts-and-compatible-apis.html",
+      "sha256": "df1eaff9445e44738fc0aa8e17665681cd8e59ff32ea1f9078fb7853e60fc5a3",
+      "bytes": 17504
+    },
+    {
+      "path": "book-pages/inside-orch/08-a-cli-that-operators-can-automate.html",
+      "sha256": "b928bc070e7aa1354681574a87e90a5bf5abeff78501af51b48dd8855d3f118f",
+      "bytes": 17183
+    },
+    {
+      "path": "book-pages/inside-orch/09-persistence-transactions-and-optimistic-concurrency.html",
+      "sha256": "15094f83656791c8450da367bb121279547e42fb36a9fea80dbcb94f6b88a13c",
+      "bytes": 17329
+    },
+    {
+      "path": "book-pages/inside-orch/10-a-deterministic-scheduler.html",
+      "sha256": "3dd844f226db9fe5cac6aa3448848d486dbe58928b13ffec13684349688dc06e",
+      "bytes": 17036
+    },
+    {
+      "path": "book-pages/inside-orch/11-reconciliation-as-repeated-convergence.html",
+      "sha256": "650302e05da3b2a837447113044c9923b9131bc831f00dee5bbea9a9ffa36d6d",
+      "bytes": 16528
+    },
+    {
+      "path": "book-pages/inside-orch/12-idempotent-docker-operations-and-drift.html",
+      "sha256": "77a42693ce4e68d89d905c0e32c33879a6582de7827fcd784eecbadba751a294",
+      "bytes": 17332
+    },
+    {
+      "path": "book-pages/inside-orch/13-agents-heartbeats-and-task-reports.html",
+      "sha256": "b87134fdebf785013577e03ffaee9f8fe5e7faa05ed1d02ceded4f783983ab0e",
+      "bytes": 17199
+    },
+    {
+      "path": "book-pages/inside-orch/14-health-checks-that-respect-trust-boundaries.html",
+      "sha256": "c7449c0500624b111b870173caea9a269b33fba96bd1d8b8f0546a0eb66587f6",
+      "bytes": 16884
+    },
+    {
+      "path": "book-pages/inside-orch/15-events-audits-and-notification-boundaries.html",
+      "sha256": "c93d0f97298e7d50f93b9b708f67aec97955b79d9c28dda20d20cbc372e2e951",
+      "bytes": 17177
+    },
+    {
+      "path": "book-pages/inside-orch/16-log-streaming-without-losing-control.html",
+      "sha256": "7deb7b0e19b4cc3582e295e04136c4e3827b7bc2fa5b226d246fe56b1fbefd7b",
+      "bytes": 16923
+    },
+    {
+      "path": "book-pages/inside-orch/17-rolling-updates-and-rollback-invariants.html",
+      "sha256": "f9d8e3c8b168673264756328a68de819a143cc7bdd85358f8717201c861df1f5",
+      "bytes": 17154
+    },
+    {
+      "path": "book-pages/inside-orch/18-safe-deletion-and-resource-cleanup.html",
+      "sha256": "3e51c2b6142882e53aa3ac32db285b0841adc25ab3435221f0c87a0c34d7f256",
+      "bytes": 17633
+    },
+    {
+      "path": "book-pages/inside-orch/19-offline-nodes-draining-and-rescheduling.html",
+      "sha256": "c4c48f864fc59aeda9b98a99f7673aa35d7ad4f7170ea20572b0b4c081c552bf",
+      "bytes": 17826
+    },
+    {
+      "path": "book-pages/inside-orch/20-endpoint-discovery-and-internal-dns.html",
+      "sha256": "03b6e007e389f7a950882fbf34a4b7dee1f7bc03afd0bf60e39b64a2ea5671ac",
+      "bytes": 16787
+    },
+    {
+      "path": "book-pages/inside-orch/21-ingress-host-networking-and-the-overlay-roadmap.html",
+      "sha256": "5e025030f0ad3e9e294440ee4449f614845c6bbdddae5e2b6ee1cf3b8b4c7496",
+      "bytes": 17059
+    },
+    {
+      "path": "book-pages/inside-orch/22-autoscaling-decisions-and-missing-integration.html",
+      "sha256": "c5c397a52545f702a2ee9a9dff3e0dcb24d6169691a2b466057aefb8e8c9728d",
+      "bytes": 17574
+    },
+    {
+      "path": "book-pages/inside-orch/23-authentication-authorization-and-node-trust.html",
+      "sha256": "76c13e3d3bc71c99071de77da728985cdb83d1b3bb1053a88279458275ad1fa9",
+      "bytes": 16919
+    },
+    {
+      "path": "book-pages/inside-orch/24-encrypted-secrets-and-configuration-redaction.html",
+      "sha256": "0159f17c08b49174cf869fa8d5b7fc30a872ec6b2270bcd5cbe7e55f565aa9c8",
+      "bytes": 19056
+    },
+    {
+      "path": "book-pages/inside-orch/25-registry-credentials-and-immutable-image-identity.html",
+      "sha256": "2161cd3aef84104029821ca2aa0423a34b0ae53e8e204ac692a885ae1e17dfe5",
+      "bytes": 17111
+    },
+    {
+      "path": "book-pages/inside-orch/26-security-contexts-admission-and-policy.html",
+      "sha256": "3dbe37525aceba59ce8cd2c3566e0720ce068e92edbf597ba8fd1a63b2e223c4",
+      "bytes": 16428
+    },
+    {
+      "path": "book-pages/inside-orch/27-namespaces-and-the-limits-of-multi-tenancy.html",
+      "sha256": "cc725232073a83e2528721eda42b0b9b91daf9abe511cc9aa58fd5b01c6ecfff",
+      "bytes": 15832
+    },
+    {
+      "path": "book-pages/inside-orch/28-quotas-and-usage-accounting.html",
+      "sha256": "b906134aee6044c3884d9cce828226e9a14ec5c3f39eb359e15ee52640594de7",
+      "bytes": 16378
+    },
+    {
+      "path": "book-pages/inside-orch/29-supply-chain-designs-without-false-guarantees.html",
+      "sha256": "e2a78a230830e5404f2f9266c44247e82626261b47c7ad40d4075f157f38571e",
+      "bytes": 16660
+    },
+    {
+      "path": "book-pages/inside-orch/30-gitops-drift-and-controlled-reconciliation.html",
+      "sha256": "c1bdc308d13181640d61bbfe1306d7f1374aba0d769bdbb5749d11f79094731c",
+      "bytes": 16734
+    },
+    {
+      "path": "book-pages/inside-orch/31-finite-jobs-and-time-based-work.html",
+      "sha256": "adb6353ba1133e4cef11ec6b2191db991e6598b5c2ca84ecfc393357656786c6",
+      "bytes": 17030
+    },
+    {
+      "path": "book-pages/inside-orch/32-local-volumes-claims-and-workload-topology.html",
+      "sha256": "6365e96fffc85f1cd69025d6de10c1b533ed29411d5211de446e385a2809270e",
+      "bytes": 16737
+    },
+    {
+      "path": "book-pages/inside-orch/33-extension-interfaces-and-a-plugin-roadmap.html",
+      "sha256": "f2a1a0d7f3625709dd683166ea9d45a98735440252862a1c80db6d00fffdbc1e",
+      "bytes": 16749
+    },
+    {
+      "path": "book-pages/inside-orch/34-leader-election-and-the-durable-ha-boundary.html",
+      "sha256": "73ed7e450749d95576293da8696db295d00962cde4ac86c95613121abb3de41d",
+      "bytes": 15993
+    },
+    {
+      "path": "book-pages/inside-orch/35-upgrades-migrations-maintenance-and-retention.html",
+      "sha256": "903abfa9932992e3ec4a2c80232eeb7206c8e1f6483111d53544081c51a01cbe",
+      "bytes": 16137
+    },
+    {
+      "path": "book-pages/inside-orch/36-fakes-property-tests-fuzzing-and-contracts.html",
+      "sha256": "d4f71d6895f8f73fd6986961aebdbcfa7b0b970d01dfd6f741d0a74bde9b7de6",
+      "bytes": 15722
+    },
+    {
+      "path": "book-pages/inside-orch/37-failure-injection-and-recovery-evidence.html",
+      "sha256": "a316a0f7c2a4d039535538bc04372ca93f933f7d67a79277f4b4ccc9b6e25740",
+      "bytes": 16437
+    },
+    {
+      "path": "book-pages/inside-orch/38-metrics-dashboards-and-actionable-signals.html",
+      "sha256": "753216167cc573dcaa094a69e958776dd1c03c83b50205c61e76e5386b2e96c9",
+      "bytes": 16490
+    },
+    {
+      "path": "book-pages/inside-orch/39-performance-and-scale-tests-that-say-what-they-measure.html",
+      "sha256": "232f38951e17a1e357eaf2152d9bb19ebb0e34bc80fe0b1da5a6b6dd9a434c10",
+      "bytes": 15522
+    },
+    {
+      "path": "book-pages/inside-orch/40-release-a-system-you-can-honestly-operate.html",
+      "sha256": "e4fa119e227a9eb48ff68e7961f7cd40025187a1185d5755df73c93fb4fea19d",
+      "bytes": 16601
+    },
+    {
+      "path": "book-pages/inside-orch/a-cli-api-config.html",
+      "sha256": "230d2cd79da9055012db211a3c544762361a8c3a1ef84fed5bd6211d3a61129b",
+      "bytes": 20901
+    },
+    {
+      "path": "book-pages/inside-orch/b-lifecycle-invariants.html",
+      "sha256": "822be4a245b7455d1b09c13ed993047cb2620167f44f7d506ddd2a3457cf61cb",
+      "bytes": 17362
+    },
+    {
+      "path": "book-pages/inside-orch/c-annotated-history.html",
+      "sha256": "b18300d4b4a1e76b3b73b62b4798381c07cddb5ff8db1287cf60247aa04013e6",
+      "bytes": 19140
+    },
+    {
+      "path": "book-pages/inside-orch/companion/examples/teaching-extensions/ch34/ADR-durable-composition.html",
+      "sha256": "0d1f1d6482855d9f8a3fa796dc85707c670502da2d123c3726361bf79c585285",
+      "bytes": 2845
+    },
+    {
+      "path": "book-pages/inside-orch/companion/exercises/questions.html",
+      "sha256": "eea350dd207db8c154ea166575f7d2c371740a97a145986354ad706e689af733",
+      "bytes": 22932
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/01-initialization-restart/README.html",
+      "sha256": "7999072cd942d4fda35449432b1d1e86ce839a9798fd0299bcee9f8dbe40b6c6",
+      "bytes": 11462
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/02-scheduler-placement/README.html",
+      "sha256": "fcbc55a93f48a19b963b49928730a0fd5123940a660b28c5f633982eba0e9766",
+      "bytes": 12513
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/03-reconciler-drift/README.html",
+      "sha256": "770af3d6101579c9d12197c51a49e50ccba399f48345edba2ace43792b9b4d40",
+      "bytes": 11143
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/04-rollout-rollback/README.html",
+      "sha256": "8a405cf2bee32d3ed7f698a34e5e7c87a579161f8b30f82abde13b1bd44834ab",
+      "bytes": 8870
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/05-security-boundaries/README.html",
+      "sha256": "1f0263219bd77e203adeebe38a19b921cdf15e7ca6c3e261adf014679c628389",
+      "bytes": 11117
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/06-namespaces-quotas/README.html",
+      "sha256": "29bd66935e86949addd4e5153daa0c7718969226fbd085ff34d616d28e9cb262",
+      "bytes": 10463
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/07-gitops-jobs-cron/README.html",
+      "sha256": "89ead2febc9e60eb8fbd048f5832181bdc54575e356b506dc35fe2980ac707a8",
+      "bytes": 10439
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/08-recovery-boundaries/README.html",
+      "sha256": "351b56d63953bbb908322dd6b4ebc27857f0dfab619d6bbcf34881175a10aeee",
+      "bytes": 9933
+    },
+    {
+      "path": "book-pages/inside-orch/companion/labs/ENVIRONMENT.html",
+      "sha256": "454bc7c18d37645d03226629b8970c839e701d5eb106f26da44784809ae5333c",
+      "bytes": 10098
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/appendix-d.html",
+      "sha256": "54cb2002bcedc414d8eea916936736d08b856c5a4a0bc9612779c47fa0febba0",
+      "bytes": 16001
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch01.html",
+      "sha256": "773c10e71e0e977bab097db1507ce34a28e25207566fc6aec2101eaa466bf59d",
+      "bytes": 2812
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch02.html",
+      "sha256": "15a0fa6693cc4211f4c7fba09f513c1dc65b7782f0d4c139e56cefdc7a0b2cb3",
+      "bytes": 2719
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch03.html",
+      "sha256": "6ec0d2ef899f6c977432dd9d710c2e6b653302f3b9c31d34e7d07238a2f2dde1",
+      "bytes": 2900
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch04.html",
+      "sha256": "a97485cd306d18d00a6dc7bb341c9280ef1fd90f792bd656e5f4a015d5e342f3",
+      "bytes": 3027
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch05.html",
+      "sha256": "11361347c072a409f03995331a5fe6641c6211b5da34a672db330340b96762d7",
+      "bytes": 2796
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch06.html",
+      "sha256": "0590fcdcdce5f2a9ecf30568d48c02ac29d93199a4733dee6be815dd810812a2",
+      "bytes": 2900
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch07.html",
+      "sha256": "5925cdc94bd9edbd71eedc7a522d156d60e35a6fbea2d33de0d006066f655c4a",
+      "bytes": 2586
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch08.html",
+      "sha256": "12b38a62bcafe37b30d4fc5867093f91b0262d13a8ebff01379a609d079a8c76",
+      "bytes": 2775
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch09.html",
+      "sha256": "2f6a5336f9517d9700a7b4ef7df94bcbd75933172562cb4448e212aaace5a05e",
+      "bytes": 3539
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch10.html",
+      "sha256": "484f568bbc30a64f3ee8ed177feb4b7d4bf63b53ca007fe83e4739da56b9ec9a",
+      "bytes": 3375
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch11.html",
+      "sha256": "2e71bcf478b7f389f23d2757d150b966ed3b7130aca07becdbe9a8121bf0e190",
+      "bytes": 3060
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch12.html",
+      "sha256": "020e614ca36b81bd4043cd4aa8271b2f9bdc0a4eee994235afd472a05b273e6e",
+      "bytes": 3079
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch13.html",
+      "sha256": "0cdaf82ed459cf50f6f9de7ed239f63b8b0cdf4bcb8f50f63d8aa49e19b36b8c",
+      "bytes": 3156
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch14.html",
+      "sha256": "9a2fa8bbc51e911e9231ae2b1bf9ccbfb63a8c07fabf176e7f45e9a1b1562e42",
+      "bytes": 2938
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch15.html",
+      "sha256": "3e5336b7ffe95c01efc63cce27c41ffb6179de60c48afd0ce03e1fe991c9a5d2",
+      "bytes": 3066
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch16.html",
+      "sha256": "64361e688751a2734178fcf982aec3d9f5e3f39a2e6c4ae91f5089d17b4f2db9",
+      "bytes": 3003
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch17.html",
+      "sha256": "41e51d1f5b71b804bc6010c17579ce13a9c05a9780025b9eee07041f2a056ba7",
+      "bytes": 2269
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch18.html",
+      "sha256": "783cb3c87340b41841be56c49ef290bce6d7da6e665dc159d5d8b336fc23408b",
+      "bytes": 2225
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch19.html",
+      "sha256": "757fa15dc10d7291f6a6c50d73f849a87262a6a2297adf156ff691fe52dbaac1",
+      "bytes": 2155
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch20.html",
+      "sha256": "72dca2c72650d85ecd6e5c643f25228975ed7b3ac3b8af6cb10c4617d7ad6a6f",
+      "bytes": 2086
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch21.html",
+      "sha256": "c6e9bb3de0e73c994ab40e59910e21f328b8bf8275dadcabaa49aac1e02f85d1",
+      "bytes": 2092
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch22.html",
+      "sha256": "dba91e1e85f691445b20ead5d18e6140e7e0d6f1bd6370b759e7232adf6fb974",
+      "bytes": 2108
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch23.html",
+      "sha256": "3f7ade46205ec62d34eddb910594f657056c95e134648d049dc31b7096753b2f",
+      "bytes": 2040
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch24.html",
+      "sha256": "d7c8d7c0ca14949204b7c92e3b5c70e291bcc8884da81ca8b919dc1b24b078d1",
+      "bytes": 2176
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch25.html",
+      "sha256": "edef2278a9081b28e9a747ac6c266a12cb262bd4cbe26d47dbe53d35bbb00c13",
+      "bytes": 2782
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch26.html",
+      "sha256": "48e7642127bd3f2b1dc12313b7cc6a9ea0085a1acff7027246bc54e53eae29fa",
+      "bytes": 2724
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch27.html",
+      "sha256": "74bfbcfc3615ca3741be508ee7f1c52a38ca87b1255df672faeddc9002fbf22d",
+      "bytes": 2713
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch28.html",
+      "sha256": "0340e75108944a773236e606360dadac252ca68d3e3ff1283882e16551b8278d",
+      "bytes": 2833
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch29.html",
+      "sha256": "2fa2af20653442404d1b5c2343ee3296904b28ffeb065b57ee05f378883f77d7",
+      "bytes": 2754
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch30.html",
+      "sha256": "cec1f6e2781a0f241748c0d546e9fcfd916f400b38d4c834d6f0921d72dd67e7",
+      "bytes": 2733
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch31.html",
+      "sha256": "f53ed87526556cb8ef9ef559c4bf0c8ba753453d1794abd5e312c2b126eaa728",
+      "bytes": 2633
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch32.html",
+      "sha256": "1eaceef473d65a7435a973b091ab404e67c2e918afc1c48574c9768e5c65aecf",
+      "bytes": 2827
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch33.html",
+      "sha256": "50b7378e78450d4d54a679a1e9c315a2164eb1906de1373953010abeca3bc490",
+      "bytes": 3134
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch34.html",
+      "sha256": "33240e34f93936224de1e34e481abc50371dc2f7c3c5d73566a9f4e3e1dfe653",
+      "bytes": 3020
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch35.html",
+      "sha256": "a99bb59ccccfea5f07b63a31f1a57c0f5bfb1f5a27aae9a342fff8c038f3cbc1",
+      "bytes": 2918
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch36.html",
+      "sha256": "d9270ac863e2de366d34bc4b30fb113358241d585d7d07b4fdcf697baca26af0",
+      "bytes": 2990
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch37.html",
+      "sha256": "dd168868d11e962244404230159079b78e6adc4e584e0f88add9e15f164b9e8a",
+      "bytes": 3009
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch38.html",
+      "sha256": "0f7a6cca0ed872f2f10fa46d921efa7098e7dbfe9d63cae3d9e4da73906b32eb",
+      "bytes": 3049
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch39.html",
+      "sha256": "7d28ab47f85ed404cbbd48d74e94c9e68d890f7abd7cbc9c2053c4569af608a2",
+      "bytes": 3134
+    },
+    {
+      "path": "book-pages/inside-orch/companion/manuscript/solutions/ch40.html",
+      "sha256": "efe85c64b60e753a54a94e9dae026efe1b2c66b03f0a2ddb1902a326e796a61d",
+      "bytes": 3374
+    },
+    {
+      "path": "book-pages/inside-orch/d-exercises-solutions.html",
+      "sha256": "f8dcdfc49b01e8bdd712ac3605845de769124f945522f8aebdba0ca74ce3f37c",
+      "bytes": 22022
+    },
+    {
+      "path": "book-pages/inside-orch/e-ops-measurement.html",
+      "sha256": "5fec6bc29accdbec7ca15b630715ac1b209a7d62aa95bac6700bfe49749bb0b6",
+      "bytes": 13147
+    },
+    {
+      "path": "book-pages/inside-orch/f-glossary-bibliography.html",
+      "sha256": "cd9442901c9f98c8feb6d0fa6a76e2354f338fddf6234fb9945f702e69479e93",
+      "bytes": 43169
+    },
+    {
+      "path": "book-pages/inside-orch/index.html",
+      "sha256": "ce08c5f5569b692ebb49766f1945d87cb82e1ae3afa18d3321219c253f39d116",
+      "bytes": 366
+    },
+    {
+      "path": "book-pages/inside-orch/license.html",
+      "sha256": "8d7ace26271e6f57f7d48d37913b429bbb0ff3b14ca25c6167ee10c1954e5216",
+      "bytes": 1804
+    },
+    {
+      "path": "assets/books/inside-orch/cover-320.webp",
+      "sha256": "01d2060f48988e62c1abfa6440d02a1761f766a52dc98314db75a7993b7d513f",
+      "bytes": 10238
+    },
+    {
+      "path": "assets/books/inside-orch/cover-640.webp",
+      "sha256": "e59346235fb3902e038cd296bcd4595d578706bfe6f405dabfd4dcb411e79284",
+      "bytes": 24022
+    },
+    {
+      "path": "assets/books/inside-orch/cover-960.webp",
+      "sha256": "c1ff922c0758f59189f5438ee9491b463f8197cea5c1421b52e828b118dbba4c",
+      "bytes": 38390
+    },
+    {
+      "path": "assets/books/inside-orch/downloads/inside-orch.epub",
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+      "bytes": 991265
+    },
+    {
+      "path": "assets/books/inside-orch/downloads/inside-orch.pdf",
+      "sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+      "bytes": 1924420
+    },
+    {
+      "path": "assets/books/inside-orch/examples/diagrams/task-lifecycle.png",
+      "sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+      "bytes": 154443
+    },
+    {
+      "path": "assets/books/inside-orch/examples/source-excerpts/ch09/metadata.json",
+      "sha256": "fc97477ee0a5732fe8eae5925b02d7bc8ac5451b73b71395fa4b78995bbd2dce",
+      "bytes": 1061
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/ch33/adapter_contract_test.go",
+      "sha256": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209",
+      "bytes": 3458
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/ch35/preflight_test.go",
+      "sha256": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f",
+      "bytes": 1858
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/ch38/metrics_contract_test.go",
+      "sha256": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532",
+      "bytes": 1044
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/ch40/verify_dossier.py",
+      "sha256": "6d8cb390696c1da0ac3972ce4fbb42156ed80d88125731f7fefb47bcd5399418",
+      "bytes": 2698
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/docker-boundary/main.go",
+      "sha256": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5",
+      "bytes": 9439
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/full-schema/main.go",
+      "sha256": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+      "bytes": 6498
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/lab02/main.go",
+      "sha256": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+      "bytes": 8596
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/rollout/main.go",
+      "sha256": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+      "bytes": 10067
+    },
+    {
+      "path": "assets/books/inside-orch/examples/teaching-extensions/security/main.go",
+      "sha256": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361",
+      "bytes": 12671
+    },
+    {
+      "path": "assets/books/inside-orch/labs/01-initialization-restart/book-http.yaml",
+      "sha256": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+      "bytes": 117
+    },
+    {
+      "path": "assets/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json",
+      "sha256": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740",
+      "bytes": 10758
+    },
+    {
+      "path": "assets/books/inside-orch/labs/03-reconciler-drift/fixtures/cases.json",
+      "sha256": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517",
+      "bytes": 1002
+    },
+    {
+      "path": "assets/books/inside-orch/publication/NOTICE.md",
+      "sha256": "859f820db254cb8c9bbd9a275dfb1c79e2142c3bd7de5022dbc0e510c9deb26e",
+      "bytes": 4189
+    },
+    {
+      "path": "assets/books/inside-orch/publication/RIGHTS.md",
+      "sha256": "9b23469d1bded8d33b59fc53304505a0978c33094ff0a08c099a27703848be0f",
+      "bytes": 3027
+    },
+    {
+      "path": "assets/books/inside-orch/publication/cover.png",
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+      "bytes": 309024
+    },
+    {
+      "path": "assets/books/inside-orch/publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "sha256": "e180b3d65bf650dffffd71dd21b6180767b469a18dd87e1d8552be69bb9ecdf0",
+      "bytes": 2734
+    },
+    {
+      "path": "assets/books/inside-orch/publication/fonts/dm-sans-OFL.txt",
+      "sha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+      "bytes": 4482
+    },
+    {
+      "path": "assets/books/inside-orch/publication/fonts/noto-color-emoji-OFL.txt",
+      "sha256": "7a93e97e1c66391963c255ed6c7759fd73666f06d969051d21e8c6fc1837d27e",
+      "bytes": 4478
+    },
+    {
+      "path": "assets/books/inside-orch/publication/fonts/passion-one-OFL.txt",
+      "sha256": "36c285c5472c625901d4a13da7e31c5ea6126678d31d56cf95572c49f27c8950",
+      "bytes": 4390
+    },
+    {
+      "path": "assets/books/inside-orch/scripts/observe_database_recovery.py",
+      "sha256": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+      "bytes": 4606
+    },
+    {
+      "path": "assets/books/inside-orch/tests/test_recovery_targets.py",
+      "sha256": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d",
+      "bytes": 838
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/appendices.json",
+      "sha256": "67f63b018e91a604d12cb3245dd7353f43062a1e75697f11d77aebbaf76ad7b4",
+      "bytes": 19830
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch09.json",
+      "sha256": "82988a78dee1b613536679b769752ea75bfe03680e162f60debb6950644fc665",
+      "bytes": 3944
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch10.json",
+      "sha256": "46881465eb9d3b2af8e5586891b745a74d5c044c320b1831ab64908916671338",
+      "bytes": 3301
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch11.json",
+      "sha256": "4507d31f04215130307c87c0407813dfc79a2ca6211ffadfe0a036b6246ce21a",
+      "bytes": 3225
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch12.json",
+      "sha256": "fd365c86d02970c4761bcb5965bf76082bb54c7835a1e8fb0dd099c2c94675f9",
+      "bytes": 3233
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch13.json",
+      "sha256": "719a594424bfa43af62f45a5c64ead84f083f78d8cf0e7802112fb1a052178d9",
+      "bytes": 2510
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch14.json",
+      "sha256": "26e3ade83113e0eaab3368d8cc2bf4b4e2029e3b3e65301d17540e33b6ace472",
+      "bytes": 3032
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch15.json",
+      "sha256": "a2d50697e041f9929b4371b36da55dfec8fdb2bbcbf2f45d8afdc6ac7acbc90a",
+      "bytes": 4118
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch16.json",
+      "sha256": "6e09eca59269159a06a19037e532801d1d14f1fd3f79a85e5733b179a0934723",
+      "bytes": 2816
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch25.json",
+      "sha256": "3bcea5d666c1154a8cd7a846a3d5878affde80b8096c3c410849192dbc955f8d",
+      "bytes": 3166
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch26.json",
+      "sha256": "17c4819f1d226b9813cb3b2e2f8f44b1784b28a8e028ce24709c94b5503923e6",
+      "bytes": 2386
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch27.json",
+      "sha256": "a52148ee1b5f7d177a6a0282f90e7072dad114011d78d16720aae54138ab2677",
+      "bytes": 2857
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch28.json",
+      "sha256": "5fbd890b0fc7676838c2d820f7cda417bbcbb5f93eadb2c9d13846240bb1569e",
+      "bytes": 3213
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch29.json",
+      "sha256": "abbb33f72afde808b71145f736181801f1f5c6b6e50dbdc47ee7464798b05c85",
+      "bytes": 2832
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch30.json",
+      "sha256": "bcbe824264ee817a692cda805fb6851f95a63c79991b09d7d5ab6bd3918bff28",
+      "bytes": 3170
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch31.json",
+      "sha256": "c4545649f114ec8c00d719a4565fbdc52cc983bf8f5a013b5f4e9bd4950fecfe",
+      "bytes": 2926
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch32.json",
+      "sha256": "e37c9d67fb7d162906c4db93aa244c0124f3e92197b68fc080fa66d9489e3620",
+      "bytes": 4259
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch33.json",
+      "sha256": "e3c4c4278b68ab8ca5903ad29f8d98c9f4a8d6ecc43fd76346d81670431a399e",
+      "bytes": 3808
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch34.json",
+      "sha256": "22fda59330f19a881c39b30f772da4bdc38f46ba4e1bb4ad2da827bcfa1316dc",
+      "bytes": 5014
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch35.json",
+      "sha256": "b220154cdae8098bbf2678b03d047c3ad322963eb45f3fd0b1cdc8ea03e94ee3",
+      "bytes": 6217
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch36.json",
+      "sha256": "58dc38382e6e0a89594eaa040d33e087f82387ce5b1cb50285175564123905ad",
+      "bytes": 4357
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch37.json",
+      "sha256": "f46e543a795b95b70a6a8be06fc4eb3d4e5bd775c1cabc6dba9fbfe6f3f39764",
+      "bytes": 5417
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch38.json",
+      "sha256": "c0c0711a565b04d6320b6b6c45c9c4e7435b2cae8d901e818de18497e2117051",
+      "bytes": 4990
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch39.json",
+      "sha256": "3f67b9b70c8815da2a7f64f6dc265635e5dfea3fc142eb0a52e4f7f424d7e37d",
+      "bytes": 4461
+    },
+    {
+      "path": "assets/books/inside-orch/validation/evidence/ch40.json",
+      "sha256": "c833d804732c751aca7f735185f36b2329b9078e06a8a3567a99d766d778639a",
+      "bytes": 4985
+    },
+    {
+      "path": "assets/books/inside-orch/validation/exercises/mutation-runs.json",
+      "sha256": "fe04fb74f42c58b2867cc5da99d3909e163406b5e34e1c5579d900715e71fc33",
+      "bytes": 11148
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/docker-complete-flow-cleanup.json",
+      "sha256": "0a453580eb89c717485e595bec5a75a8248d14e4f401e0550a8d481c30bc43f6",
+      "bytes": 1393
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/docker-complete-flow-log-guard.json",
+      "sha256": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+      "bytes": 920
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/docker-complete-flow-log-guard.stdout.txt",
+      "sha256": "4ecfc224f795b67942ea7bed175950e2c08fa85a60600a535c826a04a92d1b3e",
+      "bytes": 8385
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/fresh-server-restart-authenticated.json",
+      "sha256": "ad35f2d4b1d3ec597539d8144f0be70d26f5edaf0e9d2995a736320003d2d45c",
+      "bytes": 4424
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/full-schema-recovery-corrected.json",
+      "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+      "bytes": 9477
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/orch-baseline-tests.json",
+      "sha256": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b",
+      "bytes": 946
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/orch-build-isolated-root.json",
+      "sha256": "81a2ce1b02a25ee2555c67fe07a6d5639b25ab4005c2fc3afe57bccad4c2ec98",
+      "bytes": 953
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/orch-race-tests.json",
+      "sha256": "cd2f6848150c7d5cd59d741f50fe00b56318fc4a3611be9497b21fee33495d42",
+      "bytes": 948
+    },
+    {
+      "path": "assets/books/inside-orch/validation/intake/postgres-store-owned.json",
+      "sha256": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7",
+      "bytes": 1056
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/03-check.json",
+      "sha256": "58af4a3bbcd54a7deb2b4c3c73214101de94901ba64951b3209f76c05424bc65",
+      "bytes": 79691
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/04-check.json",
+      "sha256": "134e282b71c9c7aaa9053057c375ad6bcd8bc79381c271a2ed5c04861f697950",
+      "bytes": 3464
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/04-timeline.csv",
+      "sha256": "7be3fcd09e140a860331f1f4bcda7451c43a48d7de6e5a105bd4b3a9a8708eba",
+      "bytes": 938
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/05-check.json",
+      "sha256": "a70328a87ffddce0d9c0a9675f9419313041e4592da5ad1e990b43f4bc4df4e9",
+      "bytes": 8112
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch06/combined-restart.json",
+      "sha256": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075",
+      "bytes": 5790
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch10/hand-plan.json",
+      "sha256": "f22af2b3e18a0745fe1c485c92ff2615964d3104d3783fd6b27c6bc02a05b960",
+      "bytes": 800
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch11/focused-tests.json",
+      "sha256": "3e5dd647c3e6944e04227e4d619f426c90e96c9f21b08b27818eea4407877618",
+      "bytes": 866
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch12/focused-tests.json",
+      "sha256": "2070ecfb4531ed80b042d604aac8ea4b58a50f0f1f0b28b12e11db7d38b77b5e",
+      "bytes": 1069
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch13/focused-tests.json",
+      "sha256": "2c47d86c23267cf1ae78af45df44f2754d1cb1516dcf78a87c4e86c65a964ed4",
+      "bytes": 1047
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch14/focused-tests-loopback.json",
+      "sha256": "e23b2367603552a493e97c8a79298ceedf348dc0090ba02dcd4dfceeb3b90855",
+      "bytes": 1013
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch14/focused-tests.json",
+      "sha256": "a02c61cd357bde31bb52947dcf2646f5dd22addae582f25fa04d75f673b4dc07",
+      "bytes": 986
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch15/atlas-events-corrected.json",
+      "sha256": "74a29ef1307b2b7e812551fc7e2d3be58f18812470fb3d4ed60ffa6a8ce634c3",
+      "bytes": 840
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch15/focused-tests.json",
+      "sha256": "7c4d561666c2c3161a13438e23d2e7aae05553b48f6ae46a20cbf64c1ebf99dc",
+      "bytes": 901
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch16/focused-tests.json",
+      "sha256": "75980ae84b34fc8ab40afb79d22316f42fb218f7c779483b765e9df266e95e61",
+      "bytes": 964
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch25/focused-tests.json",
+      "sha256": "65f4525dc9a89275d54e0856da576f014dfcf7e6327969a15f3ef04e2f197def",
+      "bytes": 960
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch26/focused-tests.json",
+      "sha256": "466e224b90d7120ad219bf040e359c060b6d2400aba83b4d555b54eb3da7eb16",
+      "bytes": 941
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch27/focused-tests.json",
+      "sha256": "78dba1979277605940b9dcbfc409394d064ec9841a851a1cef314821f12c23dd",
+      "bytes": 982
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch28/focused-tests.json",
+      "sha256": "1e56ae7eb58164c73319eda16ba5f98cbae370dd41d53a24d57d7a6a776c8c6a",
+      "bytes": 1035
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch29/teaching-fixture.json",
+      "sha256": "fcaeb94b9b5125104d0c3827f540b52aba325db12c0b4d6347a126788678d8f6",
+      "bytes": 674
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch30/focused-tests.json",
+      "sha256": "306789250bce246f124104f2027e0b97727e97120b8fc863e93beeaff6582a3b",
+      "bytes": 1016
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch30/teaching-fixture.json",
+      "sha256": "ca0190c837d8dbaa82bc49e288c999572af5caaf406c7b035c7712a6bc07b03c",
+      "bytes": 807
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch31/focused-tests.json",
+      "sha256": "116bd803eac9d285fedeb6f18798fc65ae30bc06a60cc638af357512c56e9a78",
+      "bytes": 978
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch31/teaching-fixture.json",
+      "sha256": "d9378dac5608e7cfe3375902d28e7f1c919fca61faf51d096240a5fff9044f88",
+      "bytes": 805
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch32/focused-tests.json",
+      "sha256": "56d8fc1a1fbaa72e7c1d7e46d0bdca69669a21abe22cee432ca8b8a39f709c07",
+      "bytes": 939
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch33/adapter-contract.json",
+      "sha256": "a83a4a1777cd5a3587ed27996c98847453e2213a955c0451e0ab05185515c80a",
+      "bytes": 824
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch34/leadership-tests.json",
+      "sha256": "d730963e594c9fb83cb508fef304cc85e7e37de9eab6fe265200b75d7af2b6a2",
+      "bytes": 899
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch35/controlled-preflight-corrected.json",
+      "sha256": "7b08c9b3f68187f2331e67c20a5d4a4670825397ed8a4924da82b02a0014bb16",
+      "bytes": 866
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch35/operations-tests.json",
+      "sha256": "5b04320dd4a7d3737c703bda1bdfab5eda123dc613ab25003f20f98ae363487d",
+      "bytes": 1194
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch36/bounded-port-fuzz.json",
+      "sha256": "d327818ff48f089693daaccf8a0c4d23e5daf288bb607baefa1e9b90246a182c",
+      "bytes": 977
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch36/seeded-properties.json",
+      "sha256": "50a74510d57c646dad2db3e23a8d0946e60ed4952e77246464be278c4eea97ea",
+      "bytes": 1193
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch37/fault-tests.json",
+      "sha256": "2faef0c686b11be980f183b2d74de9481e11921369e1c91450252e76dab25b24",
+      "bytes": 1100
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch38/failed-pull-emission.json",
+      "sha256": "209be9bb58c621974a64288c591bb2b788950d6f37aad6c832641fba17b6817a",
+      "bytes": 837
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch38/metrics-tests.json",
+      "sha256": "2666a00e3bd521d43c2d471da40f2681b37c0a80b321e2c173871bca0c246aa8",
+      "bytes": 945
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch39/bounded-benchmarks.json",
+      "sha256": "ec2356a2e562e5ce0a6b95a479b284cb0d6e95e5fbde01492fd249fa8a647ae4",
+      "bytes": 1110
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch39/bounded-fake-load.json",
+      "sha256": "7aa9c25ea95a575f20ce6af7033ebc4f6b2016aaf5a55b493b3593d319bc4ded",
+      "bytes": 808
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch39/scheduler-profile-absolute.json",
+      "sha256": "8ba7a25fc86b56b74edd87eb8835d9322f668c04c526b0ff76ed9fed5dbd68c3",
+      "bytes": 1139
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch39/scheduler-summary.json",
+      "sha256": "e083d9cfb460f8695dbc8385165bed145b8e87579291792ff6d04f3c80c338b2",
+      "bytes": 1688
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch39/thousand-service-scale.json",
+      "sha256": "d366c928455749ae536377690273e6c166ba8ae2fe002c62088a110cf5d49fb2",
+      "bytes": 987
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/ch40/dossier-integrity-corrected.json",
+      "sha256": "031e9b901fa4b76954ca847bb824f69cbf6e939765580ff368e83d3b338fa3d5",
+      "bytes": 698
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab02-concurrent-claims.json",
+      "sha256": "aefabbc1054793621884b951493d39a1fef6a2448118584ca33d29a519b0490f",
+      "bytes": 1015
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab02-model-and-permutations.json",
+      "sha256": "fd3583028a96de31678502374e166fb0d9783bfb1fa9cbb6618978d9c2ed43f4",
+      "bytes": 939
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab04-rollout-observed.json",
+      "sha256": "94b8b0f2fc468d0134fba0945ce62b1782cdb0a7e366da6bc0227435bfe6cbe9",
+      "bytes": 908
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab04-rollout-observed.stdout.txt",
+      "sha256": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+      "bytes": 34828
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab05-security-local-probes.json",
+      "sha256": "cf3e3920a814189170f32087249d22594fdb54314128cf3280d6692affe0c8d4",
+      "bytes": 930
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab05-security-local-probes.stdout.txt",
+      "sha256": "aed261c15eceda60945729949f437b4eba9caa4eb82c7d2382dfd831964454d1",
+      "bytes": 13391
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab08-fixed-seed-fake-load.json",
+      "sha256": "d9fc3eafbc7789accda0c0c924d9f1562204771dbc308036cb2e262b5fa97447",
+      "bytes": 825
+    },
+    {
+      "path": "assets/books/inside-orch/validation/labs/lab08-fixed-seed-fake-load.stdout.txt",
+      "sha256": "8a7a658dd6151e5f9246aa47b1998bf87db8d639a4cda8c462de499c3f7964ef",
+      "bytes": 209
+    },
+    {
+      "path": "assets/books/inside-orch/validation/reviews/ch17-24-fresh-source-tests.json",
+      "sha256": "bac2e64984036447b6446706996c941216d310b152fa5243d72f614e1a54e720",
+      "bytes": 8851
+    },
+    {
+      "path": "assets/books/inside-orch/validation/reviews/ch17-24-source-tests.json",
+      "sha256": "df6dc04ada213deb77e26d94c9e15702dd1bbb5cebeab282ccb25e711a441d75",
+      "bytes": 1067
+    },
+    {
+      "path": "_site/books/inside-orch/00-preface.html",
+      "sha256": "c998b4274931d410e40f041cae57e81b648801578d01cdac4217ac057963ca24",
+      "bytes": 72284
+    },
+    {
+      "path": "_site/books/inside-orch/01-why-build-a-container-orchestrator.html",
+      "sha256": "47eb42dbcab1d158673ef607bd34e7e31696f6b75697b7f31a6afdbcbbf3e912",
+      "bytes": 81598
+    },
+    {
+      "path": "_site/books/inside-orch/02-a-repository-built-for-reasoning.html",
+      "sha256": "508f28aa62f9b0943d034a05b87794914396328aea26ed837e53e6671484a594",
+      "bytes": 81249
+    },
+    {
+      "path": "_site/books/inside-orch/03-boot-the-lab-and-deploy-the-first-service.html",
+      "sha256": "1f522c05109f490687bce9472803fe2f95d2d634043360666ac1753bcd4d4fbb",
+      "bytes": 83380
+    },
+    {
+      "path": "_site/books/inside-orch/04-domain-models-and-state-machines.html",
+      "sha256": "c99632d6d2357245a0de22f088d42296f97733a3d2c0bea2ba93e50c0bb6fec9",
+      "bytes": 82865
+    },
+    {
+      "path": "_site/books/inside-orch/05-service-specifications-resources-and-ports.html",
+      "sha256": "9a853e5b27667b634b6c3137ef079179450252c65ca4965f48ea0d06e12602a2",
+      "bytes": 83402
+    },
+    {
+      "path": "_site/books/inside-orch/06-follow-one-request-through-the-control-plane.html",
+      "sha256": "af70fdcb1724e53b3fafaf342b65a39957c19ed86f3c9bfc94fd135f0ff097d6",
+      "bytes": 82520
+    },
+    {
+      "path": "_site/books/inside-orch/07-http-contracts-and-compatible-apis.html",
+      "sha256": "f789cafd7be3c5c1ac54169b471da8e99ba91054a608fb3e466566bdf5c1236a",
+      "bytes": 82991
+    },
+    {
+      "path": "_site/books/inside-orch/08-a-cli-that-operators-can-automate.html",
+      "sha256": "9121444287e9e61b9b691184cdfe6a832e25b6ebc38a40d89e18e9951a14e274",
+      "bytes": 82671
+    },
+    {
+      "path": "_site/books/inside-orch/09-persistence-transactions-and-optimistic-concurrency.html",
+      "sha256": "69d359a8536665860351d82ba48177edfba2a0b7ab710bcbf936ea0feadd60d5",
+      "bytes": 83291
+    },
+    {
+      "path": "_site/books/inside-orch/10-a-deterministic-scheduler.html",
+      "sha256": "f8ad3e5737f55d020cda43c44278a85aceb4cff2fa9f76e86cf71443fbfdbd43",
+      "bytes": 82305
+    },
+    {
+      "path": "_site/books/inside-orch/11-reconciliation-as-repeated-convergence.html",
+      "sha256": "64cd2d537a280105bcc5b3e77e4a7e03255155fe100c7db488dead23254af1d0",
+      "bytes": 82104
+    },
+    {
+      "path": "_site/books/inside-orch/12-idempotent-docker-operations-and-drift.html",
+      "sha256": "48048340f1c107dbfbaaf759ef1a347d2f2c5de055b01ab09a61c362f528afcb",
+      "bytes": 82939
+    },
+    {
+      "path": "_site/books/inside-orch/13-agents-heartbeats-and-task-reports.html",
+      "sha256": "853f4141c7eceb4a512cb54efc64bbf1b73aa167ffeb711fd253b6df8c5b85b5",
+      "bytes": 82764
+    },
+    {
+      "path": "_site/books/inside-orch/14-health-checks-that-respect-trust-boundaries.html",
+      "sha256": "37f8931d9a616bc33cfca5fbecf53ba779d888bc36ca25377978d29ec514bcb7",
+      "bytes": 82644
+    },
+    {
+      "path": "_site/books/inside-orch/15-events-audits-and-notification-boundaries.html",
+      "sha256": "c1fb1e9561d956ae00823d1dcdb67474223f56e884d07cf1c1888a7261bb3ba9",
+      "bytes": 82927
+    },
+    {
+      "path": "_site/books/inside-orch/16-log-streaming-without-losing-control.html",
+      "sha256": "804123c399b4efb306a9536d23e21e4f4307e37042ac2b8a6d8acbb370c7bdac",
+      "bytes": 82492
+    },
+    {
+      "path": "_site/books/inside-orch/17-rolling-updates-and-rollback-invariants.html",
+      "sha256": "70fb0835b2c6883f40273c4f385c53d3fa297227f864f923cbcd3b6e58d3b503",
+      "bytes": 82782
+    },
+    {
+      "path": "_site/books/inside-orch/18-safe-deletion-and-resource-cleanup.html",
+      "sha256": "2012d84996946cfe816cd05bf8eb647aae916bddc397ac6f3303e951d6a46c46",
+      "bytes": 83144
+    },
+    {
+      "path": "_site/books/inside-orch/19-offline-nodes-draining-and-rescheduling.html",
+      "sha256": "631c5de203f94f3fd2763a17e00e84079187efc29b70290e6094cc029b323feb",
+      "bytes": 84011
+    },
+    {
+      "path": "_site/books/inside-orch/20-endpoint-discovery-and-internal-dns.html",
+      "sha256": "f0050f1d4b883185cf388d8fd2f41b9471c03559f22e30d32fa7c14622df257d",
+      "bytes": 82343
+    },
+    {
+      "path": "_site/books/inside-orch/21-ingress-host-networking-and-the-overlay-roadmap.html",
+      "sha256": "8a82c86c948d700508eb10cd51bba36166b7bac03bf196a970386a669a67bf02",
+      "bytes": 82992
+    },
+    {
+      "path": "_site/books/inside-orch/22-autoscaling-decisions-and-missing-integration.html",
+      "sha256": "68df2b186ed5b04aed9785aaf6801df310b571a98662a9a7b8b4dd31feb65b36",
+      "bytes": 83408
+    },
+    {
+      "path": "_site/books/inside-orch/23-authentication-authorization-and-node-trust.html",
+      "sha256": "ff5abac5224fa66b81ffdc8dce2741f4b962d9741e6ea41606237cd1bfab49dc",
+      "bytes": 82744
+    },
+    {
+      "path": "_site/books/inside-orch/24-encrypted-secrets-and-configuration-redaction.html",
+      "sha256": "d675a2044fabcde2e1e81f22aad6746b4dadbda89948f3370e502c96eca5820f",
+      "bytes": 84892
+    },
+    {
+      "path": "_site/books/inside-orch/25-registry-credentials-and-immutable-image-identity.html",
+      "sha256": "968243299f91a0825a09a30d6e7d5a769a350800e6caf05071e5fc3e33f4b478",
+      "bytes": 83047
+    },
+    {
+      "path": "_site/books/inside-orch/26-security-contexts-admission-and-policy.html",
+      "sha256": "cab53f833cda2fbf329ad3eddf260197e55d3884840c0feb03fb80488d9a4923",
+      "bytes": 82120
+    },
+    {
+      "path": "_site/books/inside-orch/27-namespaces-and-the-limits-of-multi-tenancy.html",
+      "sha256": "6a223bcbc575b0a76e0894184852f0137767ff07b8ebc3a71c9986ac6f5da31b",
+      "bytes": 81542
+    },
+    {
+      "path": "_site/books/inside-orch/28-quotas-and-usage-accounting.html",
+      "sha256": "6142be343c1498133ea7e826dad64cdf74e36009ecc4f3dbd28268ae0d0ad326",
+      "bytes": 81705
+    },
+    {
+      "path": "_site/books/inside-orch/29-supply-chain-designs-without-false-guarantees.html",
+      "sha256": "932459c96b7b3acbc608b7d5e7f97a59466f5d3d63d03743e2f96822bf248198",
+      "bytes": 82460
+    },
+    {
+      "path": "_site/books/inside-orch/30-gitops-drift-and-controlled-reconciliation.html",
+      "sha256": "1686cc56b8ded00a38f58bf0bb08e434f53dfc43d9988e74441dc1e35cc8ce36",
+      "bytes": 82504
+    },
+    {
+      "path": "_site/books/inside-orch/31-finite-jobs-and-time-based-work.html",
+      "sha256": "ae50d20846803913399c4e33d0c953afeec9832bd65dfc49a585f83fe7815f36",
+      "bytes": 82474
+    },
+    {
+      "path": "_site/books/inside-orch/32-local-volumes-claims-and-workload-topology.html",
+      "sha256": "82f1a8b7d4e0147b0e4e120e1f13a9ed5192dfcd106c6db1a95212777d67312b",
+      "bytes": 82510
+    },
+    {
+      "path": "_site/books/inside-orch/33-extension-interfaces-and-a-plugin-roadmap.html",
+      "sha256": "f0880a05a8093a415d2332b21fa1de6e0f4710850955a5171376fd3410b793a0",
+      "bytes": 82472
+    },
+    {
+      "path": "_site/books/inside-orch/34-leader-election-and-the-durable-ha-boundary.html",
+      "sha256": "a3b9a339237dc0914cfa1cc00b7cbfc384c497791df66ac002df58aaa696fc88",
+      "bytes": 81783
+    },
+    {
+      "path": "_site/books/inside-orch/35-upgrades-migrations-maintenance-and-retention.html",
+      "sha256": "1da2c8ada251bb1977d60f6489fec9784b468a2aa85bba4cad06494f3ee72be2",
+      "bytes": 82034
+    },
+    {
+      "path": "_site/books/inside-orch/36-fakes-property-tests-fuzzing-and-contracts.html",
+      "sha256": "222ddd9f96edf58642568e6c4cf6c292683cf0b5df62be383723aa798896cb7a",
+      "bytes": 81546
+    },
+    {
+      "path": "_site/books/inside-orch/37-failure-injection-and-recovery-evidence.html",
+      "sha256": "dd70f470e30f7325f3ca575c14f2be0e3114aa8fd1f748d4461fe5da26d417cd",
+      "bytes": 82095
+    },
+    {
+      "path": "_site/books/inside-orch/38-metrics-dashboards-and-actionable-signals.html",
+      "sha256": "cb1c53da0a444288d0afcf28b202a1f788e9fc55ccde7fb8a9c35b9cf026dd34",
+      "bytes": 82267
+    },
+    {
+      "path": "_site/books/inside-orch/39-performance-and-scale-tests-that-say-what-they-measure.html",
+      "sha256": "13283beb2e5b2da4267a8031627df83601f3e65dead1882cf55affadf6e7d321",
+      "bytes": 81620
+    },
+    {
+      "path": "_site/books/inside-orch/40-release-a-system-you-can-honestly-operate.html",
+      "sha256": "a4a66164bc8c338bb1e72b64fa75aa226b4f1a2fc1038e70b8b6788564d675f4",
+      "bytes": 82320
+    },
+    {
+      "path": "_site/books/inside-orch/a-cli-api-config.html",
+      "sha256": "d8abe1aaf240f6bad7bbf45aac69d135642effc6e5f73a025e8b7490b46c9717",
+      "bytes": 86163
+    },
+    {
+      "path": "_site/books/inside-orch/b-lifecycle-invariants.html",
+      "sha256": "09e1d97599c5b856995d544774e05770e8247442318d7bc3eb5fc45a901d66bd",
+      "bytes": 82690
+    },
+    {
+      "path": "_site/books/inside-orch/c-annotated-history.html",
+      "sha256": "a8980fb94d43950998daa442b4e3ea61edc02b3ccd203adcdb3015a402ec164f",
+      "bytes": 84469
+    },
+    {
+      "path": "_site/books/inside-orch/companion/examples/teaching-extensions/ch34/ADR-durable-composition.html",
+      "sha256": "d297593651890550fbe09f24c180e6e1764d2a645700198d096e2954206274d1",
+      "bytes": 29194
+    },
+    {
+      "path": "_site/books/inside-orch/companion/exercises/questions.html",
+      "sha256": "3bf0d87e5db51e9361ca88be0511dd608aa64d0ae1e259d18c85c63a3b5546d8",
+      "bytes": 48999
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/01-initialization-restart/README.html",
+      "sha256": "2319459f3feab7bb3d9b5e58dead1674e8214b4d6ede0f09b4c013e38013a5f2",
+      "bytes": 37799
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/02-scheduler-placement/README.html",
+      "sha256": "dae4042dfd86f1b75002b0adb0da881f33d70948e262881fc680e0dc808f4ab7",
+      "bytes": 38765
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/03-reconciler-drift/README.html",
+      "sha256": "bba78579078f52e706537356d912de81a3d24a8852eabeb2aced605e1f815a66",
+      "bytes": 37378
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/04-rollout-rollback/README.html",
+      "sha256": "823504c2435daa262d76322e4021831302a6c1b50a7ccf4a953383e59b761159",
+      "bytes": 35105
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/05-security-boundaries/README.html",
+      "sha256": "78598cdd5f96e072c15f50652d2b7787080fd9c885e3753bef33b60d0c071266",
+      "bytes": 37353
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/06-namespaces-quotas/README.html",
+      "sha256": "2ce55e4f5db90eaaf10d053e19997274c24a0975abad4d19febe7d93e9782d10",
+      "bytes": 36745
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/07-gitops-jobs-cron/README.html",
+      "sha256": "bbbe0c3a2ec9685f101b61480ef54d92552d718bbd4a13d36a282b685afc926d",
+      "bytes": 36714
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/08-recovery-boundaries/README.html",
+      "sha256": "fb9336c7a23bc37522525b4ac22e8f737c729e039a91ab92867e47b8a4b01a36",
+      "bytes": 36233
+    },
+    {
+      "path": "_site/books/inside-orch/companion/labs/ENVIRONMENT.html",
+      "sha256": "eb27c39b8549652711c59b132aa7315ae91697efc84e408850c9568d8a70871c",
+      "bytes": 36196
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/appendix-d.html",
+      "sha256": "55d4c50284401c5da931163966c2ecad887124e27d2da45f1d59d3abfeb2c0d0",
+      "bytes": 42156
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch01.html",
+      "sha256": "9f565afac008cda054fd729402d4d8782aa6ebc5dd30af9d4206c34a07b90a4d",
+      "bytes": 28929
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch02.html",
+      "sha256": "bc2d19270ce5a9b55c9e75f5525e5726f3e13697709dafe9b2579861ffdf013e",
+      "bytes": 28836
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch03.html",
+      "sha256": "bfad6ca24a865c1c11eade29885f1ddd9f24c0403a5af517c616acbbc92ef69b",
+      "bytes": 29017
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch04.html",
+      "sha256": "2c808bb6e86b84e6ae42d8c0e24b888859f0ed7b985734c6ba4159b6b5a4e041",
+      "bytes": 29144
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch05.html",
+      "sha256": "63a3bd49077b52a006dd0452287e315c58361e932859e7a29e420e404f3fbd1d",
+      "bytes": 28913
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch06.html",
+      "sha256": "978db3e74668ec4f185d52479dd28208d4ab4001949b64b8aa4ecfc118767c5a",
+      "bytes": 29017
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch07.html",
+      "sha256": "9dc585d143425fdfd3c7a90458411d6f6e04875425a3e4b2a4a8756bb0050569",
+      "bytes": 28703
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch08.html",
+      "sha256": "acee8eb6fe61503b8881106975ea4e1785642e7f32750245a30ede2a7c6f0844",
+      "bytes": 28892
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch09.html",
+      "sha256": "3e9264a3d745808b3dfba02aa75ec735e9c1a3f3488f732b7c801479f266f7b2",
+      "bytes": 29656
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch10.html",
+      "sha256": "d1da94b97d0a4da142fe82a902e20558bdfeb7f697deaadcabe4255c6d6633aa",
+      "bytes": 29496
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch11.html",
+      "sha256": "eda40f4421aaa8032dae339106245abf55f3c697cff6b1cabedb8cac0180c568",
+      "bytes": 29181
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch12.html",
+      "sha256": "003d44d3500efa61761b4fe6a3edaa056a9aa5441b4f8b51712890383cfbda05",
+      "bytes": 29200
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch13.html",
+      "sha256": "05f93db1aa569de9bdec39d8c2e7ede4aaf8bc8508db3dbf6a33331cab77c571",
+      "bytes": 29277
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch14.html",
+      "sha256": "9e18f38b5ad469a736fc7efb835c39a60434f3b2adc06c1a2c6a39360b944d3c",
+      "bytes": 29059
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch15.html",
+      "sha256": "9e628bfab1506c1501c8973fa8eb246164cbae658f5e25158a25f5611475a444",
+      "bytes": 29187
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch16.html",
+      "sha256": "45e773f036437cbb6923f0620da4f0c13884af2f878ea3e8ca5d4e87bf57313f",
+      "bytes": 29124
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch17.html",
+      "sha256": "a10177b249a50bd6bc85b850b9cf15c03f647816ca6fa2d892307f4d36be0438",
+      "bytes": 28398
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch18.html",
+      "sha256": "3930a1582626e403bf6649838f4ed8853cb34b9ffe0e11121ac8417c6a8cd049",
+      "bytes": 28354
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch19.html",
+      "sha256": "9ecff39545ec64ca0b13ce4b7015ce9be18d45fac370fe8d85ab52b704ed4ef7",
+      "bytes": 28284
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch20.html",
+      "sha256": "d66f17eb4bea142bae0f25e128b3934e7c3b23857690ba72dd97a691fc3fcaf1",
+      "bytes": 28215
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch21.html",
+      "sha256": "af730c1a6f7ea79dea5dd392edc6591af5d1b90dc6acde31d11283c120cd19c9",
+      "bytes": 28221
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch22.html",
+      "sha256": "80d3757dd9f9334d06f95698014e7c2137082be954e895b00f457944b903387d",
+      "bytes": 28237
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch23.html",
+      "sha256": "c7593bf983364b39fd9643343810323cc7356fbfe78b0ffef2b164dd8cd356ce",
+      "bytes": 28169
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch24.html",
+      "sha256": "223816200c09a98020e92d797e03dc04b036d5d61ced9c67916a9c5a12246745",
+      "bytes": 28305
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch25.html",
+      "sha256": "52245a9b59a2045817a9e115c373b0548172a779fc3b5105775c37e9e428a97e",
+      "bytes": 28903
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch26.html",
+      "sha256": "ddbedfb2588bbf327c40d835ce6f7d983a5a41652dc09b5cd69e318ba90e37c0",
+      "bytes": 28845
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch27.html",
+      "sha256": "7cc2e81191c84ab81362509e8c1c11e46a59e93d4ddcfd955efb4f963815bb05",
+      "bytes": 28834
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch28.html",
+      "sha256": "dea6befceeeaa61fe3ae06d9bc430009a1c19de0fdee9d4b6c9acb75c165cf5c",
+      "bytes": 28954
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch29.html",
+      "sha256": "c4ee33759cca8e07fddd9c645cde132aa92ead8fecd4008b9cdcc0f8c9687bfb",
+      "bytes": 28875
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch30.html",
+      "sha256": "4c6098d926b319c530cd0f22bc25804005ed1a55a91078b161fe73f3dda4d0e3",
+      "bytes": 28854
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch31.html",
+      "sha256": "cf066a0b42a1ba1b7555f6a6b2b91de04fbe03a2900180ed0a751ac47fabcf49",
+      "bytes": 28754
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch32.html",
+      "sha256": "1b4abd25c4bbf9357dc0660231ff9f68e914eb377d24b710c3b3129cf131f3a2",
+      "bytes": 28948
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch33.html",
+      "sha256": "653c54708ac655820cf72b10dfd8d6b4fded9dc3ce54803ce9eb84e7cc1a919b",
+      "bytes": 29247
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch34.html",
+      "sha256": "0d0a911fd5409ca4166af30b65491cf9269961d4361f3b506aa3e69825cc81e3",
+      "bytes": 29133
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch35.html",
+      "sha256": "6c4315beb1199fc9ec15a2117f623c6e37ba63e67359399cd774e1800cda571e",
+      "bytes": 29031
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch36.html",
+      "sha256": "4247c34b3a9c693478ffb4a927fda75da16de8d1c47ffffa41cc6604f1f21afb",
+      "bytes": 29103
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch37.html",
+      "sha256": "75f98ca4a74af27aa5a9feddfb76ed26f3f9c0e2de0328dacef1260cde9df262",
+      "bytes": 29122
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch38.html",
+      "sha256": "2e8436a8d274cfa8c598b63c7491cbcdc6aaaf0e3d3319936ef91d4f74a18e59",
+      "bytes": 29162
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch39.html",
+      "sha256": "a4165f82e793d8b871b5c0d7217d5eabedb09feeaa874a63d9d7c1f135d39223",
+      "bytes": 29247
+    },
+    {
+      "path": "_site/books/inside-orch/companion/manuscript/solutions/ch40.html",
+      "sha256": "37dfe25274af8b8b7de8ba0a771e1d01847851aad3e8ae96131cd32a0c05b0e7",
+      "bytes": 29487
+    },
+    {
+      "path": "_site/books/inside-orch/d-exercises-solutions.html",
+      "sha256": "0f2612c044fc80f0b2dc1308c2a8eaafa47adbc2860f5589c5ec62a25960452e",
+      "bytes": 87304
+    },
+    {
+      "path": "_site/books/inside-orch/downloads/inside-orch.epub",
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+      "bytes": 991265
+    },
+    {
+      "path": "_site/books/inside-orch/downloads/inside-orch.pdf",
+      "sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+      "bytes": 1924420
+    },
+    {
+      "path": "_site/books/inside-orch/e-ops-measurement.html",
+      "sha256": "d1f394bd20e096ff9f6bc9c9b348ea811a39a73a916c39c793017eab62cdfedf",
+      "bytes": 78453
+    },
+    {
+      "path": "_site/books/inside-orch/f-glossary-bibliography.html",
+      "sha256": "01c7df2bd87957b55e2f26181f6a4d373de8856beb034c929d5e6207fbf55e92",
+      "bytes": 108504
+    },
+    {
+      "path": "_site/books/inside-orch/index.html",
+      "sha256": "22a1b291cfa8767d4392ec9e6ff39aadcb037633ebb7bc411c69d9977612bc7c",
+      "bytes": 50894
+    },
+    {
+      "path": "_site/books/inside-orch/license.html",
+      "sha256": "f3d108135753f70e1eef7a08325caf30f062fc12db18ed2a42bed75b44e840c2",
+      "bytes": 27773
+    },
+    {
+      "path": "_site/assets/books/inside-orch/cover-320.webp",
+      "sha256": "01d2060f48988e62c1abfa6440d02a1761f766a52dc98314db75a7993b7d513f",
+      "bytes": 10238
+    },
+    {
+      "path": "_site/assets/books/inside-orch/cover-640.webp",
+      "sha256": "e59346235fb3902e038cd296bcd4595d578706bfe6f405dabfd4dcb411e79284",
+      "bytes": 24022
+    },
+    {
+      "path": "_site/assets/books/inside-orch/cover-960.webp",
+      "sha256": "c1ff922c0758f59189f5438ee9491b463f8197cea5c1421b52e828b118dbba4c",
+      "bytes": 38390
+    },
+    {
+      "path": "_site/assets/books/inside-orch/downloads/inside-orch.epub",
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+      "bytes": 991265
+    },
+    {
+      "path": "_site/assets/books/inside-orch/downloads/inside-orch.pdf",
+      "sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+      "bytes": 1924420
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/diagrams/task-lifecycle.png",
+      "sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+      "bytes": 154443
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/source-excerpts/ch09/metadata.json",
+      "sha256": "fc97477ee0a5732fe8eae5925b02d7bc8ac5451b73b71395fa4b78995bbd2dce",
+      "bytes": 1061
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/ch33/adapter_contract_test.go",
+      "sha256": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209",
+      "bytes": 3458
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/ch35/preflight_test.go",
+      "sha256": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f",
+      "bytes": 1858
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/ch38/metrics_contract_test.go",
+      "sha256": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532",
+      "bytes": 1044
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/ch40/verify_dossier.py",
+      "sha256": "6d8cb390696c1da0ac3972ce4fbb42156ed80d88125731f7fefb47bcd5399418",
+      "bytes": 2698
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/docker-boundary/main.go",
+      "sha256": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5",
+      "bytes": 9439
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/full-schema/main.go",
+      "sha256": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+      "bytes": 6498
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/lab02/main.go",
+      "sha256": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+      "bytes": 8596
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/rollout/main.go",
+      "sha256": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+      "bytes": 10067
+    },
+    {
+      "path": "_site/assets/books/inside-orch/examples/teaching-extensions/security/main.go",
+      "sha256": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361",
+      "bytes": 12671
+    },
+    {
+      "path": "_site/assets/books/inside-orch/labs/01-initialization-restart/book-http.yaml",
+      "sha256": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+      "bytes": 117
+    },
+    {
+      "path": "_site/assets/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json",
+      "sha256": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740",
+      "bytes": 10758
+    },
+    {
+      "path": "_site/assets/books/inside-orch/labs/03-reconciler-drift/fixtures/cases.json",
+      "sha256": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517",
+      "bytes": 1002
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/NOTICE.md",
+      "sha256": "859f820db254cb8c9bbd9a275dfb1c79e2142c3bd7de5022dbc0e510c9deb26e",
+      "bytes": 4189
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/RIGHTS.md",
+      "sha256": "9b23469d1bded8d33b59fc53304505a0978c33094ff0a08c099a27703848be0f",
+      "bytes": 3027
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/cover.png",
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+      "bytes": 309024
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "sha256": "e180b3d65bf650dffffd71dd21b6180767b469a18dd87e1d8552be69bb9ecdf0",
+      "bytes": 2734
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/fonts/dm-sans-OFL.txt",
+      "sha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+      "bytes": 4482
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/fonts/noto-color-emoji-OFL.txt",
+      "sha256": "7a93e97e1c66391963c255ed6c7759fd73666f06d969051d21e8c6fc1837d27e",
+      "bytes": 4478
+    },
+    {
+      "path": "_site/assets/books/inside-orch/publication/fonts/passion-one-OFL.txt",
+      "sha256": "36c285c5472c625901d4a13da7e31c5ea6126678d31d56cf95572c49f27c8950",
+      "bytes": 4390
+    },
+    {
+      "path": "_site/assets/books/inside-orch/scripts/observe_database_recovery.py",
+      "sha256": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+      "bytes": 4606
+    },
+    {
+      "path": "_site/assets/books/inside-orch/tests/test_recovery_targets.py",
+      "sha256": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d",
+      "bytes": 838
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/appendices.json",
+      "sha256": "67f63b018e91a604d12cb3245dd7353f43062a1e75697f11d77aebbaf76ad7b4",
+      "bytes": 19830
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch09.json",
+      "sha256": "82988a78dee1b613536679b769752ea75bfe03680e162f60debb6950644fc665",
+      "bytes": 3944
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch10.json",
+      "sha256": "46881465eb9d3b2af8e5586891b745a74d5c044c320b1831ab64908916671338",
+      "bytes": 3301
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch11.json",
+      "sha256": "4507d31f04215130307c87c0407813dfc79a2ca6211ffadfe0a036b6246ce21a",
+      "bytes": 3225
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch12.json",
+      "sha256": "fd365c86d02970c4761bcb5965bf76082bb54c7835a1e8fb0dd099c2c94675f9",
+      "bytes": 3233
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch13.json",
+      "sha256": "719a594424bfa43af62f45a5c64ead84f083f78d8cf0e7802112fb1a052178d9",
+      "bytes": 2510
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch14.json",
+      "sha256": "26e3ade83113e0eaab3368d8cc2bf4b4e2029e3b3e65301d17540e33b6ace472",
+      "bytes": 3032
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch15.json",
+      "sha256": "a2d50697e041f9929b4371b36da55dfec8fdb2bbcbf2f45d8afdc6ac7acbc90a",
+      "bytes": 4118
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch16.json",
+      "sha256": "6e09eca59269159a06a19037e532801d1d14f1fd3f79a85e5733b179a0934723",
+      "bytes": 2816
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch25.json",
+      "sha256": "3bcea5d666c1154a8cd7a846a3d5878affde80b8096c3c410849192dbc955f8d",
+      "bytes": 3166
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch26.json",
+      "sha256": "17c4819f1d226b9813cb3b2e2f8f44b1784b28a8e028ce24709c94b5503923e6",
+      "bytes": 2386
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch27.json",
+      "sha256": "a52148ee1b5f7d177a6a0282f90e7072dad114011d78d16720aae54138ab2677",
+      "bytes": 2857
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch28.json",
+      "sha256": "5fbd890b0fc7676838c2d820f7cda417bbcbb5f93eadb2c9d13846240bb1569e",
+      "bytes": 3213
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch29.json",
+      "sha256": "abbb33f72afde808b71145f736181801f1f5c6b6e50dbdc47ee7464798b05c85",
+      "bytes": 2832
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch30.json",
+      "sha256": "bcbe824264ee817a692cda805fb6851f95a63c79991b09d7d5ab6bd3918bff28",
+      "bytes": 3170
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch31.json",
+      "sha256": "c4545649f114ec8c00d719a4565fbdc52cc983bf8f5a013b5f4e9bd4950fecfe",
+      "bytes": 2926
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch32.json",
+      "sha256": "e37c9d67fb7d162906c4db93aa244c0124f3e92197b68fc080fa66d9489e3620",
+      "bytes": 4259
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch33.json",
+      "sha256": "e3c4c4278b68ab8ca5903ad29f8d98c9f4a8d6ecc43fd76346d81670431a399e",
+      "bytes": 3808
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch34.json",
+      "sha256": "22fda59330f19a881c39b30f772da4bdc38f46ba4e1bb4ad2da827bcfa1316dc",
+      "bytes": 5014
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch35.json",
+      "sha256": "b220154cdae8098bbf2678b03d047c3ad322963eb45f3fd0b1cdc8ea03e94ee3",
+      "bytes": 6217
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch36.json",
+      "sha256": "58dc38382e6e0a89594eaa040d33e087f82387ce5b1cb50285175564123905ad",
+      "bytes": 4357
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch37.json",
+      "sha256": "f46e543a795b95b70a6a8be06fc4eb3d4e5bd775c1cabc6dba9fbfe6f3f39764",
+      "bytes": 5417
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch38.json",
+      "sha256": "c0c0711a565b04d6320b6b6c45c9c4e7435b2cae8d901e818de18497e2117051",
+      "bytes": 4990
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch39.json",
+      "sha256": "3f67b9b70c8815da2a7f64f6dc265635e5dfea3fc142eb0a52e4f7f424d7e37d",
+      "bytes": 4461
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/evidence/ch40.json",
+      "sha256": "c833d804732c751aca7f735185f36b2329b9078e06a8a3567a99d766d778639a",
+      "bytes": 4985
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/exercises/mutation-runs.json",
+      "sha256": "fe04fb74f42c58b2867cc5da99d3909e163406b5e34e1c5579d900715e71fc33",
+      "bytes": 11148
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/docker-complete-flow-cleanup.json",
+      "sha256": "0a453580eb89c717485e595bec5a75a8248d14e4f401e0550a8d481c30bc43f6",
+      "bytes": 1393
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/docker-complete-flow-log-guard.json",
+      "sha256": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+      "bytes": 920
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/docker-complete-flow-log-guard.stdout.txt",
+      "sha256": "4ecfc224f795b67942ea7bed175950e2c08fa85a60600a535c826a04a92d1b3e",
+      "bytes": 8385
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/fresh-server-restart-authenticated.json",
+      "sha256": "ad35f2d4b1d3ec597539d8144f0be70d26f5edaf0e9d2995a736320003d2d45c",
+      "bytes": 4424
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/full-schema-recovery-corrected.json",
+      "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+      "bytes": 9477
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/orch-baseline-tests.json",
+      "sha256": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b",
+      "bytes": 946
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/orch-build-isolated-root.json",
+      "sha256": "81a2ce1b02a25ee2555c67fe07a6d5639b25ab4005c2fc3afe57bccad4c2ec98",
+      "bytes": 953
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/orch-race-tests.json",
+      "sha256": "cd2f6848150c7d5cd59d741f50fe00b56318fc4a3611be9497b21fee33495d42",
+      "bytes": 948
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/intake/postgres-store-owned.json",
+      "sha256": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7",
+      "bytes": 1056
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/03-check.json",
+      "sha256": "58af4a3bbcd54a7deb2b4c3c73214101de94901ba64951b3209f76c05424bc65",
+      "bytes": 79691
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/04-check.json",
+      "sha256": "134e282b71c9c7aaa9053057c375ad6bcd8bc79381c271a2ed5c04861f697950",
+      "bytes": 3464
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/04-timeline.csv",
+      "sha256": "7be3fcd09e140a860331f1f4bcda7451c43a48d7de6e5a105bd4b3a9a8708eba",
+      "bytes": 938
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/05-check.json",
+      "sha256": "a70328a87ffddce0d9c0a9675f9419313041e4592da5ad1e990b43f4bc4df4e9",
+      "bytes": 8112
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch06/combined-restart.json",
+      "sha256": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075",
+      "bytes": 5790
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch10/hand-plan.json",
+      "sha256": "f22af2b3e18a0745fe1c485c92ff2615964d3104d3783fd6b27c6bc02a05b960",
+      "bytes": 800
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch11/focused-tests.json",
+      "sha256": "3e5dd647c3e6944e04227e4d619f426c90e96c9f21b08b27818eea4407877618",
+      "bytes": 866
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch12/focused-tests.json",
+      "sha256": "2070ecfb4531ed80b042d604aac8ea4b58a50f0f1f0b28b12e11db7d38b77b5e",
+      "bytes": 1069
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch13/focused-tests.json",
+      "sha256": "2c47d86c23267cf1ae78af45df44f2754d1cb1516dcf78a87c4e86c65a964ed4",
+      "bytes": 1047
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch14/focused-tests-loopback.json",
+      "sha256": "e23b2367603552a493e97c8a79298ceedf348dc0090ba02dcd4dfceeb3b90855",
+      "bytes": 1013
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch14/focused-tests.json",
+      "sha256": "a02c61cd357bde31bb52947dcf2646f5dd22addae582f25fa04d75f673b4dc07",
+      "bytes": 986
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch15/atlas-events-corrected.json",
+      "sha256": "74a29ef1307b2b7e812551fc7e2d3be58f18812470fb3d4ed60ffa6a8ce634c3",
+      "bytes": 840
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch15/focused-tests.json",
+      "sha256": "7c4d561666c2c3161a13438e23d2e7aae05553b48f6ae46a20cbf64c1ebf99dc",
+      "bytes": 901
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch16/focused-tests.json",
+      "sha256": "75980ae84b34fc8ab40afb79d22316f42fb218f7c779483b765e9df266e95e61",
+      "bytes": 964
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch25/focused-tests.json",
+      "sha256": "65f4525dc9a89275d54e0856da576f014dfcf7e6327969a15f3ef04e2f197def",
+      "bytes": 960
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch26/focused-tests.json",
+      "sha256": "466e224b90d7120ad219bf040e359c060b6d2400aba83b4d555b54eb3da7eb16",
+      "bytes": 941
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch27/focused-tests.json",
+      "sha256": "78dba1979277605940b9dcbfc409394d064ec9841a851a1cef314821f12c23dd",
+      "bytes": 982
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch28/focused-tests.json",
+      "sha256": "1e56ae7eb58164c73319eda16ba5f98cbae370dd41d53a24d57d7a6a776c8c6a",
+      "bytes": 1035
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch29/teaching-fixture.json",
+      "sha256": "fcaeb94b9b5125104d0c3827f540b52aba325db12c0b4d6347a126788678d8f6",
+      "bytes": 674
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch30/focused-tests.json",
+      "sha256": "306789250bce246f124104f2027e0b97727e97120b8fc863e93beeaff6582a3b",
+      "bytes": 1016
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch30/teaching-fixture.json",
+      "sha256": "ca0190c837d8dbaa82bc49e288c999572af5caaf406c7b035c7712a6bc07b03c",
+      "bytes": 807
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch31/focused-tests.json",
+      "sha256": "116bd803eac9d285fedeb6f18798fc65ae30bc06a60cc638af357512c56e9a78",
+      "bytes": 978
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch31/teaching-fixture.json",
+      "sha256": "d9378dac5608e7cfe3375902d28e7f1c919fca61faf51d096240a5fff9044f88",
+      "bytes": 805
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch32/focused-tests.json",
+      "sha256": "56d8fc1a1fbaa72e7c1d7e46d0bdca69669a21abe22cee432ca8b8a39f709c07",
+      "bytes": 939
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch33/adapter-contract.json",
+      "sha256": "a83a4a1777cd5a3587ed27996c98847453e2213a955c0451e0ab05185515c80a",
+      "bytes": 824
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch34/leadership-tests.json",
+      "sha256": "d730963e594c9fb83cb508fef304cc85e7e37de9eab6fe265200b75d7af2b6a2",
+      "bytes": 899
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch35/controlled-preflight-corrected.json",
+      "sha256": "7b08c9b3f68187f2331e67c20a5d4a4670825397ed8a4924da82b02a0014bb16",
+      "bytes": 866
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch35/operations-tests.json",
+      "sha256": "5b04320dd4a7d3737c703bda1bdfab5eda123dc613ab25003f20f98ae363487d",
+      "bytes": 1194
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch36/bounded-port-fuzz.json",
+      "sha256": "d327818ff48f089693daaccf8a0c4d23e5daf288bb607baefa1e9b90246a182c",
+      "bytes": 977
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch36/seeded-properties.json",
+      "sha256": "50a74510d57c646dad2db3e23a8d0946e60ed4952e77246464be278c4eea97ea",
+      "bytes": 1193
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch37/fault-tests.json",
+      "sha256": "2faef0c686b11be980f183b2d74de9481e11921369e1c91450252e76dab25b24",
+      "bytes": 1100
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch38/failed-pull-emission.json",
+      "sha256": "209be9bb58c621974a64288c591bb2b788950d6f37aad6c832641fba17b6817a",
+      "bytes": 837
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch38/metrics-tests.json",
+      "sha256": "2666a00e3bd521d43c2d471da40f2681b37c0a80b321e2c173871bca0c246aa8",
+      "bytes": 945
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch39/bounded-benchmarks.json",
+      "sha256": "ec2356a2e562e5ce0a6b95a479b284cb0d6e95e5fbde01492fd249fa8a647ae4",
+      "bytes": 1110
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch39/bounded-fake-load.json",
+      "sha256": "7aa9c25ea95a575f20ce6af7033ebc4f6b2016aaf5a55b493b3593d319bc4ded",
+      "bytes": 808
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch39/scheduler-profile-absolute.json",
+      "sha256": "8ba7a25fc86b56b74edd87eb8835d9322f668c04c526b0ff76ed9fed5dbd68c3",
+      "bytes": 1139
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch39/scheduler-summary.json",
+      "sha256": "e083d9cfb460f8695dbc8385165bed145b8e87579291792ff6d04f3c80c338b2",
+      "bytes": 1688
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch39/thousand-service-scale.json",
+      "sha256": "d366c928455749ae536377690273e6c166ba8ae2fe002c62088a110cf5d49fb2",
+      "bytes": 987
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/ch40/dossier-integrity-corrected.json",
+      "sha256": "031e9b901fa4b76954ca847bb824f69cbf6e939765580ff368e83d3b338fa3d5",
+      "bytes": 698
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab02-concurrent-claims.json",
+      "sha256": "aefabbc1054793621884b951493d39a1fef6a2448118584ca33d29a519b0490f",
+      "bytes": 1015
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab02-model-and-permutations.json",
+      "sha256": "fd3583028a96de31678502374e166fb0d9783bfb1fa9cbb6618978d9c2ed43f4",
+      "bytes": 939
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab04-rollout-observed.json",
+      "sha256": "94b8b0f2fc468d0134fba0945ce62b1782cdb0a7e366da6bc0227435bfe6cbe9",
+      "bytes": 908
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab04-rollout-observed.stdout.txt",
+      "sha256": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+      "bytes": 34828
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab05-security-local-probes.json",
+      "sha256": "cf3e3920a814189170f32087249d22594fdb54314128cf3280d6692affe0c8d4",
+      "bytes": 930
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab05-security-local-probes.stdout.txt",
+      "sha256": "aed261c15eceda60945729949f437b4eba9caa4eb82c7d2382dfd831964454d1",
+      "bytes": 13391
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab08-fixed-seed-fake-load.json",
+      "sha256": "d9fc3eafbc7789accda0c0c924d9f1562204771dbc308036cb2e262b5fa97447",
+      "bytes": 825
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/labs/lab08-fixed-seed-fake-load.stdout.txt",
+      "sha256": "8a7a658dd6151e5f9246aa47b1998bf87db8d639a4cda8c462de499c3f7964ef",
+      "bytes": 209
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/reviews/ch17-24-fresh-source-tests.json",
+      "sha256": "bac2e64984036447b6446706996c941216d310b152fa5243d72f614e1a54e720",
+      "bytes": 8851
+    },
+    {
+      "path": "_site/assets/books/inside-orch/validation/reviews/ch17-24-source-tests.json",
+      "sha256": "df6dc04ada213deb77e26d94c9e15702dd1bbb5cebeab282ccb25e711a441d75",
+      "bytes": 1067
+    },
+    {
+      "path": "_data/books.json",
+      "sha256": "3f47cb6e502a529f024c83e461b1b1b0f56d911e807ed89a1e4a938ba257e88f",
+      "bytes": 69652
+    }
+  ],
+  "generated_git_ignore_check": [
+    "book-pages/inside-orch/index.html",
+    "assets/books/inside-orch/downloads/inside-orch.pdf",
+    "_data/books.json"
+  ],
+  "patch_sha256": "f3c7f851956e18d997de10bc881d4f4da3b6c84b0506ccb3ea45509002fd14ab",
+  "canonical_vs_public_downloads": "Both PDF and EPUB match exact canonical bytes in assets and final _site copies.",
+  "raw_workflow_leak_check": "No raw prompts, evidence, state, AGENTS.md or BOOK_SPEC.md subtree at _site/books/inside-orch. Explicit referenced companion documents remain bounded by the adapter.",
+  "limits": [
+    "This inventory is scoped to the added book and touched site sources; it does not claim byte-for-byte invariance of unrelated generated books against an unavailable pre-task build.",
+    "Full existing-book preservation is established by all-six-book completeness/navigation/download checks, not by a fabricated historical hash baseline."
+  ]
+}

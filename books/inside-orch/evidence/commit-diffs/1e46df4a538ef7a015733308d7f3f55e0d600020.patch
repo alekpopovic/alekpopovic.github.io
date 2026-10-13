@@ -1,0 +1,193 @@
+commit 1e46df4a538ef7a015733308d7f3f55e0d600020
+Date: 2026-06-11T22:15:46+02:00
+Subject: Add GitHub Actions CI
+
+
+---
+ .github/workflows/ci.yml   | 94 ++++++++++++++++++++++++++++++++++++++++++++++
+ .github/workflows/test.yml | 38 -------------------
+ .golangci.yml              | 19 ++++++++++
+ README.md                  |  2 +
+ 4 files changed, 115 insertions(+), 38 deletions(-)
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+new file mode 100644
+index 0000000..f683d92
+--- /dev/null
++++ b/.github/workflows/ci.yml
+@@ -0,0 +1,94 @@
++name: CI
++
++on:
++  push:
++    branches: [main]
++  pull_request:
++
++permissions:
++  contents: read
++
++jobs:
++  quality:
++    name: Format, Lint, Vet, Test
++    runs-on: ubuntu-latest
++    services:
++      postgres:
++        image: postgres:16-alpine
++        env:
++          POSTGRES_DB: orch
++          POSTGRES_USER: orch
++          POSTGRES_PASSWORD: orch
++        ports:
++          - 5432:5432
++        options: >-
++          --health-cmd "pg_isready -U orch -d orch"
++          --health-interval 5s
++          --health-timeout 3s
++          --health-retries 10
++    env:
++      ORCH_E2E_DATABASE_URL: postgres://orch:orch@localhost:5432/orch?sslmode=disable
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v4
++
++      - name: Setup Go
++        uses: actions/setup-go@v5
++        with:
++          go-version-file: go.mod
++          cache: false
++
++      - name: Cache Go modules and build cache
++        uses: actions/cache@v4
++        with:
++          path: |
++            ~/go/pkg/mod
++            ~/.cache/go-build
++          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
++          restore-keys: |
++            ${{ runner.os }}-go-
++
++      - name: Download dependencies
++        run: go mod download
++
++      - name: Check gofmt
++        run: |
++          unformatted="$(gofmt -l $(git ls-files '*.go'))"
++          if [ -n "$unformatted" ]; then
++            echo "The following files need gofmt:"
++            echo "$unformatted"
++            exit 1
++          fi
++
++      - name: Run go vet
++        run: go vet ./...
++
++      - name: Run golangci-lint
++        uses: golangci/golangci-lint-action@v6
++        with:
++          args: --timeout=5m
++
++      - name: Run tests with coverage
++        run: go test -covermode=atomic -coverprofile=coverage.out ./...
++
++      - name: Upload coverage artifact
++        uses: actions/upload-artifact@v4
++        with:
++          name: coverage
++          path: coverage.out
++
++  race:
++    name: Race Detector
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout
++        uses: actions/checkout@v4
++
++      - name: Setup Go
++        uses: actions/setup-go@v5
++        with:
++          go-version-file: go.mod
++          cache: true
++
++      - name: Run race detector
++        run: go test -race ./...
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+deleted file mode 100644
+index c9ef1af..0000000
+--- a/.github/workflows/test.yml
++++ /dev/null
+@@ -1,38 +0,0 @@
+-name: Tests
+-
+-on:
+-  push:
+-    branches: [main]
+-  pull_request:
+-
+-jobs:
+-  unit:
+-    runs-on: ubuntu-latest
+-    services:
+-      postgres:
+-        image: postgres:16-alpine
+-        env:
+-          POSTGRES_DB: orch
+-          POSTGRES_USER: orch
+-          POSTGRES_PASSWORD: orch
+-        ports:
+-          - 5432:5432
+-        options: >-
+-          --health-cmd "pg_isready -U orch -d orch"
+-          --health-interval 5s
+-          --health-timeout 3s
+-          --health-retries 10
+-    env:
+-      ORCH_E2E_DATABASE_URL: postgres://orch:orch@localhost:5432/orch?sslmode=disable
+-    steps:
+-      - name: Checkout
+-        uses: actions/checkout@v4
+-
+-      - name: Setup Go
+-        uses: actions/setup-go@v5
+-        with:
+-          go-version-file: go.mod
+-          cache: true
+-
+-      - name: Run tests
+-        run: go test ./...
+diff --git a/.golangci.yml b/.golangci.yml
+new file mode 100644
+index 0000000..134f2b2
+--- /dev/null
++++ b/.golangci.yml
+@@ -0,0 +1,19 @@
++run:
++  timeout: 5m
++  tests: true
++
++linters:
++  enable:
++    - errcheck
++    - gofmt
++    - govet
++    - ineffassign
++    - misspell
++    - revive
++    - staticcheck
++    - unconvert
++    - unused
++
++issues:
++  max-issues-per-linter: 0
++  max-same-issues: 0
+diff --git a/README.md b/README.md
+index 87d20ec..b529eea 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,7 @@
+ # orch
+ 
++[![CI](https://github.com/alekpopovic/orch/actions/workflows/ci.yml/badge.svg)](https://github.com/alekpopovic/orch/actions/workflows/ci.yml)
++
+ `orch` is a production-shaped Go container orchestrator scaffold. It targets multi-node Docker deployments through the Docker Engine API first, with package boundaries that can later support other runtimes.
+ 
+ ## Quickstart

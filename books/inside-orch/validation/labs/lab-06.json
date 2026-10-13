@@ -1,0 +1,90 @@
+{
+  "lab_id": "06",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/06-namespaces-quotas/lab.json",
+  "definition_sha256": "6f83705db192a980dd6c3c3822f483748a17ac7eb35bd411623344886b9308b8",
+  "guide": "labs/06-namespaces-quotas/README.md",
+  "guide_sha256": "917b1666e429ec076b9b5f8f4cceadfab27ceed86d833f3a4865a359366438e7",
+  "configuration_hashes": {
+    "examples/teaching-extensions/lab06/main.go": "3ae90e46300f117f707155b7aac5afd673e743238714df442a8b93332bc434c6",
+    "labs/06-namespaces-quotas/fixtures/api-base.json": "0089a907baa81e95573cb87715258109745498870afb7232bde17d5b8f78d5d5",
+    "labs/06-namespaces-quotas/fixtures/quota.json": "00df8f930819f5d547be748fd6656ff1483b0d1fe3488fd1f972f0af2496ecc5",
+    "labs/06-namespaces-quotas/fixtures/tenants.json": "bd80b01d53687f2bd14bb03c9bf3af50e8f797128f89580e9766e9852c9fe6f2"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Actual in-process tenant API and MemoryService; twenty-eight cases including concurrent quota admission and independently constructed server-state isolation; no database quota/hostile runtime isolation claim.",
+  "state_continuity": "Fresh MemoryService/API per scenario and independent second instance; fixtures declare both tenant names.",
+  "started_at_utc": "2026-10-13T01:58:13.381748+00:00",
+  "finished_at_utc": "2026-10-13T01:58:13.453933+00:00",
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/namespaces-quotas",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/06-namespaces-quotas/fixtures"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:13.381748+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.453933+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/06-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "case_count": 28,
+    "case_ids": [
+      "namespace-create-book-payments",
+      "namespace-create-book-observability",
+      "duplicate-local-name",
+      "cross-id-hidden",
+      "header-precedes-query",
+      "query-fallback",
+      "default-compatible",
+      "viewer-own-scope",
+      "viewer-other-scope",
+      "namespace-admin-not-cluster",
+      "cluster-admin-list",
+      "secret-local-book-payments",
+      "secret-local-book-observability",
+      "secret-reference-isolation",
+      "quota-config-book-payments",
+      "quota-config-book-observability",
+      "arithmetic-one",
+      "denied-scale-atomic",
+      "concurrent-final-slot",
+      "secret-quota",
+      "registry-quota-robot-one",
+      "registry-quota-robot-two",
+      "zero-is-unlimited",
+      "deleted-release",
+      "default-undeletable",
+      "history-blocks-namespace-delete",
+      "usage-query-conflict",
+      "independent-servers-no-shared-state"
+    ],
+    "detailed_results": "validation/labs/review076/06-command.stdout.txt"
+  },
+  "original_records": [
+    "validation/labs/review076/06-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/06-command.stdout.txt",
+      "sha256": "1144baf38c45b2e391e5fa6fe8b616daddaf512f140d9bc512e77a6c49a0a3a4",
+      "bytes": 31135
+    },
+    {
+      "path": "validation/labs/review076/06-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

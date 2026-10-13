@@ -1,0 +1,1458 @@
+commit b3e29e593f46b4e90899a56bd9391c03d7c42f1a
+Date: 2026-06-11T21:59:52+02:00
+Subject: Add Prometheus metrics
+
+
+---
+ cmd/orch-agent/main.go                 |   7 +-
+ cmd/orch-server/main.go                |   6 +-
+ docs/OBSERVABILITY.md                  |  50 +++++++
+ go.mod                                 |   9 ++
+ go.sum                                 |  38 +++--
+ internal/agent/agent.go                |  69 +++++++--
+ internal/agent/agent_test.go           |  18 +++
+ internal/agent/logs.go                 |  23 ++-
+ internal/api/api.go                    | 100 ++++++++++++-
+ internal/api/api_test.go               |  18 +++
+ internal/docker/metrics.go             | 103 ++++++++++++++
+ internal/metrics/prometheus.go         | 247 +++++++++++++++++++++++++++++++++
+ internal/metrics/prometheus_test.go    |  88 ++++++++++++
+ internal/reconciler/reconciler.go      |   6 +
+ internal/reconciler/reconciler_test.go |   2 +
+ internal/rollout/rollout.go            |  47 +++++--
+ internal/scheduler/scheduler.go        |  54 ++++++-
+ 17 files changed, 842 insertions(+), 43 deletions(-)
+
+diff --git a/cmd/orch-agent/main.go b/cmd/orch-agent/main.go
+index c6a6679..da590fa 100644
+--- a/cmd/orch-agent/main.go
++++ b/cmd/orch-agent/main.go
+@@ -14,6 +14,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/logging"
++	"github.com/alekpopovic/orch/internal/metrics"
+ )
+ 
+ func main() {
+@@ -33,10 +34,12 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.AgentConfig) error
+ 	if err != nil {
+ 		return err
+ 	}
+-	runner := agent.NewRunner(cfg, nil, logger).WithRuntime(runtime)
++	agentMetrics := metrics.NewAgent()
++	instrumentedRuntime := orchdocker.WithMetrics(runtime, agentMetrics)
++	runner := agent.NewRunner(cfg, nil, logger).WithRuntime(instrumentedRuntime).WithMetrics(agentMetrics)
+ 	server := &http.Server{
+ 		Addr:              cfg.AgentAddr,
+-		Handler:           agent.NewLogHandler(runtime, cfg.BootstrapToken, logger),
++		Handler:           agent.NewLogHandler(instrumentedRuntime, cfg.BootstrapToken, logger, agent.WithMetricsHandler(agentMetrics.Handler())),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index d3a1166..8f605d8 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/logging"
++	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/internal/rollout"
+ )
+ 
+@@ -40,7 +41,8 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 	}
+ 
+ 	controlPlane := controlplane.NewMemoryService()
+-	rolloutController := rollout.NewController(controlPlane, logger)
++	serverMetrics := metrics.NewServer()
++	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+ 		if err := rolloutController.Run(ctx, 5*time.Second); err != nil && !errors.Is(err, context.Canceled) {
+ 			logger.Warn("rollout controller stopped", "error", err)
+@@ -49,7 +51,7 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+-		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users)),
++		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users), api.WithRequestMetrics(serverMetrics), api.WithControlMetrics(serverMetrics), api.WithMetricsHandler(serverMetrics.Handler())),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+new file mode 100644
+index 0000000..8c08ed2
+--- /dev/null
++++ b/docs/OBSERVABILITY.md
+@@ -0,0 +1,50 @@
++# Observability
++
++`orch-server` and `orch-agent` expose Prometheus metrics at:
++
++- `GET /metrics` on the server address, for example `http://localhost:8080/metrics`.
++- `GET /metrics` on the agent address, for example `http://localhost:8081/metrics`.
++
++## Server Metrics
++
++- `api_requests_total{method,route,status}`: API requests by HTTP method, route template, and status code.
++- `api_request_duration_seconds{method,route,status}`: API request latency.
++- `scheduler_runs_total`: scheduler pass count.
++- `scheduler_errors_total`: scheduler pass failures.
++- `scheduler_duration_seconds`: scheduler pass duration.
++- `reconciler_runs_total`: reconciler pass count.
++- `reconciler_errors_total`: reconciler pass failures.
++- `reconciler_duration_seconds`: reconciler pass duration.
++- `tasks_created_total`: tasks created by controllers.
++- `tasks_failed_total`: tasks reported failed.
++- `rollouts_total`: rollout or rollback requests accepted.
++- `rollout_failures_total`: rollouts marked failed.
++
++API metrics use route templates such as `/v1/services/{id}` rather than raw paths. This keeps labels low-cardinality and avoids embedding service IDs, task IDs, node IDs, or names in Prometheus series.
++
++## Agent Metrics
++
++- `heartbeat_success_total`: successful heartbeat attempts.
++- `heartbeat_failure_total`: failed heartbeat attempts.
++- `docker_operations_total{operation}`: Docker runtime operations by operation type.
++- `docker_operation_errors_total{operation}`: Docker runtime operation failures by operation type.
++- `task_state_changes_total{status}`: task status updates accepted by the control plane.
++- `healthcheck_success_total`: successful health checks.
++- `healthcheck_failure_total`: failed health checks.
++
++Agent labels are intentionally limited to operation and status enums. Do not add labels for service names, task IDs, container IDs, node IDs, image tags, or user-provided labels unless there is a reviewed operational reason.
++
++## Prometheus Scrape Example
++
++```yaml
++scrape_configs:
++  - job_name: orch-server
++    static_configs:
++      - targets: ["localhost:8080"]
++
++  - job_name: orch-agent
++    static_configs:
++      - targets: ["localhost:8081"]
++```
++
++For production, discover agents through your infrastructure inventory or service discovery rather than hard-coding every node.
+diff --git a/go.mod b/go.mod
+index 538a972..e6553bf 100644
+--- a/go.mod
++++ b/go.mod
+@@ -7,12 +7,15 @@ require (
+ 	github.com/docker/go-connections v0.5.0
+ 	github.com/jackc/pgx/v5 v5.10.0
+ 	github.com/opencontainers/image-spec v1.1.1
++	github.com/prometheus/client_golang v1.23.2
+ 	github.com/spf13/cobra v1.10.2
+ 	gopkg.in/yaml.v3 v3.0.1
+ )
+ 
+ require (
+ 	github.com/Microsoft/go-winio v0.6.2 // indirect
++	github.com/beorn7/perks v1.0.1 // indirect
++	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+ 	github.com/containerd/log v0.1.0 // indirect
+ 	github.com/distribution/reference v0.6.0 // indirect
+ 	github.com/docker/go-units v0.5.0 // indirect
+@@ -27,8 +30,12 @@ require (
+ 	github.com/moby/docker-image-spec v1.3.1 // indirect
+ 	github.com/moby/term v0.5.2 // indirect
+ 	github.com/morikuni/aec v1.1.0 // indirect
++	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+ 	github.com/opencontainers/go-digest v1.0.0 // indirect
+ 	github.com/pkg/errors v0.9.1 // indirect
++	github.com/prometheus/client_model v0.6.2 // indirect
++	github.com/prometheus/common v0.66.1 // indirect
++	github.com/prometheus/procfs v0.16.1 // indirect
+ 	github.com/rogpeppe/go-internal v1.15.0 // indirect
+ 	github.com/spf13/pflag v1.0.9 // indirect
+ 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
+@@ -37,9 +44,11 @@ require (
+ 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
+ 	go.opentelemetry.io/otel/sdk v1.28.0 // indirect
+ 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
++	go.yaml.in/yaml/v2 v2.4.2 // indirect
+ 	golang.org/x/sync v0.20.0 // indirect
+ 	golang.org/x/sys v0.45.0 // indirect
+ 	golang.org/x/text v0.37.0 // indirect
+ 	golang.org/x/time v0.15.0 // indirect
++	google.golang.org/protobuf v1.36.8 // indirect
+ 	gotest.tools/v3 v3.5.2 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index 43afe53..a1e59db 100644
+--- a/go.sum
++++ b/go.sum
+@@ -2,8 +2,12 @@ github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c h1:udKWzYgxTojEK
+ github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
+ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
+ github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
++github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
++github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
+ github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
+ github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
++github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
++github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+ github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
+ github.com/containerd/log v0.1.0/go.mod h1:VRRf09a7mHDIRezVKTRCrOq78v577GXq3bSa3EhrzVo=
+ github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
+@@ -27,8 +31,8 @@ github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+ github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
+ github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
+ github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
+-github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
+-github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
++github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
++github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+ github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+ github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+ github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 h1:bkypFPDjIYGfCYD5mRBvpqxfYX1YCS1PXdKYWi8FsN0=
+@@ -45,16 +49,22 @@ github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo
+ github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
+ github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
+ github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
+-github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
+-github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
++github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
++github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
++github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
++github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
+ github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+ github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
++github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
++github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
+ github.com/moby/docker-image-spec v1.3.1 h1:jMKff3w6PgbfSa69GfNg+zN/XLhfXJGnEx3Nl2EsFP0=
+ github.com/moby/docker-image-spec v1.3.1/go.mod h1:eKmb5VW8vQEh/BAr2yvVNvuiJuY6UIocYsFu/DxxRpo=
+ github.com/moby/term v0.5.2 h1:6qk3FJAFDs6i/q3W/pQ97SX192qKfZgGjCQqfCJkgzQ=
+ github.com/moby/term v0.5.2/go.mod h1:d3djjFCrjnB+fl8NJux+EJzu0msscUP+f8it8hPkFLc=
+ github.com/morikuni/aec v1.1.0 h1:vBBl0pUnvi/Je71dsRrhMBtreIqNMYErSAbEeb8jrXQ=
+ github.com/morikuni/aec v1.1.0/go.mod h1:xDRgiq/iw5l+zkao76YTKzKttOp2cwPEne25HDkJnBw=
++github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
++github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
+ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
+ github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
+ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
+@@ -63,6 +73,14 @@ github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
++github.com/prometheus/client_golang v1.23.2 h1:Je96obch5RDVy3FDMndoUsjAhG5Edi49h0RJWRi/o0o=
++github.com/prometheus/client_golang v1.23.2/go.mod h1:Tb1a6LWHB3/SPIzCoaDXI4I8UHKeFTEQ1YCr+0Gyqmg=
++github.com/prometheus/client_model v0.6.2 h1:oBsgwpGs7iVziMvrGhE53c/GrLUsZdHnqNwqPLxwZyk=
++github.com/prometheus/client_model v0.6.2/go.mod h1:y3m2F6Gdpfy6Ut/GBsUqTWZqCUvMVzSfMLjcu6wAwpE=
++github.com/prometheus/common v0.66.1 h1:h5E0h5/Y8niHc5DlaLlWLArTQI7tMrsfQjHV+d9ZoGs=
++github.com/prometheus/common v0.66.1/go.mod h1:gcaUsgf3KfRSwHY4dIMXLPV0K/Wg1oZ8+SbZk/HH/dA=
++github.com/prometheus/procfs v0.16.1 h1:hZ15bTNuirocR6u0JZ6BAHHmwS1p8B4P6MRqxtzMyRg=
++github.com/prometheus/procfs v0.16.1/go.mod h1:teAbpZRB1iIAJYREa1LsoWUXykVXA1KlTmWl8x/U+Is=
+ github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
+ github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
+ github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
+@@ -95,6 +113,10 @@ go.opentelemetry.io/otel/trace v1.28.0 h1:GhQ9cUuQGmNDd5BTCP2dAvv75RdMxEfTmYejp+
+ go.opentelemetry.io/otel/trace v1.28.0/go.mod h1:jPyXzNPg6da9+38HEwElrQiHlVMTnVfM3/yv2OlIHaI=
+ go.opentelemetry.io/proto/otlp v1.3.1 h1:TrMUixzpM0yuc/znrFTP9MMRh8trP93mkCiDVeXrui0=
+ go.opentelemetry.io/proto/otlp v1.3.1/go.mod h1:0X1WI4de4ZsLrrJNLAQbFeLCm3T7yBkR0XqQ7niQU+8=
++go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
++go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
++go.yaml.in/yaml/v2 v2.4.2 h1:DzmwEr2rDGHl7lsFgAHxmNz/1NlQ7xLIrlN2h5d1eGI=
++go.yaml.in/yaml/v2 v2.4.2/go.mod h1:081UH+NErpNdqlCXm3TtEran0rJZGxAYx9hb/ELlsPU=
+ go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
+ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+ golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
+@@ -105,8 +127,8 @@ golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn
+ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20200226121028-0de0cce0169b/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+ golang.org/x/net v0.0.0-20201021035429-f5854403a974/go.mod h1:sp8m0HH+o8qH0wwXwYZr8TS3Oi6o0r6Gce1SSxlDquU=
+-golang.org/x/net v0.26.0 h1:soB7SVo0PWrY4vPW/+ay0jKDNScG2X9wFeYlXIvJsOQ=
+-golang.org/x/net v0.26.0/go.mod h1:5YKkiSynbBIh3p6iOc/vibscux0x38BZDkn8sCUPxHE=
++golang.org/x/net v0.43.0 h1:lat02VYK2j4aLzMzecihNvTlJNQUq316m2Mr9rnM6YE=
++golang.org/x/net v0.43.0/go.mod h1:vhO1fvI4dGsIjh73sWfUVjj3N7CA9WkKJNQm2svM6Jg=
+ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+ golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+@@ -137,8 +159,8 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 h1:
+ google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094/go.mod h1:Ue6ibwXGpU+dqIcODieyLOcgj7z8+IcskoNIgZxtrFY=
+ google.golang.org/grpc v1.64.0 h1:KH3VH9y/MgNQg1dE7b3XfVK0GsPSIzJwdF617gUSbvY=
+ google.golang.org/grpc v1.64.0/go.mod h1:oxjF8E3FBnjp+/gVFYdWacaLDx9na1aqy9oovLpxQYg=
+-google.golang.org/protobuf v1.34.2 h1:6xV6lTsCfpGD21XK49h7MhtcApnLqkfYgPcdHftf6hg=
+-google.golang.org/protobuf v1.34.2/go.mod h1:qYOHts0dSfpeUzUFpOMr/WGzszTmLH+DiWniOlNbLDw=
++google.golang.org/protobuf v1.36.8 h1:xHScyCOEuuwZEc6UtSOvPbAT4zRh0xcNRYekJwfqyMc=
++google.golang.org/protobuf v1.36.8/go.mod h1:fuxRtAxBytpl4zzqUh6/eyUujkJdNiuEkXntxiD/uRU=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+ gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
+ gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index a4fda6f..099537e 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -34,11 +34,32 @@ type Runner struct {
+ 	client       Client
+ 	runtime      orchdocker.Runtime
+ 	health       health.Checker
++	metrics      Metrics
+ 	healthStates map[types.TaskID]healthState
+ 	logger       *slog.Logger
+ 	rand         *rand.Rand
+ }
+ 
++type Metrics interface {
++	IncHeartbeatSuccess()
++	IncHeartbeatFailure()
++	IncTaskStateChange(status types.TaskStatus)
++	IncHealthcheckSuccess()
++	IncHealthcheckFailure()
++}
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) IncHeartbeatSuccess() {}
++
++func (NoopMetrics) IncHeartbeatFailure() {}
++
++func (NoopMetrics) IncTaskStateChange(types.TaskStatus) {}
++
++func (NoopMetrics) IncHealthcheckSuccess() {}
++
++func (NoopMetrics) IncHealthcheckFailure() {}
++
+ type healthState struct {
+ 	successes int
+ 	failures  int
+@@ -52,6 +73,7 @@ func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runn
+ 		cfg:          cfg,
+ 		client:       client,
+ 		health:       health.NewChecker(),
++		metrics:      NoopMetrics{},
+ 		healthStates: make(map[types.TaskID]healthState),
+ 		logger:       logger,
+ 		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+@@ -68,6 +90,13 @@ func (r *Runner) WithHealthChecker(checker health.Checker) *Runner {
+ 	return r
+ }
+ 
++func (r *Runner) WithMetrics(metrics Metrics) *Runner {
++	if metrics != nil {
++		r.metrics = metrics
++	}
++	return r
++}
++
+ func (r *Runner) Run(ctx context.Context) error {
+ 	if err := r.cfg.Validate(); err != nil {
+ 		return err
+@@ -148,10 +177,10 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 		}
+ 		if err == nil {
+ 			if err := r.runtime.StartContainer(ctx, status.ID); err != nil {
+-				_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(status.ID), FailureReason: err.Error()})
++				_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(status.ID), FailureReason: err.Error()})
+ 				return err
+ 			}
+-			_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(status.ID)})
++			_, err = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(status.ID)})
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -160,11 +189,11 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 			return r.checkTaskHealth(ctx, nodeID, assigned, status)
+ 		}
+ 	}
+-	if _, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskPulling}); err != nil {
++	if _, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskPulling}); err != nil {
+ 		return err
+ 	}
+ 	if err := r.runtime.PullImage(ctx, task.Image, nil); err != nil {
+-		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
++		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
+ 		return err
+ 	}
+ 
+@@ -177,18 +206,18 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 		Version:   task.Version,
+ 	})
+ 	if err != nil {
+-		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
++		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
+ 		return err
+ 	}
+-	if _, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskCreated, ContainerID: string(containerID)}); err != nil {
++	if _, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskCreated, ContainerID: string(containerID)}); err != nil {
+ 		return err
+ 	}
+ 
+ 	if err := r.runtime.StartContainer(ctx, containerID); err != nil {
+-		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(containerID), FailureReason: err.Error()})
++		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(containerID), FailureReason: err.Error()})
+ 		return err
+ 	}
+-	_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(containerID)})
++	_, err = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(containerID)})
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -219,7 +248,7 @@ func (r *Runner) removeAssignedTask(ctx context.Context, nodeID types.NodeID, ta
+ 			return err
+ 		}
+ 	}
+-	_, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
++	_, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
+ 		NodeID:      nodeID,
+ 		Status:      types.TaskRemoved,
+ 		ContainerID: string(containerID),
+@@ -255,10 +284,12 @@ func (r *Runner) checkTaskHealth(ctx context.Context, nodeID types.NodeID, assig
+ 	}
+ 	result, err := r.health.Check(ctx, probe)
+ 	if err != nil {
++		r.metrics.IncHealthcheckFailure()
+ 		return err
+ 	}
+ 	state := r.healthStates[task.ID]
+ 	if result.Healthy {
++		r.metrics.IncHealthcheckSuccess()
+ 		state.successes++
+ 		state.failures = 0
+ 		r.healthStates[task.ID] = state
+@@ -267,12 +298,13 @@ func (r *Runner) checkTaskHealth(ctx context.Context, nodeID types.NodeID, assig
+ 			threshold = 1
+ 		}
+ 		if state.successes >= threshold && task.ActualStatus != types.TaskHealthy {
+-			_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskHealthy, ContainerID: string(container.ID)})
++			_, err = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskHealthy, ContainerID: string(container.ID)})
+ 			return err
+ 		}
+ 		return nil
+ 	}
+ 
++	r.metrics.IncHealthcheckFailure()
+ 	state.failures++
+ 	state.successes = 0
+ 	r.healthStates[task.ID] = state
+@@ -281,7 +313,7 @@ func (r *Runner) checkTaskHealth(ctx context.Context, nodeID types.NodeID, assig
+ 		threshold = 3
+ 	}
+ 	if state.failures >= threshold {
+-		_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
++		_, err = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
+ 			NodeID:        nodeID,
+ 			Status:        types.TaskUnhealthy,
+ 			ContainerID:   string(container.ID),
+@@ -354,7 +386,7 @@ func (r *Runner) cleanupUnassigned(ctx context.Context, nodeID types.NodeID, ass
+ 			r.logger.Warn("failed to remove unassigned container", "container_id", container.ID, "task_id", taskID, "error", err)
+ 			continue
+ 		}
+-		_, _ = r.client.ReportTaskStatus(ctx, taskID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRemoved, ContainerID: string(container.ID)})
++		_, _ = r.reportTaskStatus(ctx, taskID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRemoved, ContainerID: string(container.ID)})
+ 	}
+ 	return nil
+ }
+@@ -387,11 +419,24 @@ func (r *Runner) heartbeatWithRetry(ctx context.Context, nodeID types.NodeID, ca
+ 			Labels:      r.cfg.Labels,
+ 			Shutdown:    shutdown,
+ 		})
++		if err != nil {
++			r.metrics.IncHeartbeatFailure()
++			return err
++		}
++		r.metrics.IncHeartbeatSuccess()
+ 		return err
+ 	})
+ 	return response, err
+ }
+ 
++func (r *Runner) reportTaskStatus(ctx context.Context, taskID types.TaskID, req api.AgentTaskStatusRequest) (types.Task, error) {
++	task, err := r.client.ReportTaskStatus(ctx, taskID, req)
++	if err == nil {
++		r.metrics.IncTaskStateChange(req.Status)
++	}
++	return task, err
++}
++
+ func (r *Runner) notifyShutdown(nodeID types.NodeID, capacity types.Resources) error {
+ 	shutdownCtx, cancel := context.WithTimeout(context.Background(), r.cfg.GracefulShutdownTTL)
+ 	defer cancel()
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index a7ac4d0..01aaa7a 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"log/slog"
+ 	"net/http"
+ 	"net/http/httptest"
++	"strings"
+ 	"testing"
+ 	"time"
+ 
+@@ -13,6 +14,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/health"
++	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -193,6 +195,22 @@ func TestLogHandlerStopsOnCancellation(t *testing.T) {
+ 	}
+ }
+ 
++func TestLogHandlerExposesMetrics(t *testing.T) {
++	agentMetrics := metrics.NewAgent()
++	handler := NewLogHandler(&fakeRuntime{}, "secret", slog.New(slog.NewTextHandler(io.Discard, nil)), WithMetricsHandler(agentMetrics.Handler()))
++
++	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
++	rec := httptest.NewRecorder()
++	handler.ServeHTTP(rec, req)
++
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected metrics status %d, got %d", http.StatusOK, rec.Code)
++	}
++	if !strings.Contains(rec.Body.String(), "heartbeat_success_total") {
++		t.Fatalf("expected agent metrics, got %s", rec.Body.String())
++	}
++}
++
+ type fakeAgentClient struct {
+ 	tasks    []api.AgentTask
+ 	statuses []types.TaskStatus
+diff --git a/internal/agent/logs.go b/internal/agent/logs.go
+index 3b2a107..dce5346 100644
+--- a/internal/agent/logs.go
++++ b/internal/agent/logs.go
+@@ -11,20 +11,35 @@ import (
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ )
+ 
+-func NewLogHandler(runtime orchdocker.Runtime, token string, logger *slog.Logger) http.Handler {
++type LogHandlerOption func(*logServer)
++
++func WithMetricsHandler(handler http.Handler) LogHandlerOption {
++	return func(server *logServer) {
++		server.metricsHandler = handler
++	}
++}
++
++func NewLogHandler(runtime orchdocker.Runtime, token string, logger *slog.Logger, opts ...LogHandlerOption) http.Handler {
+ 	if logger == nil {
+ 		logger = slog.Default()
+ 	}
+ 	server := &logServer{runtime: runtime, token: token, logger: logger}
++	for _, opt := range opts {
++		opt(server)
++	}
+ 	mux := http.NewServeMux()
++	if server.metricsHandler != nil {
++		mux.Handle("GET /metrics", server.metricsHandler)
++	}
+ 	mux.HandleFunc("GET /v1/agent/logs", server.streamLogs)
+ 	return mux
+ }
+ 
+ type logServer struct {
+-	runtime orchdocker.Runtime
+-	token   string
+-	logger  *slog.Logger
++	runtime        orchdocker.Runtime
++	token          string
++	logger         *slog.Logger
++	metricsHandler http.Handler
+ }
+ 
+ func (s *logServer) streamLogs(w http.ResponseWriter, r *http.Request) {
+diff --git a/internal/api/api.go b/internal/api/api.go
+index c2edd35..741cbc2 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -30,11 +30,23 @@ type Server struct {
+ 	jwtSecret      string
+ 	staticUsers    map[string]auth.Role
+ 	agentIssuer    auth.AgentCredentialIssuer
++	metrics        RequestMetrics
++	controlMetrics ControlMetrics
++	metricsHandler http.Handler
+ 	now            func() time.Time
+ }
+ 
+ type Option func(*Server)
+ 
++type RequestMetrics interface {
++	ObserveAPIRequest(method string, route string, status int, duration time.Duration)
++}
++
++type ControlMetrics interface {
++	IncTasksFailed()
++	IncRollouts()
++}
++
+ func WithTimeout(timeout time.Duration) Option {
+ 	return func(server *Server) {
+ 		server.timeout = timeout
+@@ -71,6 +83,24 @@ func WithAgentCredentialIssuer(issuer auth.AgentCredentialIssuer) Option {
+ 	}
+ }
+ 
++func WithRequestMetrics(metrics RequestMetrics) Option {
++	return func(server *Server) {
++		server.metrics = metrics
++	}
++}
++
++func WithControlMetrics(metrics ControlMetrics) Option {
++	return func(server *Server) {
++		server.controlMetrics = metrics
++	}
++}
++
++func WithMetricsHandler(handler http.Handler) Option {
++	return func(server *Server) {
++		server.metricsHandler = handler
++	}
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -90,8 +120,12 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	if server.agentIssuer == nil {
+ 		server.agentIssuer = auth.NewTokenAgentCredentialIssuer(15 * time.Minute)
+ 	}
++	if server.metricsHandler == nil {
++		server.metricsHandler = http.NotFoundHandler()
++	}
+ 
+ 	mux := http.NewServeMux()
++	mux.Handle("GET /metrics", server.metricsHandler)
+ 	mux.HandleFunc("GET /healthz", server.healthz)
+ 	mux.HandleFunc("GET /readyz", server.readyz)
+ 	mux.HandleFunc("POST /v1/agent/register", server.agentRegister)
+@@ -342,6 +376,9 @@ func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	if req.Status == types.TaskFailed && s.controlMetrics != nil {
++		s.controlMetrics.IncTasksFailed()
++	}
+ 	writeJSON(w, http.StatusOK, TaskResponse{Task: task})
+ }
+ 
+@@ -522,6 +559,9 @@ func (s *Server) rolloutService(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	if s.controlMetrics != nil {
++		s.controlMetrics.IncRollouts()
++	}
+ 	writeJSON(w, http.StatusAccepted, DeploymentResponse{Deployment: deployment})
+ }
+ 
+@@ -562,6 +602,9 @@ func (s *Server) rollbackService(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	if s.controlMetrics != nil {
++		s.controlMetrics.IncRollouts()
++	}
+ 	writeJSON(w, http.StatusAccepted, DeploymentResponse{Deployment: deployment})
+ }
+ 
+@@ -682,7 +725,7 @@ func (s *Server) userAuthMiddleware(next http.Handler) http.Handler {
+ 
+ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	path := r.URL.Path
+-	if path == "/healthz" || path == "/readyz" || strings.HasPrefix(path, "/v1/agent/") {
++	if path == "/healthz" || path == "/readyz" || path == "/metrics" || strings.HasPrefix(path, "/v1/agent/") {
+ 		return "", false
+ 	}
+ 	if r.Method == http.MethodGet {
+@@ -760,6 +803,11 @@ func (s *Server) accessLogMiddleware(next http.Handler) http.Handler {
+ 		started := time.Now().UTC()
+ 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+ 		next.ServeHTTP(rec, r)
++		if s.metrics != nil {
++			if route, ok := metricRoute(r.Method, r.URL.Path); ok {
++				s.metrics.ObserveAPIRequest(r.Method, route, rec.status, time.Since(started))
++			}
++		}
+ 		s.logger.Info("http request",
+ 			"request_id", requestID(r.Context()),
+ 			"method", r.Method,
+@@ -770,6 +818,56 @@ func (s *Server) accessLogMiddleware(next http.Handler) http.Handler {
+ 	})
+ }
+ 
++func metricRoute(method string, path string) (string, bool) {
++	if path == "/metrics" {
++		return "", false
++	}
++	switch {
++	case path == "/healthz":
++		return "/healthz", true
++	case path == "/readyz":
++		return "/readyz", true
++	case path == "/v1/agent/register":
++		return "/v1/agent/register", true
++	case path == "/v1/agent/heartbeat":
++		return "/v1/agent/heartbeat", true
++	case path == "/v1/agent/tasks":
++		return "/v1/agent/tasks", true
++	case strings.HasPrefix(path, "/v1/agent/tasks/") && strings.HasSuffix(path, "/status"):
++		return "/v1/agent/tasks/{task_id}/status", true
++	case path == "/v1/nodes":
++		return "/v1/nodes", true
++	case strings.HasPrefix(path, "/v1/nodes/") && strings.HasSuffix(path, "/drain"):
++		return "/v1/nodes/{id}/drain", true
++	case strings.HasPrefix(path, "/v1/nodes/") && strings.HasSuffix(path, "/uncordon"):
++		return "/v1/nodes/{id}/uncordon", true
++	case strings.HasPrefix(path, "/v1/nodes/"):
++		return "/v1/nodes/{id}", true
++	case path == "/v1/services":
++		return "/v1/services", true
++	case strings.HasPrefix(path, "/v1/services/") && strings.HasSuffix(path, "/scale"):
++		return "/v1/services/{id}/scale", true
++	case strings.HasPrefix(path, "/v1/services/") && strings.HasSuffix(path, "/rollout"):
++		return "/v1/services/{id}/rollout", true
++	case strings.HasPrefix(path, "/v1/services/") && strings.HasSuffix(path, "/rollback"):
++		return "/v1/services/{id}/rollback", true
++	case strings.HasPrefix(path, "/v1/services/"):
++		return "/v1/services/{id}", true
++	case path == "/v1/tasks":
++		return "/v1/tasks", true
++	case strings.HasPrefix(path, "/v1/tasks/"):
++		return "/v1/tasks/{id}", true
++	case path == "/v1/events":
++		return "/v1/events", true
++	case path == "/v1/logs":
++		return "/v1/logs", true
++	case strings.HasPrefix(path, "/v1/rollouts/"):
++		return "/v1/rollouts/{id}", true
++	default:
++		return "unknown", true
++	}
++}
++
+ type statusRecorder struct {
+ 	http.ResponseWriter
+ 	status int
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index d9a0195..763e609 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -14,6 +14,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -28,6 +29,23 @@ func TestHealthz(t *testing.T) {
+ 	}
+ }
+ 
++func TestMetricsEndpoint(t *testing.T) {
++	serverMetrics := metrics.NewServer()
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithRequestMetrics(serverMetrics), WithMetricsHandler(serverMetrics.Handler()))
++
++	health := doRequest(t, handler, http.MethodGet, "/healthz", nil)
++	if health.Code != http.StatusOK {
++		t.Fatalf("expected health status %d, got %d", http.StatusOK, health.Code)
++	}
++	rec := doRequest(t, handler, http.MethodGet, "/metrics", nil)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected metrics status %d, got %d", http.StatusOK, rec.Code)
++	}
++	if !strings.Contains(rec.Body.String(), "api_requests_total") {
++		t.Fatalf("expected API request metrics, got %s", rec.Body.String())
++	}
++}
++
+ func TestListNodes(t *testing.T) {
+ 	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
+ 	registered := registerTestNode(t, handler)
+diff --git a/internal/docker/metrics.go b/internal/docker/metrics.go
+new file mode 100644
+index 0000000..981f59e
+--- /dev/null
++++ b/internal/docker/metrics.go
+@@ -0,0 +1,103 @@
++package docker
++
++import (
++	"context"
++	"time"
++)
++
++type RuntimeMetrics interface {
++	IncDockerOperation(operation string)
++	IncDockerOperationError(operation string)
++}
++
++type instrumentedRuntime struct {
++	next    Runtime
++	metrics RuntimeMetrics
++}
++
++func WithMetrics(runtime Runtime, metrics RuntimeMetrics) Runtime {
++	if runtime == nil || metrics == nil {
++		return runtime
++	}
++	return &instrumentedRuntime{next: runtime, metrics: metrics}
++}
++
++func (r *instrumentedRuntime) PullImage(ctx context.Context, image string, auth *RegistryAuth) error {
++	err := r.measure("pull_image", func() error {
++		return r.next.PullImage(ctx, image, auth)
++	})
++	return err
++}
++
++func (r *instrumentedRuntime) CreateContainer(ctx context.Context, spec ContainerSpec) (ContainerID, error) {
++	var id ContainerID
++	err := r.measure("create_container", func() error {
++		var err error
++		id, err = r.next.CreateContainer(ctx, spec)
++		return err
++	})
++	return id, err
++}
++
++func (r *instrumentedRuntime) StartContainer(ctx context.Context, id ContainerID) error {
++	return r.measure("start_container", func() error {
++		return r.next.StartContainer(ctx, id)
++	})
++}
++
++func (r *instrumentedRuntime) StopContainer(ctx context.Context, id ContainerID, timeout time.Duration) error {
++	return r.measure("stop_container", func() error {
++		return r.next.StopContainer(ctx, id, timeout)
++	})
++}
++
++func (r *instrumentedRuntime) RemoveContainer(ctx context.Context, id ContainerID, force bool) error {
++	return r.measure("remove_container", func() error {
++		return r.next.RemoveContainer(ctx, id, force)
++	})
++}
++
++func (r *instrumentedRuntime) InspectContainer(ctx context.Context, id ContainerID) (ContainerStatus, error) {
++	var status ContainerStatus
++	err := r.measure("inspect_container", func() error {
++		var err error
++		status, err = r.next.InspectContainer(ctx, id)
++		return err
++	})
++	return status, err
++}
++
++func (r *instrumentedRuntime) ListManagedContainers(ctx context.Context, labels map[string]string) ([]ContainerStatus, error) {
++	var statuses []ContainerStatus
++	err := r.measure("list_managed_containers", func() error {
++		var err error
++		statuses, err = r.next.ListManagedContainers(ctx, labels)
++		return err
++	})
++	return statuses, err
++}
++
++func (r *instrumentedRuntime) StreamLogs(ctx context.Context, id ContainerID, opts LogOptions) (<-chan LogLine, <-chan error) {
++	r.metrics.IncDockerOperation("stream_logs")
++	lines, errs := r.next.StreamLogs(ctx, id, opts)
++	outErrs := make(chan error, 1)
++	go func() {
++		defer close(outErrs)
++		for err := range errs {
++			if err != nil {
++				r.metrics.IncDockerOperationError("stream_logs")
++				outErrs <- err
++			}
++		}
++	}()
++	return lines, outErrs
++}
++
++func (r *instrumentedRuntime) measure(operation string, call func() error) error {
++	r.metrics.IncDockerOperation(operation)
++	err := call()
++	if err != nil {
++		r.metrics.IncDockerOperationError(operation)
++	}
++	return err
++}
+diff --git a/internal/metrics/prometheus.go b/internal/metrics/prometheus.go
+new file mode 100644
+index 0000000..d045779
+--- /dev/null
++++ b/internal/metrics/prometheus.go
+@@ -0,0 +1,247 @@
++package metrics
++
++import (
++	"net/http"
++	"strconv"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/prometheus/client_golang/prometheus"
++	"github.com/prometheus/client_golang/prometheus/promhttp"
++)
++
++type Server struct {
++	registry *prometheus.Registry
++
++	apiRequests        *prometheus.CounterVec
++	apiRequestDuration *prometheus.HistogramVec
++	schedulerRuns      prometheus.Counter
++	schedulerErrors    prometheus.Counter
++	schedulerDuration  prometheus.Histogram
++	reconcilerRuns     prometheus.Counter
++	reconcilerErrors   prometheus.Counter
++	reconcilerDuration prometheus.Histogram
++	tasksCreated       prometheus.Counter
++	tasksFailed        prometheus.Counter
++	rollouts           prometheus.Counter
++	rolloutFailures    prometheus.Counter
++}
++
++func NewServer() *Server {
++	m := &Server{
++		registry: prometheus.NewRegistry(),
++		apiRequests: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "api_requests_total",
++			Help: "Total API requests by method, route, and status code.",
++		}, []string{"method", "route", "status"}),
++		apiRequestDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
++			Name:    "api_request_duration_seconds",
++			Help:    "API request duration in seconds by method, route, and status code.",
++			Buckets: prometheus.DefBuckets,
++		}, []string{"method", "route", "status"}),
++		schedulerRuns: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_runs_total",
++			Help: "Total scheduler runs.",
++		}),
++		schedulerErrors: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_errors_total",
++			Help: "Total scheduler run errors.",
++		}),
++		schedulerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
++			Name:    "scheduler_duration_seconds",
++			Help:    "Scheduler run duration in seconds.",
++			Buckets: prometheus.DefBuckets,
++		}),
++		reconcilerRuns: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "reconciler_runs_total",
++			Help: "Total reconciler runs.",
++		}),
++		reconcilerErrors: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "reconciler_errors_total",
++			Help: "Total reconciler run errors.",
++		}),
++		reconcilerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
++			Name:    "reconciler_duration_seconds",
++			Help:    "Reconciler run duration in seconds.",
++			Buckets: prometheus.DefBuckets,
++		}),
++		tasksCreated: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "tasks_created_total",
++			Help: "Total tasks created by controllers.",
++		}),
++		tasksFailed: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "tasks_failed_total",
++			Help: "Total tasks reported failed.",
++		}),
++		rollouts: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "rollouts_total",
++			Help: "Total rollout or rollback requests accepted.",
++		}),
++		rolloutFailures: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "rollout_failures_total",
++			Help: "Total rollouts marked failed.",
++		}),
++	}
++	m.registry.MustRegister(
++		m.apiRequests,
++		m.apiRequestDuration,
++		m.schedulerRuns,
++		m.schedulerErrors,
++		m.schedulerDuration,
++		m.reconcilerRuns,
++		m.reconcilerErrors,
++		m.reconcilerDuration,
++		m.tasksCreated,
++		m.tasksFailed,
++		m.rollouts,
++		m.rolloutFailures,
++	)
++	return m
++}
++
++func (m *Server) Handler() http.Handler {
++	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{})
++}
++
++func (m *Server) ObserveAPIRequest(method string, route string, status int, duration time.Duration) {
++	statusCode := strconv.Itoa(status)
++	m.apiRequests.WithLabelValues(method, route, statusCode).Inc()
++	m.apiRequestDuration.WithLabelValues(method, route, statusCode).Observe(duration.Seconds())
++}
++
++func (m *Server) IncSchedulerRuns() {
++	m.schedulerRuns.Inc()
++}
++
++func (m *Server) IncSchedulerErrors() {
++	m.schedulerErrors.Inc()
++}
++
++func (m *Server) ObserveSchedulerDuration(duration time.Duration) {
++	m.schedulerDuration.Observe(duration.Seconds())
++}
++
++func (m *Server) IncReconciliationRuns() {
++	m.reconcilerRuns.Inc()
++}
++
++func (m *Server) ObserveReconciliationDuration(duration time.Duration) {
++	m.reconcilerDuration.Observe(duration.Seconds())
++}
++
++func (m *Server) IncReconciliationErrors() {
++	m.reconcilerErrors.Inc()
++}
++
++func (m *Server) AddCreatedTasks(count int) {
++	m.add(m.tasksCreated, count)
++}
++
++func (m *Server) AddStoppedTasks(int) {}
++
++func (m *Server) IncTasksFailed() {
++	m.tasksFailed.Inc()
++}
++
++func (m *Server) IncRollouts() {
++	m.rollouts.Inc()
++}
++
++func (m *Server) IncRolloutFailures() {
++	m.rolloutFailures.Inc()
++}
++
++func (m *Server) add(counter prometheus.Counter, count int) {
++	if count <= 0 {
++		return
++	}
++	counter.Add(float64(count))
++}
++
++type Agent struct {
++	registry *prometheus.Registry
++
++	heartbeatSuccess      prometheus.Counter
++	heartbeatFailure      prometheus.Counter
++	dockerOperations      *prometheus.CounterVec
++	dockerOperationErrors *prometheus.CounterVec
++	taskStateChanges      *prometheus.CounterVec
++	healthcheckSuccess    prometheus.Counter
++	healthcheckFailure    prometheus.Counter
++}
++
++func NewAgent() *Agent {
++	m := &Agent{
++		registry: prometheus.NewRegistry(),
++		heartbeatSuccess: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "heartbeat_success_total",
++			Help: "Total successful heartbeat attempts.",
++		}),
++		heartbeatFailure: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "heartbeat_failure_total",
++			Help: "Total failed heartbeat attempts.",
++		}),
++		dockerOperations: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "docker_operations_total",
++			Help: "Total Docker runtime operations by operation type.",
++		}, []string{"operation"}),
++		dockerOperationErrors: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "docker_operation_errors_total",
++			Help: "Total Docker runtime operation errors by operation type.",
++		}, []string{"operation"}),
++		taskStateChanges: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "task_state_changes_total",
++			Help: "Total task state changes reported by the agent.",
++		}, []string{"status"}),
++		healthcheckSuccess: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "healthcheck_success_total",
++			Help: "Total successful health checks.",
++		}),
++		healthcheckFailure: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "healthcheck_failure_total",
++			Help: "Total failed health checks.",
++		}),
++	}
++	m.registry.MustRegister(
++		m.heartbeatSuccess,
++		m.heartbeatFailure,
++		m.dockerOperations,
++		m.dockerOperationErrors,
++		m.taskStateChanges,
++		m.healthcheckSuccess,
++		m.healthcheckFailure,
++	)
++	return m
++}
++
++func (m *Agent) Handler() http.Handler {
++	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{})
++}
++
++func (m *Agent) IncHeartbeatSuccess() {
++	m.heartbeatSuccess.Inc()
++}
++
++func (m *Agent) IncHeartbeatFailure() {
++	m.heartbeatFailure.Inc()
++}
++
++func (m *Agent) IncDockerOperation(operation string) {
++	m.dockerOperations.WithLabelValues(operation).Inc()
++}
++
++func (m *Agent) IncDockerOperationError(operation string) {
++	m.dockerOperationErrors.WithLabelValues(operation).Inc()
++}
++
++func (m *Agent) IncTaskStateChange(status types.TaskStatus) {
++	m.taskStateChanges.WithLabelValues(string(status)).Inc()
++}
++
++func (m *Agent) IncHealthcheckSuccess() {
++	m.healthcheckSuccess.Inc()
++}
++
++func (m *Agent) IncHealthcheckFailure() {
++	m.healthcheckFailure.Inc()
++}
+diff --git a/internal/metrics/prometheus_test.go b/internal/metrics/prometheus_test.go
+new file mode 100644
+index 0000000..7383c10
+--- /dev/null
++++ b/internal/metrics/prometheus_test.go
+@@ -0,0 +1,88 @@
++package metrics
++
++import (
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
++	metrics := NewServer()
++	metrics.ObserveAPIRequest(http.MethodGet, "/healthz", http.StatusOK, 10*time.Millisecond)
++	metrics.IncSchedulerRuns()
++	metrics.IncSchedulerErrors()
++	metrics.ObserveSchedulerDuration(20 * time.Millisecond)
++	metrics.IncReconciliationRuns()
++	metrics.IncReconciliationErrors()
++	metrics.ObserveReconciliationDuration(30 * time.Millisecond)
++	metrics.AddCreatedTasks(2)
++	metrics.IncTasksFailed()
++	metrics.IncRollouts()
++	metrics.IncRolloutFailures()
++
++	body := scrape(t, metrics.Handler())
++	for _, want := range []string{
++		"api_requests_total",
++		"api_request_duration_seconds",
++		"scheduler_runs_total",
++		"scheduler_errors_total",
++		"scheduler_duration_seconds",
++		"reconciler_runs_total",
++		"reconciler_errors_total",
++		"reconciler_duration_seconds",
++		"tasks_created_total 2",
++		"tasks_failed_total 1",
++		"rollouts_total 1",
++		"rollout_failures_total 1",
++	} {
++		if !strings.Contains(body, want) {
++			t.Fatalf("expected scrape to contain %q\n%s", want, body)
++		}
++	}
++}
++
++func TestAgentMetricsExposeExpectedCollectors(t *testing.T) {
++	metrics := NewAgent()
++	metrics.IncHeartbeatSuccess()
++	metrics.IncHeartbeatFailure()
++	metrics.IncDockerOperation("pull_image")
++	metrics.IncDockerOperationError("pull_image")
++	metrics.IncTaskStateChange(types.TaskRunning)
++	metrics.IncHealthcheckSuccess()
++	metrics.IncHealthcheckFailure()
++
++	body := scrape(t, metrics.Handler())
++	for _, want := range []string{
++		"heartbeat_success_total 1",
++		"heartbeat_failure_total 1",
++		`docker_operations_total{operation="pull_image"} 1`,
++		`docker_operation_errors_total{operation="pull_image"} 1`,
++		`task_state_changes_total{status="running"} 1`,
++		"healthcheck_success_total 1",
++		"healthcheck_failure_total 1",
++	} {
++		if !strings.Contains(body, want) {
++			t.Fatalf("expected scrape to contain %q\n%s", want, body)
++		}
++	}
++}
++
++func scrape(t *testing.T, handler http.Handler) string {
++	t.Helper()
++	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
++	rec := httptest.NewRecorder()
++	handler.ServeHTTP(rec, req)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected metrics status %d, got %d", http.StatusOK, rec.Code)
++	}
++	data, err := io.ReadAll(rec.Body)
++	if err != nil {
++		t.Fatalf("read metrics body: %v", err)
++	}
++	return string(data)
++}
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 8a2fd4f..bef3665 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -32,6 +32,7 @@ type Lease interface {
+ }
+ 
+ type Metrics interface {
++	IncReconciliationRuns()
+ 	ObserveReconciliationDuration(duration time.Duration)
+ 	IncReconciliationErrors()
+ 	AddCreatedTasks(count int)
+@@ -121,10 +122,13 @@ func (r *Reconciler) Run(ctx context.Context) error {
+ }
+ 
+ func (r *Reconciler) ReconcileOnce(ctx context.Context) error {
++	r.metrics.IncReconciliationRuns()
+ 	if r.store == nil {
++		r.metrics.IncReconciliationErrors()
+ 		return fmt.Errorf("reconciler store is required")
+ 	}
+ 	if err := ctx.Err(); err != nil {
++		r.metrics.IncReconciliationErrors()
+ 		return err
+ 	}
+ 
+@@ -485,6 +489,8 @@ func (noopLease) Release(context.Context) error {
+ 
+ type NoopMetrics struct{}
+ 
++func (NoopMetrics) IncReconciliationRuns() {}
++
+ func (NoopMetrics) ObserveReconciliationDuration(time.Duration) {}
+ func (NoopMetrics) IncReconciliationErrors()                    {}
+ func (NoopMetrics) AddCreatedTasks(int)                         {}
+diff --git a/internal/reconciler/reconciler_test.go b/internal/reconciler/reconciler_test.go
+index d997e79..eccf20e 100644
+--- a/internal/reconciler/reconciler_test.go
++++ b/internal/reconciler/reconciler_test.go
+@@ -297,12 +297,14 @@ func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Eve
+ }
+ 
+ type fakeMetrics struct {
++	runs      int
+ 	durations int
+ 	errors    int
+ 	created   int
+ 	stopped   int
+ }
+ 
++func (m *fakeMetrics) IncReconciliationRuns()                      { m.runs++ }
+ func (m *fakeMetrics) ObserveReconciliationDuration(time.Duration) { m.durations++ }
+ func (m *fakeMetrics) IncReconciliationErrors()                    { m.errors++ }
+ func (m *fakeMetrics) AddCreatedTasks(count int)                   { m.created += count }
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index fc70a5b..b2e8d4c 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -22,20 +22,47 @@ type Store interface {
+ }
+ 
+ type Controller struct {
+-	store  Store
+-	logger *slog.Logger
+-	now    func() time.Time
++	store   Store
++	metrics Metrics
++	logger  *slog.Logger
++	now     func() time.Time
+ }
+ 
+-func NewController(store Store, logger *slog.Logger) *Controller {
++type Metrics interface {
++	AddCreatedTasks(count int)
++	IncRolloutFailures()
++}
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) AddCreatedTasks(int) {}
++
++func (NoopMetrics) IncRolloutFailures() {}
++
++type Option func(*Controller)
++
++func WithMetrics(metrics Metrics) Option {
++	return func(c *Controller) {
++		if metrics != nil {
++			c.metrics = metrics
++		}
++	}
++}
++
++func NewController(store Store, logger *slog.Logger, opts ...Option) *Controller {
+ 	if logger == nil {
+ 		logger = slog.Default()
+ 	}
+-	return &Controller{
+-		store:  store,
+-		logger: logger,
+-		now:    func() time.Time { return time.Now().UTC() },
++	c := &Controller{
++		store:   store,
++		metrics: NoopMetrics{},
++		logger:  logger,
++		now:     func() time.Time { return time.Now().UTC() },
++	}
++	for _, opt := range opts {
++		opt(c)
+ 	}
++	return c
+ }
+ 
+ func (c *Controller) Run(ctx context.Context, interval time.Duration) error {
+@@ -124,6 +151,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D
+ 	if err != nil {
+ 		return err
+ 	}
++	c.metrics.AddCreatedTasks(created)
+ 	state.newActive += created
+ 	state.totalActive += created
+ 
+@@ -220,6 +248,9 @@ func (c *Controller) setStatus(ctx context.Context, deployment types.Deployment,
+ 			return types.Deployment{}, fmt.Errorf("update rollout status: %w", err)
+ 		}
+ 		deployment = updated
++		if status == types.DeploymentFailed {
++			c.metrics.IncRolloutFailures()
++		}
+ 	}
+ 	_ = events.Emit(ctx, c.store, types.Event{
+ 		Type:              events.TypeRolloutStatusChanged,
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index b1f9a5c..bdee3fa 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -32,39 +32,80 @@ type PlanInput struct {
+ }
+ 
+ type Scheduler struct {
+-	store Store
+-	now   func() time.Time
++	store   Store
++	metrics Metrics
++	now     func() time.Time
+ }
+ 
+-func New(store Store) *Scheduler {
+-	return &Scheduler{
+-		store: store,
+-		now:   func() time.Time { return time.Now().UTC() },
++type Metrics interface {
++	IncSchedulerRuns()
++	IncSchedulerErrors()
++	ObserveSchedulerDuration(duration time.Duration)
++}
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) IncSchedulerRuns() {}
++
++func (NoopMetrics) IncSchedulerErrors() {}
++
++func (NoopMetrics) ObserveSchedulerDuration(time.Duration) {}
++
++type Option func(*Scheduler)
++
++func WithMetrics(metrics Metrics) Option {
++	return func(s *Scheduler) {
++		if metrics != nil {
++			s.metrics = metrics
++		}
++	}
++}
++
++func New(store Store, opts ...Option) *Scheduler {
++	s := &Scheduler{
++		store:   store,
++		metrics: NoopMetrics{},
++		now:     func() time.Time { return time.Now().UTC() },
++	}
++	for _, opt := range opts {
++		opt(s)
+ 	}
++	return s
+ }
+ 
+ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
++	started := s.now()
++	s.metrics.IncSchedulerRuns()
++	defer func() {
++		s.metrics.ObserveSchedulerDuration(s.now().Sub(started))
++	}()
+ 	if s.store == nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, fmt.Errorf("scheduler store is required")
+ 	}
+ 	if err := ctx.Err(); err != nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, err
+ 	}
+ 
+ 	pending, err := s.store.ListTasksByStatus(ctx, types.TaskPending)
+ 	if err != nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, fmt.Errorf("list pending tasks: %w", err)
+ 	}
+ 	nodes, err := s.store.ListNodesByStatus(ctx, types.NodeReady)
+ 	if err != nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, fmt.Errorf("list ready nodes: %w", err)
+ 	}
+ 	running, err := s.loadRunningTasks(ctx, nodes)
+ 	if err != nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, err
+ 	}
+ 	services, err := s.loadServices(ctx, pending, running)
+ 	if err != nil {
++		s.metrics.IncSchedulerErrors()
+ 		return nil, err
+ 	}
+ 
+@@ -80,6 +121,7 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 			continue
+ 		}
+ 		if _, err := s.store.AssignTask(ctx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
++			s.metrics.IncSchedulerErrors()
+ 			return assignments, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
+ 		}
+ 		_ = events.Emit(ctx, s.store, types.Event{

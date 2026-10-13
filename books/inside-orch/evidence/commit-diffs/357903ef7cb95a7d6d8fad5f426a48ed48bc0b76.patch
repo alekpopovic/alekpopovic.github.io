@@ -1,0 +1,292 @@
+commit 357903ef7cb95a7d6d8fad5f426a48ed48bc0b76
+Date: 2026-07-14T18:10:35+02:00
+Subject: Add Prometheus alert rules
+
+
+---
+ deploy/monitoring/prometheus-rules.yaml | 132 ++++++++++++++++++++++++++++++++
+ deploy/monitoring/prometheus.yml        |  22 ++++++
+ docker-compose.yml                      |  27 +++++++
+ docs/OBSERVABILITY.md                   |  37 +++++++--
+ prompts/EXECUTION_TRACKER.md            |   8 +-
+ 5 files changed, 214 insertions(+), 12 deletions(-)
+
+diff --git a/deploy/monitoring/prometheus-rules.yaml b/deploy/monitoring/prometheus-rules.yaml
+new file mode 100644
+index 0000000..743593c
+--- /dev/null
++++ b/deploy/monitoring/prometheus-rules.yaml
+@@ -0,0 +1,132 @@
++groups:
++  - name: orch.availability
++    rules:
++      - alert: OrchServerDown
++        expr: up{job="orch-server"} == 0
++        for: 2m
++        labels:
++          severity: critical
++          component: server
++        annotations:
++          summary: "orch-server metrics endpoint is down"
++          description: "Prometheus cannot scrape orch-server at {{ $labels.instance }} for more than 2 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: OrchAgentHeartbeatMissing
++        expr: increase(heartbeat_success_total{job="orch-agent"}[2m]) == 0
++        for: 5m
++        labels:
++          severity: warning
++          component: agent
++        annotations:
++          summary: "orch-agent heartbeat success stopped"
++          description: "Agent {{ $labels.instance }} has not recorded a successful heartbeat for more than 5 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: NodeOffline
++        expr: up{job="orch-agent"} == 0
++        for: 3m
++        labels:
++          severity: critical
++          component: node
++        annotations:
++          summary: "orch-agent node endpoint is unreachable"
++          description: "Prometheus cannot scrape the agent on {{ $labels.instance }}. Treat the node as suspect/offline until verified."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: DatabaseUnavailable
++        expr: up{job="postgres"} == 0
++        for: 2m
++        labels:
++          severity: critical
++          component: database
++        annotations:
++          summary: "PostgreSQL exporter is down"
++          description: "Prometheus cannot scrape PostgreSQL exporter at {{ $labels.instance }}. Check database availability and exporter configuration."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++  - name: orch.controllers
++    rules:
++      - alert: SchedulerErrorsHigh
++        expr: rate(scheduler_errors_total[5m]) > 0.1
++        for: 10m
++        labels:
++          severity: warning
++          component: scheduler
++        annotations:
++          summary: "Scheduler errors are elevated"
++          description: "scheduler_errors_total is increasing faster than 0.1/s for 10 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: ReconcilerErrorsHigh
++        expr: rate(reconciler_errors_total[5m]) > 0.1
++        for: 10m
++        labels:
++          severity: warning
++          component: reconciler
++        annotations:
++          summary: "Reconciler errors are elevated"
++          description: "reconciler_errors_total is increasing faster than 0.1/s for 10 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: ReconciliationLatencyHigh
++        expr: histogram_quantile(0.95, rate(reconciler_duration_seconds_bucket[10m])) > 10
++        for: 15m
++        labels:
++          severity: warning
++          component: reconciler
++        annotations:
++          summary: "Reconciliation latency is high"
++          description: "The p95 reconciler duration is above 10 seconds for 15 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: RolloutFailed
++        expr: increase(rollout_failures_total[5m]) > 0
++        for: 1m
++        labels:
++          severity: critical
++          component: rollout
++        annotations:
++          summary: "A rollout failed"
++          description: "At least one rollout failed in the last 5 minutes. Inspect rollout events and service tasks."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++  - name: orch.runtime
++    rules:
++      - alert: TaskFailuresHigh
++        expr: increase(tasks_failed_total[10m]) > 5
++        for: 5m
++        labels:
++          severity: warning
++          component: tasks
++        annotations:
++          summary: "Task failures are high"
++          description: "More than 5 tasks failed in the last 10 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++      - alert: DockerOperationErrorsHigh
++        expr: sum(rate(docker_operation_errors_total[5m])) > 0.1
++        for: 10m
++        labels:
++          severity: warning
++          component: docker
++        annotations:
++          summary: "Docker operation errors are elevated"
++          description: "Docker operation errors are increasing faster than 0.1/s across agents."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
++
++  - name: orch.api
++    rules:
++      - alert: APIErrorRateHigh
++        expr: |
++          sum(rate(api_requests_total{status=~"5.."}[5m]))
++            /
++          clamp_min(sum(rate(api_requests_total[5m])), 1) > 0.05
++        for: 10m
++        labels:
++          severity: warning
++          component: api
++        annotations:
++          summary: "API 5xx error rate is high"
++          description: "More than 5% of API requests are returning 5xx responses for 10 minutes."
++          runbook_url: "docs/OBSERVABILITY.md#recommended-alerts"
+diff --git a/deploy/monitoring/prometheus.yml b/deploy/monitoring/prometheus.yml
+new file mode 100644
+index 0000000..7640649
+--- /dev/null
++++ b/deploy/monitoring/prometheus.yml
+@@ -0,0 +1,22 @@
++global:
++  scrape_interval: 15s
++  evaluation_interval: 15s
++
++rule_files:
++  - /etc/prometheus/rules/prometheus-rules.yaml
++
++scrape_configs:
++  - job_name: orch-server
++    static_configs:
++      - targets:
++          - orch-server:8080
++
++  - job_name: orch-agent
++    static_configs:
++      - targets:
++          - orch-agent:8081
++
++  - job_name: postgres
++    static_configs:
++      - targets:
++          - postgres-exporter:9187
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 776ce99..8004cc2 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -83,5 +83,32 @@ services:
+     ports:
+       - "18080:80"
+ 
++  postgres-exporter:
++    image: prometheuscommunity/postgres-exporter:latest
++    profiles: ["monitoring"]
++    environment:
++      DATA_SOURCE_NAME: postgres://orch:orch@postgres:5432/orch?sslmode=disable
++    depends_on:
++      postgres:
++        condition: service_healthy
++
++  prometheus:
++    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
++    profiles: ["monitoring"]
++    command:
++      - --config.file=/etc/prometheus/prometheus.yml
++      - --storage.tsdb.path=/prometheus
++    ports:
++      - "9090:9090"
++    volumes:
++      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
++      - ./deploy/monitoring/prometheus-rules.yaml:/etc/prometheus/rules/prometheus-rules.yaml:ro
++      - prometheus-data:/prometheus
++    depends_on:
++      - orch-server
++      - orch-agent
++      - postgres-exporter
++
+ volumes:
+   postgres-data:
++  prometheus-data:
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+index 80a93bd..1ee84b2 100644
+--- a/docs/OBSERVABILITY.md
++++ b/docs/OBSERVABILITY.md
+@@ -88,6 +88,9 @@ Labels are intentionally low-cardinality. Do not add service names, task IDs, no
+ ## Prometheus Scrape Example
+ 
+ ```yaml
++rule_files:
++  - /etc/prometheus/rules/prometheus-rules.yaml
++
+ scrape_configs:
+   - job_name: orch-server
+     static_configs:
+@@ -98,16 +101,34 @@ scrape_configs:
+       - targets: ["localhost:8081"]
+ ```
+ 
+-## Suggested Alerts
++Local Compose can run Prometheus with the bundled rules:
++
++```sh
++docker compose --profile local-orch --profile monitoring up -d
++open http://localhost:9090
++```
++
++The local monitoring profile starts Prometheus and a PostgreSQL exporter. It loads `deploy/monitoring/prometheus.yml` and `deploy/monitoring/prometheus-rules.yaml`.
++
++## Recommended Alerts
++
++Recommended alert rules live in `deploy/monitoring/prometheus-rules.yaml`.
+ 
+-For an MVP environment:
++| Alert | Severity | Meaning | First response |
++| --- | --- | --- | --- |
++| `OrchServerDown` | critical | Prometheus cannot scrape `orch-server`. | Check server process, container status, and port `8080`. |
++| `OrchAgentHeartbeatMissing` | warning | An agent stopped recording successful heartbeats. | Check agent logs, server reachability, token rotation, and clock skew. |
++| `NodeOffline` | critical | Prometheus cannot scrape an agent endpoint. | Treat the node as suspect; inspect `orch node inspect` and Docker health. |
++| `SchedulerErrorsHigh` | warning | Scheduler errors are increasing. | Inspect scheduler logs and pending task placement constraints. |
++| `ReconcilerErrorsHigh` | warning | Reconciler errors are increasing. | Inspect service/task state and control-plane logs. |
++| `RolloutFailed` | critical | A rollout entered failed state. | Run `orch rollout status`, `orch events --service`, and inspect failed tasks. |
++| `TaskFailuresHigh` | warning | Task failures exceeded the recommended baseline. | Check image pulls, healthchecks, port collisions, and node runtime errors. |
++| `DockerOperationErrorsHigh` | warning | Docker API operations are failing across agents. | Check Docker daemon health and socket permissions on affected nodes. |
++| `DatabaseUnavailable` | critical | PostgreSQL exporter cannot be scraped. | Check PostgreSQL, exporter credentials, network path, and migrations. |
++| `APIErrorRateHigh` | warning | More than 5% of API requests are 5xx responses. | Correlate API logs by request ID and inspect recent deploy/rollout activity. |
++| `ReconciliationLatencyHigh` | warning | Reconciler p95 runtime is above 10 seconds. | Check database latency, event backlog, and controller contention. |
+ 
+-- API 5xx rate above baseline.
+-- Agent heartbeat failures increasing.
+-- Docker operation errors increasing.
+-- Task failures increasing.
+-- Rollout failures non-zero.
+-- No events or metrics from an expected node.
++Alert labels intentionally stay low-cardinality: `severity` and `component`. Do not add service IDs, task IDs, user IDs, image names, or node labels to alert labels; put those in annotations or linked runbooks.
+ 
+ Roadmap:
+ 
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index c33bd46..7fb3286 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `46-audit-logging.md`
+-- Last matching commit: `same commit: Add audit logging`
+-- Completed prompt range: `00` through `46`
+-- Next prompt to execute: `47-prometheus-alert-rules.md`
++- Last executed prompt: `47-prometheus-alert-rules.md`
++- Last matching commit: `same commit: Add Prometheus alert rules`
++- Completed prompt range: `00` through `47`
++- Next prompt to execute: `48-grafana-dashboard-json.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

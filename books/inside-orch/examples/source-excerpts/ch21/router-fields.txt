@@ -1,0 +1,15 @@
+			serviceName := routerName + "-service"
+			router := Router{
+				Rule:    routeRule(route),
+				Service: serviceName,
+			}
+			if route.TLS {
+				router.TLS = &TLSConfig{}
+			}
+			config.HTTP.Routers[routerName] = router
+			config.HTTP.Services[serviceName] = Service{
+				LoadBalancer: LoadBalancer{
+					Servers:        servers,
+					PassHostHeader: true,
+				},
+			}

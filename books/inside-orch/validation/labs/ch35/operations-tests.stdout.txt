@@ -1,0 +1,24 @@
+=== RUN   TestAgentCompatibility
+--- PASS: TestAgentCompatibility (0.00s)
+=== RUN   TestSchemaCompatibility
+--- PASS: TestSchemaCompatibility (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/version	0.002s
+=== RUN   TestDiscoverStatusInputIsIdempotent
+--- PASS: TestDiscoverStatusInputIsIdempotent (0.00s)
+=== RUN   TestMigrationLock
+--- PASS: TestMigrationLock (0.00s)
+=== RUN   TestMigrationLockFailure
+--- PASS: TestMigrationLockFailure (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/migrations	0.004s
+=== RUN   TestAllowsWithFakeTime
+--- PASS: TestAllowsWithFakeTime (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/maintenance	0.003s
+=== RUN   TestMaintenanceWindowAndForcedBypass
+--- PASS: TestMaintenanceWindowAndForcedBypass (0.00s)
+=== RUN   TestRetentionPruneAndDryRun
+--- PASS: TestRetentionPruneAndDryRun (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/controlplane	0.004s

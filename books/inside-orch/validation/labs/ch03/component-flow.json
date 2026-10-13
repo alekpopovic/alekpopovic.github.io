@@ -1,0 +1,58 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed",
+  "scope": "Reconciled index of existing actual component-flow record, not a new execution and not upstream Compose.",
+  "command_record": "validation/intake/docker-complete-flow-log-guard.json",
+  "command_record_started_at_utc": "2026-10-13T00:48:16.679771+00:00",
+  "command_record_finished_at_utc": "2026-10-13T00:48:18.459757+00:00",
+  "observed_at_utc": "2026-10-13T00:48:18.451646627Z",
+  "captured_ids": {
+    "direct_container": "3d5f67177718f7c8ddfbdb20a8b697a90e6bffffe1ad6d9484108ba7f76773b5",
+    "node": "7512d843-9348-444a-9242-3f2d6a344c7e",
+    "ordinary_container": "f2f78b9a4f7cd448aa03dd7b466ae0734de1fea0f9664c04e686307278ea75c6",
+    "service": "dfe9d34c-1cfb-418d-9099-015e6b126894",
+    "task": "e3a10467-4372-4e57-98f8-22087199a002"
+  },
+  "stages": [
+    {
+      "stage": "deployed",
+      "at_utc": "2026-10-13T00:48:17.488045504Z",
+      "active": 1,
+      "removed": 0
+    },
+    {
+      "stage": "scaled-up",
+      "at_utc": "2026-10-13T00:48:17.792333534Z",
+      "active": 2,
+      "removed": 0
+    },
+    {
+      "stage": "scaled-down",
+      "at_utc": "2026-10-13T00:48:18.147919648Z",
+      "active": 1,
+      "removed": 1
+    },
+    {
+      "stage": "deleted",
+      "at_utc": "2026-10-13T00:48:18.451377312Z",
+      "active": 0,
+      "removed": 2
+    }
+  ],
+  "http_probe": {
+    "bytes": 615,
+    "method": "docker exec wget loopback inside captured container",
+    "sha256": "fb47468a2cd3953c7131431991afcc6a2703f14640520102eea0a685a7e8d6de",
+    "welcome_matched": true
+  },
+  "logs": {
+    "bytes": 1218,
+    "nginx_matched": true,
+    "sha256": "8aa057d4c5bb559421cfa45eb61851383528514c0e9904501ef5d70e332bdc00"
+  },
+  "published_ports": 0,
+  "limitations": [
+    "Guarded ordinary handler plus real agent Runner and Docker adapter; upstream Compose procedure source-checked but not executed by this record.",
+    "Root captured cleanup separately; no broad deletion is authorized."
+  ]
+}

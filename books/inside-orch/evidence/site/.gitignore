@@ -1,0 +1,25 @@
+_site/
+_site-dev/
+.jekyll-cache/
+.sass-cache/
+node_modules/
+assets/css/site.css
+assets/css/reader-shell.css
+assets/css/ai-shell.css
+assets/css/ai-cards.css
+assets/labs/
+npm-debug.log*
+.venv/
+__pycache__/
+# Generated reading pages for every book
+book-pages/
+# Generated book downloads, licenses, and images
+assets/books/
+_data/books.json
+assets/social/
+assets/brand/*.png
+test-results/
+playwright-report/
+# Root-only browser reports; book publication reports are source material.
+/reports/
+/alekpopovic/

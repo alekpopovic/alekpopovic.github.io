@@ -1,0 +1,131 @@
+?   	github.com/alekpopovic/orch/.book-labs/review075/case-parser	[no test files]
+ok  	github.com/alekpopovic/orch/.book-labs/review075/ch07	0.004s [no tests to run]
+?   	github.com/alekpopovic/orch/.book-labs/review075/ch10	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/ch15	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/ch30	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/ch31	[no test files]
+ok  	github.com/alekpopovic/orch/.book-labs/review075/ch33	0.005s [no tests to run]
+ok  	github.com/alekpopovic/orch/.book-labs/review075/ch35	0.005s [no tests to run]
+ok  	github.com/alekpopovic/orch/.book-labs/review075/ch38	0.006s [no tests to run]
+?   	github.com/alekpopovic/orch/.book-labs/review075/docker-boundary	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/full-schema	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/lab02	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/lab06	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/lab07	[no test files]
+ok  	github.com/alekpopovic/orch/.book-labs/review075/review-interfaces	0.004s [no tests to run]
+?   	github.com/alekpopovic/orch/.book-labs/review075/rollout	[no test files]
+?   	github.com/alekpopovic/orch/.book-labs/review075/security	[no test files]
+{
+  "canonical_inputs": [
+    {
+      "canonical": "examples/teaching-extensions/case-parser/main.go",
+      "sha256": "84978b46ea8f71e61617b1b11e5498ba7c48c3dca6980079c860d5bdcf7d0ca6",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/case-parser/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch07/contract_test.go",
+      "sha256": "aa3c5713523f5389a8ad009e64921af4dd4c63d30f1b9408673e6eabff1799da",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch07/contract_test.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch10/main.go",
+      "sha256": "5bb589ee97f1be7d3a32481a611fc8ccfca2e22165bc054aa081ce3360337176",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch10/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch15/main.go",
+      "sha256": "49aa9bc70dd40425a260515f020636c26547cf06f263618c82851b2637ffa905",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch15/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch30/main.go",
+      "sha256": "813e3d419db02c75e8f15f39f46cffcb9b2e5991efa427bf17e03e2608678648",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch30/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch31/main.go",
+      "sha256": "40c6e84ab36900dc10fc97e27a05903c4f3461c2e27314bd2c65b2f89002ef78",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch31/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch33/adapter_contract_test.go",
+      "sha256": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch33/adapter_contract_test.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch35/preflight_test.go",
+      "sha256": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch35/preflight_test.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/ch38/metrics_contract_test.go",
+      "sha256": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/ch38/metrics_contract_test.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/docker-boundary/main.go",
+      "sha256": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/docker-boundary/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/full-schema/main.go",
+      "sha256": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/full-schema/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/lab02/main.go",
+      "sha256": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/lab02/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/lab06/main.go",
+      "sha256": "3ae90e46300f117f707155b7aac5afd673e743238714df442a8b93332bc434c6",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/lab06/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/lab07/main.go",
+      "sha256": "0bcdbafe50168e0392cc8c7446716171a70be96a9813585db29de66b957c1f85",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/lab07/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/review-interfaces/cron_manifest_test.go",
+      "sha256": "8fb5aacadfb3e3c57dcb6463ee22273de544bc953669fe77057b1cd6c7db8fac",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/review-interfaces/cron_manifest_test.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/rollout/main.go",
+      "sha256": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/rollout/main.go"
+    },
+    {
+      "canonical": "examples/teaching-extensions/security/main.go",
+      "sha256": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361",
+      "overlay": "/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/review075/security/main.go"
+    }
+  ],
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "-count=1",
+    "-run",
+    "^$",
+    "./.book-labs/review075/case-parser",
+    "./.book-labs/review075/ch07",
+    "./.book-labs/review075/ch10",
+    "./.book-labs/review075/ch15",
+    "./.book-labs/review075/ch30",
+    "./.book-labs/review075/ch31",
+    "./.book-labs/review075/ch33",
+    "./.book-labs/review075/ch35",
+    "./.book-labs/review075/ch38",
+    "./.book-labs/review075/docker-boundary",
+    "./.book-labs/review075/full-schema",
+    "./.book-labs/review075/lab02",
+    "./.book-labs/review075/lab06",
+    "./.book-labs/review075/lab07",
+    "./.book-labs/review075/review-interfaces",
+    "./.book-labs/review075/rollout",
+    "./.book-labs/review075/security"
+  ],
+  "scope": "Compile-only current canonical additions; focused semantic executions joined separately in manifest. Lab03 excluded here because private-source overlays have fresh076 actual compile+execution."
+}

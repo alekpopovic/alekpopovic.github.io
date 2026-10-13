@@ -1,0 +1,88 @@
+{
+  "chapter": "33",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch33.runtime",
+      "statement": "Runtime methods expose context-aware side effects and the fake deduplicates create by task identity.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 47,
+      "line_end": 56,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch33/adapter-contract.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual fake adapter and handshake exercise passed; no external plugin transport or supervisor was executed."
+      ]
+    },
+    {
+      "claim_id": "ch33.envelope",
+      "statement": "The local envelope is injected by the default server, rather than discovered as an external plugin.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 142,
+      "line_end": 147,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual fake adapter and handshake exercise passed; no external plugin transport or supervisor was executed."
+      ]
+    },
+    {
+      "claim_id": "ch33.notifications",
+      "statement": "Notification delivery retries and optionally signs HTTP payloads.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/notifications/notifications.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 77,
+      "line_end": 115,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual fake adapter and handshake exercise passed; no external plugin transport or supervisor was executed."
+      ]
+    },
+    {
+      "claim_id": "ch33.rpc-proposal",
+      "statement": "External RPC handshake and supervisor are design requirements, not implemented plugin loading.",
+      "classification": "design only",
+      "source_path": "docs/PLUGIN_SYSTEM_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 3,
+      "line_end": 11,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual fake adapter and handshake exercise passed; no external plugin transport or supervisor was executed."
+      ]
+    },
+    {
+      "claim_id": "ch33.provider",
+      "statement": "Autoscaler defines a narrow CPU metrics provider but server composition does not start it.",
+      "classification": "implemented package",
+      "source_path": "internal/autoscaler/autoscaler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 18,
+      "line_end": 36,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual fake adapter and handshake exercise passed; no external plugin transport or supervisor was executed."
+      ]
+    }
+  ]
+}

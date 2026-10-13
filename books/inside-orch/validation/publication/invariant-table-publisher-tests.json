@@ -1,0 +1,24 @@
+{
+  "id": "invariant-table-publisher-tests",
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "books/inside-orch/tests",
+    "-p",
+    "test_publisher_adapter.py"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T03:04:30.407386+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T03:04:30.616907+00:00",
+  "duration_seconds": 0.21,
+  "stdout": "validation/publication/invariant-table-publisher-tests.stdout.txt",
+  "stderr": "validation/publication/invariant-table-publisher-tests.stderr.txt"
+}

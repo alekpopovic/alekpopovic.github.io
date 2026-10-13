@@ -1,0 +1,43 @@
+{
+  "id": "01",
+  "title": "initialization-restart",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "author": "Aleksandar Popovic",
+  "prepared_at_utc": "2026-10-13T00:57:48.787771+00:00",
+  "execution_phase": "actual author-run book production, distinct from original pack-authoring phase",
+  "inputs": {
+    "labs/01-initialization-restart/book-http.yaml": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+    "scripts/observe_process_restart.py": "15d1ce9bda8c69a292decf217314bf5a2eeb3d58666ac2c4299a30961dc2dbc5",
+    "examples/teaching-extensions/docker-boundary/main.go": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5"
+  },
+  "records": [
+    "validation/labs/01-check.json",
+    "validation/intake/fresh-server-restart-authenticated.json",
+    "validation/intake/docker-complete-flow-log-guard.json"
+  ],
+  "machine_assertions": [
+    "all361lockedsourcehashes",
+    "CLIversion0.3.0",
+    "CLIYAMLparseracceptance",
+    "secretdatabasebootstrapredaction",
+    "actualservice/task/nodeIDs",
+    "freshprocessreadinessandmemoryloss",
+    "realDockerHTTP/logs/events/scale/delete"
+  ],
+  "modes": [
+    "inspection",
+    "recorded author-run evidence",
+    "explicit new disposable execution"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_lab_records.py",
+    "--lab",
+    "01",
+    "--mode",
+    "recorded"
+  ],
+  "release_status": "lab evidence prepared; final book integration/review pending",
+  "cleanup": "Only captured process/container IDs and newly created lab database names; never global prune",
+  "input_revision_note": "Canonical teaching-code formatting or verifier updates; repeat-execution gate076 will freeze current hashes."
+}

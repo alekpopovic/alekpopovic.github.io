@@ -1,0 +1,82 @@
+{
+  "chapter_id": "12",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch12.runtime",
+      "statement": "Runtime exposes typed container lifecycle and log operations; agent ContainerSpec forwards command/volumes but omits Resources.",
+      "classification": "partial integration",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 249,
+      "line_end": 269,
+      "associated_commits": [
+        "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+        "cf9769553d6599d798fafaffe1495d3d739fe993"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Lower Engine adapter resource support does not establish the ordinary agent field path."
+      ]
+    },
+    {
+      "claim_id": "ch12.create",
+      "statement": "Engine CreateContainer looks up task identity first and recovers create conflict by lookup.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 219,
+      "associated_commits": [
+        "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+        "cf9769553d6599d798fafaffe1495d3d739fe993"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Task lookup does not independently establish complete desired-spec equivalence."
+      ]
+    },
+    {
+      "claim_id": "ch12.operations",
+      "statement": "Focused fake/client tests passed repeated lifecycle and replacement behaviors.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 221,
+      "line_end": 277,
+      "associated_commits": [
+        "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+        "cf9769553d6599d798fafaffe1495d3d739fe993"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch12/focused-tests.json",
+      "limitations": [
+        "Focused tests use fakes and client fixtures, not a real daemon restart or every error case."
+      ]
+    },
+    {
+      "claim_id": "ch12.cleanup",
+      "statement": "Focused agent tests preserved nonmanaged containers despite task references.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 713,
+      "line_end": 718,
+      "associated_commits": [
+        "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+        "cf9769553d6599d798fafaffe1495d3d739fe993"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch12/focused-tests.json",
+      "limitations": [
+        "Ownership checks are narrower than universal isolation; cleanup after an authoritative empty memory assignment set remains a risk."
+      ]
+    }
+  ]
+}

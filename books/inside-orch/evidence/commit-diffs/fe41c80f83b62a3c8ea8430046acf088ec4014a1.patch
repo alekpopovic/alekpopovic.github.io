@@ -1,0 +1,1178 @@
+commit fe41c80f83b62a3c8ea8430046acf088ec4014a1
+Date: 2026-07-14T15:39:30+02:00
+Subject: Add registry credentials support
+
+
+---
+ docs/API.md                                     |  14 ++
+ docs/REGISTRIES.md                              |  50 ++++++++
+ internal/agent/agent.go                         |  14 +-
+ internal/agent/agent_test.go                    |  10 +-
+ internal/api/api.go                             |  69 ++++++++++
+ internal/api/api_test.go                        | 100 +++++++++++++++
+ internal/cli/deploy.go                          |  28 ++--
+ internal/cli/deploy_test.go                     |   4 +
+ internal/controlplane/controlplane.go           | 159 +++++++++++++++++++++--
+ internal/docker/fake.go                         |  27 +++-
+ internal/events/events.go                       |   2 +
+ internal/store/postgres.go                      | 163 ++++++++++++++++++++----
+ internal/store/postgres_test.go                 |   2 +
+ internal/store/store.go                         |   8 ++
+ migrations/000005_registry_credentials.down.sql |   4 +
+ migrations/000005_registry_credentials.up.sql   |  12 ++
+ pkg/types/types.go                              |  33 +++++
+ prompts/EXECUTION_TRACKER.md                    |   8 +-
+ 18 files changed, 653 insertions(+), 54 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index 6a86e87..647eb8f 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -72,6 +72,7 @@ curl -X POST http://localhost:8080/v1/services \
+     "spec": {
+       "name": "web",
+       "image": "nginx:1.27",
++      "image_pull_secret": "ghcr-prod",
+       "replicas": 2,
+       "env": {"APP_ENV": "local"},
+       "secret_refs": [{"name": "prod/database-url", "env": "DATABASE_URL"}],
+@@ -147,6 +148,19 @@ curl -X DELETE http://localhost:8080/v1/secrets/prod%2Fdatabase-url
+ 
+ Secret GET responses include metadata only and never return plaintext. Services can reference secrets with `secret_refs`, and agents receive decrypted values only in assigned task payloads. See [SECRETS.md](SECRETS.md).
+ 
++## Registry Credentials
++
++```sh
++curl -X POST http://localhost:8080/v1/registry-credentials \
++  -H 'Content-Type: application/json' \
++  -d '{"id":"ghcr-prod","registry":"ghcr.io","username":"robot","password":"token"}'
++
++curl http://localhost:8080/v1/registry-credentials
++curl -X DELETE http://localhost:8080/v1/registry-credentials/ghcr-prod
++```
++
++Registry credential responses include metadata only. Services can reference credentials with `image_pull_secret`; agents receive decrypted pull auth only for assigned tasks. See [REGISTRIES.md](REGISTRIES.md).
++
+ ## Service Discovery
+ 
+ ```sh
+diff --git a/docs/REGISTRIES.md b/docs/REGISTRIES.md
+new file mode 100644
+index 0000000..3b43660
+--- /dev/null
++++ b/docs/REGISTRIES.md
+@@ -0,0 +1,50 @@
++# Image Registries
++
++`orch` can store encrypted image registry credentials and send them only to agents that receive tasks for services referencing those credentials.
++
++## Create A Credential
++
++```sh
++curl -X POST http://localhost:8080/v1/registry-credentials \
++  -H 'Content-Type: application/json' \
++  -d '{
++    "id": "ghcr-prod",
++    "registry": "ghcr.io",
++    "username": "robot",
++    "password": "ghp_example_token"
++  }'
++```
++
++The password/token is encrypted with the server envelope key before storage. API list responses include metadata only:
++
++```sh
++curl http://localhost:8080/v1/registry-credentials
++```
++
++Delete a credential:
++
++```sh
++curl -X DELETE http://localhost:8080/v1/registry-credentials/ghcr-prod
++```
++
++## Service YAML
++
++Reference the credential by ID:
++
++```yaml
++name: private-api
++image: ghcr.io/example/private-api:1.0.0
++imagePullSecret: ghcr-prod
++replicas: 1
++resources:
++  cpu: 100m
++  memory: 128Mi
++```
++
++The control plane rejects services that reference missing credentials. Agents receive pull credentials only in assigned task payloads for the service that needs them, and the Docker runtime passes them to `PullImage`.
++
++## Security Notes
++
++- Do not log registry passwords or tokens.
++- Keep `ORCH_SECRET_KEY` stable; it protects registry credentials and secrets.
++- Use registry-scoped robot accounts or tokens with least privilege.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 18f73e3..de3ffe2 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -17,6 +17,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/config"
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/health"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -211,7 +212,7 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 	if _, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskPulling}); err != nil {
+ 		return err
+ 	}
+-	if err := r.runtime.PullImage(ctx, task.Image, nil); err != nil {
++	if err := r.runtime.PullImage(ctx, task.Image, dockerRegistryAuth(assigned.ImagePullAuth)); err != nil {
+ 		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
+ 		return err
+ 	}
+@@ -259,6 +260,17 @@ func dockerPortBindings(ports []types.Port) []orchdocker.PortBinding {
+ 	return bindings
+ }
+ 
++func dockerRegistryAuth(auth *controlplane.RegistryAuth) *orchdocker.RegistryAuth {
++	if auth == nil {
++		return nil
++	}
++	return &orchdocker.RegistryAuth{
++		Username:      auth.Username,
++		Password:      auth.Password,
++		ServerAddress: auth.ServerAddress,
++	}
++}
++
+ func runtimeFailureReason(err error) string {
+ 	if err == nil {
+ 		return ""
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index c3a1875..ad0972e 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -13,6 +13,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/config"
++	"github.com/alekpopovic/orch/internal/controlplane"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/health"
+ 	"github.com/alekpopovic/orch/internal/metrics"
+@@ -33,8 +34,9 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 				Image:         "nginx:1.27",
+ 				Version:       1,
+ 			},
+-			Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
+-			Env:   map[string]string{"DATABASE_URL": "postgres://secret"},
++			Ports:         []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			Env:           map[string]string{"DATABASE_URL": "postgres://secret"},
++			ImagePullAuth: &controlplane.RegistryAuth{Username: "robot", Password: "token", ServerAddress: "ghcr.io"},
+ 		}},
+ 	}
+ 	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("container-1"))
+@@ -48,6 +50,10 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
+ 		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
++	pullAuths := runtime.PullAuths()
++	if len(pullAuths) != 1 || pullAuths[0].Username != "robot" || pullAuths[0].Password != "token" || pullAuths[0].ServerAddress != "ghcr.io" {
++		t.Fatalf("expected Docker pull auth, got %#v", pullAuths)
++	}
+ 	specs := runtime.CreatedSpecs()
+ 	if len(specs) != 1 || specs[0].Env["DATABASE_URL"] != "postgres://secret" {
+ 		t.Fatalf("expected secret env in container spec, got %#v", specs)
+diff --git a/internal/api/api.go b/internal/api/api.go
+index b4b67ba..5960830 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -142,6 +142,9 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/secrets", server.listSecrets)
+ 	mux.HandleFunc("GET /v1/secrets/{name...}", server.getSecret)
+ 	mux.HandleFunc("DELETE /v1/secrets/{name...}", server.deleteSecret)
++	mux.HandleFunc("POST /v1/registry-credentials", server.createRegistryCredential)
++	mux.HandleFunc("GET /v1/registry-credentials", server.listRegistryCredentials)
++	mux.HandleFunc("DELETE /v1/registry-credentials/{id}", server.deleteRegistryCredential)
+ 	mux.HandleFunc("POST /v1/services", server.createService)
+ 	mux.HandleFunc("GET /v1/services", server.listServices)
+ 	mux.HandleFunc("GET /v1/services/{id}", server.getService)
+@@ -236,6 +239,21 @@ type ListSecretsResponse struct {
+ 	Secrets []types.SecretMetadata `json:"secrets"`
+ }
+ 
++type CreateRegistryCredentialRequest struct {
++	ID       string `json:"id"`
++	Registry string `json:"registry"`
++	Username string `json:"username"`
++	Password string `json:"password"`
++}
++
++type RegistryCredentialResponse struct {
++	Credential types.RegistryCredentialMetadata `json:"credential"`
++}
++
++type ListRegistryCredentialsResponse struct {
++	Credentials []types.RegistryCredentialMetadata `json:"credentials"`
++}
++
+ type CreateServiceRequest struct {
+ 	Spec types.ServiceSpec `json:"spec"`
+ }
+@@ -514,6 +532,46 @@ func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request) {
+ 	w.WriteHeader(http.StatusNoContent)
+ }
+ 
++func (s *Server) createRegistryCredential(w http.ResponseWriter, r *http.Request) {
++	var req CreateRegistryCredentialRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	credential, err := s.controlPlane.CreateRegistryCredential(r.Context(), controlplane.RegistryCredentialSpec{
++		ID:       req.ID,
++		Registry: req.Registry,
++		Username: req.Username,
++		Password: req.Password,
++	})
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusCreated, RegistryCredentialResponse{Credential: credential})
++}
++
++func (s *Server) listRegistryCredentials(w http.ResponseWriter, r *http.Request) {
++	credentials, err := s.controlPlane.ListRegistryCredentials(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListRegistryCredentialsResponse{Credentials: credentials})
++}
++
++func (s *Server) deleteRegistryCredential(w http.ResponseWriter, r *http.Request) {
++	id := strings.TrimSpace(r.PathValue("id"))
++	if id == "" {
++		s.writeError(w, r, fmt.Errorf("%w: registry credential id is required", store.ErrInvalidState))
++		return
++	}
++	if err := s.controlPlane.DeleteRegistryCredential(r.Context(), id); err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++
+ func (s *Server) createService(w http.ResponseWriter, r *http.Request) {
+ 	var req CreateServiceRequest
+ 	if !s.decodeJSON(w, r, &req) {
+@@ -890,6 +948,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/secrets" || strings.HasPrefix(path, "/v1/secrets/"):
+ 			return auth.RoleViewer, true
++		case path == "/v1/registry-credentials" || strings.HasPrefix(path, "/v1/registry-credentials/"):
++			return auth.RoleViewer, true
+ 		case path == "/v1/services" || strings.HasPrefix(path, "/v1/services/"):
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/tasks" || strings.HasPrefix(path, "/v1/tasks/"):
+@@ -912,6 +972,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleAdmin, true
+ 		case path == "/v1/secrets":
+ 			return auth.RoleOperator, true
++		case path == "/v1/registry-credentials":
++			return auth.RoleOperator, true
+ 		case path == "/v1/services" || strings.Contains(path, "/scale") || strings.Contains(path, "/rollout") || strings.Contains(path, "/rollback"):
+ 			return auth.RoleOperator, true
+ 		}
+@@ -919,6 +981,9 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/secrets/") {
+ 		return auth.RoleOperator, true
+ 	}
++	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/registry-credentials/") {
++		return auth.RoleOperator, true
++	}
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/services/") {
+ 		return auth.RoleOperator, true
+ 	}
+@@ -1014,6 +1079,10 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/secrets", true
+ 	case strings.HasPrefix(path, "/v1/secrets/"):
+ 		return "/v1/secrets/{name}", true
++	case path == "/v1/registry-credentials":
++		return "/v1/registry-credentials", true
++	case strings.HasPrefix(path, "/v1/registry-credentials/"):
++		return "/v1/registry-credentials/{id}", true
+ 	case path == "/v1/services":
+ 		return "/v1/services", true
+ 	case strings.HasPrefix(path, "/v1/services/") && strings.HasSuffix(path, "/scale"):
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 117e0b5..573561c 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -236,6 +236,106 @@ func TestSecretInjectedIntoAgentTaskEnv(t *testing.T) {
+ 	}
+ }
+ 
++func TestRegistryCredentialCreateListDeleteAndRedactPassword(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	const token = "ghp_secret_token"
++
++	create := doRequest(t, handler, http.MethodPost, "/v1/registry-credentials", CreateRegistryCredentialRequest{
++		ID:       "ghcr-prod",
++		Registry: "ghcr.io",
++		Username: "robot",
++		Password: token,
++	})
++	if create.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
++	}
++	if strings.Contains(create.Body.String(), token) {
++		t.Fatalf("create response leaked registry token: %s", create.Body.String())
++	}
++	var created RegistryCredentialResponse
++	decodeResponse(t, create, &created)
++	if created.Credential.ID != "ghcr-prod" || created.Credential.Registry != "ghcr.io" || created.Credential.Username != "robot" {
++		t.Fatalf("unexpected credential metadata %#v", created.Credential)
++	}
++
++	list := doRequest(t, handler, http.MethodGet, "/v1/registry-credentials", nil)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	if strings.Contains(list.Body.String(), token) {
++		t.Fatalf("list response leaked registry token: %s", list.Body.String())
++	}
++	var listed ListRegistryCredentialsResponse
++	decodeResponse(t, list, &listed)
++	if len(listed.Credentials) != 1 || listed.Credentials[0].ID != "ghcr-prod" {
++		t.Fatalf("unexpected credential list %#v", listed.Credentials)
++	}
++
++	deleteRec := doRequest(t, handler, http.MethodDelete, "/v1/registry-credentials/ghcr-prod", nil)
++	if deleteRec.Code != http.StatusNoContent {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusNoContent, deleteRec.Code, deleteRec.Body.String())
++	}
++}
++
++func TestServiceReferencesMissingRegistryCredential(t *testing.T) {
++	rec := doRequest(t, newTestHandler(), http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "private-api",
++			"image": "ghcr.io/example/private-api:1.0.0",
++			"image_pull_secret": "missing",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	if rec.Code != http.StatusBadRequest {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, rec.Code, rec.Body.String())
++	}
++	if !strings.Contains(rec.Body.String(), "registry credential") {
++		t.Fatalf("expected registry credential validation error, got %s", rec.Body.String())
++	}
++}
++
++func TestAgentReceivesImagePullAuthForAssignedTask(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++	const token = "ghp_secret_token"
++	createCredential := doRequest(t, handler, http.MethodPost, "/v1/registry-credentials", CreateRegistryCredentialRequest{
++		ID:       "ghcr-prod",
++		Registry: "ghcr.io",
++		Username: "robot",
++		Password: token,
++	})
++	if createCredential.Code != http.StatusCreated {
++		t.Fatalf("expected credential status %d, got %d: %s", http.StatusCreated, createCredential.Code, createCredential.Body.String())
++	}
++	createService := doRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "private-api",
++			"image": "ghcr.io/example/private-api:1.0.0",
++			"image_pull_secret": "ghcr-prod",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	if createService.Code != http.StatusCreated {
++		t.Fatalf("expected service status %d, got %d: %s", http.StatusCreated, createService.Code, createService.Body.String())
++	}
++
++	list := doAgentCredentialRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil, registered.Credential.Token)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected tasks status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	var tasks AgentTasksResponse
++	decodeResponse(t, list, &tasks)
++	if len(tasks.Tasks) != 1 {
++		t.Fatalf("expected one assigned task, got %#v", tasks.Tasks)
++	}
++	auth := tasks.Tasks[0].ImagePullAuth
++	if auth == nil || auth.Username != "robot" || auth.Password != token || auth.ServerAddress != "ghcr.io" {
++		t.Fatalf("unexpected image pull auth %#v", auth)
++	}
++}
++
+ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
+ 	registered := registerTestNode(t, handler)
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index 8de46b9..ea7f2dd 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -12,16 +12,17 @@ import (
+ )
+ 
+ type DeployFile struct {
+-	Name        string            `yaml:"name"`
+-	Image       string            `yaml:"image"`
+-	Replicas    int               `yaml:"replicas"`
+-	Ports       []DeployPort      `yaml:"ports"`
+-	Env         DeployEnv         `yaml:"env"`
+-	Resources   DeployResources   `yaml:"resources"`
+-	Healthcheck DeployHealthcheck `yaml:"healthcheck"`
+-	Restart     DeployRestart     `yaml:"restart"`
+-	Placement   DeployPlacement   `yaml:"placement"`
+-	Routes      []DeployRoute     `yaml:"routes"`
++	Name            string            `yaml:"name"`
++	Image           string            `yaml:"image"`
++	ImagePullSecret string            `yaml:"imagePullSecret"`
++	Replicas        int               `yaml:"replicas"`
++	Ports           []DeployPort      `yaml:"ports"`
++	Env             DeployEnv         `yaml:"env"`
++	Resources       DeployResources   `yaml:"resources"`
++	Healthcheck     DeployHealthcheck `yaml:"healthcheck"`
++	Restart         DeployRestart     `yaml:"restart"`
++	Placement       DeployPlacement   `yaml:"placement"`
++	Routes          []DeployRoute     `yaml:"routes"`
+ }
+ 
+ type DeployPort struct {
+@@ -106,9 +107,10 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	}
+ 
+ 	spec := types.ServiceSpec{
+-		Name:     strings.TrimSpace(deploy.Name),
+-		Image:    strings.TrimSpace(deploy.Image),
+-		Replicas: deploy.Replicas,
++		Name:            strings.TrimSpace(deploy.Name),
++		Image:           strings.TrimSpace(deploy.Image),
++		ImagePullSecret: strings.TrimSpace(deploy.ImagePullSecret),
++		Replicas:        deploy.Replicas,
+ 		ResourceRequirements: types.ResourceRequirements{
+ 			Requests: requests,
+ 			Limits:   requests,
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index 0da0078..4e57634 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -10,6 +10,7 @@ func TestParseDeploy(t *testing.T) {
+ 	spec, err := ParseDeploy([]byte(`
+ name: api
+ image: ghcr.io/example/api:1.0.0
++imagePullSecret: ghcr-prod
+ replicas: 3
+ ports:
+   - container: 8080
+@@ -49,6 +50,9 @@ placement:
+ 	if spec.Image != "ghcr.io/example/api:1.0.0" {
+ 		t.Fatalf("unexpected image %q", spec.Image)
+ 	}
++	if spec.ImagePullSecret != "ghcr-prod" {
++		t.Fatalf("unexpected image pull secret %q", spec.ImagePullSecret)
++	}
+ 	if spec.Replicas != 3 {
+ 		t.Fatalf("expected 3 replicas, got %d", spec.Replicas)
+ 	}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 5690353..d14843c 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -31,6 +31,9 @@ type Service interface {
+ 	ListSecrets(ctx context.Context) ([]types.SecretMetadata, error)
+ 	GetSecret(ctx context.Context, name string) (types.SecretMetadata, error)
+ 	DeleteSecret(ctx context.Context, name string) error
++	CreateRegistryCredential(ctx context.Context, spec RegistryCredentialSpec) (types.RegistryCredentialMetadata, error)
++	ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredentialMetadata, error)
++	DeleteRegistryCredential(ctx context.Context, id string) error
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	ListServices(ctx context.Context) ([]types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+@@ -72,10 +75,24 @@ type AgentDirective struct {
+ }
+ 
+ type AgentTask struct {
+-	Task        types.Task         `json:"task"`
+-	Healthcheck *types.Healthcheck `json:"healthcheck,omitempty"`
+-	Ports       []types.Port       `json:"ports,omitempty"`
+-	Env         map[string]string  `json:"env,omitempty"`
++	Task          types.Task         `json:"task"`
++	Healthcheck   *types.Healthcheck `json:"healthcheck,omitempty"`
++	Ports         []types.Port       `json:"ports,omitempty"`
++	Env           map[string]string  `json:"env,omitempty"`
++	ImagePullAuth *RegistryAuth      `json:"image_pull_auth,omitempty"`
++}
++
++type RegistryCredentialSpec struct {
++	ID       string
++	Registry string
++	Username string
++	Password string
++}
++
++type RegistryAuth struct {
++	Username      string `json:"username,omitempty"`
++	Password      string `json:"password,omitempty"`
++	ServerAddress string `json:"server_address,omitempty"`
+ }
+ 
+ type TaskStatusReport struct {
+@@ -106,6 +123,7 @@ type MemoryService struct {
+ 	tasks       map[types.TaskID]types.Task
+ 	deployments map[types.DeploymentID]types.Deployment
+ 	secrets     map[string]types.Secret
++	registries  map[string]types.RegistryCredential
+ 	envelope    secrets.Envelope
+ 	events      []types.Event
+ 	now         func() time.Time
+@@ -131,6 +149,7 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 		tasks:       make(map[types.TaskID]types.Task),
+ 		deployments: make(map[types.DeploymentID]types.Deployment),
+ 		secrets:     make(map[string]types.Secret),
++		registries:  make(map[string]types.RegistryCredential),
+ 		envelope:    envelope,
+ 		now:         now,
+ 	}
+@@ -314,11 +333,16 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		if err != nil {
+ 			return nil, err
+ 		}
++		auth, err := s.resolveRegistryAuthLocked(ctx, service.Spec.ImagePullSecret)
++		if err != nil {
++			return nil, err
++		}
+ 		tasks = append(tasks, AgentTask{
+-			Task:        task,
+-			Healthcheck: service.Spec.Healthcheck,
+-			Ports:       taskPortsForAgent(task, service),
+-			Env:         env,
++			Task:          task,
++			Healthcheck:   service.Spec.Healthcheck,
++			Ports:         taskPortsForAgent(task, service),
++			Env:           env,
++			ImagePullAuth: auth,
+ 		})
+ 	}
+ 	slices.SortFunc(tasks, func(a, b AgentTask) int {
+@@ -373,6 +397,29 @@ func cloneStringMap(values map[string]string) map[string]string {
+ 	return cloned
+ }
+ 
++func (s *MemoryService) resolveRegistryAuthLocked(ctx context.Context, id string) (*RegistryAuth, error) {
++	id = strings.TrimSpace(id)
++	if id == "" {
++		return nil, nil
++	}
++	credential, ok := s.registries[id]
++	if !ok {
++		return nil, fmt.Errorf("%w: registry credential %q not found", store.ErrInvalidState, id)
++	}
++	if s.envelope == nil {
++		return nil, fmt.Errorf("%w: secret envelope is not configured", store.ErrInvalidState)
++	}
++	plaintext, err := s.envelope.Decrypt(ctx, secrets.Ciphertext{KeyID: credential.KeyID, Data: credential.EncryptedPassword})
++	if err != nil {
++		return nil, fmt.Errorf("%w: decrypt registry credential %q", store.ErrInvalidState, id)
++	}
++	return &RegistryAuth{
++		Username:      credential.Username,
++		Password:      string(plaintext),
++		ServerAddress: credential.Registry,
++	}, nil
++}
++
+ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Task{}, err
+@@ -583,6 +630,96 @@ func (s *MemoryService) DeleteSecret(ctx context.Context, name string) error {
+ 	return nil
+ }
+ 
++func (s *MemoryService) CreateRegistryCredential(ctx context.Context, spec RegistryCredentialSpec) (types.RegistryCredentialMetadata, error) {
++	if err := ctx.Err(); err != nil {
++		return types.RegistryCredentialMetadata{}, err
++	}
++	spec.ID = strings.TrimSpace(spec.ID)
++	spec.Registry = strings.TrimSpace(spec.Registry)
++	spec.Username = strings.TrimSpace(spec.Username)
++	if spec.ID == "" {
++		return types.RegistryCredentialMetadata{}, fmt.Errorf("%w: registry credential id is required", store.ErrInvalidState)
++	}
++	if spec.Registry == "" {
++		return types.RegistryCredentialMetadata{}, fmt.Errorf("%w: registry host is required", store.ErrInvalidState)
++	}
++	if spec.Username == "" {
++		return types.RegistryCredentialMetadata{}, fmt.Errorf("%w: registry username is required", store.ErrInvalidState)
++	}
++	if s.envelope == nil {
++		return types.RegistryCredentialMetadata{}, fmt.Errorf("%w: secret envelope is not configured", store.ErrInvalidState)
++	}
++	ciphertext, err := s.envelope.Encrypt(ctx, []byte(spec.Password))
++	if err != nil {
++		return types.RegistryCredentialMetadata{}, fmt.Errorf("encrypt registry credential %q: %w", spec.ID, err)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	now := s.now()
++	if existing, ok := s.registries[spec.ID]; ok {
++		existing.Registry = spec.Registry
++		existing.Username = spec.Username
++		existing.EncryptedPassword = append([]byte(nil), ciphertext.Data...)
++		existing.KeyID = ciphertext.KeyID
++		existing.UpdatedAt = now
++		s.registries[spec.ID] = existing
++		return existing.Metadata(), nil
++	}
++	credential := types.RegistryCredential{
++		ID:                spec.ID,
++		Registry:          spec.Registry,
++		Username:          spec.Username,
++		EncryptedPassword: append([]byte(nil), ciphertext.Data...),
++		KeyID:             ciphertext.KeyID,
++		CreatedAt:         now,
++		UpdatedAt:         now,
++	}
++	s.registries[spec.ID] = credential
++	s.appendEventLocked(events.TypeRegistryCredCreated, types.EventInfo, "controlplane", "registry credential created", "registry_credential", "", now)
++	return credential.Metadata(), nil
++}
++
++func (s *MemoryService) ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredentialMetadata, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	items := make([]types.RegistryCredentialMetadata, 0, len(s.registries))
++	for _, credential := range s.registries {
++		items = append(items, credential.Metadata())
++	}
++	slices.SortFunc(items, func(a, b types.RegistryCredentialMetadata) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++	return items, nil
++}
++
++func (s *MemoryService) DeleteRegistryCredential(ctx context.Context, id string) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	id = strings.TrimSpace(id)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	if _, ok := s.registries[id]; !ok {
++		return store.ErrNotFound
++	}
++	delete(s.registries, id)
++	s.appendEventLocked(events.TypeRegistryCredDeleted, types.EventInfo, "controlplane", "registry credential deleted", "registry_credential", "", s.now())
++	return nil
++}
++
+ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Service{}, err
+@@ -609,6 +746,12 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 			return types.Service{}, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
+ 		}
+ 	}
++	if imagePullSecret := strings.TrimSpace(spec.ImagePullSecret); imagePullSecret != "" {
++		if _, ok := s.registries[imagePullSecret]; !ok {
++			return types.Service{}, fmt.Errorf("%w: registry credential %q not found", store.ErrInvalidState, imagePullSecret)
++		}
++		spec.ImagePullSecret = imagePullSecret
++	}
+ 
+ 	now := s.now()
+ 	service := types.Service{
+diff --git a/internal/docker/fake.go b/internal/docker/fake.go
+index f51c301..8087ff7 100644
+--- a/internal/docker/fake.go
++++ b/internal/docker/fake.go
+@@ -24,6 +24,7 @@ type FakeRuntime struct {
+ 	operations         []FakeOperation
+ 	createdSpecs       []ContainerSpec
+ 	pullErr            error
++	pullAuths          []*RegistryAuth
+ 	createErr          error
+ 	startErr           error
+ 	inspectErr         error
+@@ -45,6 +46,7 @@ type FakeOperation struct {
+ 	ContainerID ContainerID
+ 	Force       bool
+ 	Labels      map[string]string
++	Auth        *RegistryAuth
+ }
+ 
+ func NewFakeRuntime(opts ...FakeRuntimeOption) *FakeRuntime {
+@@ -115,13 +117,15 @@ func WithFakeLogBlock(started chan struct{}) FakeRuntimeOption {
+ 	}
+ }
+ 
+-func (r *FakeRuntime) PullImage(ctx context.Context, image string, _ *RegistryAuth) error {
++func (r *FakeRuntime) PullImage(ctx context.Context, image string, auth *RegistryAuth) error {
+ 	if err := ctx.Err(); err != nil {
+ 		return err
+ 	}
+ 	r.mu.Lock()
+ 	defer r.mu.Unlock()
+-	r.operations = append(r.operations, FakeOperation{Name: "pull", Image: image})
++	clonedAuth := cloneRegistryAuth(auth)
++	r.operations = append(r.operations, FakeOperation{Name: "pull", Image: image, Auth: clonedAuth})
++	r.pullAuths = append(r.pullAuths, clonedAuth)
+ 	if strings.TrimSpace(image) == "" {
+ 		return fmt.Errorf("image is required")
+ 	}
+@@ -350,10 +354,21 @@ func (r *FakeRuntime) Operations() []FakeOperation {
+ 	for i, operation := range r.operations {
+ 		operations[i] = operation
+ 		operations[i].Labels = cloneMap(operation.Labels)
++		operations[i].Auth = cloneRegistryAuth(operation.Auth)
+ 	}
+ 	return operations
+ }
+ 
++func (r *FakeRuntime) PullAuths() []*RegistryAuth {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	auths := make([]*RegistryAuth, len(r.pullAuths))
++	for i, auth := range r.pullAuths {
++		auths[i] = cloneRegistryAuth(auth)
++	}
++	return auths
++}
++
+ func (r *FakeRuntime) OperationStrings() []string {
+ 	operations := r.Operations()
+ 	values := make([]string, len(operations))
+@@ -445,4 +460,12 @@ func cloneContainerSpec(spec ContainerSpec) ContainerSpec {
+ 	return spec
+ }
+ 
++func cloneRegistryAuth(auth *RegistryAuth) *RegistryAuth {
++	if auth == nil {
++		return nil
++	}
++	cloned := *auth
++	return &cloned
++}
++
+ var _ Runtime = (*FakeRuntime)(nil)
+diff --git a/internal/events/events.go b/internal/events/events.go
+index 980c701..c17bc7f 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -20,6 +20,8 @@ const (
+ 	TypeServiceScaled          = "service.scaled"
+ 	TypeSecretCreated          = "secret.created"
+ 	TypeSecretDeleted          = "secret.deleted"
++	TypeRegistryCredCreated    = "registry_credential.created"
++	TypeRegistryCredDeleted    = "registry_credential.deleted"
+ 	TypeRolloutStarted         = "service.rollout.started"
+ 	TypeRollbackStarted        = "service.rollback.started"
+ 	TypeTaskAssigned           = "task.assigned"
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 239d86b..e6a309a 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -322,7 +322,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $3
+-		RETURNING id, name, image, replicas, env, secret_refs, ports,
++		RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+@@ -418,6 +418,97 @@ func (s *postgresStore) DeleteSecret(ctx context.Context, name string) error {
+ 	return nil
+ }
+ 
++func (s *postgresStore) CreateRegistryCredential(ctx context.Context, credential types.RegistryCredential) (types.RegistryCredential, error) {
++	credential.ID = strings.TrimSpace(credential.ID)
++	credential.Registry = strings.TrimSpace(credential.Registry)
++	credential.Username = strings.TrimSpace(credential.Username)
++	if credential.ID == "" {
++		return types.RegistryCredential{}, fmt.Errorf("%w: registry credential id is required", ErrInvalidState)
++	}
++	if credential.Registry == "" {
++		return types.RegistryCredential{}, fmt.Errorf("%w: registry host is required", ErrInvalidState)
++	}
++	if credential.Username == "" {
++		return types.RegistryCredential{}, fmt.Errorf("%w: registry username is required", ErrInvalidState)
++	}
++	if len(credential.EncryptedPassword) == 0 {
++		return types.RegistryCredential{}, fmt.Errorf("%w: encrypted registry credential password is required", ErrInvalidState)
++	}
++	if strings.TrimSpace(credential.KeyID) == "" {
++		return types.RegistryCredential{}, fmt.Errorf("%w: registry credential key id is required", ErrInvalidState)
++	}
++	row := s.db.QueryRow(ctx, `
++		INSERT INTO registry_credentials (id, registry, username, encrypted_password, key_id)
++		VALUES ($1, $2, $3, $4, $5)
++		ON CONFLICT (id) DO UPDATE
++		SET registry = EXCLUDED.registry,
++			username = EXCLUDED.username,
++			encrypted_password = EXCLUDED.encrypted_password,
++			key_id = EXCLUDED.key_id,
++			updated_at = timezone('utc', now())
++		RETURNING id, registry, username, encrypted_password, key_id, created_at, updated_at`,
++		credential.ID,
++		credential.Registry,
++		credential.Username,
++		credential.EncryptedPassword,
++		credential.KeyID,
++	)
++	created, err := scanRegistryCredential(row)
++	if err != nil {
++		return types.RegistryCredential{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *postgresStore) GetRegistryCredential(ctx context.Context, id string) (types.RegistryCredential, error) {
++	row := s.db.QueryRow(ctx, `
++		SELECT id, registry, username, encrypted_password, key_id, created_at, updated_at
++		FROM registry_credentials
++		WHERE id = $1`,
++		strings.TrimSpace(id),
++	)
++	credential, err := scanRegistryCredential(row)
++	if err != nil {
++		return types.RegistryCredential{}, mapPostgresError(err)
++	}
++	return credential, nil
++}
++
++func (s *postgresStore) ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredential, error) {
++	rows, err := s.db.Query(ctx, `
++		SELECT id, registry, username, encrypted_password, key_id, created_at, updated_at
++		FROM registry_credentials
++		ORDER BY id`)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	credentials := make([]types.RegistryCredential, 0)
++	for rows.Next() {
++		credential, err := scanRegistryCredential(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		credentials = append(credentials, credential)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return credentials, nil
++}
++
++func (s *postgresStore) DeleteRegistryCredential(ctx context.Context, id string) error {
++	tag, err := s.db.Exec(ctx, `DELETE FROM registry_credentials WHERE id = $1`, strings.TrimSpace(id))
++	if err != nil {
++		return mapPostgresError(err)
++	}
++	if tag.RowsAffected() == 0 {
++		return ErrNotFound
++	}
++	return nil
++}
++
+ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
+ 	if task.DesiredStatus == "" {
+ 		task.DesiredStatus = types.TaskRunning
+@@ -811,15 +902,16 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+-			name, image, replicas, env, secret_refs, ports,
++			name, image, image_pull_secret, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+-		RETURNING id, name, image, replicas, env, secret_refs, ports,
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
++		RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
++		spec.ImagePullSecret,
+ 		spec.Replicas,
+ 		env,
+ 		secretRefs,
+@@ -843,28 +935,30 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 		return types.Service{}, err
+ 	}
+ 	row := db.QueryRow(ctx, `
+-		UPDATE services
+-		SET name = $2,
+-			image = $3,
+-			replicas = $4,
+-			env = $5,
+-			secret_refs = $6,
+-			ports = $7,
+-			resource_requirements = $8,
+-			healthcheck = $9,
+-			restart_policy = $10,
+-			placement_constraints = $11,
+-			routes = $13,
+-			deployment_version = deployment_version + 1,
+-			updated_at = timezone('utc', now()),
+-			version = version + 1
+-		WHERE id = $1 AND updated_at = $12
+-		RETURNING id, name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+-			status, deployment_version, created_at, updated_at`,
++			UPDATE services
++			SET name = $2,
++				image = $3,
++				image_pull_secret = $4,
++				replicas = $5,
++				env = $6,
++				secret_refs = $7,
++				ports = $8,
++				resource_requirements = $9,
++				healthcheck = $10,
++				restart_policy = $11,
++				placement_constraints = $12,
++				routes = $14,
++				deployment_version = deployment_version + 1,
++				updated_at = timezone('utc', now()),
++				version = version + 1
++			WHERE id = $1 AND updated_at = $13
++			RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
++				resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
++				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+ 		spec.Image,
++		spec.ImagePullSecret,
+ 		spec.Replicas,
+ 		env,
+ 		secretRefs,
+@@ -902,7 +996,7 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ }
+ 
+ func serviceSelectSQL() string {
+-	return `SELECT id, name, image, replicas, env, secret_refs, ports,
++	return `SELECT id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
+ 		resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+@@ -972,6 +1066,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&id,
+ 		&service.Spec.Name,
+ 		&service.Spec.Image,
++		&service.Spec.ImagePullSecret,
+ 		&service.Spec.Replicas,
+ 		&env,
+ 		&secretRefs,
+@@ -1072,6 +1167,26 @@ func scanSecret(row pgx.Row) (types.Secret, error) {
+ 	return secret, nil
+ }
+ 
++func scanRegistryCredential(row pgx.Row) (types.RegistryCredential, error) {
++	var credential types.RegistryCredential
++	err := row.Scan(
++		&credential.ID,
++		&credential.Registry,
++		&credential.Username,
++		&credential.EncryptedPassword,
++		&credential.KeyID,
++		&credential.CreatedAt,
++		&credential.UpdatedAt,
++	)
++	if err != nil {
++		return types.RegistryCredential{}, err
++	}
++	credential.EncryptedPassword = append([]byte(nil), credential.EncryptedPassword...)
++	credential.CreatedAt = credential.CreatedAt.UTC()
++	credential.UpdatedAt = credential.UpdatedAt.UTC()
++	return credential, nil
++}
++
+ func scanDeployment(row pgx.Row) (types.Deployment, error) {
+ 	var deployment types.Deployment
+ 	var id, serviceID string
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index fd6b946..4f11c3d 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -383,6 +383,7 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
+ 
+ 	for _, file := range []string{
++		"000005_registry_credentials.down.sql",
+ 		"000004_secrets.down.sql",
+ 		"000003_service_routes.down.sql",
+ 		"000002_task_ports.down.sql",
+@@ -391,6 +392,7 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 		"000002_task_ports.up.sql",
+ 		"000003_service_routes.up.sql",
+ 		"000004_secrets.up.sql",
++		"000005_registry_credentials.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+diff --git a/internal/store/store.go b/internal/store/store.go
+index becbea5..e0ceace 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -54,6 +54,13 @@ type SecretStore interface {
+ 	DeleteSecret(ctx context.Context, name string) error
+ }
+ 
++type RegistryCredentialStore interface {
++	CreateRegistryCredential(ctx context.Context, credential types.RegistryCredential) (types.RegistryCredential, error)
++	GetRegistryCredential(ctx context.Context, id string) (types.RegistryCredential, error)
++	ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredential, error)
++	DeleteRegistryCredential(ctx context.Context, id string) error
++}
++
+ type Store interface {
+ 	NodeStore
+ 	ServiceStore
+@@ -61,6 +68,7 @@ type Store interface {
+ 	DeploymentStore
+ 	EventStore
+ 	SecretStore
++	RegistryCredentialStore
+ }
+ 
+ // TxFunc runs a set of store operations inside one transaction boundary.
+diff --git a/migrations/000005_registry_credentials.down.sql b/migrations/000005_registry_credentials.down.sql
+new file mode 100644
+index 0000000..8ea553b
+--- /dev/null
++++ b/migrations/000005_registry_credentials.down.sql
+@@ -0,0 +1,4 @@
++DROP TABLE IF EXISTS registry_credentials;
++
++ALTER TABLE IF EXISTS services
++    DROP COLUMN IF EXISTS image_pull_secret;
+diff --git a/migrations/000005_registry_credentials.up.sql b/migrations/000005_registry_credentials.up.sql
+new file mode 100644
+index 0000000..79b48ae
+--- /dev/null
++++ b/migrations/000005_registry_credentials.up.sql
+@@ -0,0 +1,12 @@
++ALTER TABLE services
++    ADD COLUMN image_pull_secret TEXT NOT NULL DEFAULT '';
++
++CREATE TABLE registry_credentials (
++    id TEXT PRIMARY KEY,
++    registry TEXT NOT NULL,
++    username TEXT NOT NULL,
++    encrypted_password BYTEA NOT NULL,
++    key_id TEXT NOT NULL,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 3b3ad9b..c3eb5de 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -152,6 +152,7 @@ const (
+ type ServiceSpec struct {
+ 	Name                 string                `json:"name"`
+ 	Image                string                `json:"image"`
++	ImagePullSecret      string                `json:"image_pull_secret,omitempty"`
+ 	Replicas             int                   `json:"replicas"`
+ 	Env                  map[string]string     `json:"env,omitempty"`
+ 	SecretRefs           []SecretRef           `json:"secret_refs,omitempty"`
+@@ -170,6 +171,7 @@ func (spec ServiceSpec) Validate() error {
+ 	if strings.TrimSpace(spec.Image) == "" {
+ 		return fmt.Errorf("image is required")
+ 	}
++	spec.ImagePullSecret = strings.TrimSpace(spec.ImagePullSecret)
+ 	if spec.Replicas < 0 {
+ 		return fmt.Errorf("replicas cannot be negative")
+ 	}
+@@ -259,6 +261,36 @@ type SecretMetadata struct {
+ 	UpdatedAt time.Time `json:"updated_at"`
+ }
+ 
++type RegistryCredential struct {
++	ID                string    `json:"id"`
++	Registry          string    `json:"registry"`
++	Username          string    `json:"username"`
++	EncryptedPassword []byte    `json:"-"`
++	KeyID             string    `json:"key_id,omitempty"`
++	CreatedAt         time.Time `json:"created_at"`
++	UpdatedAt         time.Time `json:"updated_at"`
++}
++
++func (credential RegistryCredential) Metadata() RegistryCredentialMetadata {
++	return RegistryCredentialMetadata{
++		ID:        credential.ID,
++		Registry:  credential.Registry,
++		Username:  credential.Username,
++		KeyID:     credential.KeyID,
++		CreatedAt: credential.CreatedAt.UTC(),
++		UpdatedAt: credential.UpdatedAt.UTC(),
++	}
++}
++
++type RegistryCredentialMetadata struct {
++	ID        string    `json:"id"`
++	Registry  string    `json:"registry"`
++	Username  string    `json:"username"`
++	KeyID     string    `json:"key_id,omitempty"`
++	CreatedAt time.Time `json:"created_at"`
++	UpdatedAt time.Time `json:"updated_at"`
++}
++
+ type Port struct {
+ 	Name          string       `json:"name,omitempty"`
+ 	Protocol      PortProtocol `json:"protocol"`
+@@ -396,6 +428,7 @@ func (requirements ResourceRequirements) ValidateStrict() error {
+ 
+ func NormalizeServiceSpec(spec ServiceSpec, defaults ResourceDefaults) (ServiceSpec, error) {
+ 	normalized := spec
++	normalized.ImagePullSecret = strings.TrimSpace(normalized.ImagePullSecret)
+ 	requirements, err := normalized.ResourceRequirements.WithDefaults(defaults)
+ 	if err != nil {
+ 		return ServiceSpec{}, err
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index affe178..ee8a83d 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `37-secrets-mvp.md`
+-- Last matching commit: `same commit: Add secrets MVP`
+-- Completed prompt range: `00` through `37`
+-- Next prompt to execute: `38-image-registry-authentication.md`
++- Last executed prompt: `38-image-registry-authentication.md`
++- Last matching commit: `same commit: Add registry credentials support`
++- Completed prompt range: `00` through `38`
++- Next prompt to execute: `39-node-drain-and-reschedule.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

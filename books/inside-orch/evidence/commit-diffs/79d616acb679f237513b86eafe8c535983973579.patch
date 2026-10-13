@@ -1,0 +1,499 @@
+commit 79d616acb679f237513b86eafe8c535983973579
+Date: 2026-08-21T16:17:07+02:00
+Subject: Fix v0.3.0 release formatting gate (#7)
+
+* Fix release formatting gate
+
+* Modernize release lint checks
+---
+ .github/workflows/ci.yml               |  3 ++-
+ .golangci.yml                          | 42 ++++++++++++++++++++++++++--------
+ Makefile                               |  3 ++-
+ internal/admission/admission_test.go   |  4 ++--
+ internal/agent/agent.go                |  6 ++---
+ internal/api/api.go                    | 13 ++++-------
+ internal/api/versioning_test.go        |  2 +-
+ internal/cli/client.go                 |  2 +-
+ internal/cli/fuzz_test.go              |  2 +-
+ internal/cli/root.go                   |  2 +-
+ internal/config/config.go              |  2 +-
+ internal/controlplane/workloads.go     |  6 ++---
+ internal/cronjobs/cronjobs.go          |  8 +++----
+ internal/cronjobs/fuzz_test.go         |  2 +-
+ internal/dns/server.go                 |  6 ++++-
+ internal/docker/fake_test.go           |  3 ++-
+ internal/image/fuzz_test.go            |  2 +-
+ internal/leadership/leadership_test.go | 10 +++++---
+ internal/store/store.go                |  2 +-
+ internal/version/version.go            |  8 +++----
+ pkg/types/fuzz_test.go                 |  8 +++----
+ pkg/types/types.go                     |  1 -
+ 22 files changed, 83 insertions(+), 54 deletions(-)
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 2a7b146..604a29f 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -67,8 +67,9 @@ jobs:
+         run: go test ./api
+ 
+       - name: Run golangci-lint
+-        uses: golangci/golangci-lint-action@v6
++        uses: golangci/golangci-lint-action@v9
+         with:
++          version: v2.13.1
+           args: --timeout=5m
+ 
+       - name: Run tests with coverage
+diff --git a/.golangci.yml b/.golangci.yml
+index 134f2b2..c44c105 100644
+--- a/.golangci.yml
++++ b/.golangci.yml
+@@ -1,19 +1,43 @@
++version: "2"
+ run:
+-  timeout: 5m
+   tests: true
+-
+ linters:
+   enable:
+-    - errcheck
+-    - gofmt
+-    - govet
+-    - ineffassign
+     - misspell
+     - revive
+-    - staticcheck
+     - unconvert
+-    - unused
+-
++  exclusions:
++    generated: lax
++    presets:
++      - comments
++      - common-false-positives
++      - legacy
++      - std-error-handling
++    paths:
++      - third_party$
++      - builtin$
++      - examples$
++    rules:
++      - path: _test\.go
++        linters:
++          - revive
++        text: context-as-argument
++      - path: internal/docker/
++        linters:
++          - staticcheck
++        text: SA1019
++      - linters:
++          - staticcheck
++        text: QF[0-9]+
+ issues:
+   max-issues-per-linter: 0
+   max-same-issues: 0
++formatters:
++  enable:
++    - gofmt
++  exclusions:
++    generated: lax
++    paths:
++      - third_party$
++      - builtin$
++      - examples$
+diff --git a/Makefile b/Makefile
+index 32fe715..d4aaa96 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,7 +11,8 @@ lint:
+ 		golangci-lint run ./...; \
+ 	else \
+ 		echo "golangci-lint not found; running gofmt check and go vet ./..."; \
+-		test -z "$$(gofmt -l .)"; \
++		unformatted="$$(gofmt -l $$(git ls-files '*.go'))"; \
++		test -z "$$unformatted"; \
+ 		go vet ./...; \
+ 	fi
+ 
+diff --git a/internal/admission/admission_test.go b/internal/admission/admission_test.go
+index 71242e4..a0a68b5 100644
+--- a/internal/admission/admission_test.go
++++ b/internal/admission/admission_test.go
+@@ -35,7 +35,7 @@ func TestAdmissionPolicies(t *testing.T) {
+ 		{"privileged", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.Privileged = true }, "security.privileged.denied"},
+ 		{"host network", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.HostNetwork = true }, "security.host_network.denied"},
+ 		{"host pid", func(s *types.ServiceSpec, _ *policy.ClusterPolicy) { s.SecurityContext.HostPID = true }, "security.host_pid.denied"},
+-		{"registry", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
++		{"registry", func(_ *types.ServiceSpec, p *policy.ClusterPolicy) {
+ 			p.AllowedImageRegistries = []string{"approved.example"}
+ 		}, "image.registry.denied"},
+ 		{"latest", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
+@@ -47,7 +47,7 @@ func TestAdmissionPolicies(t *testing.T) {
+ 			p.AllowedHostPathPrefixes = []string{"/srv/orch"}
+ 			s.SecurityContext.HostPathMounts = []types.HostPathMount{{HostPath: "/etc", ContainerPath: "/host"}}
+ 		}, "security.host_path.denied"},
+-		{"replicas", func(s *types.ServiceSpec, p *policy.ClusterPolicy) { p.MaxReplicasPerService = 1 }, "replicas.maximum"},
++		{"replicas", func(_ *types.ServiceSpec, p *policy.ClusterPolicy) { p.MaxReplicasPerService = 1 }, "replicas.maximum"},
+ 		{"public ports", func(s *types.ServiceSpec, p *policy.ClusterPolicy) {
+ 			p.MaxPublicPortsPerService = 1
+ 			s.Ports = []types.Port{{PublishedPort: 80}, {PublishedPort: 443}}
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index cd511ba..dfb90b4 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -551,11 +551,11 @@ func (r *Runner) healthJitter(interval time.Duration) time.Duration {
+ 	if interval <= 0 {
+ 		return 0
+ 	}
+-	max := interval / 5
+-	if max <= 0 {
++	maximum := interval / 5
++	if maximum <= 0 {
+ 		return 0
+ 	}
+-	return time.Duration(r.rand.Int63n(int64(max)))
++	return time.Duration(r.rand.Int63n(int64(maximum)))
+ }
+ 
+ func healthProbe(check types.Healthcheck, ports []types.Port) (health.Check, bool) {
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 3937b1c..43c0d66 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -246,7 +246,7 @@ type HealthResponse struct {
+ 	Time   time.Time `json:"time"`
+ }
+ 
+-type APIVersionResponse struct {
++type VersionResponse struct {
+ 	APIVersion                string `json:"api_version"`
+ 	ServerVersion             string `json:"server_version"`
+ 	MinimumAgentVersion       string `json:"minimum_agent_version"`
+@@ -443,7 +443,7 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {
+ 
+ func (s *Server) apiVersion(w http.ResponseWriter, _ *http.Request) {
+ 	info := versioninfo.Info()
+-	writeJSON(w, http.StatusOK, APIVersionResponse{
++	writeJSON(w, http.StatusOK, VersionResponse{
+ 		APIVersion: info.APIVersion, ServerVersion: info.ServerVersion,
+ 		MinimumAgentVersion: info.MinimumAgentVersion, MaximumTestedAgentVersion: info.MaximumTestedAgentVersion,
+ 		DatabaseSchemaVersion: info.DatabaseSchemaVersion, MinimumSchemaVersion: info.MinimumSchemaVersion,
+@@ -1159,7 +1159,7 @@ func (s *Server) traefikConfig(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	endpointSets := discovery.BuildAllServiceEndpoints(services, tasks, nodes, false)
+-	writeJSON(w, http.StatusOK, TraefikConfigResponse(traefik.BuildConfig(services, endpointSets)))
++	writeJSON(w, http.StatusOK, traefik.BuildConfig(services, endpointSets))
+ }
+ 
+ func (s *Server) discoverySnapshot(ctx context.Context) ([]types.Service, []types.Task, []types.Node, error) {
+@@ -1443,7 +1443,7 @@ func (s *Server) accessLogMiddleware(next http.Handler) http.Handler {
+ 	})
+ }
+ 
+-func metricRoute(method string, path string) (string, bool) {
++func metricRoute(_ string, path string) (string, bool) {
+ 	if path == "/metrics" {
+ 		return "", false
+ 	}
+@@ -1870,11 +1870,6 @@ func sourceIP(r *http.Request) string {
+ 	return strings.TrimSpace(r.RemoteAddr)
+ }
+ 
+-func errorStatus(err error) (int, string) {
+-	status, code, _, _ := errorAttributes(err)
+-	return status, string(code)
+-}
+-
+ func errorAttributes(err error) (int, apperrors.Code, string, map[string]any) {
+ 	var admissionErr *admission.Error
+ 	if errors.As(err, &admissionErr) {
+diff --git a/internal/api/versioning_test.go b/internal/api/versioning_test.go
+index 5666940..9adefaa 100644
+--- a/internal/api/versioning_test.go
++++ b/internal/api/versioning_test.go
+@@ -17,7 +17,7 @@ func TestV1RoutingAndVersionMetadata(t *testing.T) {
+ 	if rec.Header().Get("API-Version") != "v1" {
+ 		t.Fatalf("expected API-Version v1, got %q", rec.Header().Get("API-Version"))
+ 	}
+-	var version APIVersionResponse
++	var version VersionResponse
+ 	if err := json.Unmarshal(rec.Body.Bytes(), &version); err != nil {
+ 		t.Fatal(err)
+ 	}
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 9451665..74127d5 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -349,7 +349,7 @@ func (c *APIClient) GetServiceEndpoints(ctx context.Context, id string, includeU
+ 	if err := c.do(ctx, http.MethodGet, path, nil, &out); err != nil {
+ 		return discovery.ServiceEndpoints{}, err
+ 	}
+-	return discovery.ServiceEndpoints(out), nil
++	return out, nil
+ }
+ 
+ func (c *APIClient) DeleteService(ctx context.Context, id string) error {
+diff --git a/internal/cli/fuzz_test.go b/internal/cli/fuzz_test.go
+index af290a5..dbca43e 100644
+--- a/internal/cli/fuzz_test.go
++++ b/internal/cli/fuzz_test.go
+@@ -6,5 +6,5 @@ func FuzzServiceYAML(f *testing.F) {
+ 	for _, v := range [][]byte{[]byte("name: api\nimage: nginx:1.27\nreplicas: 1\n"), []byte("kind: nope\n"), nil} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v []byte) { _, _ = ParseDeploy(v) })
++	f.Fuzz(func(_ *testing.T, v []byte) { _, _ = ParseDeploy(v) })
+ }
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 56e75b7..5a8e151 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -430,7 +430,7 @@ func (a *app) versionCommand() *cobra.Command {
+ 	return &cobra.Command{
+ 		Use:   "version",
+ 		Short: "Print the CLI version",
+-		RunE: func(cmd *cobra.Command, _ []string) error {
++		RunE: func(_ *cobra.Command, _ []string) error {
+ 			fmt.Fprintln(a.out, "orch "+version)
+ 			return nil
+ 		},
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 0dd278d..7cbc6fc 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -768,7 +768,7 @@ func (cfg AgentConfig) Validate() error {
+ 		return fmt.Errorf("agent registration token is required")
+ 	}
+ 	if cfg.DockerSocketPath == "" {
+-		return fmt.Errorf("Docker socket path is required")
++		return fmt.Errorf("docker socket path is required")
+ 	}
+ 	if cfg.HeartbeatInterval <= 0 {
+ 		return fmt.Errorf("heartbeat interval must be positive")
+diff --git a/internal/controlplane/workloads.go b/internal/controlplane/workloads.go
+index a8f79f2..48e7c8a 100644
+--- a/internal/controlplane/workloads.go
++++ b/internal/controlplane/workloads.go
+@@ -200,7 +200,7 @@ func (s *MemoryService) updateJobForTaskLocked(task types.Task) {
+ 			job.Status = types.JobSucceeded
+ 			job.CompletedAt = now
+ 		} else {
+-			s.retryOrFailJobLocked(&job, task, code, now)
++			s.retryOrFailJobLocked(&job, task, now)
+ 		}
+ 	case types.TaskFailed:
+ 		code := 1
+@@ -208,13 +208,13 @@ func (s *MemoryService) updateJobForTaskLocked(task types.Task) {
+ 			code = *task.ExitCode
+ 		}
+ 		job.LastExitCode = &code
+-		s.retryOrFailJobLocked(&job, task, code, now)
++		s.retryOrFailJobLocked(&job, task, now)
+ 	}
+ 	job.UpdatedAt = now
+ 	s.jobs[job.ID] = job
+ }
+ 
+-func (s *MemoryService) retryOrFailJobLocked(job *types.Job, previous types.Task, code int, now time.Time) {
++func (s *MemoryService) retryOrFailJobLocked(job *types.Job, previous types.Task, now time.Time) {
+ 	if job.Attempts > job.Spec.BackoffLimit {
+ 		job.Status = types.JobFailed
+ 		job.CompletedAt = now
+diff --git a/internal/cronjobs/cronjobs.go b/internal/cronjobs/cronjobs.go
+index b3f6d44..14aa7ae 100644
+--- a/internal/cronjobs/cronjobs.go
++++ b/internal/cronjobs/cronjobs.go
+@@ -150,7 +150,7 @@ func Parse(value string) (Schedule, error) {
+ 	}
+ 	return s, nil
+ }
+-func parseField(raw string, min, max int) (field, error) {
++func parseField(raw string, minimum, maximum int) (field, error) {
+ 	out := field{}
+ 	for _, part := range strings.Split(raw, ",") {
+ 		step := 1
+@@ -165,7 +165,7 @@ func parseField(raw string, min, max int) (field, error) {
+ 		} else if len(x) > 2 {
+ 			return nil, fmt.Errorf("invalid field")
+ 		}
+-		lo, hi := min, max
++		lo, hi := minimum, maximum
+ 		if base != "*" {
+ 			r := strings.Split(base, "-")
+ 			v, err := strconv.Atoi(r[0])
+@@ -182,8 +182,8 @@ func parseField(raw string, min, max int) (field, error) {
+ 				return nil, fmt.Errorf("invalid range")
+ 			}
+ 		}
+-		if lo < min || hi > max || lo > hi {
+-			return nil, fmt.Errorf("value outside %d-%d", min, max)
++		if lo < minimum || hi > maximum || lo > hi {
++			return nil, fmt.Errorf("value outside %d-%d", minimum, maximum)
+ 		}
+ 		for v := lo; v <= hi; v += step {
+ 			out[v] = struct{}{}
+diff --git a/internal/cronjobs/fuzz_test.go b/internal/cronjobs/fuzz_test.go
+index d2aeb17..3658129 100644
+--- a/internal/cronjobs/fuzz_test.go
++++ b/internal/cronjobs/fuzz_test.go
+@@ -9,7 +9,7 @@ func FuzzCronExpression(f *testing.F) {
+ 	for _, v := range []string{"* * * * *", "0 2 * * *", "*/5 0-23 * * 1-5", "bad"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) {
++	f.Fuzz(func(_ *testing.T, v string) {
+ 		schedule, err := Parse(v)
+ 		if err == nil {
+ 			_ = schedule.Next(time.Unix(0, 0).UTC())
+diff --git a/internal/dns/server.go b/internal/dns/server.go
+index cd00733..dd1de8c 100644
+--- a/internal/dns/server.go
++++ b/internal/dns/server.go
+@@ -23,7 +23,11 @@ type Metrics struct {
+ 	queries atomic.Uint64
+ 	errors  atomic.Uint64
+ }
+-type MetricsRecorder interface { IncDNSQuery(); IncDNSError() }
++type MetricsRecorder interface {
++	IncDNSQuery()
++	IncDNSError()
++}
++
+ func (m *Metrics) IncDNSQuery() { m.queries.Add(1) }
+ func (m *Metrics) IncDNSError() { m.errors.Add(1) }
+ 
+diff --git a/internal/docker/fake_test.go b/internal/docker/fake_test.go
+index 3a4450e..d06450d 100644
+--- a/internal/docker/fake_test.go
++++ b/internal/docker/fake_test.go
+@@ -140,7 +140,8 @@ func TestFakeRuntimeStreamLogsCanBlockUntilContextCancellation(t *testing.T) {
+ 		t.Fatal("expected stream logs to start")
+ 	}
+ 	cancel()
+-	for range lines {
++	for line := range lines {
++		_ = line
+ 	}
+ 	for err := range errs {
+ 		if err != nil {
+diff --git a/internal/image/fuzz_test.go b/internal/image/fuzz_test.go
+index 6c08d11..30ecd2d 100644
+--- a/internal/image/fuzz_test.go
++++ b/internal/image/fuzz_test.go
+@@ -6,7 +6,7 @@ func FuzzImageReference(f *testing.F) {
+ 	for _, v := range []string{"nginx:1.27", "ghcr.io/acme/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "", "-bad", "x@@y"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) {
++	f.Fuzz(func(_ *testing.T, v string) {
+ 		metadata, err := Parse(v)
+ 		if err == nil {
+ 			_ = PinnedReference(metadata)
+diff --git a/internal/leadership/leadership_test.go b/internal/leadership/leadership_test.go
+index 5884761..096edf7 100644
+--- a/internal/leadership/leadership_test.go
++++ b/internal/leadership/leadership_test.go
+@@ -68,7 +68,11 @@ func TestRunWithLeadershipRecordsAcquisitionFailure(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatalf("acquire lease: %v", err)
+ 	}
+-	defer lease.Release(context.Background())
++	t.Cleanup(func() {
++		if err := lease.Release(context.Background()); err != nil {
++			t.Errorf("release lease: %v", err)
++		}
++	})
+ 	metrics := &recordingLeadershipMetrics{}
+ 
+ 	err = RunWithLeadership(context.Background(), elector, "rollout", slog.Default(), metrics, func(context.Context) error {
+@@ -84,8 +88,8 @@ func TestRunWithLeadershipRecordsAcquisitionFailure(t *testing.T) {
+ }
+ 
+ func TestAdvisoryLockKeyIsStable(t *testing.T) {
+-	if advisoryLockKey("scheduler") != advisoryLockKey("scheduler") {
+-		t.Fatalf("expected stable advisory key")
++	if advisoryLockKey("scheduler") == 0 {
++		t.Fatalf("expected non-zero advisory key")
+ 	}
+ 	if advisoryLockKey("scheduler") == advisoryLockKey("reconciler") {
+ 		t.Fatalf("expected different controllers to use different keys")
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 62e33ff..f33c618 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -136,7 +136,7 @@ func WithTx[S any](ctx context.Context, candidate S, fn func(context.Context, S)
+ 		return fn(ctx, candidate)
+ 	}
+ 	return transactor.WithTx(ctx, func(txCtx context.Context, tx any) error {
+-		scoped, ok := any(tx).(S)
++		scoped, ok := tx.(S)
+ 		if !ok {
+ 			return fmt.Errorf("%w: transaction store does not implement requested boundary", ErrInvalidState)
+ 		}
+diff --git a/internal/version/version.go b/internal/version/version.go
+index 76373a7..8e9d705 100644
+--- a/internal/version/version.go
++++ b/internal/version/version.go
+@@ -36,12 +36,12 @@ func CheckAgent(value string) (Compatibility, error) {
+ 	if err != nil {
+ 		return "", err
+ 	}
+-	min, _ := parse(MinimumAgent)
+-	max, _ := parse(MaximumTestedAgent)
+-	if compare(v, min) < 0 {
++	minimum, _ := parse(MinimumAgent)
++	maximum, _ := parse(MaximumTestedAgent)
++	if compare(v, minimum) < 0 {
+ 		return TooOld, nil
+ 	}
+-	if compare(v, max) > 0 {
++	if compare(v, maximum) > 0 {
+ 		return UntestedNewer, nil
+ 	}
+ 	return Compatible, nil
+diff --git a/pkg/types/fuzz_test.go b/pkg/types/fuzz_test.go
+index 862f546..2a573ac 100644
+--- a/pkg/types/fuzz_test.go
++++ b/pkg/types/fuzz_test.go
+@@ -6,23 +6,23 @@ func FuzzResourceQuantities(f *testing.F) {
+ 	for _, v := range []string{"500m", "1", "128Mi", "0", "-1", "garbage"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) { _, _ = ParseCPU(v); _, _ = ParseMemory(v) })
++	f.Fuzz(func(_ *testing.T, v string) { _, _ = ParseCPU(v); _, _ = ParseMemory(v) })
+ }
+ func FuzzPortSpec(f *testing.F) {
+ 	for _, v := range []string{"8080:80/tcp", "53/udp", "0", "65536", "abc"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) { _, _ = ParsePortSpec(v) })
++	f.Fuzz(func(_ *testing.T, v string) { _, _ = ParsePortSpec(v) })
+ }
+ func FuzzLabelSelector(f *testing.F) {
+ 	for _, v := range []string{"region=eu", "disk!=slow", "a=b,c!=d", "bad"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) { _, _ = ParseLabelSelector(v) })
++	f.Fuzz(func(_ *testing.T, v string) { _, _ = ParseLabelSelector(v) })
+ }
+ func FuzzHealthcheckPath(f *testing.F) {
+ 	for _, v := range []string{"/healthz", "//evil", "http://evil", "/ok?q=1", "\x00"} {
+ 		f.Add(v)
+ 	}
+-	f.Fuzz(func(t *testing.T, v string) { _ = (&Healthcheck{Type: HealthcheckHTTP, Path: v, Port: 80}).Validate() })
++	f.Fuzz(func(_ *testing.T, v string) { _ = (&Healthcheck{Type: HealthcheckHTTP, Path: v, Port: 80}).Validate() })
+ }
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 0c0981a..14d8c7e 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -242,7 +242,6 @@ func (spec ServiceSpec) Validate() error {
+ 	if !validImageReference(spec.Image) {
+ 		return fmt.Errorf("image reference is invalid")
+ 	}
+-	spec.ImagePullSecret = strings.TrimSpace(spec.ImagePullSecret)
+ 	if spec.Replicas < 0 {
+ 		return fmt.Errorf("replicas cannot be negative")
+ 	}

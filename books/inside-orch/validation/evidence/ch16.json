@@ -1,0 +1,74 @@
+{
+  "chapter_id": "16",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch16.proxy",
+      "statement": "Server-to-agent log client forwards task/follow/tail and optional bearer token using request context.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/logs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 29,
+      "line_end": 66,
+      "associated_commits": [
+        "39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Configured bootstrap token path differs from node enrollment credential; stream authorization has its own boundary."
+      ]
+    },
+    {
+      "claim_id": "ch16.frames",
+      "statement": "Engine uses StdCopy and scanners with stream tags/read-time timestamps; agent prints text without those fields.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 302,
+      "line_end": 357,
+      "associated_commits": [
+        "39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Concurrent stdout/stderr scanning does not establish application-global ordering; default scanner bounds apply."
+      ]
+    },
+    {
+      "claim_id": "ch16.options",
+      "statement": "Worker malformed tail falls back to all while follow remains independently controlled.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/logs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 122,
+      "line_end": 131,
+      "associated_commits": [
+        "39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Parsed negative integer follows downstream path; public CLI exposes a narrower subset than Runtime LogOptions."
+      ]
+    },
+    {
+      "claim_id": "ch16.cancellation",
+      "statement": "Focused cooperative fake log tests passed context cancellation and handler completion.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 612,
+      "line_end": 623,
+      "associated_commits": [
+        "39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch16/focused-tests.json",
+      "limitations": [
+        "Does not prove every real blocked Engine reader/pipe/scanner exits on disconnect."
+      ]
+    }
+  ]
+}

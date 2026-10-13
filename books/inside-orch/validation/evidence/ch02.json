@@ -1,0 +1,104 @@
+{
+  "chapter": "02",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch02.runtime-interface",
+      "statement": "Docker Runtime exposes typed context-aware side effects used by agent.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 47,
+      "line_end": 56,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Focused package tests executed in validation/labs/ch02/focused-tests.json; isolated root build record retained; no Docker/database test inferred."
+      ]
+    },
+    {
+      "claim_id": "ch02.injection",
+      "statement": "Agent binary constructs instrumented EngineRuntime and injects Runner runtime.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-agent/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 73,
+      "line_end": 84,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Focused package tests executed in validation/labs/ch02/focused-tests.json; isolated root build record retained; no Docker/database test inferred."
+      ]
+    },
+    {
+      "claim_id": "ch02.fake-idempotency",
+      "statement": "Fake-runtime fixture checks repeated create identity and operation sequence.",
+      "classification": "implemented package",
+      "source_path": "internal/docker/fake_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 11,
+      "line_end": 38,
+      "associated_commits": [
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch02/focused-tests.json",
+      "limitations": [
+        "Selected fake identity/operation fixture only; no real daemon.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch02.planner-fixtures",
+      "statement": "Planner tests include insufficient resources,label mismatch and deterministic tie breaking.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/scheduler_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 58,
+      "line_end": 123,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch02/focused-tests.json",
+      "limitations": [
+        "Only verbose-listed PlanAssignments fixture cases; immediate MemoryService assignment remains separate.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    },
+    {
+      "claim_id": "ch02.lint-fallback",
+      "statement": "Makefile falls back to gofmt and vet when golangci-lint missing.",
+      "classification": "implemented package",
+      "source_path": "Makefile",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 9,
+      "line_end": 18,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Focused package tests executed in validation/labs/ch02/focused-tests.json; isolated root build record retained; no Docker/database test inferred."
+      ]
+    },
+    {
+      "claim_id": "ch02.go-directive",
+      "statement": "Locked module requires Go1.25.0.",
+      "classification": "implemented package",
+      "source_path": "go.mod",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 13,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Focused package tests executed in validation/labs/ch02/focused-tests.json; isolated root build record retained; no Docker/database test inferred."
+      ]
+    }
+  ]
+}

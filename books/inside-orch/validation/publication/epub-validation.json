@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T04:34:31.928580+00:00",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "epubcheck": {
+    "version": "5.4.0",
+    "record": "validation/publication/reviewed-layout-epubcheck.json",
+    "record_sha256": "97676758e4fa8b8b59a7729109ef97bb5bf808948a0861dd1d782cffb2bd4270",
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "reading_preview": {
+    "record": "validation/publication/epub-reading-preview.json",
+    "record_sha256": "536c80a7f36a33874a530427218f489fee909380664895e0e82d66ac0e7f4889",
+    "cases": 24,
+    "scope": "Actual Chromium file:// rendering of unmodified extracted EPUB XHTML; reader-type preference simulated by font-size override, OS theme by prefers-color-scheme.",
+    "failures": []
+  },
+  "structure": "validation/publication/format-structure.json",
+  "internal_links": "validation/reviews/evidence-link-lock.json",
+  "limitations": [
+    "Actual EPUBCheck and Chromium extracted-XHTML reading preview, not Kindle/AppleBooks hardware certification.",
+    "No footnote markup exists; footnote behavior N/A.",
+    "FinalPDF byte rebind does not change this already-previewed EPUB archive."
+  ]
+}

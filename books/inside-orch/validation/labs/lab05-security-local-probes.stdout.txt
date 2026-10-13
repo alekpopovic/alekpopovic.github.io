@@ -1,0 +1,412 @@
+{
+  "assigned_agent_plaintext_permitted": true,
+  "at_utc": "2026-10-13T01:09:53.594415708Z",
+  "canary_sha256": "8a478004d21ad0009cd662df0f60f88c5e08b1d2d64898ee4dba6e56298a5b5a",
+  "cases": [
+    {
+      "actor": "anonymous",
+      "actual_http": 401,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 401,
+      "id": "missing-user-token",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "viewer",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "viewer-read",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "viewer",
+      "actual_http": 403,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 403,
+      "id": "viewer-mutation-denied",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "operator",
+      "actual_http": 201,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 201,
+      "id": "scoped-operator-create",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "operator",
+      "actual_http": 403,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 403,
+      "id": "scoped-operator-other-namespace",
+      "namespace": "team-b",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "operator",
+      "actual_http": 403,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 403,
+      "id": "scoped-operator-cluster-admin-denied",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "admin",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "admin-audit",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "admin",
+      "actual_http": 201,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 201,
+      "id": "secret-create-metadata",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "viewer",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "secret-get-metadata",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "viewer",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "secret-list-metadata",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "admin",
+      "actual_http": 404,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 404,
+      "id": "secret-namespace-hidden",
+      "namespace": "team-b",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "viewer",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "secret-events-redacted",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "admin",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "secret-audit-redacted",
+      "namespace": "team-a",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "admin",
+      "actual_http": 400,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 400,
+      "id": "missing-secret-error",
+      "namespace": "team-b",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "agent",
+      "actual_http": 401,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 401,
+      "id": "bootstrap-missing",
+      "namespace": "",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "agent",
+      "actual_http": 201,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 201,
+      "id": "bootstrap-issued",
+      "namespace": "",
+      "secret_visibility": "permitted assigned-agent/token delivery; raw response discarded"
+    },
+    {
+      "actor": "assigned-agent",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "assigned-agent-plaintext",
+      "namespace": "",
+      "secret_visibility": "permitted assigned-agent/token delivery; raw response discarded"
+    },
+    {
+      "actor": "agent",
+      "actual_http": 201,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 201,
+      "id": "second-agent-issued",
+      "namespace": "",
+      "secret_visibility": "permitted assigned-agent/token delivery; raw response discarded"
+    },
+    {
+      "actor": "agent-b",
+      "actual_http": 401,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 401,
+      "id": "wrong-node-credential",
+      "namespace": "",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "agent-a",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "heartbeat-rotates",
+      "namespace": "",
+      "secret_visibility": "permitted assigned-agent/token delivery; raw response discarded"
+    },
+    {
+      "actor": "agent-a",
+      "actual_http": 401,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 401,
+      "id": "rotated-old-token-denied",
+      "namespace": "",
+      "secret_visibility": "forbidden; scanned before persistence"
+    },
+    {
+      "actor": "issuer fixture",
+      "actual": "invalid",
+      "destination": "none",
+      "expected": "invalid exactly at expiry",
+      "id": "credential-expiry-boundary"
+    },
+    {
+      "actor": "anonymous",
+      "actual_http": 200,
+      "destination": "in-process httptest request; no network dial",
+      "expected_http": 200,
+      "id": "empty-user-jwt-auth-disabled",
+      "namespace": "default",
+      "secret_visibility": "empty service metadata"
+    },
+    {
+      "actual_healthy": true,
+      "destination": "http://127.0.0.1:35899/same",
+      "expected_healthy": true,
+      "id": "same-origin-redirect",
+      "redirect_target": "http://127.0.0.1:38507",
+      "response_body_cap_bytes": 65536
+    },
+    {
+      "actual_healthy": false,
+      "destination": "http://127.0.0.1:35899/cross",
+      "expected_healthy": false,
+      "id": "cross-origin-blocked",
+      "redirect_target": "http://127.0.0.1:38507",
+      "response_body_cap_bytes": 65536
+    },
+    {
+      "actual_healthy": true,
+      "destination": "http://127.0.0.1:35899/large",
+      "expected_healthy": true,
+      "id": "bounded-large-response",
+      "redirect_target": "http://127.0.0.1:38507",
+      "response_body_cap_bytes": 65536
+    },
+    {
+      "actual_healthy": false,
+      "destination": "http://127.0.0.1:35899/slow",
+      "expected_healthy": false,
+      "id": "timeout-unhealthy",
+      "redirect_target": "http://127.0.0.1:38507",
+      "response_body_cap_bytes": 65536
+    },
+    {
+      "actual_valid": true,
+      "destination": "none: input validation only",
+      "expected_valid": true,
+      "id": "health-path-/ready"
+    },
+    {
+      "actual_valid": false,
+      "destination": "none: input validation only",
+      "expected_valid": false,
+      "id": "health-path-https://example.invalid/"
+    },
+    {
+      "actual_valid": false,
+      "destination": "none: input validation only",
+      "expected_valid": false,
+      "id": "health-path-//127.0.0.1/"
+    }
+  ],
+  "ciphertext_contains_plaintext": false,
+  "ciphertext_sha256": "c2727896eccc81060fca76f637f85aecedda368db783a3d1c12b9affe7313899",
+  "cleanup": "all local listeners deferred closed; canary/key/token raw values never written",
+  "cross_origin_destination_requests": 0,
+  "same_key_roundtrip": true,
+  "scanned_forbidden_channels": [
+    {
+      "bytes": 130,
+      "canary_found": false,
+      "file": "missing-user-token.txt",
+      "sha256": "602ed5a114c11024998c6587ff84f76eb93c7332adb0ba4cd958dc880bc0e419"
+    },
+    {
+      "bytes": 16,
+      "canary_found": false,
+      "file": "viewer-read.txt",
+      "sha256": "46fc16cadd09ccf044b65ec3ac398b581731b6afe91fb5400077f730ba08d271"
+    },
+    {
+      "bytes": 113,
+      "canary_found": false,
+      "file": "viewer-mutation-denied.txt",
+      "sha256": "4f71251d0d99293acba073536944349f474e4f1b9c42741fd068bb1d02e1bbde"
+    },
+    {
+      "bytes": 430,
+      "canary_found": false,
+      "file": "admin-audit.txt",
+      "sha256": "cd65cbeaabed4a367080cdbdd53981fa778b39734b68038cb560ee6edbd2954d"
+    },
+    {
+      "bytes": 184,
+      "canary_found": false,
+      "file": "secret-list-metadata.txt",
+      "sha256": "9459fce6bb628ab097f8aa176f490b8293ca4ae908b68d759d9e48725cc98227"
+    },
+    {
+      "bytes": 796,
+      "canary_found": false,
+      "file": "secret-audit-redacted.txt",
+      "sha256": "2e6236387f2941a876f8ab65da42a6c9199394f5c12a5e308ad69496c2151167"
+    },
+    {
+      "bytes": 131,
+      "canary_found": false,
+      "file": "bootstrap-missing.txt",
+      "sha256": "84c6b6fd1963c2340c7953e3fc6f9dccf13eab37e76833b8083ad78516c33a11"
+    },
+    {
+      "bytes": 584,
+      "canary_found": false,
+      "file": "scoped-operator-create.txt",
+      "sha256": "ce55c97f05d31c9f7d2133c4447f2c55bdb358582f6dea148388afbd67f05972"
+    },
+    {
+      "bytes": 113,
+      "canary_found": false,
+      "file": "scoped-operator-other-namespace.txt",
+      "sha256": "1cf192edd2585d5012308d755aa202abe7f14b17ef65a504c5485c8d7073ab47"
+    },
+    {
+      "bytes": 113,
+      "canary_found": false,
+      "file": "scoped-operator-cluster-admin-denied.txt",
+      "sha256": "fc69a41fa591085e70891f0f1e0072303dab519c833ea88f1d8b5702994737de"
+    },
+    {
+      "bytes": 105,
+      "canary_found": false,
+      "file": "secret-namespace-hidden.txt",
+      "sha256": "dabe12a64f7bbc15a3677361fcf0c54975a02f02ffc7f829578a812293d2f3d7"
+    },
+    {
+      "bytes": 593,
+      "canary_found": false,
+      "file": "secret-events-redacted.txt",
+      "sha256": "105e8d21d7fc4e1c72c4923c9ed0518d630c38892f3baa43b002d32e64478604"
+    },
+    {
+      "bytes": 123,
+      "canary_found": false,
+      "file": "rotated-old-token-denied.txt",
+      "sha256": "1f86642602f49276fdfcfa76bddd2e8785ac57a9f0e16fce4d1342c51a113604"
+    },
+    {
+      "bytes": 181,
+      "canary_found": false,
+      "file": "secret-create-metadata.txt",
+      "sha256": "99f8cd7386cb019df2083df227841b94e11daaac6916ab1ca5b1e2262fc5160b"
+    },
+    {
+      "bytes": 181,
+      "canary_found": false,
+      "file": "secret-get-metadata.txt",
+      "sha256": "99f8cd7386cb019df2083df227841b94e11daaac6916ab1ca5b1e2262fc5160b"
+    },
+    {
+      "bytes": 161,
+      "canary_found": false,
+      "file": "missing-secret-error.txt",
+      "sha256": "14304a82db8de0f6755ab0bcd731dd4128045aff6f8cdcffcc0ef2af8010adde"
+    },
+    {
+      "bytes": 6,
+      "canary_found": false,
+      "file": "same-origin-redirect.txt",
+      "sha256": "f9bafc82ba5f8fb02b25020d66f396860604f496ca919480147fa525cb505d88"
+    },
+    {
+      "bytes": 98,
+      "canary_found": false,
+      "file": "cross-origin-blocked.txt",
+      "sha256": "e5e7029ea1946af0f6885d65539d2464de3da442732a754b172fee38b0a5cb3b"
+    },
+    {
+      "bytes": 6,
+      "canary_found": false,
+      "file": "bounded-large-response.txt",
+      "sha256": "f9bafc82ba5f8fb02b25020d66f396860604f496ca919480147fa525cb505d88"
+    },
+    {
+      "bytes": 60,
+      "canary_found": false,
+      "file": "timeout-unhealthy.txt",
+      "sha256": "c5749b8fb6cbf669bf672014c975e94bd7d33b69d50940bdf856f2f8d16d30ac"
+    },
+    {
+      "bytes": 22,
+      "canary_found": false,
+      "file": "wrong-envelope-error.txt",
+      "sha256": "4c33372fb7fe3887de5511c3420bbafb6c49991f08a632c8648e5069da808974"
+    },
+    {
+      "bytes": 123,
+      "canary_found": false,
+      "file": "wrong-node-credential.txt",
+      "sha256": "8ad738b23ec16c15ae20281b74df10c846feb6b1513b0564349d13dc5a192843"
+    },
+    {
+      "bytes": 6918,
+      "canary_found": false,
+      "file": "captured-logs.txt",
+      "sha256": "37aadf43fe54dfa77c63da7fb3589dca29696301487766427660074a6f7db500"
+    }
+  ],
+  "scope": "local envelope, actual API handler/issuer, local health checker; no Docker or public network; plaintext and credentials exist only in process memory",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed",
+  "wrong_key_rejected": true,
+  "wrong_node_unchanged_task": true
+}

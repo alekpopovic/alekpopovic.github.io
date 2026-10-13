@@ -1,0 +1,4308 @@
+commit f2836eabfff8e442d38984433f3e1f5c642667d1
+Date: 2026-08-21T13:47:42+02:00
+Subject: Add quotas image pinning and GitOps
+
+
+---
+ README.md                                  |   3 +-
+ api/openapi.yaml                           | 194 ++++++++++++-
+ cmd/orch-server/main.go                    |  10 +-
+ docs/API.md                                |  29 +-
+ docs/CONFIGURATION.md                      |   5 +-
+ docs/GITOPS.md                             |  32 +++
+ docs/IMAGE_SIGNING_DESIGN.md               |  71 +++++
+ docs/MULTI_TENANCY.md                      |  18 +-
+ docs/REGISTRIES.md                         |  18 ++
+ docs/SECURITY.md                           |   7 +-
+ docs/SUPPLY_CHAIN_SECURITY_DESIGN.md       |  76 ++++++
+ docs/assets/docs.js                        |   5 +-
+ internal/admission/admission.go            |  13 +-
+ internal/admission/admission_test.go       |  28 ++
+ internal/agent/agent_test.go               |  23 ++
+ internal/api/api.go                        | 147 ++++++++++
+ internal/api/api_test.go                   |   4 +-
+ internal/api/quota_gitops_test.go          |  68 +++++
+ internal/apperrors/errors.go               |   3 +-
+ internal/cli/client.go                     |  45 +++
+ internal/cli/output.go                     |  41 +++
+ internal/cli/root.go                       | 151 +++++++++++
+ internal/cli/root_test.go                  |  31 +++
+ internal/config/config.go                  |  94 ++++---
+ internal/config/config_test.go             |   5 +
+ internal/controlplane/admission_test.go    |   1 +
+ internal/controlplane/agent_test.go        |   2 +-
+ internal/controlplane/controlplane.go      | 408 ++++++++++++++++++++++++----
+ internal/controlplane/image_test.go        |  65 +++++
+ internal/controlplane/quota_test.go        | 117 ++++++++
+ internal/gitops/gitops.go                  | 309 +++++++++++++++++++++
+ internal/gitops/gitops_test.go             | 111 ++++++++
+ internal/image/reference.go                |  87 ++++++
+ internal/image/reference_test.go           |  39 +++
+ internal/policy/policy.go                  |   8 +-
+ internal/quota/quota.go                    |  52 ++++
+ internal/reconciler/reconciler.go          |  17 +-
+ internal/rollout/rollout.go                |  17 +-
+ internal/store/postgres.go                 | 421 ++++++++++++++++++++++++-----
+ internal/store/postgres_test.go            | 118 +++++++-
+ internal/store/store.go                    |  15 +
+ migrations/000012_resource_quotas.down.sql |   1 +
+ migrations/000012_resource_quotas.up.sql   |  14 +
+ migrations/000013_image_metadata.down.sql  |   6 +
+ migrations/000013_image_metadata.up.sql    |   9 +
+ migrations/000014_gitops_sources.down.sql  |   1 +
+ migrations/000014_gitops_sources.up.sql    |  17 ++
+ pkg/client/client.go                       |  45 +++
+ pkg/client/types.go                        |  21 ++
+ pkg/types/types.go                         |  94 +++++--
+ scripts/migrate-up.sh                      |   3 +
+ 51 files changed, 2916 insertions(+), 203 deletions(-)
+
+diff --git a/README.md b/README.md
+index a52ffd7..a882eb0 100644
+--- a/README.md
++++ b/README.md
+@@ -230,6 +230,7 @@ placement:
+ | 🔌 API | [API](https://alekpopovic.github.io/orch/#API.md), [API versioning](https://alekpopovic.github.io/orch/#API_VERSIONING.md), [OpenAPI](https://alekpopovic.github.io/orch/#openapi.yaml) |
+ | 🐳 Runtime | [Agent](https://alekpopovic.github.io/orch/#AGENT.md), [Service spec](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), [Resources](https://alekpopovic.github.io/orch/#RESOURCES.md) |
+ | 🧭 Control loops | [Scheduler](https://alekpopovic.github.io/orch/#SCHEDULER.md), [Reconciler](https://alekpopovic.github.io/orch/#RECONCILER.md), [Rollouts](https://alekpopovic.github.io/orch/#ROLLOUTS.md) |
+-| 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Policy engine](https://alekpopovic.github.io/orch/#POLICY_ENGINE_DESIGN.md), [Multi-tenancy](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md), [Secrets](https://alekpopovic.github.io/orch/#SECRETS.md), [Registries](https://alekpopovic.github.io/orch/#REGISTRIES.md) |
++| 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Policy engine](https://alekpopovic.github.io/orch/#POLICY_ENGINE_DESIGN.md), [Multi-tenancy](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md), [Image signing](https://alekpopovic.github.io/orch/#IMAGE_SIGNING_DESIGN.md), [Supply chain](https://alekpopovic.github.io/orch/#SUPPLY_CHAIN_SECURITY_DESIGN.md) |
++| 🔄 GitOps | [GitOps sources and reconciliation](https://alekpopovic.github.io/orch/#GITOPS.md) |
+ | 📈 Operations | [Observability](https://alekpopovic.github.io/orch/#OBSERVABILITY.md), [Reliability](https://alekpopovic.github.io/orch/#RELIABILITY.md), [Operations](https://alekpopovic.github.io/orch/#OPERATIONS.md), [Production deployment](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md) |
+ | 🧪 Testing | [Load testing](https://alekpopovic.github.io/orch/#LOAD_TESTING.md), [Chaos testing](https://alekpopovic.github.io/orch/#CHAOS_TESTING.md), [Development](https://alekpopovic.github.io/orch/#DEVELOPMENT.md) |
+diff --git a/api/openapi.yaml b/api/openapi.yaml
+index 0dca484..6d1a0e6 100644
+--- a/api/openapi.yaml
++++ b/api/openapi.yaml
+@@ -77,6 +77,92 @@ paths:
+       responses:
+         "204":
+           description: Namespace deleted
++  /v1/quota:
++    get:
++      summary: Get namespace quota and usage
++      parameters:
++        - $ref: "#/components/parameters/Namespace"
++      responses:
++        "200":
++          description: Quota and current usage
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/ResourceQuotaResponse"
++    put:
++      summary: Set namespace quota
++      parameters:
++        - $ref: "#/components/parameters/Namespace"
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: "#/components/schemas/ResourceQuota"
++      responses:
++        "200":
++          description: Updated quota and usage
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/ResourceQuotaResponse"
++        "409":
++          description: Existing usage exceeds the requested quota
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/ErrorResponse"
++  /v1/gitops/sources:
++    get:
++      summary: List namespace GitOps sources
++      parameters:
++        - $ref: "#/components/parameters/Namespace"
++      responses:
++        "200":
++          description: GitOps sources
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/ListGitOpsSourcesResponse"
++    post:
++      summary: Create a GitOps source
++      parameters:
++        - $ref: "#/components/parameters/Namespace"
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: "#/components/schemas/CreateGitOpsSourceRequest"
++      responses:
++        "201":
++          description: Created GitOps source
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/GitOpsSourceResponse"
++  /v1/gitops/sources/{id}:
++    delete:
++      summary: Delete a GitOps source
++      parameters:
++        - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Namespace"
++      responses:
++        "204":
++          description: GitOps source deleted
++  /v1/gitops/sources/{id}/sync:
++    post:
++      summary: Synchronize a GitOps source now
++      parameters:
++        - $ref: "#/components/parameters/ID"
++        - $ref: "#/components/parameters/Namespace"
++      responses:
++        "200":
++          description: Synchronized GitOps source
++          content:
++            application/json:
++              schema:
++                $ref: "#/components/schemas/GitOpsSourceResponse"
+   /v1/nodes:
+     get:
+       summary: List nodes
+@@ -564,7 +650,7 @@ components:
+       properties:
+         code:
+           type: string
+-          enum: [not_found, invalid_argument, conflict, unauthorized, forbidden, failed_precondition, unavailable, internal]
++          enum: [not_found, invalid_argument, conflict, quota_exceeded, unauthorized, forbidden, failed_precondition, unavailable, internal]
+         message:
+           type: string
+         request_id:
+@@ -588,6 +674,56 @@ components:
+           $ref: "#/components/schemas/ResourceQuantity"
+         limits:
+           $ref: "#/components/schemas/ResourceQuantity"
++    ResourceQuota:
++      type: object
++      properties:
++        namespace:
++          type: string
++        max_services:
++          type: integer
++        max_replicas:
++          type: integer
++        max_cpu_millicores:
++          type: integer
++          format: int64
++        max_memory_bytes:
++          type: integer
++          format: int64
++        max_public_ports:
++          type: integer
++        max_secrets:
++          type: integer
++        max_registry_credentials:
++          type: integer
++        updated_at:
++          type: string
++          format: date-time
++    ResourceUsage:
++      type: object
++      properties:
++        services: {type: integer}
++        replicas: {type: integer}
++        cpu_millicores: {type: integer, format: int64}
++        memory_bytes: {type: integer, format: int64}
++        public_ports: {type: integer}
++        secrets: {type: integer}
++        registry_credentials: {type: integer}
++    ResourceQuotaResponse:
++      type: object
++      properties:
++        quota:
++          $ref: "#/components/schemas/ResourceQuota"
++        usage:
++          $ref: "#/components/schemas/ResourceUsage"
++    ImageMetadata:
++      type: object
++      properties:
++        requested_image: {type: string}
++        digest: {type: string}
++        registry: {type: string}
++        name: {type: string}
++        tag: {type: string}
++        pinned: {type: boolean}
+     Port:
+       type: object
+       properties:
+@@ -677,6 +813,8 @@ components:
+           type: string
+         image:
+           type: string
++        image_metadata:
++          $ref: "#/components/schemas/ImageMetadata"
+         image_pull_secret:
+           type: string
+         stateful:
+@@ -751,6 +889,16 @@ components:
+           type: string
+         image:
+           type: string
++        requested_image:
++          type: string
++        resolved_image_digest:
++          type: string
++        image_registry:
++          type: string
++        image_name:
++          type: string
++        image_tag:
++          type: string
+         version:
+           type: integer
+         ports:
+@@ -855,6 +1003,50 @@ components:
+       properties:
+         spec:
+           $ref: "#/components/schemas/ServiceSpec"
++    CreateGitOpsSourceRequest:
++      type: object
++      required: [repository_url, sync_interval]
++      properties:
++        repository_url: {type: string}
++        branch: {type: string, default: main}
++        path: {type: string, default: .}
++        sync_interval:
++          type: string
++          example: 1m
++        prune: {type: boolean}
++    GitOpsSource:
++      type: object
++      properties:
++        id: {type: string}
++        namespace: {type: string}
++        repository_url: {type: string}
++        branch: {type: string}
++        path: {type: string}
++        sync_interval:
++          type: integer
++          format: int64
++          description: Sync interval in nanoseconds.
++        prune: {type: boolean}
++        managed_services:
++          type: array
++          items: {type: string}
++        last_revision: {type: string}
++        last_error: {type: string}
++        last_synced_at: {type: string, format: date-time}
++        created_at: {type: string, format: date-time}
++        updated_at: {type: string, format: date-time}
++    GitOpsSourceResponse:
++      type: object
++      properties:
++        source:
++          $ref: "#/components/schemas/GitOpsSource"
++    ListGitOpsSourcesResponse:
++      type: object
++      properties:
++        sources:
++          type: array
++          items:
++            $ref: "#/components/schemas/GitOpsSource"
+     ScaleServiceRequest:
+       type: object
+       required: [replicas]
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 0107c6b..062bbac 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -14,8 +14,10 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/auth"
++	"github.com/alekpopovic/orch/internal/cli"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/gitops"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/internal/node"
+@@ -88,6 +90,12 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 		return err
+ 	}
+ 	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy))
++	gitopsController := gitops.NewController(controlPlane, nil, cli.ParseDeploy, logger)
++	go func() {
++		if err := gitopsController.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
++			logger.Warn("GitOps controller stopped", "error", err)
++		}
++	}()
+ 	serverMetrics := metrics.NewServer()
+ 	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+@@ -104,7 +112,7 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+-		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users), api.WithRequestMetrics(serverMetrics), api.WithControlMetrics(serverMetrics), api.WithMetricsHandler(serverMetrics.Handler())),
++		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users), api.WithRequestMetrics(serverMetrics), api.WithControlMetrics(serverMetrics), api.WithMetricsHandler(serverMetrics.Handler()), api.WithGitOpsSyncer(gitopsController)),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/docs/API.md b/docs/API.md
+index e5305a1..45970e1 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -6,7 +6,7 @@ All responses use UTC timestamps.
+ 
+ Workload routes select a namespace with `X-Orch-Namespace` and default to `default`. See [MULTI_TENANCY.md](https://alekpopovic.github.io/orch/#MULTI_TENANCY.md). API compatibility and deprecation rules are defined in [API_VERSIONING.md](https://alekpopovic.github.io/orch/#API_VERSIONING.md).
+ 
+-The canonical public API contract is `api/openapi.yaml`. It is also published in the GitHub Pages documentation portal as `openapi.yaml`. It documents the user-facing health, node, service, task, event, log, rollout, secret, registry credential, and audit log endpoints. Agent-only routes are intentionally excluded from that public spec.
++The canonical public API contract is `api/openapi.yaml`. It is also published in the GitHub Pages documentation portal as `openapi.yaml`. It documents the user-facing health, namespace, quota, GitOps, node, service, task, event, log, rollout, secret, registry credential, and audit log endpoints. Agent-only routes are intentionally excluded from that public spec.
+ 
+ Validate the OpenAPI document with:
+ 
+@@ -38,6 +38,7 @@ Errors use a stable envelope:
+ - `not_found`
+ - `invalid_argument`
+ - `conflict`
++- `quota_exceeded`
+ - `unauthorized`
+ - `forbidden`
+ - `failed_precondition`
+@@ -163,6 +164,32 @@ Concurrent service operations are guarded per service. Active rollout/rollback b
+ 
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
++Resolved image metadata is stored as `image_metadata` on the service spec and as `requested_image`, `resolved_image_digest`, `image_registry`, `image_name`, and `image_tag` on tasks. When digest pinning policy is enabled, task `image` is the immutable pull reference.
++
++## Resource Quotas
++
++```sh
++curl http://localhost:8080/v1/quota -H 'X-Orch-Namespace: payments'
++curl -X PUT http://localhost:8080/v1/quota \
++  -H 'X-Orch-Namespace: payments' -H 'Content-Type: application/json' \
++  -d '{"max_services":20,"max_replicas":100,"max_cpu_millicores":20000,"max_memory_bytes":68719476736,"max_public_ports":10,"max_secrets":50,"max_registry_credentials":10}'
++```
++
++GET returns both configured limits and live usage. Zero limits are unlimited. Exceeding a limit returns `409 quota_exceeded` with structured resource/usage details.
++
++## GitOps Sources
++
++```sh
++curl -X POST http://localhost:8080/v1/gitops/sources \
++  -H 'Content-Type: application/json' \
++  -d '{"repository_url":"https://github.com/acme/orch-config.git","branch":"main","path":"services","sync_interval":"1m","prune":true}'
++curl http://localhost:8080/v1/gitops/sources
++curl -X POST http://localhost:8080/v1/gitops/sources/{id}/sync
++curl -X DELETE http://localhost:8080/v1/gitops/sources/{id}
++```
++
++Sources and applied workloads are namespace-scoped. See [GITOPS.md](https://alekpopovic.github.io/orch/#GITOPS.md).
++
+ The canonical YAML deployment format is documented in [SERVICE_SPEC.md](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), with JSON Schema at `schemas/service.schema.json`.
+ 
+ ## Secrets
+diff --git a/docs/CONFIGURATION.md b/docs/CONFIGURATION.md
+index eb5d859..1431430 100644
+--- a/docs/CONFIGURATION.md
++++ b/docs/CONFIGURATION.md
+@@ -50,6 +50,9 @@ cluster_policy:
+   allow_host_pid: false
+   allowed_image_registries: [registry.example.com]
+   block_latest_tag: true
++  require_digest: true
++  allow_mutable_tags: false
++  deny_latest_tag: true
+   require_healthcheck: true
+   allowed_host_path_prefixes: [/srv/orch]
+   allowed_capabilities: [NET_BIND_SERVICE]
+@@ -59,7 +62,7 @@ cluster_policy:
+ 
+ Common server flags mirror config keys: `--addr`, `--database-url`, `--log-level`, `--bootstrap-token`, `--jwt-secret`, `--users`, `--secret-key`, `--shutdown-timeout`, `--node-heartbeat-timeout`, and `--node-monitor-interval`.
+ 
+-Admission policy can also be supplied through `ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS`, `ORCH_POLICY_REQUIRE_RESOURCE_LIMITS`, `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_IMAGE_REGISTRIES`, `ORCH_POLICY_BLOCK_LATEST_TAG`, `ORCH_POLICY_REQUIRE_HEALTHCHECK`, `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, `ORCH_POLICY_MAX_REPLICAS_PER_SERVICE`, and `ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE`. List values are comma-separated.
++Admission policy can also be supplied through `ORCH_POLICY_REQUIRE_RESOURCE_REQUESTS`, `ORCH_POLICY_REQUIRE_RESOURCE_LIMITS`, `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_IMAGE_REGISTRIES`, `ORCH_POLICY_BLOCK_LATEST_TAG`, `ORCH_POLICY_REQUIRE_DIGEST`, `ORCH_POLICY_ALLOW_MUTABLE_TAGS`, `ORCH_POLICY_DENY_LATEST_TAG`, `ORCH_POLICY_REQUIRE_HEALTHCHECK`, `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, `ORCH_POLICY_MAX_REPLICAS_PER_SERVICE`, and `ORCH_POLICY_MAX_PUBLIC_PORTS_PER_SERVICE`. List values are comma-separated.
+ 
+ ## Agent
+ 
+diff --git a/docs/GITOPS.md b/docs/GITOPS.md
+new file mode 100644
+index 0000000..be115e5
+--- /dev/null
++++ b/docs/GITOPS.md
+@@ -0,0 +1,32 @@
++# GitOps Sources
++
++The GitOps controller periodically checks out a Git branch, validates deployment YAML with the same parser and admission path as `orch deploy`, and applies services in the source namespace. Each source records its last revision, managed service names, last sync time, and last error.
++
++## Configure a Source
++
++```sh
++orch --namespace payments gitops add \
++  --repo https://github.com/acme/orch-config.git \
++  --branch main \
++  --path services/payments \
++  --interval 1m \
++  --prune
++
++orch -n payments gitops ls
++orch -n payments gitops sync <source-id>
++orch -n payments gitops delete <source-id>
++```
++
++Equivalent API routes are `POST/GET /v1/gitops/sources`, `POST /v1/gitops/sources/{id}/sync`, and `DELETE /v1/gitops/sources/{id}`.
++
++`path` may identify one `.yaml`/`.yml` manifest or a directory, which is traversed in deterministic lexical order. An update replaces the complete service spec and creates a new service version. Admission, namespace secret resolution, resource quota, and image policy checks cannot be bypassed by GitOps.
++
++With `prune` enabled, a service previously managed by that source is deleted when its manifest disappears. The controller never prunes an unrelated manually created service or a service managed by another source.
++
++## Security and Operations
++
++The MVP uses the installed `git` executable through an isolated fetch adapter and a temporary checkout removed after every sync. Repository URLs containing user info or credential-like query parameters are rejected; credentials are not represented in `GitOpsSource` and cannot be stored in plaintext. Use an external Git credential helper or a future encrypted credential provider for private repositories.
++
++Use immutable commit history protections on the configured branch. A sync records the checked-out commit and emits `gitops.sync.succeeded` or `gitops.sync.failed` plus a system audit record. Repository URLs are redacted by the common audit layer.
++
++The loop respects context cancellation. Failed sources retain their error and retry at their configured interval; one failed source does not stop others.
+diff --git a/docs/IMAGE_SIGNING_DESIGN.md b/docs/IMAGE_SIGNING_DESIGN.md
+new file mode 100644
+index 0000000..54bbd1c
+--- /dev/null
++++ b/docs/IMAGE_SIGNING_DESIGN.md
+@@ -0,0 +1,71 @@
++# Image Signing and Verification Design
++
++## Goals and Non-goals
++
++The goal is to prevent untrusted container artifacts from reaching a node by verifying an immutable image digest against namespace policy. Verification must be repeatable, auditable, independent of mutable tags, and available at more than one enforcement point. Sigstore/cosign-compatible signatures are the initial target, but the verifier remains an interface so another OCI-signature implementation can be substituted.
++
++This design does not implement signing, run a certificate authority, mirror registries, scan images for vulnerabilities, or make a signature prove that the image is safe. SBOM and vulnerability decisions are covered by `SUPPLY_CHAIN_SECURITY_DESIGN.md`.
++
++## Threat Model
++
++The controls address registry tag replacement, compromised publisher credentials, an unauthorized publisher, artifact substitution between admission and pull, stale verification results, and policy bypass through a direct agent request. They do not protect a node after host/root compromise, a malicious configured trust root, or a compromised build identity that legitimately satisfies policy.
++
++## Enforcement Points
++
++Verification uses the resolved digest, never a tag:
++
++1. API admission resolves the requested reference and rejects immediately when policy or a cached verification result cannot be satisfied.
++2. Rollout creation re-verifies the exact service-version digest, preventing a stale admission decision from silently changing artifacts.
++3. The agent verifies the assigned digest before pull/start. This is the final fail-closed boundary and protects against control-plane bypass or stale assignments.
++
++The control plane records the verification subject, policy revision, result, verifier version, and expiry. Agents receive a short-lived signed verification assertion rather than registry or signing credentials.
++
++## Trust Roots and Signing Modes
++
++Key-based signing stores public keys or KMS-backed public-key references in a versioned trust-root set. Private keys never enter `orch`.
++
++Keyless signing validates the Fulcio certificate chain, Rekor inclusion proof, certificate validity at signing time, OIDC issuer, and workload identity. Offline verification uses a periodically refreshed, authenticated transparency-log checkpoint. Network failure behavior is policy-controlled but production namespaces default to fail closed.
++
++Trust-root updates are admin-only, append audited revisions, and overlap old/new roots during rotation. Removing a root triggers re-evaluation of affected running digests.
++
++## Policy Examples
++
++```yaml
++image_signing:
++  require_signed_images: true
++  allowed_issuers:
++    - https://token.actions.githubusercontent.com
++  allowed_identities:
++    - https://github.com/acme/api/.github/workflows/release.yml@refs/heads/main
++```
++
++```yaml
++namespaces:
++  dev:
++    image_signing:
++      require_signed_images: false
++```
++
++An unsigned exception is namespace-scoped, time-bounded, requires a reason/approver, and is never inherited by another namespace.
++
++## Failure Modes and Audit
++
++Invalid signature, untrusted issuer/identity, missing Rekor proof, digest mismatch, expired assertion, unavailable verifier, and trust-root refresh failure are distinct stable failure reasons. Denials emit `image.verification.denied`; successful rollout verification emits `image.verification.succeeded`; exceptions emit `image.verification.waiver_used`. Events and audit records contain the digest and policy revision but no credentials or raw identity tokens.
++
++Retryable verifier/registry outages return an unavailable result. Production policy fails closed; an explicitly configured development policy may use a recent unexpired cached success.
++
++## Test Strategy
++
++- Table tests for issuer, identity, key rotation, expiry, Rekor proof, and digest mismatch.
++- Fake verifier tests at API, rollout, and agent boundaries.
++- Replay tests proving a verification assertion cannot authorize another digest/namespace.
++- Integration tests with locally generated cosign keys and an OCI fixture registry.
++- Failure-injection tests for registry, transparency log, clock skew, and trust-root refresh.
++
++## Rollout Path
++
++1. Observe-only verification records results without denial.
++2. Require digest pinning while signature policy remains observe-only.
++3. Enforce signing for selected non-production namespaces.
++4. Enforce production with a temporary, audited waiver mechanism.
++5. Enable mandatory agent-side assertion verification and remove observe-only compatibility paths.
+diff --git a/docs/MULTI_TENANCY.md b/docs/MULTI_TENANCY.md
+index b68b62f..e9f6a6c 100644
+--- a/docs/MULTI_TENANCY.md
++++ b/docs/MULTI_TENANCY.md
+@@ -20,6 +20,20 @@ The CLI resolves its namespace from `--namespace`, then `ORCH_NAMESPACE`, then `
+ 
+ Namespace deletion is allowed only when the namespace contains no workload resources or namespace-scoped history. The `default` namespace cannot be deleted.
+ 
++## Resource Quotas
++
++Each namespace can limit services, replicas, requested CPU millicores, requested memory bytes, public ports, secrets, and registry credentials. A zero limit means unlimited. CPU and memory usage are the sum of per-replica requests; public-port usage counts published port declarations.
++
++```sh
++orch quota get --namespace payments
++orch quota set --namespace payments \
++  --max-services 20 --max-replicas 100 \
++  --max-cpu-millicores 20000 --max-memory-bytes 68719476736 \
++  --max-public-ports 10 --max-secrets 50 --max-registry-credentials 10
++```
++
++Checks run atomically with service create/update/scale, secret create, and registry credential create. A denial returns `409 quota_exceeded` with namespace, resource, current use, requested use, and limit. Deleted services stop consuming quota. PostgreSQL uses a namespace advisory transaction lock so concurrent scale requests cannot both pass against the same remaining capacity.
++
+ ## RBAC
+ 
+ Legacy JWT `role` remains a cluster-wide role. Namespace-scoped tokens may instead use `namespace_roles`:
+@@ -42,6 +56,6 @@ Secret and registry credential references resolve only in the workload namespace
+ 
+ ## Persistence and Migration
+ 
+-Migration `000011_namespaces` creates the namespace table, assigns existing rows to `default`, replaces global name uniqueness with namespace-local keys, and adds namespace indexes. The down migration removes non-default data before restoring global uniqueness and is therefore intended only for controlled rollback.
++Migration `000011_namespaces` creates the namespace table, assigns existing rows to `default`, replaces global name uniqueness with namespace-local keys, and adds namespace indexes. Migration `000012_resource_quotas` adds quota limits. The namespace down migration removes non-default data before restoring global uniqueness and is therefore intended only for controlled rollback.
+ 
+-Namespaces are a logical isolation boundary, not yet a complete hostile multi-tenant security boundary. Docker nodes, host networking, scheduler capacity, and the current in-memory server process remain shared. Production multi-tenancy still requires PostgreSQL server wiring, network isolation, per-namespace quotas, and stronger agent identity.
++Namespaces are a logical isolation boundary, not yet a complete hostile multi-tenant security boundary. Docker nodes, host networking, scheduler capacity, and the current in-memory server process remain shared. Production multi-tenancy still requires PostgreSQL server wiring, network isolation, and stronger agent identity.
+diff --git a/docs/REGISTRIES.md b/docs/REGISTRIES.md
+index 3b43660..940fcd8 100644
+--- a/docs/REGISTRIES.md
++++ b/docs/REGISTRIES.md
+@@ -43,8 +43,26 @@ resources:
+ 
+ The control plane rejects services that reference missing credentials. Agents receive pull credentials only in assigned task payloads for the service that needs them, and the Docker runtime passes them to `PullImage`.
+ 
++## Image Digests and Pinning
++
++Image references are parsed into the requested reference, registry, repository name, tag, and resolved digest. References that already contain `@sha256:...` are immediately immutable; a configured resolver can resolve a tag during create or rollout. The metadata is stored in the service version and copied to every task.
++
++Image policy supports:
++
++```yaml
++cluster_policy:
++  require_digest: true
++  allow_mutable_tags: false
++  deny_latest_tag: true
++```
++
++When `require_digest` is enabled, the task image becomes `registry/name@digest`; both Docker pull and container create receive that exact reference. If resolution cannot produce a digest, admission rejects the service or rollout. `block_latest_tag` remains accepted as the compatibility name for `deny_latest_tag`.
++
++The current default parser resolves metadata and existing digest references. Registry-specific remote resolvers plug into the control-plane resolver interface; this MVP does not implement a registry proxy.
++
+ ## Security Notes
+ 
+ - Do not log registry passwords or tokens.
+ - Keep `ORCH_SECRET_KEY` stable; it protects registry credentials and secrets.
+ - Use registry-scoped robot accounts or tokens with least privilege.
++- Prefer digest pinning for production namespaces and protect tag mutation in the registry.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 7ff0f5e..e5f9eb8 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -101,6 +101,9 @@ cluster_policy:
+   allowed_image_registries:
+     - ghcr.io
+   block_latest_tag: true
++  require_digest: true
++  allow_mutable_tags: false
++  deny_latest_tag: true
+   require_healthcheck: true
+   require_resource_requests: true
+   require_resource_limits: true
+@@ -110,7 +113,9 @@ cluster_policy:
+ 
+ The admission controller applies these rules on service creation, rollout, and scale. Rejections return structured rule violations and emit a redacted audit record. See `docs/POLICY_ENGINE_DESIGN.md`.
+ 
+-Equivalent environment variables are `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, and `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`.
++Equivalent environment variables are `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, and `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`. Image controls use `ORCH_POLICY_REQUIRE_DIGEST`, `ORCH_POLICY_ALLOW_MUTABLE_TAGS`, and `ORCH_POLICY_DENY_LATEST_TAG`.
++
++Image digest metadata is persisted per service version and task. With `require_digest`, agents pull and create containers by digest rather than by a mutable tag. Signing verification and vulnerability enforcement are deliberately separate future layers; see `IMAGE_SIGNING_DESIGN.md` and `SUPPLY_CHAIN_SECURITY_DESIGN.md`.
+ 
+ ## Secret Handling
+ 
+diff --git a/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md b/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md
+new file mode 100644
+index 0000000..2f4fb29
+--- /dev/null
++++ b/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md
+@@ -0,0 +1,76 @@
++# SBOM and Vulnerability Scanning Design
++
++## Scope and Architecture
++
++Supply-chain state is keyed by immutable image digest and remains compatible with the current registry credential, image-resolution, and admission flow. A digest may have multiple SBOM documents and scan results, but admission selects the newest trusted, non-expired result for the configured scanner/policy.
++
++The system ingests SPDX or CycloneDX SBOM metadata from OCI referrers, CI upload, or a registry scanner. Large documents remain in an object store/registry; PostgreSQL stores digest, format, document hash, location, producer identity, timestamps, and verification status. Ingestion never accepts a tag as artifact identity.
++
++Scanner adapters submit or discover a digest, normalize findings, and record scanner/database versions. Registry-native scanners can push status through a webhook or be polled. Registry credentials are resolved through the existing encrypted credential boundary and are never copied into scan records, events, or jobs.
++
++## Proposed Data Model
++
++- `image_artifacts`: digest, registry/name, first/last seen, provenance reference.
++- `image_sboms`: artifact digest, format, document digest/location, producer, verified_at.
++- `vulnerability_scans`: artifact digest, scanner, DB version, state, summary counts, scanned/expires timestamps.
++- `vulnerability_findings`: scan ID, vulnerability ID, package/version, severity, fix availability.
++- `supply_chain_waivers`: namespace, digest or vulnerability ID, reason, approver, expiry.
++
++Scanner payloads are bounded, validated, and idempotent by `(digest, scanner, database_version)`.
++
++## Admission Policy
++
++Example:
++
++```yaml
++supply_chain:
++  require_sbom: true
++  require_recent_scan: 24h
++  deny_severities: [critical]
++  deny_fixable_high: true
++  allowed_scanners: [trivy-prod]
++```
++
++Admission runs after tag-to-digest resolution. Missing/stale data, active scans, scanner outage, and policy violation are separate structured results. Production defaults to fail closed for missing or expired evidence. Development may allow deployment while a scan is pending, but this produces an audit event.
++
++## Exceptions and Audit
++
++Waivers are namespace-scoped, least-specific-last (digest plus vulnerability ID is preferred), time-bounded, and require reason, approver, and ticket reference. They cannot waive an unknown digest. Creation, use, expiry, and revocation are audited. Admission events record digest, scan ID, policy revision, maximum severity, and waiver ID without embedding the SBOM or registry credentials.
++
++## Periodic Rescan and Running Images
++
++A scheduler rescans active digests when the vulnerability database changes or a result nears expiry. Work is deduplicated per digest and retried with bounded backoff.
++
++When a running image later violates policy, `orch` emits a high-severity event and marks the service supply-chain status noncompliant. Initial behavior is alert-only: automatic termination can reduce availability and is unsafe without an approved replacement. A future namespace policy may choose quarantine, rollout blocking, or controlled eviction inside a maintenance window.
++
++## API and CLI Proposal
++
++API:
++
++- `POST /v1/supply-chain/sboms`
++- `POST /v1/supply-chain/scans`
++- `GET /v1/images/{digest}/supply-chain`
++- `POST /v1/supply-chain/waivers`
++- `DELETE /v1/supply-chain/waivers/{id}`
++- `POST /v1/images/{digest}/rescan`
++
++CLI:
++
++```sh
++orch image inspect <digest>
++orch image sbom upload <digest> --file sbom.spdx.json
++orch image scan <digest>
++orch image waiver create <digest> --vulnerability CVE-... --expires 24h --reason ...
++orch image waiver delete <id>
++```
++
++Uploads use streaming size limits and document hashes; CLI output defaults to summaries rather than full finding lists.
++
++## Test Strategy
++
++- Parser/fuzz tests for SPDX, CycloneDX, scanner payloads, severity normalization, and size limits.
++- Admission tables for fresh/stale/missing scans, severity thresholds, fixability, and waivers.
++- Idempotency and concurrent webhook tests.
++- Registry-scanner contract tests with encrypted credential fakes.
++- Periodic rescan and later-vulnerable running-image tests with injected clocks.
++- Audit redaction, namespace isolation, waiver expiry, and failure-mode tests.
+diff --git a/docs/assets/docs.js b/docs/assets/docs.js
+index ebf7e89..864bf4d 100644
+--- a/docs/assets/docs.js
++++ b/docs/assets/docs.js
+@@ -31,7 +31,8 @@ const docsNav = [
+       { title: 'Reconciler', path: 'RECONCILER.md', icon: '🔁' },
+       { title: 'Rollouts', path: 'ROLLOUTS.md', icon: '🚀' },
+       { title: 'HA control plane', path: 'HA_CONTROL_PLANE_DESIGN.md', icon: '👑' },
+-      { title: 'Policy engine', path: 'POLICY_ENGINE_DESIGN.md', icon: '📜' }
++      { title: 'Policy engine', path: 'POLICY_ENGINE_DESIGN.md', icon: '📜' },
++      { title: 'GitOps', path: 'GITOPS.md', icon: '🔄' }
+     ]
+   },
+   {
+@@ -53,6 +54,8 @@ const docsNav = [
+       { title: 'Traefik', path: 'TRAEFIK.md', icon: '🚦' },
+       { title: 'Secrets', path: 'SECRETS.md', icon: '🔐' },
+       { title: 'Registries', path: 'REGISTRIES.md', icon: '🗃️' },
++      { title: 'Image signing design', path: 'IMAGE_SIGNING_DESIGN.md', icon: '✍️' },
++      { title: 'Supply-chain security', path: 'SUPPLY_CHAIN_SECURITY_DESIGN.md', icon: '🧾' },
+       { title: 'Security', path: 'SECURITY.md', icon: '🛡️' },
+       { title: 'Security review', path: 'SECURITY_REVIEW.md', icon: '🧪' },
+       { title: 'Multi-tenancy', path: 'MULTI_TENANCY.md', icon: '🏘️' }
+diff --git a/internal/admission/admission.go b/internal/admission/admission.go
+index 8d8ce1e..48b8fe2 100644
+--- a/internal/admission/admission.go
++++ b/internal/admission/admission.go
+@@ -6,6 +6,7 @@ import (
+ 	"path/filepath"
+ 	"strings"
+ 
++	imageinfo "github.com/alekpopovic/orch/internal/image"
+ 	"github.com/alekpopovic/orch/internal/policy"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -122,7 +123,17 @@ func Evaluate(spec types.ServiceSpec, clusterPolicy policy.ClusterPolicy) []Viol
+ 			add("image", "image.registry.denied", fmt.Sprintf("image registry %q is not allowed", registry))
+ 		}
+ 	}
+-	if clusterPolicy.BlockLatestTag && usesLatestTag(spec.Image) {
++	metadata := spec.ImageMetadata
++	if metadata.RequestedImage == "" {
++		metadata, _ = imageinfo.Parse(spec.Image)
++	}
++	if clusterPolicy.RequireDigest && strings.TrimSpace(metadata.Digest) == "" {
++		add("image", "image.digest.required", "an immutable image digest is required")
++	}
++	if !clusterPolicy.AllowMutableTags && strings.TrimSpace(metadata.Digest) == "" {
++		add("image", "image.mutable_tag.denied", "mutable image tags are not allowed")
++	}
++	if (clusterPolicy.BlockLatestTag || clusterPolicy.DenyLatestTag) && usesLatestTag(spec.Image) {
+ 		add("image", "image.latest.denied", "the latest image tag is not allowed")
+ 	}
+ 	if clusterPolicy.RequireHealthcheck && spec.Healthcheck == nil {
+diff --git a/internal/admission/admission_test.go b/internal/admission/admission_test.go
+index 4507a6c..71242e4 100644
+--- a/internal/admission/admission_test.go
++++ b/internal/admission/admission_test.go
+@@ -5,6 +5,7 @@ import (
+ 	"strings"
+ 	"testing"
+ 
++	imageinfo "github.com/alekpopovic/orch/internal/image"
+ 	"github.com/alekpopovic/orch/internal/policy"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -65,6 +66,33 @@ func TestAdmissionPolicies(t *testing.T) {
+ 	}
+ }
+ 
++func TestAdmissionRejectsMutableImageTag(t *testing.T) {
++	spec := types.ServiceSpec{Name: "api", Image: "ghcr.io/acme/api:v1", Replicas: 1}
++	violations := Evaluate(spec, policy.ClusterPolicy{AllowMutableTags: false})
++	if !containsRule(violations, "image.mutable_tag.denied") {
++		t.Fatalf("expected mutable tag rejection, got %#v", violations)
++	}
++	spec.Image = "ghcr.io/acme/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
++	metadata, err := imageinfo.Parse(spec.Image)
++	if err != nil {
++		t.Fatal(err)
++	}
++	spec.ImageMetadata = metadata
++	violations = Evaluate(spec, policy.ClusterPolicy{RequireDigest: true, AllowMutableTags: false})
++	if containsRule(violations, "image.digest.required") || containsRule(violations, "image.mutable_tag.denied") {
++		t.Fatalf("expected digest image to pass image policy, got %#v", violations)
++	}
++}
++
++func containsRule(violations []Violation, rule string) bool {
++	for _, violation := range violations {
++		if violation.Rule == rule {
++			return true
++		}
++	}
++	return false
++}
++
+ type recordingSink struct{ rejection Rejection }
+ 
+ func (sink *recordingSink) RecordAdmissionRejection(_ context.Context, rejection Rejection) {
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index f5ac251..60d7e53 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -80,6 +80,29 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	}
+ }
+ 
++func TestDigestPinnedTaskIsPulledAndCreatedByDigest(t *testing.T) {
++	const pinned = "ghcr.io/acme/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
++	client := &fakeAgentClient{tasks: []api.AgentTask{{Task: types.Task{
++		ID: taskID, ServiceID: types.ServiceID("00000000-0000-4000-8000-000000000003"), NodeID: nodeID,
++		DesiredStatus: types.TaskRunning, ActualStatus: types.TaskAssigned, Image: pinned, Version: 1,
++	}}}}
++	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("container-pinned"))
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatal(err)
++	}
++	operations := runtime.OperationStrings()
++	if len(operations) < 3 || operations[1] != "pull:"+pinned {
++		t.Fatalf("expected digest-pinned Docker pull, got %#v", operations)
++	}
++	specs := runtime.CreatedSpecs()
++	if len(specs) != 1 || specs[0].Image != pinned {
++		t.Fatalf("expected digest-pinned container image, got %#v", specs)
++	}
++}
++
+ func TestReconcileAssignedTaskRecreatesManuallyDeletedContainer(t *testing.T) {
+ 	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
+ 	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 16a0ccb..4ae1564 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -23,6 +23,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/internal/traefik"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -42,6 +43,11 @@ type Server struct {
+ 	metricsHandler http.Handler
+ 	auditStore     audit.Store
+ 	now            func() time.Time
++	gitopsSyncer   GitOpsSyncer
++}
++
++type GitOpsSyncer interface {
++	Sync(context.Context, string) (types.GitOpsSource, error)
+ }
+ 
+ type Option func(*Server)
+@@ -115,6 +121,10 @@ func WithAuditStore(store audit.Store) Option {
+ 	}
+ }
+ 
++func WithGitOpsSyncer(syncer GitOpsSyncer) Option {
++	return func(server *Server) { server.gitopsSyncer = syncer }
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -191,6 +201,12 @@ func (s *Server) registerV1(mux *http.ServeMux) {
+ 	mux.HandleFunc("POST /v1/namespaces", s.createNamespace)
+ 	mux.HandleFunc("GET /v1/namespaces", s.listNamespaces)
+ 	mux.HandleFunc("DELETE /v1/namespaces/{name}", s.deleteNamespace)
++	mux.HandleFunc("GET /v1/quota", s.getResourceQuota)
++	mux.HandleFunc("PUT /v1/quota", s.setResourceQuota)
++	mux.HandleFunc("POST /v1/gitops/sources", s.createGitOpsSource)
++	mux.HandleFunc("GET /v1/gitops/sources", s.listGitOpsSources)
++	mux.HandleFunc("DELETE /v1/gitops/sources/{id}", s.deleteGitOpsSource)
++	mux.HandleFunc("POST /v1/gitops/sources/{id}/sync", s.syncGitOpsSource)
+ }
+ 
+ type HealthResponse struct {
+@@ -215,6 +231,27 @@ type ListNamespacesResponse struct {
+ 	Namespaces []types.Namespace `json:"namespaces"`
+ }
+ 
++type ResourceQuotaResponse struct {
++	Quota types.ResourceQuota `json:"quota"`
++	Usage types.ResourceUsage `json:"usage"`
++}
++
++type CreateGitOpsSourceRequest struct {
++	RepositoryURL string `json:"repository_url"`
++	Branch        string `json:"branch"`
++	Path          string `json:"path"`
++	SyncInterval  string `json:"sync_interval"`
++	Prune         bool   `json:"prune"`
++}
++
++type GitOpsSourceResponse struct {
++	Source types.GitOpsSource `json:"source"`
++}
++
++type ListGitOpsSourcesResponse struct {
++	Sources []types.GitOpsSource `json:"sources"`
++}
++
+ type ErrorResponse struct {
+ 	Error RequestError `json:"error"`
+ }
+@@ -402,6 +439,87 @@ func (s *Server) deleteNamespace(w http.ResponseWriter, r *http.Request) {
+ 	w.WriteHeader(http.StatusNoContent)
+ }
+ 
++func (s *Server) getResourceQuota(w http.ResponseWriter, r *http.Request) {
++	value, usage, err := s.controlPlane.GetResourceQuota(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ResourceQuotaResponse{Quota: value, Usage: usage})
++}
++
++func (s *Server) setResourceQuota(w http.ResponseWriter, r *http.Request) {
++	var value types.ResourceQuota
++	if !s.decodeJSON(w, r, &value) {
++		return
++	}
++	updated, usage, err := s.controlPlane.SetResourceQuota(r.Context(), value)
++	if err != nil {
++		s.recordAudit(r, "quota.set", "namespace", namespace.FromContext(r.Context()), audit.OutcomeFailure, nil)
++		s.writeError(w, r, err)
++		return
++	}
++	s.recordAudit(r, "quota.set", "namespace", updated.Namespace, audit.OutcomeSuccess, nil)
++	writeJSON(w, http.StatusOK, ResourceQuotaResponse{Quota: updated, Usage: usage})
++}
++
++func (s *Server) createGitOpsSource(w http.ResponseWriter, r *http.Request) {
++	var request CreateGitOpsSourceRequest
++	if !s.decodeJSON(w, r, &request) {
++		return
++	}
++	interval, err := time.ParseDuration(strings.TrimSpace(request.SyncInterval))
++	if err != nil || interval <= 0 {
++		s.writeError(w, r, fmt.Errorf("%w: sync_interval must be a positive duration", store.ErrInvalidState))
++		return
++	}
++	source, err := s.controlPlane.CreateGitOpsSource(r.Context(), types.GitOpsSource{
++		RepositoryURL: request.RepositoryURL, Branch: request.Branch, Path: request.Path,
++		SyncInterval: interval, Prune: request.Prune,
++	})
++	if err != nil {
++		s.recordAudit(r, "gitops.source.create", "gitops_source", "unknown", audit.OutcomeFailure, nil)
++		s.writeError(w, r, err)
++		return
++	}
++	s.recordAudit(r, "gitops.source.create", "gitops_source", source.ID, audit.OutcomeSuccess, map[string]string{"repository_url": source.RepositoryURL})
++	writeJSON(w, http.StatusCreated, GitOpsSourceResponse{Source: source})
++}
++
++func (s *Server) listGitOpsSources(w http.ResponseWriter, r *http.Request) {
++	sources, err := s.controlPlane.ListGitOpsSources(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListGitOpsSourcesResponse{Sources: sources})
++}
++
++func (s *Server) deleteGitOpsSource(w http.ResponseWriter, r *http.Request) {
++	id := strings.TrimSpace(r.PathValue("id"))
++	if err := s.controlPlane.DeleteGitOpsSource(r.Context(), id); err != nil {
++		s.recordAudit(r, "gitops.source.delete", "gitops_source", id, audit.OutcomeFailure, nil)
++		s.writeError(w, r, err)
++		return
++	}
++	s.recordAudit(r, "gitops.source.delete", "gitops_source", id, audit.OutcomeSuccess, nil)
++	w.WriteHeader(http.StatusNoContent)
++}
++
++func (s *Server) syncGitOpsSource(w http.ResponseWriter, r *http.Request) {
++	id := strings.TrimSpace(r.PathValue("id"))
++	if s.gitopsSyncer == nil {
++		s.writeError(w, r, apperrors.New(apperrors.CodeUnavailable, "GitOps controller is not configured"))
++		return
++	}
++	source, err := s.gitopsSyncer.Sync(r.Context(), id)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, GitOpsSourceResponse{Source: source})
++}
++
+ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+ 	if !s.authorizeAgentRegistration(w, r) {
+ 		return
+@@ -1146,6 +1264,10 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/namespaces":
+ 			return auth.RoleAdmin, true
++		case path == "/v1/quota":
++			return auth.RoleViewer, true
++		case path == "/v1/gitops/sources" || strings.HasPrefix(path, "/v1/gitops/sources/"):
++			return auth.RoleViewer, true
+ 		case path == "/v1/nodes" || strings.HasPrefix(path, "/v1/nodes/"):
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/secrets" || strings.HasPrefix(path, "/v1/secrets/"):
+@@ -1174,6 +1296,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 		switch {
+ 		case path == "/v1/namespaces":
+ 			return auth.RoleAdmin, true
++		case path == "/v1/gitops/sources" || strings.HasSuffix(path, "/sync"):
++			return auth.RoleOperator, true
+ 		case strings.HasSuffix(path, "/drain") || strings.HasSuffix(path, "/uncordon"):
+ 			return auth.RoleAdmin, true
+ 		case path == "/v1/secrets":
+@@ -1187,6 +1311,12 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/namespaces/") {
+ 		return auth.RoleAdmin, true
+ 	}
++	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/gitops/sources/") {
++		return auth.RoleOperator, true
++	}
++	if r.Method == http.MethodPut && path == "/v1/quota" {
++		return auth.RoleAdmin, true
++	}
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/secrets/") {
+ 		return auth.RoleOperator, true
+ 	}
+@@ -1274,6 +1404,14 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/namespaces", true
+ 	case strings.HasPrefix(path, "/v1/namespaces/"):
+ 		return "/v1/namespaces/{name}", true
++	case path == "/v1/quota":
++		return "/v1/quota", true
++	case path == "/v1/gitops/sources":
++		return "/v1/gitops/sources", true
++	case strings.HasPrefix(path, "/v1/gitops/sources/") && strings.HasSuffix(path, "/sync"):
++		return "/v1/gitops/sources/{id}/sync", true
++	case strings.HasPrefix(path, "/v1/gitops/sources/"):
++		return "/v1/gitops/sources/{id}", true
+ 	case path == "/v1/agent/register":
+ 		return "/v1/agent/register", true
+ 	case path == "/v1/agent/heartbeat":
+@@ -1692,6 +1830,13 @@ func errorAttributes(err error) (int, apperrors.Code, string, map[string]any) {
+ 			"violations": admissionErr.Violations,
+ 		}
+ 	}
++	var quotaErr *quota.Error
++	if errors.As(err, &quotaErr) {
++		return http.StatusConflict, apperrors.CodeQuotaExceeded, quotaErr.Error(), map[string]any{
++			"namespace": quotaErr.Namespace, "resource": quotaErr.Resource, "limit": quotaErr.Limit,
++			"used": quotaErr.Used, "requested": quotaErr.Requested,
++		}
++	}
+ 	code := apperrors.CodeOf(err)
+ 	message := apperrors.MessageOf(err)
+ 	details := apperrors.DetailsOf(err)
+@@ -1706,6 +1851,8 @@ func statusForCode(code apperrors.Code) int {
+ 		return http.StatusBadRequest
+ 	case code == apperrors.CodeConflict:
+ 		return http.StatusConflict
++	case code == apperrors.CodeQuotaExceeded:
++		return http.StatusConflict
+ 	case code == apperrors.CodeUnauthorized:
+ 		return http.StatusUnauthorized
+ 	case code == apperrors.CodeForbidden:
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 76abbc4..193db2a 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -972,8 +972,8 @@ func TestAuditRequiresAdminRole(t *testing.T) {
+ 	}
+ }
+ 
+-func newTestHandler() http.Handler {
+-	return NewHandler(slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), controlplane.NewMemoryService())
++func newTestHandler(opts ...Option) http.Handler {
++	return NewHandler(slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), controlplane.NewMemoryService(), opts...)
+ }
+ 
+ func doRequest(t *testing.T, handler http.Handler, method string, path string, body any) *httptest.ResponseRecorder {
+diff --git a/internal/api/quota_gitops_test.go b/internal/api/quota_gitops_test.go
+new file mode 100644
+index 0000000..1d7f5cd
+--- /dev/null
++++ b/internal/api/quota_gitops_test.go
+@@ -0,0 +1,68 @@
++package api
++
++import (
++	"context"
++	"encoding/json"
++	"net/http"
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestQuotaAPIProducesStructuredConflict(t *testing.T) {
++	handler := newTestHandler()
++	set := doRequest(t, handler, http.MethodPut, "/v1/quota", `{"max_services":1}`)
++	if set.Code != http.StatusOK {
++		t.Fatalf("set quota: %d %s", set.Code, set.Body.String())
++	}
++	for i, name := range []string{"first", "second"} {
++		response := doRequest(t, handler, http.MethodPost, "/v1/services", `{"spec":{"name":"`+name+`","image":"nginx:1.27","replicas":0}}`)
++		if i == 0 && response.Code != http.StatusCreated {
++			t.Fatalf("first service: %d %s", response.Code, response.Body.String())
++		}
++		if i == 1 {
++			if response.Code != http.StatusConflict || !strings.Contains(response.Body.String(), `"code":"quota_exceeded"`) || !strings.Contains(response.Body.String(), `"resource":"services"`) {
++				t.Fatalf("expected structured quota conflict, got %d %s", response.Code, response.Body.String())
++			}
++		}
++	}
++}
++
++type fakeGitOpsSyncer struct {
++	source types.GitOpsSource
++}
++
++func (syncer *fakeGitOpsSyncer) Sync(_ context.Context, id string) (types.GitOpsSource, error) {
++	syncer.source.ID = id
++	syncer.source.LastRevision = "abc123"
++	return syncer.source, nil
++}
++
++func TestGitOpsSourceCRUDAndManualSyncAPI(t *testing.T) {
++	syncer := &fakeGitOpsSyncer{}
++	handler := newTestHandler(WithGitOpsSyncer(syncer))
++	created := doRequest(t, handler, http.MethodPost, "/v1/gitops/sources", `{"repository_url":"https://example.com/acme/config.git","branch":"main","path":"services","sync_interval":"1m","prune":true}`)
++	if created.Code != http.StatusCreated {
++		t.Fatalf("create source: %d %s", created.Code, created.Body.String())
++	}
++	var response GitOpsSourceResponse
++	if err := json.Unmarshal(created.Body.Bytes(), &response); err != nil {
++		t.Fatal(err)
++	}
++	if response.Source.ID == "" {
++		t.Fatal("expected source id")
++	}
++	listed := doRequest(t, handler, http.MethodGet, "/v1/gitops/sources", nil)
++	if listed.Code != http.StatusOK || !strings.Contains(listed.Body.String(), response.Source.ID) {
++		t.Fatalf("list sources: %d %s", listed.Code, listed.Body.String())
++	}
++	synced := doRequest(t, handler, http.MethodPost, "/v1/gitops/sources/"+response.Source.ID+"/sync", nil)
++	if synced.Code != http.StatusOK || !strings.Contains(synced.Body.String(), "abc123") {
++		t.Fatalf("sync source: %d %s", synced.Code, synced.Body.String())
++	}
++	deleted := doRequest(t, handler, http.MethodDelete, "/v1/gitops/sources/"+response.Source.ID, nil)
++	if deleted.Code != http.StatusNoContent {
++		t.Fatalf("delete source: %d %s", deleted.Code, deleted.Body.String())
++	}
++}
+diff --git a/internal/apperrors/errors.go b/internal/apperrors/errors.go
+index 4e2b1fa..5374916 100644
+--- a/internal/apperrors/errors.go
++++ b/internal/apperrors/errors.go
+@@ -17,6 +17,7 @@ const (
+ 	CodeNotFound           Code = "not_found"
+ 	CodeInvalidArgument    Code = "invalid_argument"
+ 	CodeConflict           Code = "conflict"
++	CodeQuotaExceeded      Code = "quota_exceeded"
+ 	CodeUnauthorized       Code = "unauthorized"
+ 	CodeForbidden          Code = "forbidden"
+ 	CodeFailedPrecondition Code = "failed_precondition"
+@@ -143,7 +144,7 @@ func StringDetails(details map[string]any) map[string]string {
+ 
+ func normalizeCode(code Code) Code {
+ 	switch code {
+-	case CodeNotFound, CodeInvalidArgument, CodeConflict, CodeUnauthorized, CodeForbidden, CodeFailedPrecondition, CodeUnavailable, CodeInternal:
++	case CodeNotFound, CodeInvalidArgument, CodeConflict, CodeQuotaExceeded, CodeUnauthorized, CodeForbidden, CodeFailedPrecondition, CodeUnavailable, CodeInternal:
+ 		return code
+ 	default:
+ 		return CodeInternal
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 65399b8..fb075c9 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -106,6 +106,51 @@ func (c *APIClient) DeleteNamespace(ctx context.Context, name string) error {
+ 	return c.do(ctx, http.MethodDelete, "/v1/namespaces/"+url.PathEscape(name), nil, nil)
+ }
+ 
++func (c *APIClient) GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error) {
++	var out api.ResourceQuotaResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/quota", nil, &out); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	return out.Quota, out.Usage, nil
++}
++
++func (c *APIClient) SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error) {
++	var out api.ResourceQuotaResponse
++	if err := c.do(ctx, http.MethodPut, "/v1/quota", value, &out); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	return out.Quota, out.Usage, nil
++}
++
++func (c *APIClient) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	var out api.GitOpsSourceResponse
++	request := api.CreateGitOpsSourceRequest{RepositoryURL: source.RepositoryURL, Branch: source.Branch, Path: source.Path, SyncInterval: source.SyncInterval.String(), Prune: source.Prune}
++	if err := c.do(ctx, http.MethodPost, "/v1/gitops/sources", request, &out); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	return out.Source, nil
++}
++
++func (c *APIClient) ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error) {
++	var out api.ListGitOpsSourcesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/gitops/sources", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Sources, nil
++}
++
++func (c *APIClient) SyncGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error) {
++	var out api.GitOpsSourceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/gitops/sources/"+url.PathEscape(id)+"/sync", nil, &out); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	return out.Source, nil
++}
++
++func (c *APIClient) DeleteGitOpsSource(ctx context.Context, id string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/gitops/sources/"+url.PathEscape(id), nil, nil)
++}
++
+ func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	var out api.ListNodesResponse
+ 	if err := c.do(ctx, http.MethodGet, "/v1/nodes", nil, &out); err != nil {
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+index 9e9cecb..e169a33 100644
+--- a/internal/cli/output.go
++++ b/internal/cli/output.go
+@@ -46,6 +46,47 @@ func writeNamespaces(w io.Writer, output string, namespaces []types.Namespace) e
+ 	return tw.Flush()
+ }
+ 
++func writeQuota(w io.Writer, output string, value types.ResourceQuota, usage types.ResourceUsage) error {
++	if output == "json" {
++		return writeValue(w, output, map[string]any{"quota": value, "usage": usage})
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "NAMESPACE\tRESOURCE\tUSED\tLIMIT")
++	rows := []struct {
++		name  string
++		used  int64
++		limit int64
++	}{
++		{"services", int64(usage.Services), int64(value.MaxServices)},
++		{"replicas", int64(usage.Replicas), int64(value.MaxReplicas)},
++		{"cpu_millicores", usage.CPUMillicores, value.MaxCPUMillicores},
++		{"memory_bytes", usage.MemoryBytes, value.MaxMemoryBytes},
++		{"public_ports", int64(usage.PublicPorts), int64(value.MaxPublicPorts)},
++		{"secrets", int64(usage.Secrets), int64(value.MaxSecrets)},
++		{"registry_credentials", int64(usage.RegistryCredentials), int64(value.MaxRegistryCredentials)},
++	}
++	for _, row := range rows {
++		limit := fmt.Sprint(row.limit)
++		if row.limit == 0 {
++			limit = "unlimited"
++		}
++		fmt.Fprintf(tw, "%s\t%s\t%d\t%s\n", value.Namespace, row.name, row.used, limit)
++	}
++	return tw.Flush()
++}
++
++func writeGitOpsSources(w io.Writer, output string, sources []types.GitOpsSource) error {
++	if output == "json" {
++		return writeValue(w, output, sources)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tNAMESPACE\tREPOSITORY\tBRANCH\tPATH\tINTERVAL\tPRUNE\tREVISION\tLAST_ERROR")
++	for _, source := range sources {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\t%t\t%s\t%s\n", source.ID, source.Namespace, source.RepositoryURL, source.Branch, source.Path, source.SyncInterval, source.Prune, source.LastRevision, source.LastError)
++	}
++	return tw.Flush()
++}
++
+ func writeNode(w io.Writer, output string, node types.Node) error {
+ 	if output == "json" {
+ 		return writeValue(w, output, node)
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index d7b48ac..73243f4 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -51,6 +51,18 @@ type NamespaceClient interface {
+ 	DeleteNamespace(ctx context.Context, name string) error
+ }
+ 
++type QuotaClient interface {
++	GetResourceQuota(context.Context) (types.ResourceQuota, types.ResourceUsage, error)
++	SetResourceQuota(context.Context, types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error)
++}
++
++type GitOpsClient interface {
++	CreateGitOpsSource(context.Context, types.GitOpsSource) (types.GitOpsSource, error)
++	ListGitOpsSources(context.Context) ([]types.GitOpsSource, error)
++	SyncGitOpsSource(context.Context, string) (types.GitOpsSource, error)
++	DeleteGitOpsSource(context.Context, string) error
++}
++
+ type Options struct {
+ 	Out           io.Writer
+ 	Err           io.Writer
+@@ -128,6 +140,8 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.AddCommand(a.auditCommand())
+ 	root.AddCommand(a.logsCommand())
+ 	root.AddCommand(a.namespaceCommand())
++	root.AddCommand(a.quotaCommand())
++	root.AddCommand(a.gitopsCommand())
+ 	return root
+ }
+ 
+@@ -190,6 +204,143 @@ func (a *app) namespaceCommand() *cobra.Command {
+ 	return cmd
+ }
+ 
++func (a *app) quotaCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "quota", Short: "Manage namespace resource quotas"}
++	cmd.AddCommand(&cobra.Command{
++		Use: "get", Short: "Show quota and current usage",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			quotaClient, ok := client.(QuotaClient)
++			if !ok {
++				return fmt.Errorf("client does not support quotas")
++			}
++			value, usage, err := quotaClient.GetResourceQuota(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeQuota(a.out, a.output, value, usage)
++		},
++	})
++	var value types.ResourceQuota
++	set := &cobra.Command{
++		Use: "set", Short: "Set quota limits (zero means unlimited)",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			quotaClient, ok := client.(QuotaClient)
++			if !ok {
++				return fmt.Errorf("client does not support quotas")
++			}
++			updated, usage, err := quotaClient.SetResourceQuota(cmd.Context(), value)
++			if err != nil {
++				return err
++			}
++			return writeQuota(a.out, a.output, updated, usage)
++		},
++	}
++	set.Flags().IntVar(&value.MaxServices, "max-services", 0, "maximum services")
++	set.Flags().IntVar(&value.MaxReplicas, "max-replicas", 0, "maximum replicas")
++	set.Flags().Int64Var(&value.MaxCPUMillicores, "max-cpu-millicores", 0, "maximum requested CPU millicores")
++	set.Flags().Int64Var(&value.MaxMemoryBytes, "max-memory-bytes", 0, "maximum requested memory bytes")
++	set.Flags().IntVar(&value.MaxPublicPorts, "max-public-ports", 0, "maximum public ports")
++	set.Flags().IntVar(&value.MaxSecrets, "max-secrets", 0, "maximum secrets")
++	set.Flags().IntVar(&value.MaxRegistryCredentials, "max-registry-credentials", 0, "maximum registry credentials")
++	cmd.AddCommand(set)
++	return cmd
++}
++
++func (a *app) gitopsCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "gitops", Short: "Manage GitOps sources"}
++	var repositoryURL, branch, sourcePath string
++	var interval time.Duration
++	var prune bool
++	add := &cobra.Command{
++		Use: "add", Short: "Add a GitOps source",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			gitopsClient, ok := client.(GitOpsClient)
++			if !ok {
++				return fmt.Errorf("client does not support GitOps")
++			}
++			source, err := gitopsClient.CreateGitOpsSource(cmd.Context(), types.GitOpsSource{RepositoryURL: repositoryURL, Branch: branch, Path: sourcePath, SyncInterval: interval, Prune: prune})
++			if err != nil {
++				return err
++			}
++			return writeGitOpsSources(a.out, a.output, []types.GitOpsSource{source})
++		},
++	}
++	add.Flags().StringVar(&repositoryURL, "repo", "", "Git repository URL")
++	add.Flags().StringVar(&branch, "branch", "main", "Git branch")
++	add.Flags().StringVar(&sourcePath, "path", ".", "manifest file or directory")
++	add.Flags().DurationVar(&interval, "interval", time.Minute, "sync interval")
++	add.Flags().BoolVar(&prune, "prune", false, "delete services whose manifests are removed")
++	_ = add.MarkFlagRequired("repo")
++	cmd.AddCommand(add)
++	cmd.AddCommand(&cobra.Command{
++		Use: "ls", Short: "List GitOps sources",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			gitopsClient, ok := client.(GitOpsClient)
++			if !ok {
++				return fmt.Errorf("client does not support GitOps")
++			}
++			sources, err := gitopsClient.ListGitOpsSources(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeGitOpsSources(a.out, a.output, sources)
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use: "sync <id>", Short: "Synchronize a GitOps source now", Args: cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			gitopsClient, ok := client.(GitOpsClient)
++			if !ok {
++				return fmt.Errorf("client does not support GitOps")
++			}
++			source, err := gitopsClient.SyncGitOpsSource(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			return writeGitOpsSources(a.out, a.output, []types.GitOpsSource{source})
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use: "delete <id>", Short: "Delete a GitOps source", Args: cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			gitopsClient, ok := client.(GitOpsClient)
++			if !ok {
++				return fmt.Errorf("client does not support GitOps")
++			}
++			if err := gitopsClient.DeleteGitOpsSource(cmd.Context(), args[0]); err != nil {
++				return err
++			}
++			fmt.Fprintf(a.out, "deleted GitOps source %s\n", args[0])
++			return nil
++		},
++	})
++	return cmd
++}
++
+ func Execute(ctx context.Context, args []string, out io.Writer, errOut io.Writer) error {
+ 	cmd := NewRootCommand(Options{Out: out, Err: errOut})
+ 	cmd.SetArgs(args)
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index ee6fd26..c8dfc78 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -45,6 +45,12 @@ func TestRootCommandConstruction(t *testing.T) {
+ 		"namespace ls",
+ 		"namespace create",
+ 		"namespace delete",
++		"quota get",
++		"quota set",
++		"gitops add",
++		"gitops ls",
++		"gitops sync",
++		"gitops delete",
+ 	} {
+ 		if _, _, err := root.Find(strings.Fields(path)); err != nil {
+ 			t.Fatalf("expected command %q: %v", path, err)
+@@ -421,6 +427,31 @@ func (f *fakeClient) ListNamespaces(context.Context) ([]types.Namespace, error)
+ 
+ func (f *fakeClient) DeleteNamespace(context.Context, string) error { return nil }
+ 
++func (f *fakeClient) GetResourceQuota(context.Context) (types.ResourceQuota, types.ResourceUsage, error) {
++	return types.ResourceQuota{Namespace: f.namespace}, types.ResourceUsage{}, nil
++}
++
++func (f *fakeClient) SetResourceQuota(_ context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error) {
++	value.Namespace = f.namespace
++	return value, types.ResourceUsage{}, nil
++}
++
++func (f *fakeClient) CreateGitOpsSource(_ context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	source.ID = "00000000-0000-4000-8000-000000000040"
++	source.Namespace = f.namespace
++	return source, nil
++}
++
++func (f *fakeClient) ListGitOpsSources(context.Context) ([]types.GitOpsSource, error) {
++	return nil, nil
++}
++
++func (f *fakeClient) SyncGitOpsSource(_ context.Context, id string) (types.GitOpsSource, error) {
++	return types.GitOpsSource{ID: id, Namespace: f.namespace}, nil
++}
++
++func (f *fakeClient) DeleteGitOpsSource(context.Context, string) error { return nil }
++
+ func (f *fakeClient) ListNodes(context.Context) ([]types.Node, error) {
+ 	return []types.Node{{ID: "00000000-0000-4000-8000-000000000001", Hostname: "node-1", Status: types.NodeReady}}, nil
+ }
+diff --git a/internal/config/config.go b/internal/config/config.go
+index adb26fd..22808be 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -157,6 +157,7 @@ func defaultServer() ServerConfig {
+ 		GracefulShutdownTTL: 10 * time.Second,
+ 		HeartbeatTimeout:    30 * time.Second,
+ 		NodeMonitorInterval: 5 * time.Second,
++		ClusterPolicy:       policy.DefaultClusterPolicy(),
+ 	}
+ }
+ 
+@@ -176,17 +177,35 @@ func defaultAgent() AgentConfig {
+ }
+ 
+ type serverFileConfig struct {
+-	Addr                string               `yaml:"addr"`
+-	DatabaseURL         string               `yaml:"database_url"`
+-	LogLevel            string               `yaml:"log_level"`
+-	BootstrapToken      string               `yaml:"bootstrap_token"`
+-	JWTSecret           string               `yaml:"jwt_secret"`
+-	Users               string               `yaml:"users"`
+-	SecretKey           string               `yaml:"secret_key"`
+-	GracefulShutdownTTL string               `yaml:"graceful_shutdown_ttl"`
+-	HeartbeatTimeout    string               `yaml:"heartbeat_timeout"`
+-	NodeMonitorInterval string               `yaml:"node_monitor_interval"`
+-	ClusterPolicy       policy.ClusterPolicy `yaml:"cluster_policy"`
++	Addr                string            `yaml:"addr"`
++	DatabaseURL         string            `yaml:"database_url"`
++	LogLevel            string            `yaml:"log_level"`
++	BootstrapToken      string            `yaml:"bootstrap_token"`
++	JWTSecret           string            `yaml:"jwt_secret"`
++	Users               string            `yaml:"users"`
++	SecretKey           string            `yaml:"secret_key"`
++	GracefulShutdownTTL string            `yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    string            `yaml:"heartbeat_timeout"`
++	NodeMonitorInterval string            `yaml:"node_monitor_interval"`
++	ClusterPolicy       clusterPolicyFile `yaml:"cluster_policy"`
++}
++
++type clusterPolicyFile struct {
++	RequireResourceRequests  *bool    `yaml:"require_resource_requests"`
++	RequireResourceLimits    *bool    `yaml:"require_resource_limits"`
++	AllowPrivileged          *bool    `yaml:"allow_privileged"`
++	AllowHostNetwork         *bool    `yaml:"allow_host_network"`
++	AllowHostPID             *bool    `yaml:"allow_host_pid"`
++	AllowedImageRegistries   []string `yaml:"allowed_image_registries"`
++	BlockLatestTag           *bool    `yaml:"block_latest_tag"`
++	RequireDigest            *bool    `yaml:"require_digest"`
++	AllowMutableTags         *bool    `yaml:"allow_mutable_tags"`
++	DenyLatestTag            *bool    `yaml:"deny_latest_tag"`
++	RequireHealthcheck       *bool    `yaml:"require_healthcheck"`
++	AllowedHostPathPrefixes  []string `yaml:"allowed_host_path_prefixes"`
++	AllowedCapabilities      []string `yaml:"allowed_capabilities"`
++	MaxReplicasPerService    *int     `yaml:"max_replicas_per_service"`
++	MaxPublicPortsPerService *int     `yaml:"max_public_ports_per_service"`
+ }
+ 
+ type agentFileConfig struct {
+@@ -419,6 +438,15 @@ func applyClusterPolicyEnv(clusterPolicy *policy.ClusterPolicy) error {
+ 	if err := applyBool(&clusterPolicy.BlockLatestTag, os.Getenv("ORCH_POLICY_BLOCK_LATEST_TAG")); err != nil {
+ 		return fmt.Errorf("ORCH_POLICY_BLOCK_LATEST_TAG: %w", err)
+ 	}
++	if err := applyBool(&clusterPolicy.RequireDigest, os.Getenv("ORCH_POLICY_REQUIRE_DIGEST")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_REQUIRE_DIGEST: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.AllowMutableTags, os.Getenv("ORCH_POLICY_ALLOW_MUTABLE_TAGS")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_ALLOW_MUTABLE_TAGS: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.DenyLatestTag, os.Getenv("ORCH_POLICY_DENY_LATEST_TAG")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_DENY_LATEST_TAG: %w", err)
++	}
+ 	if err := applyBool(&clusterPolicy.RequireHealthcheck, os.Getenv("ORCH_POLICY_REQUIRE_HEALTHCHECK")); err != nil {
+ 		return fmt.Errorf("ORCH_POLICY_REQUIRE_HEALTHCHECK: %w", err)
+ 	}
+@@ -434,36 +462,30 @@ func applyClusterPolicyEnv(clusterPolicy *policy.ClusterPolicy) error {
+ 	return nil
+ }
+ 
+-func mergeClusterPolicy(target *policy.ClusterPolicy, source policy.ClusterPolicy) {
+-	if source.RequireResourceRequests {
+-		target.RequireResourceRequests = true
+-	}
+-	if source.RequireResourceLimits {
+-		target.RequireResourceLimits = true
+-	}
+-	if source.AllowPrivileged {
+-		target.AllowPrivileged = true
+-	}
+-	if source.AllowHostNetwork {
+-		target.AllowHostNetwork = true
+-	}
+-	if source.AllowHostPID {
+-		target.AllowHostPID = true
+-	}
+-	if source.BlockLatestTag {
+-		target.BlockLatestTag = true
+-	}
+-	if source.RequireHealthcheck {
+-		target.RequireHealthcheck = true
++func mergeClusterPolicy(target *policy.ClusterPolicy, source clusterPolicyFile) {
++	setBool := func(target *bool, source *bool) {
++		if source != nil {
++			*target = *source
++		}
+ 	}
++	setBool(&target.RequireResourceRequests, source.RequireResourceRequests)
++	setBool(&target.RequireResourceLimits, source.RequireResourceLimits)
++	setBool(&target.AllowPrivileged, source.AllowPrivileged)
++	setBool(&target.AllowHostNetwork, source.AllowHostNetwork)
++	setBool(&target.AllowHostPID, source.AllowHostPID)
++	setBool(&target.BlockLatestTag, source.BlockLatestTag)
++	setBool(&target.RequireDigest, source.RequireDigest)
++	setBool(&target.AllowMutableTags, source.AllowMutableTags)
++	setBool(&target.DenyLatestTag, source.DenyLatestTag)
++	setBool(&target.RequireHealthcheck, source.RequireHealthcheck)
+ 	if source.AllowedImageRegistries != nil {
+ 		target.AllowedImageRegistries = append([]string(nil), source.AllowedImageRegistries...)
+ 	}
+-	if source.MaxReplicasPerService != 0 {
+-		target.MaxReplicasPerService = source.MaxReplicasPerService
++	if source.MaxReplicasPerService != nil {
++		target.MaxReplicasPerService = *source.MaxReplicasPerService
+ 	}
+-	if source.MaxPublicPortsPerService != 0 {
+-		target.MaxPublicPortsPerService = source.MaxPublicPortsPerService
++	if source.MaxPublicPortsPerService != nil {
++		target.MaxPublicPortsPerService = *source.MaxPublicPortsPerService
+ 	}
+ 	if source.AllowedHostPathPrefixes != nil {
+ 		target.AllowedHostPathPrefixes = append([]string(nil), source.AllowedHostPathPrefixes...)
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 53c3457..12f1231 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -56,6 +56,8 @@ log_level: warn
+ bootstrap_token: file-token
+ graceful_shutdown_ttl: 20s
+ cluster_policy:
++  require_digest: true
++  allow_mutable_tags: false
+   allowed_capabilities:
+     - NET_BIND_SERVICE
+   allowed_host_path_prefixes:
+@@ -87,6 +89,9 @@ cluster_policy:
+ 	if len(cfg.ClusterPolicy.AllowedCapabilities) != 1 || cfg.ClusterPolicy.AllowedCapabilities[0] != "NET_BIND_SERVICE" {
+ 		t.Fatalf("expected file cluster policy capabilities, got %#v", cfg.ClusterPolicy.AllowedCapabilities)
+ 	}
++	if !cfg.ClusterPolicy.RequireDigest || cfg.ClusterPolicy.AllowMutableTags {
++		t.Fatalf("expected explicit digest and mutable-tag file policy, got %#v", cfg.ClusterPolicy)
++	}
+ }
+ 
+ func TestAgentConfigPrecedence(t *testing.T) {
+diff --git a/internal/controlplane/admission_test.go b/internal/controlplane/admission_test.go
+index 4f022a0..cbb4153 100644
+--- a/internal/controlplane/admission_test.go
++++ b/internal/controlplane/admission_test.go
+@@ -13,6 +13,7 @@ import (
+ 
+ func TestAdmissionCannotBeBypassedByScaleOrRollout(t *testing.T) {
+ 	service := NewMemoryService(WithClusterPolicy(policy.ClusterPolicy{
++		AllowMutableTags:      true,
+ 		MaxReplicasPerService: 2,
+ 		BlockLatestTag:        true,
+ 	}))
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index 0e117ff..953581c 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -584,7 +584,7 @@ func TestClusterPolicyControlsSecurityContext(t *testing.T) {
+ 		t.Fatalf("expected default cluster policy to reject privileged service")
+ 	}
+ 
+-	service := NewMemoryService(WithClusterPolicy(policy.ClusterPolicy{AllowedCapabilities: []string{"NET_BIND_SERVICE"}}))
++	service := NewMemoryService(WithClusterPolicy(policy.ClusterPolicy{AllowMutableTags: true, AllowedCapabilities: []string{"NET_BIND_SERVICE"}}))
+ 	registered, err := service.RegisterNode(ctx, NodeRegistration{
+ 		Name:             "node-a",
+ 		AdvertiseAddress: "10.0.0.10",
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 3f25f71..da03755 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -5,6 +5,7 @@ import (
+ 	"crypto/rand"
+ 	"errors"
+ 	"fmt"
++	"reflect"
+ 	"slices"
+ 	"strings"
+ 	"sync"
+@@ -14,8 +15,11 @@ import (
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/gitops"
++	imageinfo "github.com/alekpopovic/orch/internal/image"
+ 	"github.com/alekpopovic/orch/internal/namespace"
+ 	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -25,6 +29,13 @@ type Service interface {
+ 	CreateNamespace(ctx context.Context, name string) (types.Namespace, error)
+ 	ListNamespaces(ctx context.Context) ([]types.Namespace, error)
+ 	DeleteNamespace(ctx context.Context, name string) error
++	GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error)
++	SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error)
++	CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error)
++	ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error)
++	GetGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error)
++	UpdateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error)
++	DeleteGitOpsSource(ctx context.Context, id string) error
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+ 	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
+@@ -45,6 +56,7 @@ type Service interface {
+ 	ListRegistryCredentials(ctx context.Context) ([]types.RegistryCredentialMetadata, error)
+ 	DeleteRegistryCredential(ctx context.Context, id string) error
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
++	ApplyService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	ListServices(ctx context.Context) ([]types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+ 	DeleteService(ctx context.Context, id types.ServiceID) error
+@@ -148,21 +160,24 @@ type RolloutSpec struct {
+ }
+ 
+ type MemoryService struct {
+-	mu          sync.RWMutex
+-	nodes       map[types.NodeID]types.Node
+-	services    map[types.ServiceID]types.Service
+-	versions    map[types.ServiceID]map[int64]types.ServiceSpec
+-	tasks       map[types.TaskID]types.Task
+-	deployments map[types.DeploymentID]types.Deployment
+-	secrets     map[string]types.Secret
+-	registries  map[string]types.RegistryCredential
+-	envelope    secrets.Envelope
+-	policy      policy.ClusterPolicy
+-	events      []types.Event
+-	auditLogs   []audit.Log
+-	namespaces  map[string]types.Namespace
+-	now         func() time.Time
+-	admission   *admission.Controller
++	mu            sync.RWMutex
++	nodes         map[types.NodeID]types.Node
++	services      map[types.ServiceID]types.Service
++	versions      map[types.ServiceID]map[int64]types.ServiceSpec
++	tasks         map[types.TaskID]types.Task
++	deployments   map[types.DeploymentID]types.Deployment
++	secrets       map[string]types.Secret
++	registries    map[string]types.RegistryCredential
++	quotas        map[string]types.ResourceQuota
++	gitops        map[string]types.GitOpsSource
++	envelope      secrets.Envelope
++	policy        policy.ClusterPolicy
++	events        []types.Event
++	auditLogs     []audit.Log
++	namespaces    map[string]types.Namespace
++	now           func() time.Time
++	admission     *admission.Controller
++	imageResolver imageinfo.Resolver
+ }
+ 
+ type Option func(*MemoryService)
+@@ -181,21 +196,32 @@ func WithClusterPolicy(clusterPolicy policy.ClusterPolicy) Option {
+ 	}
+ }
+ 
++func WithImageResolver(resolver imageinfo.Resolver) Option {
++	return func(service *MemoryService) {
++		if resolver != nil {
++			service.imageResolver = resolver
++		}
++	}
++}
++
+ func NewMemoryService(opts ...Option) *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+ 	envelope, _ := secrets.NewLocalEnvelope("dev-secret-key-change-me")
+ 	service := &MemoryService{
+-		nodes:       make(map[types.NodeID]types.Node),
+-		services:    make(map[types.ServiceID]types.Service),
+-		versions:    make(map[types.ServiceID]map[int64]types.ServiceSpec),
+-		tasks:       make(map[types.TaskID]types.Task),
+-		deployments: make(map[types.DeploymentID]types.Deployment),
+-		secrets:     make(map[string]types.Secret),
+-		registries:  make(map[string]types.RegistryCredential),
+-		namespaces:  make(map[string]types.Namespace),
+-		envelope:    envelope,
+-		policy:      policy.DefaultClusterPolicy(),
+-		now:         now,
++		nodes:         make(map[types.NodeID]types.Node),
++		services:      make(map[types.ServiceID]types.Service),
++		versions:      make(map[types.ServiceID]map[int64]types.ServiceSpec),
++		tasks:         make(map[types.TaskID]types.Task),
++		deployments:   make(map[types.DeploymentID]types.Deployment),
++		secrets:       make(map[string]types.Secret),
++		registries:    make(map[string]types.RegistryCredential),
++		quotas:        make(map[string]types.ResourceQuota),
++		gitops:        make(map[string]types.GitOpsSource),
++		namespaces:    make(map[string]types.Namespace),
++		envelope:      envelope,
++		policy:        policy.DefaultClusterPolicy(),
++		imageResolver: imageinfo.ParserResolver{},
++		now:           now,
+ 	}
+ 	for _, opt := range opts {
+ 		opt(service)
+@@ -285,7 +311,136 @@ func (s *MemoryService) DeleteNamespace(ctx context.Context, name string) error
+ 			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
+ 		}
+ 	}
++	for _, source := range s.gitops {
++		if source.Namespace == name {
++			return fmt.Errorf("%w: namespace %q is not empty", store.ErrConflict, name)
++		}
++	}
+ 	delete(s.namespaces, name)
++	delete(s.quotas, name)
++	return nil
++}
++
++func (s *MemoryService) GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error) {
++	if err := ctx.Err(); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	namespaceName := namespace.FromContext(ctx)
++	if _, ok := s.namespaces[namespaceName]; !ok {
++		return types.ResourceQuota{}, types.ResourceUsage{}, store.ErrNotFound
++	}
++	value := s.quotas[namespaceName]
++	value.Namespace = namespaceName
++	return value, s.resourceUsageLocked(namespaceName, "", nil), nil
++}
++
++func (s *MemoryService) SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error) {
++	if err := ctx.Err(); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	value.Namespace = namespace.FromContext(ctx)
++	if err := quota.Validate(value); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if _, ok := s.namespaces[value.Namespace]; !ok {
++		return types.ResourceQuota{}, types.ResourceUsage{}, store.ErrNotFound
++	}
++	usage := s.resourceUsageLocked(value.Namespace, "", nil)
++	if err := quota.Check(value, usage); err != nil {
++		return types.ResourceQuota{}, usage, err
++	}
++	value.UpdatedAt = s.now()
++	s.quotas[value.Namespace] = value
++	return value, usage, nil
++}
++
++func (s *MemoryService) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	if err := ctx.Err(); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	source.Namespace = namespace.FromContext(ctx)
++	source.RepositoryURL = strings.TrimSpace(source.RepositoryURL)
++	source.Branch = strings.TrimSpace(source.Branch)
++	source.Path = strings.TrimSpace(source.Path)
++	if source.RepositoryURL == "" || source.SyncInterval <= 0 {
++		return types.GitOpsSource{}, fmt.Errorf("%w: repository_url and positive sync_interval are required", store.ErrInvalidState)
++	}
++	if source.Branch == "" {
++		source.Branch = "main"
++	}
++	if source.Path == "" {
++		source.Path = "."
++	}
++	if err := gitops.ValidateSource(source); err != nil {
++		return types.GitOpsSource{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if _, ok := s.namespaces[source.Namespace]; !ok {
++		return types.GitOpsSource{}, store.ErrNotFound
++	}
++	source.ID = newUUID()
++	now := s.now()
++	source.CreatedAt, source.UpdatedAt = now, now
++	s.gitops[source.ID] = source
++	return source, nil
++}
++
++func (s *MemoryService) ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	items := make([]types.GitOpsSource, 0)
++	for _, source := range s.gitops {
++		if namespace.Matches(ctx, source.Namespace) {
++			items = append(items, source)
++		}
++	}
++	slices.SortFunc(items, func(a, b types.GitOpsSource) int { return strings.Compare(a.ID, b.ID) })
++	return items, nil
++}
++
++func (s *MemoryService) GetGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	source, ok := s.gitops[strings.TrimSpace(id)]
++	if !ok || !namespace.Matches(ctx, source.Namespace) {
++		return types.GitOpsSource{}, store.ErrNotFound
++	}
++	return source, nil
++}
++
++func (s *MemoryService) UpdateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	if err := ctx.Err(); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	existing, ok := s.gitops[source.ID]
++	if !ok || !namespace.Matches(ctx, existing.Namespace) {
++		return types.GitOpsSource{}, store.ErrNotFound
++	}
++	source.Namespace = existing.Namespace
++	source.CreatedAt = existing.CreatedAt
++	source.UpdatedAt = s.now()
++	s.gitops[source.ID] = source
++	return source, nil
++}
++
++func (s *MemoryService) DeleteGitOpsSource(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	source, ok := s.gitops[strings.TrimSpace(id)]
++	if !ok || !namespace.Matches(ctx, source.Namespace) {
++		return store.ErrNotFound
++	}
++	delete(s.gitops, source.ID)
+ 	return nil
+ }
+ 
+@@ -788,6 +943,11 @@ func (s *MemoryService) CreateSecret(ctx context.Context, name string, plaintext
+ 		s.secrets[key] = existing
+ 		return existing.Metadata(), nil
+ 	}
++	usage := s.resourceUsageLocked(namespaceName, "", nil)
++	usage.Secrets++
++	if err := quota.Check(s.quotaLocked(namespaceName), usage); err != nil {
++		return types.SecretMetadata{}, err
++	}
+ 	secret := types.Secret{
+ 		Name:           name,
+ 		Namespace:      namespaceName,
+@@ -902,6 +1062,11 @@ func (s *MemoryService) CreateRegistryCredential(ctx context.Context, spec Regis
+ 		s.registries[key] = existing
+ 		return existing.Metadata(), nil
+ 	}
++	usage := s.resourceUsageLocked(namespaceName, "", nil)
++	usage.RegistryCredentials++
++	if err := quota.Check(s.quotaLocked(namespaceName), usage); err != nil {
++		return types.RegistryCredentialMetadata{}, err
++	}
+ 	credential := types.RegistryCredential{
+ 		ID:                spec.ID,
+ 		Namespace:         namespaceName,
+@@ -965,6 +1130,12 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Service{}, err
+ 	}
++	resolved, err := s.imageResolver.Resolve(ctx, spec.Image)
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: resolve image: %v", store.ErrInvalidState, err)
++	}
++	resolved.Pinned = s.policy.RequireDigest
++	spec.ImageMetadata = resolved
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
+@@ -1005,6 +1176,10 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 		}
+ 		spec.ImagePullSecret = imagePullSecret
+ 	}
++	usage := s.resourceUsageLocked(namespaceName, "", &spec)
++	if err := quota.Check(s.quotaLocked(namespaceName), usage); err != nil {
++		return types.Service{}, err
++	}
+ 
+ 	now := s.now()
+ 	service := types.Service{
+@@ -1023,6 +1198,77 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	return service, nil
+ }
+ 
++func (s *MemoryService) ApplyService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Service{}, err
++	}
++	namespaceName := namespace.FromContext(ctx)
++	s.mu.RLock()
++	var existing types.Service
++	for _, service := range s.services {
++		if service.Namespace == namespaceName && service.Spec.Name == strings.TrimSpace(spec.Name) {
++			existing = service
++			break
++		}
++	}
++	s.mu.RUnlock()
++	if existing.ID == "" {
++		return s.CreateService(ctx, spec)
++	}
++	resolved, err := s.imageResolver.Resolve(ctx, spec.Image)
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: resolve image: %v", store.ErrInvalidState, err)
++	}
++	resolved.Pinned = s.policy.RequireDigest
++	spec.ImageMetadata = resolved
++	if err := s.admission.Admit(ctx, admission.Request{Actor: admissionActor(ctx), Operation: admission.OperationUpdate, Namespace: namespaceName, Spec: spec, Policy: s.policy}); err != nil {
++		return types.Service{}, err
++	}
++	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	if err := normalized.Validate(); err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	existing, ok := s.services[existing.ID]
++	if !ok || existing.Namespace != namespaceName || (existing.Status != types.ServiceActive && existing.Status != types.ServiceDeleted) {
++		return types.Service{}, store.ErrConflict
++	}
++	if existing.Status == types.ServiceActive && reflect.DeepEqual(existing.Spec, normalized) {
++		return existing, nil
++	}
++	if active := s.activeDeploymentLocked(existing.ID); active.ID != "" {
++		return types.Service{}, operationConflict(string(operationForDeployment(active)))
++	}
++	for _, ref := range normalized.SecretRefs {
++		if _, ok := s.secrets[namespacedKey(namespaceName, ref.Name)]; !ok {
++			return types.Service{}, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
++		}
++	}
++	if imagePullSecret := strings.TrimSpace(normalized.ImagePullSecret); imagePullSecret != "" {
++		if _, ok := s.registries[namespacedKey(namespaceName, imagePullSecret)]; !ok {
++			return types.Service{}, fmt.Errorf("%w: registry credential %q not found", store.ErrInvalidState, imagePullSecret)
++		}
++	}
++	usage := s.resourceUsageLocked(namespaceName, existing.ID, &normalized)
++	if err := quota.Check(s.quotaLocked(namespaceName), usage); err != nil {
++		return types.Service{}, err
++	}
++	now := s.now()
++	existing.Spec = normalized
++	existing.Status = types.ServiceActive
++	existing.DeploymentVersion++
++	existing.UpdatedAt = now
++	s.services[existing.ID] = existing
++	s.storeServiceVersionLocked(existing.ID, existing.DeploymentVersion, normalized)
++	s.reconcileServiceTasksLocked(existing, now)
++	s.appendEventLocked(events.TypeServiceUpdated, types.EventInfo, "gitops", "service applied", "service", string(existing.ID), now)
++	return existing, nil
++}
++
+ func (s *MemoryService) ListServices(ctx context.Context) ([]types.Service, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+@@ -1140,6 +1386,10 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 	}
+ 	candidate = service.Spec
+ 	candidate.Replicas = replicas
++	usage := s.resourceUsageLocked(service.Namespace, service.ID, &candidate)
++	if err := quota.Check(s.quotaLocked(service.Namespace), usage); err != nil {
++		return types.Service{}, err
++	}
+ 	service.Spec = candidate
+ 	service.UpdatedAt = s.now()
+ 	s.services[id] = service
+@@ -1165,6 +1415,11 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	if spec.MaxUnavailable == 0 && spec.MaxSurge == 0 {
+ 		return types.Deployment{}, fmt.Errorf("%w: maxUnavailable and maxSurge cannot both be zero", store.ErrInvalidState)
+ 	}
++	resolved, err := s.imageResolver.Resolve(ctx, spec.Image)
++	if err != nil {
++		return types.Deployment{}, fmt.Errorf("%w: resolve image: %v", store.ErrInvalidState, err)
++	}
++	resolved.Pinned = s.policy.RequireDigest
+ 
+ 	s.mu.RLock()
+ 	service, ok := s.services[id]
+@@ -1175,6 +1430,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	s.mu.RUnlock()
+ 	candidate := service.Spec
+ 	candidate.Image = spec.Image
++	candidate.ImageMetadata = resolved
+ 	if err := s.admission.Admit(ctx, admission.Request{
+ 		Actor: admissionActor(ctx), Operation: admission.OperationRollout,
+ 		Namespace: service.Namespace, Spec: candidate, Policy: s.policy,
+@@ -1194,6 +1450,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	if active := s.activeDeploymentLocked(id); active.ID != "" {
+ 		if operationForDeployment(active) == serviceOperationRollout &&
+ 			service.Spec.Image == spec.Image &&
++			service.Spec.ImageMetadata.Digest == resolved.Digest &&
+ 			active.MaxUnavailable == spec.MaxUnavailable &&
+ 			active.MaxSurge == spec.MaxSurge {
+ 			return active, nil
+@@ -1203,6 +1460,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	now := s.now()
+ 	fromVersion := service.DeploymentVersion
+ 	service.Spec.Image = spec.Image
++	service.Spec.ImageMetadata = resolved
+ 	service.DeploymentVersion++
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
+@@ -1743,6 +2001,48 @@ func namespacedKey(namespaceName string, name string) string {
+ 	return namespace.Normalize(namespaceName) + "\x00" + strings.TrimSpace(name)
+ }
+ 
++func (s *MemoryService) quotaLocked(namespaceName string) types.ResourceQuota {
++	value := s.quotas[namespaceName]
++	value.Namespace = namespaceName
++	return value
++}
++
++func (s *MemoryService) resourceUsageLocked(namespaceName string, replaceID types.ServiceID, replacement *types.ServiceSpec) types.ResourceUsage {
++	var usage types.ResourceUsage
++	for _, service := range s.services {
++		if service.Namespace != namespaceName || service.Status == types.ServiceDeleted || service.ID == replaceID {
++			continue
++		}
++		addServiceUsage(&usage, service.Spec)
++	}
++	if replacement != nil {
++		addServiceUsage(&usage, *replacement)
++	}
++	for _, secret := range s.secrets {
++		if secret.Namespace == namespaceName {
++			usage.Secrets++
++		}
++	}
++	for _, credential := range s.registries {
++		if credential.Namespace == namespaceName {
++			usage.RegistryCredentials++
++		}
++	}
++	return usage
++}
++
++func addServiceUsage(usage *types.ResourceUsage, spec types.ServiceSpec) {
++	usage.Services++
++	usage.Replicas += spec.Replicas
++	usage.CPUMillicores += spec.ResourceRequirements.Requests.CPU * int64(spec.Replicas)
++	usage.MemoryBytes += spec.ResourceRequirements.Requests.Memory * int64(spec.Replicas)
++	for _, port := range spec.Ports {
++		if port.PublishedPort > 0 {
++			usage.PublicPorts++
++		}
++	}
++}
++
+ func admissionActor(ctx context.Context) admission.Actor {
+ 	principal, ok := auth.PrincipalFromContext(ctx)
+ 	if !ok {
+@@ -1818,7 +2118,7 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 		if !countsTowardDesiredReplicas(task) {
+ 			continue
+ 		}
+-		if task.Image != service.Spec.Image || task.Version != service.DeploymentVersion {
++		if task.Image != service.Spec.EffectiveImage() || task.Version != service.DeploymentVersion {
+ 			if err := types.ValidateTaskDesiredTransition(task.DesiredStatus, types.TaskRemoved); err != nil {
+ 				continue
+ 			}
+@@ -1839,17 +2139,22 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 	for len(active) < service.Spec.Replicas {
+ 		node := nodes[len(active)%len(nodes)]
+ 		task := types.Task{
+-			ID:            types.TaskID(newUUID()),
+-			Namespace:     service.Namespace,
+-			ServiceID:     service.ID,
+-			NodeID:        node.ID,
+-			DesiredStatus: types.TaskRunning,
+-			ActualStatus:  types.TaskAssigned,
+-			Image:         service.Spec.Image,
+-			Version:       service.DeploymentVersion,
+-			Ports:         s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
+-			CreatedAt:     timestamp,
+-			UpdatedAt:     timestamp,
++			ID:                  types.TaskID(newUUID()),
++			Namespace:           service.Namespace,
++			ServiceID:           service.ID,
++			NodeID:              node.ID,
++			DesiredStatus:       types.TaskRunning,
++			ActualStatus:        types.TaskAssigned,
++			Image:               service.Spec.EffectiveImage(),
++			RequestedImage:      service.Spec.ImageMetadata.RequestedImage,
++			ResolvedImageDigest: service.Spec.ImageMetadata.Digest,
++			ImageRegistry:       service.Spec.ImageMetadata.Registry,
++			ImageName:           service.Spec.ImageMetadata.Name,
++			ImageTag:            service.Spec.ImageMetadata.Tag,
++			Version:             service.DeploymentVersion,
++			Ports:               s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
++			CreatedAt:           timestamp,
++			UpdatedAt:           timestamp,
+ 		}
+ 		s.tasks[task.ID] = task
+ 		active = append(active, task)
+@@ -1918,17 +2223,22 @@ func (s *MemoryService) reconcileNodeDrainLocked(nodeID types.NodeID, timestamp
+ 		for len(offNodeActive) < service.Spec.Replicas {
+ 			node := readyNodes[len(offNodeActive)%len(readyNodes)]
+ 			task := types.Task{
+-				ID:            types.TaskID(newUUID()),
+-				Namespace:     service.Namespace,
+-				ServiceID:     service.ID,
+-				NodeID:        node.ID,
+-				DesiredStatus: types.TaskRunning,
+-				ActualStatus:  types.TaskAssigned,
+-				Image:         service.Spec.Image,
+-				Version:       service.DeploymentVersion,
+-				Ports:         s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
+-				CreatedAt:     timestamp,
+-				UpdatedAt:     timestamp,
++				ID:                  types.TaskID(newUUID()),
++				Namespace:           service.Namespace,
++				ServiceID:           service.ID,
++				NodeID:              node.ID,
++				DesiredStatus:       types.TaskRunning,
++				ActualStatus:        types.TaskAssigned,
++				Image:               service.Spec.EffectiveImage(),
++				RequestedImage:      service.Spec.ImageMetadata.RequestedImage,
++				ResolvedImageDigest: service.Spec.ImageMetadata.Digest,
++				ImageRegistry:       service.Spec.ImageMetadata.Registry,
++				ImageName:           service.Spec.ImageMetadata.Name,
++				ImageTag:            service.Spec.ImageMetadata.Tag,
++				Version:             service.DeploymentVersion,
++				Ports:               s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
++				CreatedAt:           timestamp,
++				UpdatedAt:           timestamp,
+ 			}
+ 			s.tasks[task.ID] = task
+ 			offNodeActive = append(offNodeActive, task)
+diff --git a/internal/controlplane/image_test.go b/internal/controlplane/image_test.go
+new file mode 100644
+index 0000000..eb50731
+--- /dev/null
++++ b/internal/controlplane/image_test.go
+@@ -0,0 +1,65 @@
++package controlplane
++
++import (
++	"context"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/policy"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type fixedImageResolver struct {
++	digest string
++}
++
++func (resolver fixedImageResolver) Resolve(_ context.Context, requested string) (types.ImageMetadata, error) {
++	return types.ImageMetadata{RequestedImage: requested, Registry: "ghcr.io", Name: "acme/api", Tag: "v2", Digest: resolver.digest}, nil
++}
++
++func TestRolloutStoresDigestAndTasksUsePinnedImage(t *testing.T) {
++	digest := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
++	service := NewMemoryService(
++		WithClusterPolicy(policy.ClusterPolicy{RequireDigest: true}),
++		WithImageResolver(fixedImageResolver{digest: digest}),
++	)
++	ctx := context.Background()
++	if _, err := service.RegisterNode(ctx, NodeRegistration{Name: "node", AdvertiseAddress: "http://node", Capacity: types.Resources{CPU: 1000, Memory: 1 << 30}, Allocatable: types.Resources{CPU: 1000, Memory: 1 << 30}}); err != nil {
++		t.Fatal(err)
++	}
++	created, err := service.CreateService(ctx, quotaServiceSpec("api", 1))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := service.RolloutService(ctx, created.ID, RolloutSpec{Image: "ghcr.io/acme/api:v2", MaxUnavailable: 1, MaxSurge: 1}); err != nil {
++		t.Fatal(err)
++	}
++	updated, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if updated.Spec.ImageMetadata.Digest != digest || !updated.Spec.ImageMetadata.Pinned {
++		t.Fatalf("rollout did not persist pinned digest: %#v", updated.Spec.ImageMetadata)
++	}
++	// Complete the rollout task creation through the rollout controller's shared state helper.
++	service.mu.Lock()
++	for id, deployment := range service.deployments {
++		deployment.Status = types.DeploymentSucceeded
++		service.deployments[id] = deployment
++	}
++	service.reconcileServiceTasksLocked(updated, service.now())
++	service.mu.Unlock()
++	tasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: created.ID})
++	if err != nil {
++		t.Fatal(err)
++	}
++	want := "ghcr.io/acme/api@" + digest
++	found := false
++	for _, task := range tasks {
++		if task.Version == updated.DeploymentVersion && task.Image == want && task.ResolvedImageDigest == digest {
++			found = true
++		}
++	}
++	if !found {
++		t.Fatalf("expected digest-pinned task image %q, got %#v", want, tasks)
++	}
++}
+diff --git a/internal/controlplane/quota_test.go b/internal/controlplane/quota_test.go
+new file mode 100644
+index 0000000..f984221
+--- /dev/null
++++ b/internal/controlplane/quota_test.go
+@@ -0,0 +1,117 @@
++package controlplane
++
++import (
++	"context"
++	"errors"
++	"sync"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/quota"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestResourceQuotaAllowsAndDeniesUsage(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	if _, _, err := service.SetResourceQuota(ctx, types.ResourceQuota{MaxServices: 1, MaxReplicas: 2, MaxSecrets: 1, MaxRegistryCredentials: 1}); err != nil {
++		t.Fatalf("set quota: %v", err)
++	}
++	created, err := service.CreateService(ctx, quotaServiceSpec("api", 2))
++	if err != nil {
++		t.Fatalf("quota should allow service: %v", err)
++	}
++	if _, err := service.CreateService(ctx, quotaServiceSpec("worker", 0)); err == nil {
++		t.Fatal("expected max services quota rejection")
++	} else {
++		var quotaErr *quota.Error
++		if !errors.As(err, &quotaErr) || quotaErr.Resource != "services" {
++			t.Fatalf("expected services quota error, got %v", err)
++		}
++	}
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete service: %v", err)
++	}
++	if _, err := service.CreateService(ctx, quotaServiceSpec("worker", 1)); err != nil {
++		t.Fatalf("deleted service should release quota: %v", err)
++	}
++}
++
++func TestConcurrentScaleCannotExceedQuota(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	if _, _, err := service.SetResourceQuota(ctx, types.ResourceQuota{MaxReplicas: 3}); err != nil {
++		t.Fatal(err)
++	}
++	first, err := service.CreateService(ctx, quotaServiceSpec("first", 1))
++	if err != nil {
++		t.Fatal(err)
++	}
++	second, err := service.CreateService(ctx, quotaServiceSpec("second", 1))
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	start := make(chan struct{})
++	results := make(chan error, 2)
++	var wg sync.WaitGroup
++	for _, id := range []types.ServiceID{first.ID, second.ID} {
++		wg.Add(1)
++		go func(id types.ServiceID) {
++			defer wg.Done()
++			<-start
++			_, err := service.ScaleService(ctx, id, 2)
++			results <- err
++		}(id)
++	}
++	close(start)
++	wg.Wait()
++	close(results)
++	succeeded, denied := 0, 0
++	for err := range results {
++		if err == nil {
++			succeeded++
++			continue
++		}
++		var quotaErr *quota.Error
++		if errors.As(err, &quotaErr) {
++			denied++
++			continue
++		}
++		t.Fatalf("unexpected scale error: %v", err)
++	}
++	if succeeded != 1 || denied != 1 {
++		t.Fatalf("expected one success and one quota denial, got success=%d denied=%d", succeeded, denied)
++	}
++}
++
++func TestSecretAndRegistryCredentialQuotas(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	if _, _, err := service.SetResourceQuota(ctx, types.ResourceQuota{MaxSecrets: 1, MaxRegistryCredentials: 1}); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := service.CreateSecret(ctx, "one", "value"); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := service.CreateSecret(ctx, "two", "value"); err == nil {
++		t.Fatal("expected secret quota rejection")
++	}
++	credential := RegistryCredentialSpec{ID: "one", Registry: "ghcr.io", Username: "robot", Password: "secret"}
++	if _, err := service.CreateRegistryCredential(ctx, credential); err != nil {
++		t.Fatal(err)
++	}
++	credential.ID = "two"
++	if _, err := service.CreateRegistryCredential(ctx, credential); err == nil {
++		t.Fatal("expected registry credential quota rejection")
++	}
++}
++
++func quotaServiceSpec(name string, replicas int) types.ServiceSpec {
++	return types.ServiceSpec{
++		Name: name, Image: "nginx:1.27", Replicas: replicas,
++		ResourceRequirements: types.ResourceRequirements{
++			Requests: types.Resources{CPU: 100, Memory: 1024},
++			Limits:   types.Resources{CPU: 100, Memory: 1024},
++		},
++	}
++}
+diff --git a/internal/gitops/gitops.go b/internal/gitops/gitops.go
+new file mode 100644
+index 0000000..9e55c79
+--- /dev/null
++++ b/internal/gitops/gitops.go
+@@ -0,0 +1,309 @@
++package gitops
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"log/slog"
++	"net/url"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"slices"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++const (
++	EventSyncSucceeded = "gitops.sync.succeeded"
++	EventSyncFailed    = "gitops.sync.failed"
++)
++
++type Store interface {
++	ListNamespaces(context.Context) ([]types.Namespace, error)
++	ListGitOpsSources(context.Context) ([]types.GitOpsSource, error)
++	GetGitOpsSource(context.Context, string) (types.GitOpsSource, error)
++	UpdateGitOpsSource(context.Context, types.GitOpsSource) (types.GitOpsSource, error)
++	ApplyService(context.Context, types.ServiceSpec) (types.Service, error)
++	ListServices(context.Context) ([]types.Service, error)
++	DeleteService(context.Context, types.ServiceID) error
++	AppendEvent(context.Context, types.Event) (types.Event, error)
++	AppendAuditLog(context.Context, audit.Log) (audit.Log, error)
++}
++
++type Parser func([]byte) (types.ServiceSpec, error)
++
++type Checkout struct {
++	Directory string
++	Revision  string
++	Cleanup   func()
++}
++
++type Fetcher interface {
++	Checkout(context.Context, types.GitOpsSource) (Checkout, error)
++}
++
++type CommandFetcher struct{}
++
++func (CommandFetcher) Checkout(ctx context.Context, source types.GitOpsSource) (Checkout, error) {
++	if err := ValidateSource(source); err != nil {
++		return Checkout{}, err
++	}
++	directory, err := os.MkdirTemp("", "orch-gitops-")
++	if err != nil {
++		return Checkout{}, fmt.Errorf("create checkout directory: %w", err)
++	}
++	cleanup := func() { _ = os.RemoveAll(directory) }
++	args := []string{"clone", "--depth=1", "--single-branch", "--branch", source.Branch, "--", source.RepositoryURL, directory}
++	command := exec.CommandContext(ctx, "git", args...)
++	if output, err := command.CombinedOutput(); err != nil {
++		cleanup()
++		return Checkout{}, fmt.Errorf("clone repository: %w: %s", err, strings.TrimSpace(string(output)))
++	}
++	revisionBytes, err := exec.CommandContext(ctx, "git", "-C", directory, "rev-parse", "HEAD").Output()
++	if err != nil {
++		cleanup()
++		return Checkout{}, fmt.Errorf("resolve checkout revision: %w", err)
++	}
++	return Checkout{Directory: directory, Revision: strings.TrimSpace(string(revisionBytes)), Cleanup: cleanup}, nil
++}
++
++func ValidateSource(source types.GitOpsSource) error {
++	if strings.TrimSpace(source.RepositoryURL) == "" {
++		return fmt.Errorf("repository_url is required")
++	}
++	if strings.TrimSpace(source.Branch) == "" {
++		return fmt.Errorf("branch is required")
++	}
++	if source.SyncInterval <= 0 {
++		return fmt.Errorf("sync_interval must be positive")
++	}
++	parsed, err := url.Parse(source.RepositoryURL)
++	if err != nil {
++		return fmt.Errorf("repository_url is invalid: %w", err)
++	}
++	if parsed.User != nil {
++		return fmt.Errorf("repository_url must not contain credentials")
++	}
++	for key := range parsed.Query() {
++		lower := strings.ToLower(key)
++		if strings.Contains(lower, "token") || strings.Contains(lower, "secret") || strings.Contains(lower, "password") || strings.Contains(lower, "key") {
++			return fmt.Errorf("repository_url must not contain credential query parameters")
++		}
++	}
++	cleanPath := filepath.Clean(strings.TrimSpace(source.Path))
++	if filepath.IsAbs(cleanPath) || cleanPath == ".." || strings.HasPrefix(cleanPath, ".."+string(filepath.Separator)) {
++		return fmt.Errorf("path must stay within the repository")
++	}
++	return nil
++}
++
++type Controller struct {
++	store      Store
++	fetcher    Fetcher
++	parser     Parser
++	logger     *slog.Logger
++	resolution time.Duration
++}
++
++type Option func(*Controller)
++
++func WithResolution(value time.Duration) Option {
++	return func(controller *Controller) {
++		if value > 0 {
++			controller.resolution = value
++		}
++	}
++}
++
++func NewController(store Store, fetcher Fetcher, parser Parser, logger *slog.Logger, opts ...Option) *Controller {
++	if fetcher == nil {
++		fetcher = CommandFetcher{}
++	}
++	if logger == nil {
++		logger = slog.Default()
++	}
++	controller := &Controller{store: store, fetcher: fetcher, parser: parser, logger: logger, resolution: time.Second}
++	for _, opt := range opts {
++		opt(controller)
++	}
++	return controller
++}
++
++func (controller *Controller) Run(ctx context.Context) error {
++	if controller == nil || controller.store == nil || controller.parser == nil {
++		return fmt.Errorf("gitops controller is not configured")
++	}
++	ticker := time.NewTicker(controller.resolution)
++	defer ticker.Stop()
++	if err := controller.syncDue(ctx); err != nil && !errors.Is(err, context.Canceled) {
++		controller.logger.Warn("GitOps sync iteration failed", "error", err)
++	}
++	for {
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++			if err := controller.syncDue(ctx); err != nil && !errors.Is(err, context.Canceled) {
++				controller.logger.Warn("GitOps sync iteration failed", "error", err)
++			}
++		}
++	}
++}
++
++func (controller *Controller) syncDue(ctx context.Context) error {
++	namespaces, err := controller.store.ListNamespaces(ctx)
++	if err != nil {
++		return err
++	}
++	now := time.Now().UTC()
++	for _, item := range namespaces {
++		namespaceCtx := namespace.WithContext(ctx, item.Name)
++		sources, err := controller.store.ListGitOpsSources(namespaceCtx)
++		if err != nil {
++			return err
++		}
++		for _, source := range sources {
++			if !source.LastSyncedAt.IsZero() && now.Before(source.LastSyncedAt.Add(source.SyncInterval)) {
++				continue
++			}
++			if _, err := controller.Sync(namespaceCtx, source.ID); err != nil {
++				controller.logger.Warn("GitOps source sync failed", "source_id", source.ID, "namespace", source.Namespace, "error", err)
++			}
++		}
++	}
++	return nil
++}
++
++func (controller *Controller) Sync(ctx context.Context, id string) (types.GitOpsSource, error) {
++	source, err := controller.store.GetGitOpsSource(ctx, id)
++	if err != nil {
++		return types.GitOpsSource{}, err
++	}
++	if err := ValidateSource(source); err != nil {
++		return controller.fail(ctx, source, err)
++	}
++	checkout, err := controller.fetcher.Checkout(ctx, source)
++	if err != nil {
++		return controller.fail(ctx, source, err)
++	}
++	if checkout.Cleanup != nil {
++		defer checkout.Cleanup()
++	}
++	files, err := manifestFiles(checkout.Directory, source.Path)
++	if err != nil {
++		return controller.fail(ctx, source, err)
++	}
++
++	syncCtx := namespace.WithContext(ctx, source.Namespace)
++	managed := make([]string, 0, len(files))
++	for _, file := range files {
++		data, err := os.ReadFile(file)
++		if err != nil {
++			return controller.fail(syncCtx, source, fmt.Errorf("read manifest %q: %w", file, err))
++		}
++		spec, err := controller.parser(data)
++		if err != nil {
++			return controller.fail(syncCtx, source, fmt.Errorf("validate manifest %q: %w", file, err))
++		}
++		if _, err := controller.store.ApplyService(syncCtx, spec); err != nil {
++			return controller.fail(syncCtx, source, fmt.Errorf("apply service %q: %w", spec.Name, err))
++		}
++		managed = append(managed, spec.Name)
++	}
++	slices.Sort(managed)
++	if source.Prune {
++		wanted := make(map[string]struct{}, len(managed))
++		for _, name := range managed {
++			wanted[name] = struct{}{}
++		}
++		previous := make(map[string]struct{}, len(source.ManagedServices))
++		for _, name := range source.ManagedServices {
++			previous[name] = struct{}{}
++		}
++		services, err := controller.store.ListServices(syncCtx)
++		if err != nil {
++			return controller.fail(syncCtx, source, err)
++		}
++		for _, service := range services {
++			if _, wasManaged := previous[service.Spec.Name]; !wasManaged {
++				continue
++			}
++			if _, stillManaged := wanted[service.Spec.Name]; stillManaged {
++				continue
++			}
++			if err := controller.store.DeleteService(syncCtx, service.ID); err != nil {
++				return controller.fail(syncCtx, source, fmt.Errorf("prune service %q: %w", service.Spec.Name, err))
++			}
++		}
++	}
++
++	source.ManagedServices = managed
++	source.LastRevision = checkout.Revision
++	source.LastError = ""
++	source.LastSyncedAt = time.Now().UTC()
++	updated, err := controller.store.UpdateGitOpsSource(syncCtx, source)
++	if err != nil {
++		return types.GitOpsSource{}, err
++	}
++	controller.emit(syncCtx, updated, EventSyncSucceeded, types.EventInfo, audit.OutcomeSuccess, "GitOps source synchronized")
++	return updated, nil
++}
++
++func (controller *Controller) fail(ctx context.Context, source types.GitOpsSource, cause error) (types.GitOpsSource, error) {
++	source.LastError = cause.Error()
++	source.LastSyncedAt = time.Now().UTC()
++	updated, updateErr := controller.store.UpdateGitOpsSource(namespace.WithContext(ctx, source.Namespace), source)
++	if updateErr == nil {
++		controller.emit(namespace.WithContext(ctx, source.Namespace), updated, EventSyncFailed, types.EventError, audit.OutcomeFailure, cause.Error())
++	}
++	return updated, cause
++}
++
++func (controller *Controller) emit(ctx context.Context, source types.GitOpsSource, eventType string, severity types.EventSeverity, outcome audit.Outcome, message string) {
++	now := time.Now().UTC()
++	_, _ = controller.store.AppendEvent(ctx, types.Event{Namespace: source.Namespace, Type: eventType, Severity: severity, Source: "gitops", Message: message, RelatedObjectType: "gitops_source", RelatedObjectID: source.ID, Timestamp: now})
++	_, _ = controller.store.AppendAuditLog(ctx, audit.Log{Namespace: source.Namespace, ActorType: audit.ActorSystem, ActorID: "gitops-controller", Action: "gitops.sync", TargetType: "gitops_source", TargetID: source.ID, Outcome: outcome, Metadata: map[string]string{"revision": source.LastRevision}, Timestamp: now})
++}
++
++func manifestFiles(root string, configuredPath string) ([]string, error) {
++	base := filepath.Join(root, filepath.Clean(configuredPath))
++	relative, err := filepath.Rel(root, base)
++	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
++		return nil, fmt.Errorf("configured path escapes repository")
++	}
++	info, err := os.Stat(base)
++	if err != nil {
++		return nil, fmt.Errorf("stat configured path: %w", err)
++	}
++	if !info.IsDir() {
++		if isYAML(base) {
++			return []string{base}, nil
++		}
++		return nil, fmt.Errorf("configured manifest is not YAML")
++	}
++	files := make([]string, 0)
++	err = filepath.WalkDir(base, func(path string, entry os.DirEntry, walkErr error) error {
++		if walkErr != nil {
++			return walkErr
++		}
++		if !entry.IsDir() && isYAML(path) {
++			files = append(files, path)
++		}
++		return nil
++	})
++	slices.Sort(files)
++	if err != nil {
++		return nil, err
++	}
++	return files, nil
++}
++
++func isYAML(path string) bool {
++	extension := strings.ToLower(filepath.Ext(path))
++	return extension == ".yaml" || extension == ".yml"
++}
+diff --git a/internal/gitops/gitops_test.go b/internal/gitops/gitops_test.go
+new file mode 100644
+index 0000000..122b036
+--- /dev/null
++++ b/internal/gitops/gitops_test.go
+@@ -0,0 +1,111 @@
++package gitops_test
++
++import (
++	"context"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/audit"
++	"github.com/alekpopovic/orch/internal/cli"
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/gitops"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestControllerSyncsLocalFixtureRepositoryAndPrunes(t *testing.T) {
++	repository := t.TempDir()
++	runGit(t, repository, "init", "-b", "main")
++	runGit(t, repository, "config", "user.email", "gitops-test@example.com")
++	runGit(t, repository, "config", "user.name", "GitOps Test")
++	manifest := filepath.Join(repository, "api.yaml")
++	if err := os.WriteFile(manifest, []byte("name: api\nimage: nginx:1.27\nreplicas: 1\nresources:\n  cpu: 100m\n  memory: 64Mi\n"), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	runGit(t, repository, "add", "api.yaml")
++	runGit(t, repository, "commit", "-m", "add api")
++
++	service := controlplane.NewMemoryService()
++	source, err := service.CreateGitOpsSource(context.Background(), types.GitOpsSource{
++		RepositoryURL: repository, Branch: "main", Path: ".", SyncInterval: time.Minute, Prune: true,
++	})
++	if err != nil {
++		t.Fatalf("create source: %v", err)
++	}
++	controller := gitops.NewController(service, nil, cli.ParseDeploy, nil)
++	synced, err := controller.Sync(context.Background(), source.ID)
++	if err != nil {
++		t.Fatalf("sync: %v", err)
++	}
++	if synced.LastRevision == "" || len(synced.ManagedServices) != 1 || synced.ManagedServices[0] != "api" {
++		t.Fatalf("unexpected sync status: %#v", synced)
++	}
++	eventItems, err := service.ListEvents(context.Background(), events.Filter{Type: gitops.EventSyncSucceeded})
++	if err != nil || len(eventItems) != 1 {
++		t.Fatalf("expected GitOps sync event, events=%#v err=%v", eventItems, err)
++	}
++	auditItems, err := service.ListAuditLogs(context.Background(), audit.Filter{Action: "gitops.sync"})
++	if err != nil || len(auditItems) != 1 || auditItems[0].Outcome != audit.OutcomeSuccess {
++		t.Fatalf("expected GitOps sync audit, logs=%#v err=%v", auditItems, err)
++	}
++	services, err := service.ListServices(context.Background())
++	if err != nil || len(services) != 1 || services[0].Spec.Name != "api" {
++		t.Fatalf("service was not applied: services=%#v err=%v", services, err)
++	}
++	if _, err := controller.Sync(context.Background(), source.ID); err != nil {
++		t.Fatalf("idempotent sync: %v", err)
++	}
++	afterRepeat, err := service.GetService(context.Background(), services[0].ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if afterRepeat.DeploymentVersion != services[0].DeploymentVersion {
++		t.Fatalf("unchanged Git revision should not create a service version: before=%d after=%d", services[0].DeploymentVersion, afterRepeat.DeploymentVersion)
++	}
++
++	if err := os.Remove(manifest); err != nil {
++		t.Fatal(err)
++	}
++	runGit(t, repository, "add", "-A")
++	runGit(t, repository, "commit", "-m", "remove api")
++	if _, err := controller.Sync(context.Background(), source.ID); err != nil {
++		t.Fatalf("prune sync: %v", err)
++	}
++	deleted, err := service.GetService(context.Background(), services[0].ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if deleted.Status != types.ServiceDeleted {
++		t.Fatalf("expected pruned service to be deleted, got %s", deleted.Status)
++	}
++}
++
++func TestSourceRejectsPlaintextCredentials(t *testing.T) {
++	err := gitops.ValidateSource(types.GitOpsSource{
++		RepositoryURL: "https://user:token@example.com/repo.git", Branch: "main", Path: ".", SyncInterval: time.Minute,
++	})
++	if err == nil {
++		t.Fatal("expected repository URL credentials to be rejected")
++	}
++}
++
++func TestControllerRunStopsOnContextCancellation(t *testing.T) {
++	service := controlplane.NewMemoryService()
++	controller := gitops.NewController(service, nil, cli.ParseDeploy, nil, gitops.WithResolution(5*time.Millisecond))
++	ctx, cancel := context.WithCancel(context.Background())
++	cancel()
++	if err := controller.Run(ctx); err == nil {
++		t.Fatal("expected context cancellation")
++	}
++}
++
++func runGit(t *testing.T, directory string, args ...string) {
++	t.Helper()
++	command := exec.Command("git", append([]string{"-C", directory}, args...)...)
++	if output, err := command.CombinedOutput(); err != nil {
++		t.Fatalf("git %v: %v: %s", args, err, output)
++	}
++}
+diff --git a/internal/image/reference.go b/internal/image/reference.go
+new file mode 100644
+index 0000000..4547654
+--- /dev/null
++++ b/internal/image/reference.go
+@@ -0,0 +1,87 @@
++package image
++
++import (
++	"context"
++	"fmt"
++	"regexp"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++var digestPattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_+.-]*:[a-fA-F0-9]{32,}$`)
++
++type Resolver interface {
++	Resolve(context.Context, string) (types.ImageMetadata, error)
++}
++
++type ParserResolver struct{}
++
++func (ParserResolver) Resolve(_ context.Context, reference string) (types.ImageMetadata, error) {
++	return Parse(reference)
++}
++
++func Parse(reference string) (types.ImageMetadata, error) {
++	requested := strings.TrimSpace(reference)
++	if requested == "" {
++		return types.ImageMetadata{}, fmt.Errorf("image reference is required")
++	}
++
++	nameAndTag := requested
++	digest := ""
++	if before, after, found := strings.Cut(requested, "@"); found {
++		if strings.Contains(after, "@") || !digestPattern.MatchString(after) {
++			return types.ImageMetadata{}, fmt.Errorf("image digest is invalid")
++		}
++		nameAndTag = before
++		digest = strings.ToLower(after)
++	}
++
++	lastSlash := strings.LastIndexByte(nameAndTag, '/')
++	lastColon := strings.LastIndexByte(nameAndTag, ':')
++	tag := ""
++	namePart := nameAndTag
++	if lastColon > lastSlash {
++		tag = nameAndTag[lastColon+1:]
++		namePart = nameAndTag[:lastColon]
++		if tag == "" {
++			return types.ImageMetadata{}, fmt.Errorf("image tag is empty")
++		}
++	}
++
++	first, rest, hasSlash := strings.Cut(namePart, "/")
++	registry := "docker.io"
++	name := namePart
++	if hasSlash && (strings.Contains(first, ".") || strings.Contains(first, ":") || first == "localhost") {
++		registry = strings.ToLower(first)
++		name = rest
++	}
++	if registry == "docker.io" && !strings.Contains(name, "/") {
++		name = "library/" + name
++	}
++	if name == "" || strings.ContainsAny(name, " @") {
++		return types.ImageMetadata{}, fmt.Errorf("image name is invalid")
++	}
++	if tag == "" && digest == "" {
++		tag = "latest"
++	}
++
++	return types.ImageMetadata{
++		RequestedImage: requested,
++		Digest:         digest,
++		Registry:       registry,
++		Name:           name,
++		Tag:            tag,
++	}, nil
++}
++
++func PinnedReference(metadata types.ImageMetadata) string {
++	if strings.TrimSpace(metadata.Digest) == "" {
++		return strings.TrimSpace(metadata.RequestedImage)
++	}
++	return strings.TrimSuffix(metadata.Registry, "/") + "/" + strings.TrimPrefix(metadata.Name, "/") + "@" + metadata.Digest
++}
++
++func IsMutable(metadata types.ImageMetadata) bool {
++	return strings.TrimSpace(metadata.Digest) == ""
++}
+diff --git a/internal/image/reference_test.go b/internal/image/reference_test.go
+new file mode 100644
+index 0000000..e4444ef
+--- /dev/null
++++ b/internal/image/reference_test.go
+@@ -0,0 +1,39 @@
++package image
++
++import "testing"
++
++func TestParseImageReferences(t *testing.T) {
++	tests := []struct {
++		reference string
++		registry  string
++		name      string
++		tag       string
++		digest    string
++	}{
++		{reference: "nginx:1.27", registry: "docker.io", name: "library/nginx", tag: "1.27"},
++		{reference: "ghcr.io/acme/api:2.0", registry: "ghcr.io", name: "acme/api", tag: "2.0"},
++		{reference: "localhost:5000/api", registry: "localhost:5000", name: "api", tag: "latest"},
++		{reference: "ghcr.io/acme/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", registry: "ghcr.io", name: "acme/api", digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
++	}
++	for _, tt := range tests {
++		t.Run(tt.reference, func(t *testing.T) {
++			got, err := Parse(tt.reference)
++			if err != nil {
++				t.Fatalf("parse: %v", err)
++			}
++			if got.Registry != tt.registry || got.Name != tt.name || got.Tag != tt.tag || got.Digest != tt.digest {
++				t.Fatalf("unexpected metadata: %#v", got)
++			}
++		})
++	}
++}
++
++func TestPinnedReference(t *testing.T) {
++	metadata, err := Parse("nginx@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if got := PinnedReference(metadata); got != "docker.io/library/nginx@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" {
++		t.Fatalf("unexpected pinned reference %q", got)
++	}
++}
+diff --git a/internal/policy/policy.go b/internal/policy/policy.go
+index 29d9a93..1fa1165 100644
+--- a/internal/policy/policy.go
++++ b/internal/policy/policy.go
+@@ -17,6 +17,9 @@ type ClusterPolicy struct {
+ 	AllowHostPID             bool     `json:"allow_host_pid" yaml:"allow_host_pid"`
+ 	AllowedImageRegistries   []string `json:"allowed_image_registries,omitempty" yaml:"allowed_image_registries"`
+ 	BlockLatestTag           bool     `json:"block_latest_tag" yaml:"block_latest_tag"`
++	RequireDigest            bool     `json:"require_digest" yaml:"require_digest"`
++	AllowMutableTags         bool     `json:"allow_mutable_tags" yaml:"allow_mutable_tags"`
++	DenyLatestTag            bool     `json:"deny_latest_tag" yaml:"deny_latest_tag"`
+ 	RequireHealthcheck       bool     `json:"require_healthcheck" yaml:"require_healthcheck"`
+ 	AllowedHostPathPrefixes  []string `json:"allowed_host_path_prefixes,omitempty" yaml:"allowed_host_path_prefixes"`
+ 	AllowedCapabilities      []string `json:"allowed_capabilities,omitempty" yaml:"allowed_capabilities"`
+@@ -25,7 +28,7 @@ type ClusterPolicy struct {
+ }
+ 
+ func DefaultClusterPolicy() ClusterPolicy {
+-	return ClusterPolicy{}
++	return ClusterPolicy{AllowMutableTags: true}
+ }
+ 
+ func (policy ClusterPolicy) ValidateServiceSpec(spec types.ServiceSpec) error {
+@@ -95,6 +98,9 @@ func (policy ClusterPolicy) Redacted() map[string]any {
+ 		"allow_host_pid":               policy.AllowHostPID,
+ 		"allowed_image_registries":     registries,
+ 		"block_latest_tag":             policy.BlockLatestTag,
++		"require_digest":               policy.RequireDigest,
++		"allow_mutable_tags":           policy.AllowMutableTags,
++		"deny_latest_tag":              policy.DenyLatestTag,
+ 		"require_healthcheck":          policy.RequireHealthcheck,
+ 		"allowed_host_path_prefixes":   prefixes,
+ 		"allowed_capabilities":         capabilities,
+diff --git a/internal/quota/quota.go b/internal/quota/quota.go
+new file mode 100644
+index 0000000..e780096
+--- /dev/null
++++ b/internal/quota/quota.go
+@@ -0,0 +1,52 @@
++package quota
++
++import (
++	"fmt"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Error struct {
++	Namespace string `json:"namespace"`
++	Resource  string `json:"resource"`
++	Limit     int64  `json:"limit"`
++	Used      int64  `json:"used"`
++	Requested int64  `json:"requested"`
++}
++
++func (e *Error) Error() string {
++	return fmt.Sprintf("namespace %q quota exceeded for %s: limit %d, used %d, requested %d", e.Namespace, e.Resource, e.Limit, e.Used, e.Requested)
++}
++
++func Validate(value types.ResourceQuota) error {
++	if strings.TrimSpace(value.Namespace) == "" {
++		return fmt.Errorf("namespace is required")
++	}
++	if value.MaxServices < 0 || value.MaxReplicas < 0 || value.MaxCPUMillicores < 0 || value.MaxMemoryBytes < 0 || value.MaxPublicPorts < 0 || value.MaxSecrets < 0 || value.MaxRegistryCredentials < 0 {
++		return fmt.Errorf("quota limits cannot be negative")
++	}
++	return nil
++}
++
++func Check(value types.ResourceQuota, usage types.ResourceUsage) error {
++	checks := []struct {
++		name  string
++		limit int64
++		used  int64
++	}{
++		{"services", int64(value.MaxServices), int64(usage.Services)},
++		{"replicas", int64(value.MaxReplicas), int64(usage.Replicas)},
++		{"cpu_millicores", value.MaxCPUMillicores, usage.CPUMillicores},
++		{"memory_bytes", value.MaxMemoryBytes, usage.MemoryBytes},
++		{"public_ports", int64(value.MaxPublicPorts), int64(usage.PublicPorts)},
++		{"secrets", int64(value.MaxSecrets), int64(usage.Secrets)},
++		{"registry_credentials", int64(value.MaxRegistryCredentials), int64(usage.RegistryCredentials)},
++	}
++	for _, check := range checks {
++		if check.limit > 0 && check.used > check.limit {
++			return &Error{Namespace: value.Namespace, Resource: check.name, Limit: check.limit, Used: check.used, Requested: check.used}
++		}
++	}
++	return nil
++}
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 9190fbe..cfdd541 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -397,12 +397,17 @@ func (r *Reconciler) reconcileDeletedServices(ctx context.Context, activeService
+ 
+ func (r *Reconciler) createTask(ctx context.Context, service types.Service, reason string) error {
+ 	task := types.Task{
+-		Namespace:     service.Namespace,
+-		ServiceID:     service.ID,
+-		DesiredStatus: types.TaskRunning,
+-		ActualStatus:  types.TaskPending,
+-		Image:         service.Spec.Image,
+-		Version:       service.DeploymentVersion,
++		Namespace:           service.Namespace,
++		ServiceID:           service.ID,
++		DesiredStatus:       types.TaskRunning,
++		ActualStatus:        types.TaskPending,
++		Image:               service.Spec.EffectiveImage(),
++		RequestedImage:      service.Spec.ImageMetadata.RequestedImage,
++		ResolvedImageDigest: service.Spec.ImageMetadata.Digest,
++		ImageRegistry:       service.Spec.ImageMetadata.Registry,
++		ImageName:           service.Spec.ImageMetadata.Name,
++		ImageTag:            service.Spec.ImageMetadata.Tag,
++		Version:             service.DeploymentVersion,
+ 	}
+ 	transactional := r.transactional()
+ 	err := store.WithTx(ctx, r.store, func(txCtx context.Context, tx Store) error {
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index ea1b9c8..92fb5f7 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -194,12 +194,17 @@ func (c *Controller) createNewTasks(ctx context.Context, deployment types.Deploy
+ 		var task types.Task
+ 		err := store.WithTx(ctx, c.store, func(txCtx context.Context, tx Store) error {
+ 			createdTask, err := tx.CreateTask(txCtx, types.Task{
+-				Namespace:     service.Namespace,
+-				ServiceID:     service.ID,
+-				DesiredStatus: types.TaskRunning,
+-				ActualStatus:  types.TaskPending,
+-				Image:         service.Spec.Image,
+-				Version:       deployment.ToVersion,
++				Namespace:           service.Namespace,
++				ServiceID:           service.ID,
++				DesiredStatus:       types.TaskRunning,
++				ActualStatus:        types.TaskPending,
++				Image:               service.Spec.EffectiveImage(),
++				RequestedImage:      service.Spec.ImageMetadata.RequestedImage,
++				ResolvedImageDigest: service.Spec.ImageMetadata.Digest,
++				ImageRegistry:       service.Spec.ImageMetadata.Registry,
++				ImageName:           service.Spec.ImageMetadata.Name,
++				ImageTag:            service.Spec.ImageMetadata.Tag,
++				Version:             deployment.ToVersion,
+ 			})
+ 			if err != nil {
+ 				return err
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 4b2c8c4..eff0c23 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -12,6 +12,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/jackc/pgx/v5"
+ 	"github.com/jackc/pgx/v5/pgconn"
+@@ -87,10 +88,13 @@ func (s *postgresStore) CreateNamespace(ctx context.Context, name string) (types
+ 		return types.Namespace{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+ 	var item types.Namespace
+-	err := s.db.QueryRow(ctx, `
+-		INSERT INTO namespaces (name) VALUES ($1)
+-		RETURNING name, created_at`, name,
+-	).Scan(&item.Name, &item.CreatedAt)
++	err := s.withTx(ctx, func(tx *postgresStore) error {
++		if err := tx.db.QueryRow(ctx, `INSERT INTO namespaces (name) VALUES ($1) RETURNING name, created_at`, name).Scan(&item.Name, &item.CreatedAt); err != nil {
++			return mapPostgresError(err)
++		}
++		_, err := tx.db.Exec(ctx, `INSERT INTO resource_quotas (namespace) VALUES ($1)`, name)
++		return mapPostgresError(err)
++	})
+ 	if err != nil {
+ 		return types.Namespace{}, mapPostgresError(err)
+ 	}
+@@ -98,6 +102,215 @@ func (s *postgresStore) CreateNamespace(ctx context.Context, name string) (types
+ 	return item, nil
+ }
+ 
++func (s *postgresStore) GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error) {
++	return loadQuotaAndUsage(ctx, s.db, namespace.FromContext(ctx), "", nil, false)
++}
++
++func (s *postgresStore) SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error) {
++	value.Namespace = namespace.FromContext(ctx)
++	if err := quota.Validate(value); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++	var usage types.ResourceUsage
++	err := s.withTx(ctx, func(tx *postgresStore) error {
++		if err := lockQuota(ctx, tx.db, value.Namespace); err != nil {
++			return err
++		}
++		current, currentUsage, err := loadQuotaAndUsage(ctx, tx.db, value.Namespace, "", nil, false)
++		_ = current
++		if err != nil {
++			return err
++		}
++		usage = currentUsage
++		if err := quota.Check(value, usage); err != nil {
++			return err
++		}
++		return tx.db.QueryRow(ctx, `
++			INSERT INTO resource_quotas (
++				namespace, max_services, max_replicas, max_cpu_millicores, max_memory_bytes,
++				max_public_ports, max_secrets, max_registry_credentials, updated_at
++			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,timezone('utc', now()))
++			ON CONFLICT (namespace) DO UPDATE SET
++				max_services=EXCLUDED.max_services, max_replicas=EXCLUDED.max_replicas,
++				max_cpu_millicores=EXCLUDED.max_cpu_millicores, max_memory_bytes=EXCLUDED.max_memory_bytes,
++				max_public_ports=EXCLUDED.max_public_ports, max_secrets=EXCLUDED.max_secrets,
++				max_registry_credentials=EXCLUDED.max_registry_credentials, updated_at=EXCLUDED.updated_at
++			RETURNING updated_at`, value.Namespace, value.MaxServices, value.MaxReplicas, value.MaxCPUMillicores,
++			value.MaxMemoryBytes, value.MaxPublicPorts, value.MaxSecrets, value.MaxRegistryCredentials,
++		).Scan(&value.UpdatedAt)
++	})
++	if err != nil {
++		return types.ResourceQuota{}, usage, mapPostgresError(err)
++	}
++	value.UpdatedAt = value.UpdatedAt.UTC()
++	return value, usage, nil
++}
++
++func lockQuota(ctx context.Context, db postgresDB, namespaceName string) error {
++	_, err := db.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, namespaceName)
++	return mapPostgresError(err)
++}
++
++func lockAndCheckQuota(ctx context.Context, db postgresDB, namespaceName string, replaceID types.ServiceID, replacement *types.ServiceSpec, addSecrets int, addRegistries int) error {
++	if err := lockQuota(ctx, db, namespaceName); err != nil {
++		return err
++	}
++	value, usage, err := loadQuotaAndUsage(ctx, db, namespaceName, replaceID, replacement, false)
++	if err != nil {
++		return err
++	}
++	usage.Secrets += addSecrets
++	usage.RegistryCredentials += addRegistries
++	return quota.Check(value, usage)
++}
++
++func loadQuotaAndUsage(ctx context.Context, db postgresDB, namespaceName string, replaceID types.ServiceID, replacement *types.ServiceSpec, _ bool) (types.ResourceQuota, types.ResourceUsage, error) {
++	var value types.ResourceQuota
++	err := db.QueryRow(ctx, `
++		SELECT n.name, COALESCE(q.max_services,0), COALESCE(q.max_replicas,0),
++			COALESCE(q.max_cpu_millicores,0), COALESCE(q.max_memory_bytes,0), COALESCE(q.max_public_ports,0),
++			COALESCE(q.max_secrets,0), COALESCE(q.max_registry_credentials,0), COALESCE(q.updated_at,n.created_at)
++		FROM namespaces n LEFT JOIN resource_quotas q ON q.namespace=n.name WHERE n.name=$1`, namespaceName,
++	).Scan(&value.Namespace, &value.MaxServices, &value.MaxReplicas, &value.MaxCPUMillicores, &value.MaxMemoryBytes,
++		&value.MaxPublicPorts, &value.MaxSecrets, &value.MaxRegistryCredentials, &value.UpdatedAt)
++	if err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, mapPostgresError(err)
++	}
++	value.UpdatedAt = value.UpdatedAt.UTC()
++	var usage types.ResourceUsage
++	err = db.QueryRow(ctx, `
++		SELECT COUNT(*)::int, COALESCE(SUM(replicas),0)::int,
++			COALESCE(SUM(COALESCE((resource_requirements #>> '{requests,cpu}')::bigint,0) * replicas),0)::bigint,
++			COALESCE(SUM(COALESCE((resource_requirements #>> '{requests,memory}')::bigint,0) * replicas),0)::bigint,
++			COALESCE(SUM((SELECT COUNT(*) FROM jsonb_array_elements(ports) p WHERE COALESCE((p->>'published_port')::int,0) > 0)),0)::int
++		FROM services WHERE namespace=$1 AND status <> 'deleted' AND ($2 = '' OR id <> nullif($2,'')::uuid)`, namespaceName, string(replaceID),
++	).Scan(&usage.Services, &usage.Replicas, &usage.CPUMillicores, &usage.MemoryBytes, &usage.PublicPorts)
++	if err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, mapPostgresError(err)
++	}
++	if replacement != nil {
++		addServiceUsageStore(&usage, *replacement)
++	}
++	if err := db.QueryRow(ctx, `SELECT COUNT(*)::int FROM secrets WHERE namespace=$1`, namespaceName).Scan(&usage.Secrets); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, mapPostgresError(err)
++	}
++	if err := db.QueryRow(ctx, `SELECT COUNT(*)::int FROM registry_credentials WHERE namespace=$1`, namespaceName).Scan(&usage.RegistryCredentials); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, mapPostgresError(err)
++	}
++	return value, usage, nil
++}
++
++func addServiceUsageStore(usage *types.ResourceUsage, spec types.ServiceSpec) {
++	usage.Services++
++	usage.Replicas += spec.Replicas
++	usage.CPUMillicores += spec.ResourceRequirements.Requests.CPU * int64(spec.Replicas)
++	usage.MemoryBytes += spec.ResourceRequirements.Requests.Memory * int64(spec.Replicas)
++	for _, port := range spec.Ports {
++		if port.PublishedPort > 0 {
++			usage.PublicPorts++
++		}
++	}
++}
++
++func (s *postgresStore) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	source.Namespace = namespace.FromContext(ctx)
++	managed, err := jsonBytes(defaultSlice(source.ManagedServices))
++	if err != nil {
++		return types.GitOpsSource{}, err
++	}
++	row := s.db.QueryRow(ctx, `
++		INSERT INTO gitops_sources (namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services)
++		VALUES ($1,$2,$3,$4,$5,$6,$7)
++		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++			last_revision, last_error, last_synced_at, created_at, updated_at`, source.Namespace, source.RepositoryURL,
++		source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed)
++	return scanGitOpsSource(row)
++}
++
++func (s *postgresStore) ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error) {
++	rows, err := s.db.Query(ctx, gitOpsSelectSQL()+` WHERE namespace=$1 ORDER BY created_at,id`, namespace.FromContext(ctx))
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++	items := make([]types.GitOpsSource, 0)
++	for rows.Next() {
++		item, err := scanGitOpsSource(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		items = append(items, item)
++	}
++	return items, mapPostgresError(rows.Err())
++}
++
++func (s *postgresStore) GetGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error) {
++	return scanGitOpsSource(s.db.QueryRow(ctx, gitOpsSelectSQL()+` WHERE namespace=$1 AND id=nullif($2,'')::uuid`, namespace.FromContext(ctx), strings.TrimSpace(id)))
++}
++
++func (s *postgresStore) UpdateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	managed, err := jsonBytes(defaultSlice(source.ManagedServices))
++	if err != nil {
++		return types.GitOpsSource{}, err
++	}
++	row := s.db.QueryRow(ctx, `
++		UPDATE gitops_sources SET repository_url=$3, branch=$4, path=$5, sync_interval_ns=$6, prune=$7,
++			managed_services=$8, last_revision=nullif($9,''), last_error=nullif($10,''), last_synced_at=$11,
++			updated_at=timezone('utc',now())
++		WHERE namespace=$1 AND id=nullif($2,'')::uuid
++		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++			last_revision, last_error, last_synced_at, created_at, updated_at`, namespace.FromContext(ctx), source.ID,
++		source.RepositoryURL, source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed,
++		source.LastRevision, source.LastError, nilTime(source.LastSyncedAt))
++	return scanGitOpsSource(row)
++}
++
++func (s *postgresStore) DeleteGitOpsSource(ctx context.Context, id string) error {
++	tag, err := s.db.Exec(ctx, `DELETE FROM gitops_sources WHERE namespace=$1 AND id=nullif($2,'')::uuid`, namespace.FromContext(ctx), strings.TrimSpace(id))
++	if err != nil {
++		return mapPostgresError(err)
++	}
++	if tag.RowsAffected() == 0 {
++		return ErrNotFound
++	}
++	return nil
++}
++
++func gitOpsSelectSQL() string {
++	return `SELECT id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++		last_revision, last_error, last_synced_at, created_at, updated_at FROM gitops_sources`
++}
++
++func scanGitOpsSource(row pgx.Row) (types.GitOpsSource, error) {
++	var source types.GitOpsSource
++	var interval int64
++	var managed []byte
++	var revision, lastError *string
++	var lastSynced *time.Time
++	err := row.Scan(&source.ID, &source.Namespace, &source.RepositoryURL, &source.Branch, &source.Path, &interval,
++		&source.Prune, &managed, &revision, &lastError, &lastSynced, &source.CreatedAt, &source.UpdatedAt)
++	if err != nil {
++		return types.GitOpsSource{}, mapPostgresError(err)
++	}
++	source.SyncInterval = time.Duration(interval)
++	if len(managed) > 0 {
++		if err := json.Unmarshal(managed, &source.ManagedServices); err != nil {
++			return types.GitOpsSource{}, err
++		}
++	}
++	if revision != nil {
++		source.LastRevision = *revision
++	}
++	if lastError != nil {
++		source.LastError = *lastError
++	}
++	if lastSynced != nil {
++		source.LastSyncedAt = lastSynced.UTC()
++	}
++	source.CreatedAt, source.UpdatedAt = source.CreatedAt.UTC(), source.UpdatedAt.UTC()
++	return source, nil
++}
++
+ func (s *postgresStore) ListNamespaces(ctx context.Context) ([]types.Namespace, error) {
+ 	rows, err := s.db.Query(ctx, `SELECT name, created_at FROM namespaces ORDER BY name`)
+ 	if err != nil {
+@@ -286,6 +499,9 @@ func (s *postgresStore) CreateService(ctx context.Context, spec types.ServiceSpe
+ 
+ 	var service types.Service
+ 	err = s.withTx(ctx, func(tx *postgresStore) error {
++		if err := lockAndCheckQuota(ctx, tx.db, namespace.FromContext(ctx), "", &spec, 0, 0); err != nil {
++			return err
++		}
+ 		created, err := insertService(ctx, tx.db, namespace.FromContext(ctx), spec)
+ 		if err != nil {
+ 			return err
+@@ -344,6 +560,9 @@ func (s *postgresStore) UpdateService(ctx context.Context, id types.ServiceID, s
+ 
+ 	var service types.Service
+ 	err = s.withTx(ctx, func(tx *postgresStore) error {
++		if err := lockAndCheckQuota(ctx, tx.db, namespace.FromContext(ctx), id, &spec, 0, 0); err != nil {
++			return err
++		}
+ 		updated, err := updateService(ctx, tx.db, namespace.FromContext(ctx), id, spec, expectedUpdatedAt)
+ 		if err != nil {
+ 			return err
+@@ -374,7 +593,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $3 AND namespace = $4
+-		RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++		RETURNING id, namespace, name, image, image_metadata, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+@@ -404,20 +623,32 @@ func (s *postgresStore) CreateSecret(ctx context.Context, secret types.Secret) (
+ 	if strings.TrimSpace(secret.KeyID) == "" {
+ 		return types.Secret{}, fmt.Errorf("%w: secret key id is required", ErrInvalidState)
+ 	}
+-	row := s.db.QueryRow(ctx, `
+-		INSERT INTO secrets (namespace, name, encrypted_value, key_id)
+-		VALUES ($1, $2, $3, $4)
+-		ON CONFLICT (namespace, name) DO UPDATE
+-		SET encrypted_value = EXCLUDED.encrypted_value,
+-			key_id = EXCLUDED.key_id,
+-			updated_at = timezone('utc', now())
+-		RETURNING namespace, name, encrypted_value, key_id, created_at, updated_at`,
+-		secret.Namespace,
+-		secret.Name,
+-		secret.EncryptedValue,
+-		secret.KeyID,
+-	)
+-	created, err := scanSecret(row)
++	var created types.Secret
++	err := s.withTx(ctx, func(tx *postgresStore) error {
++		if err := lockQuota(ctx, tx.db, secret.Namespace); err != nil {
++			return err
++		}
++		var exists bool
++		if err := tx.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM secrets WHERE namespace=$1 AND name=$2)`, secret.Namespace, secret.Name).Scan(&exists); err != nil {
++			return err
++		}
++		add := 0
++		if !exists {
++			add = 1
++		}
++		if err := lockAndCheckQuota(ctx, tx.db, secret.Namespace, "", nil, add, 0); err != nil {
++			return err
++		}
++		row := tx.db.QueryRow(ctx, `
++			INSERT INTO secrets (namespace, name, encrypted_value, key_id)
++			VALUES ($1, $2, $3, $4)
++			ON CONFLICT (namespace, name) DO UPDATE
++			SET encrypted_value = EXCLUDED.encrypted_value, key_id = EXCLUDED.key_id, updated_at = timezone('utc', now())
++			RETURNING namespace, name, encrypted_value, key_id, created_at, updated_at`, secret.Namespace, secret.Name, secret.EncryptedValue, secret.KeyID)
++		var err error
++		created, err = scanSecret(row)
++		return err
++	})
+ 	if err != nil {
+ 		return types.Secret{}, mapPostgresError(err)
+ 	}
+@@ -493,24 +724,33 @@ func (s *postgresStore) CreateRegistryCredential(ctx context.Context, credential
+ 	if strings.TrimSpace(credential.KeyID) == "" {
+ 		return types.RegistryCredential{}, fmt.Errorf("%w: registry credential key id is required", ErrInvalidState)
+ 	}
+-	row := s.db.QueryRow(ctx, `
+-		INSERT INTO registry_credentials (namespace, id, registry, username, encrypted_password, key_id)
+-		VALUES ($1, $2, $3, $4, $5, $6)
+-		ON CONFLICT (namespace, id) DO UPDATE
+-		SET registry = EXCLUDED.registry,
+-			username = EXCLUDED.username,
+-			encrypted_password = EXCLUDED.encrypted_password,
+-			key_id = EXCLUDED.key_id,
+-			updated_at = timezone('utc', now())
+-		RETURNING namespace, id, registry, username, encrypted_password, key_id, created_at, updated_at`,
+-		credential.Namespace,
+-		credential.ID,
+-		credential.Registry,
+-		credential.Username,
+-		credential.EncryptedPassword,
+-		credential.KeyID,
+-	)
+-	created, err := scanRegistryCredential(row)
++	var created types.RegistryCredential
++	err := s.withTx(ctx, func(tx *postgresStore) error {
++		if err := lockQuota(ctx, tx.db, credential.Namespace); err != nil {
++			return err
++		}
++		var exists bool
++		if err := tx.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM registry_credentials WHERE namespace=$1 AND id=$2)`, credential.Namespace, credential.ID).Scan(&exists); err != nil {
++			return err
++		}
++		add := 0
++		if !exists {
++			add = 1
++		}
++		if err := lockAndCheckQuota(ctx, tx.db, credential.Namespace, "", nil, 0, add); err != nil {
++			return err
++		}
++		row := tx.db.QueryRow(ctx, `
++			INSERT INTO registry_credentials (namespace, id, registry, username, encrypted_password, key_id)
++			VALUES ($1, $2, $3, $4, $5, $6)
++			ON CONFLICT (namespace, id) DO UPDATE
++			SET registry=EXCLUDED.registry, username=EXCLUDED.username, encrypted_password=EXCLUDED.encrypted_password,
++				key_id=EXCLUDED.key_id, updated_at=timezone('utc', now())
++			RETURNING namespace, id, registry, username, encrypted_password, key_id, created_at, updated_at`, credential.Namespace, credential.ID, credential.Registry, credential.Username, credential.EncryptedPassword, credential.KeyID)
++		var err error
++		created, err = scanRegistryCredential(row)
++		return err
++	})
+ 	if err != nil {
+ 		return types.RegistryCredential{}, mapPostgresError(err)
+ 	}
+@@ -576,6 +816,9 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	if task.ActualStatus == "" {
+ 		task.ActualStatus = types.TaskPending
+ 	}
++	if task.RequestedImage == "" {
++		task.RequestedImage = task.Image
++	}
+ 	if !types.ValidTaskStatus(task.DesiredStatus) || !types.ValidTaskStatus(task.ActualStatus) {
+ 		return types.Task{}, fmt.Errorf("%w: task status is invalid", ErrInvalidState)
+ 	}
+@@ -590,11 +833,13 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+ 			namespace, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, conditions, restart_count, failure_reason, started_at, finished_at
++			image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++			version, ports, conditions, restart_count, failure_reason, started_at, finished_at
+ 		)
+-		VALUES ($1, $2, nullif($3, '')::uuid, nullif($4, ''), $5, $6, $7, $8, $9, $10, $11, nullif($12, ''), $13, $14)
++		VALUES ($1, $2, nullif($3, '')::uuid, nullif($4, ''), $5, $6, $7, nullif($8, ''), nullif($9, ''), nullif($10, ''), nullif($11, ''), nullif($12, ''), $13, $14, $15, $16, nullif($17, ''), $18, $19)
+ 		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++			version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		task.Namespace,
+ 		string(task.ServiceID),
+ 		string(task.NodeID),
+@@ -602,6 +847,11 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 		string(task.DesiredStatus),
+ 		string(task.ActualStatus),
+ 		task.Image,
++		task.RequestedImage,
++		task.ResolvedImageDigest,
++		task.ImageRegistry,
++		task.ImageName,
++		task.ImageTag,
+ 		task.Version,
+ 		ports,
+ 		conditions,
+@@ -663,7 +913,8 @@ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $5 AND actual_status = 'pending'
+ 		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++			version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(nodeID),
+ 		string(types.TaskAssigned),
+@@ -698,7 +949,8 @@ func (s *postgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3 AND desired_status <> $2
+ 		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++			version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(types.TaskStopped),
+ 		expectedUpdatedAt.UTC(),
+@@ -741,7 +993,8 @@ func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $6
+ 		RETURNING id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++			version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(desired),
+ 		string(actual),
+@@ -1077,18 +1330,23 @@ func insertService(ctx context.Context, db postgresDB, namespaceName string, spe
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
++	imageMetadata, err := jsonBytes(spec.ImageMetadata)
++	if err != nil {
++		return types.Service{}, err
++	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+-			namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++			namespace, name, image, image_metadata, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+-		RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
++		RETURNING id, namespace, name, image, image_metadata, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		namespaceName,
+ 		spec.Name,
+ 		spec.Image,
++		imageMetadata,
+ 		spec.ImagePullSecret,
+ 		spec.Stateful,
+ 		spec.Replicas,
+@@ -1115,33 +1373,39 @@ func updateService(ctx context.Context, db postgresDB, namespaceName string, id
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
++	imageMetadata, err := jsonBytes(spec.ImageMetadata)
++	if err != nil {
++		return types.Service{}, err
++	}
+ 	row := db.QueryRow(ctx, `
+ 			UPDATE services
+ 			SET name = $2,
+ 				image = $3,
+-				image_pull_secret = $4,
+-				stateful = $5,
+-				replicas = $6,
+-				env = $7,
+-				secret_refs = $8,
+-				ports = $9,
+-				resource_requirements = $10,
+-				security_context = $11,
+-				autoscaling = $12,
+-				healthcheck = $13,
+-				restart_policy = $14,
+-				placement_constraints = $15,
+-				routes = $17,
++				image_metadata = $4,
++				image_pull_secret = $5,
++				stateful = $6,
++				replicas = $7,
++				env = $8,
++				secret_refs = $9,
++				ports = $10,
++				resource_requirements = $11,
++				security_context = $12,
++				autoscaling = $13,
++				healthcheck = $14,
++				restart_policy = $15,
++				placement_constraints = $16,
++				routes = $18,
+ 				deployment_version = deployment_version + 1,
+ 				updated_at = timezone('utc', now()),
+ 				version = version + 1
+-			WHERE id = $1 AND updated_at = $16 AND namespace = $18
+-			RETURNING id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++			WHERE id = $1 AND updated_at = $17 AND namespace = $19
++			RETURNING id, namespace, name, image, image_metadata, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 				resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+ 		spec.Image,
++		imageMetadata,
+ 		spec.ImagePullSecret,
+ 		spec.Stateful,
+ 		spec.Replicas,
+@@ -1184,14 +1448,15 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ }
+ 
+ func serviceSelectSQL() string {
+-	return `SELECT id, namespace, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
++	return `SELECT id, namespace, name, image, image_metadata, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 		resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+ func taskSelectSQL() string {
+ 	return `SELECT id, namespace, service_id, node_id, container_id, desired_status, actual_status,
+-		image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
++		image, requested_image, resolved_image_digest, image_registry, image_name, image_tag,
++		version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
+ }
+ 
+ func deploymentSelectSQL() string {
+@@ -1248,13 +1513,14 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ func scanService(row pgx.Row) (types.Service, error) {
+ 	var service types.Service
+ 	var id string
+-	var env, secretRefs, ports, requirements, securityContext, autoscaling, restartPolicy, constraints, routes []byte
++	var imageMetadata, env, secretRefs, ports, requirements, securityContext, autoscaling, restartPolicy, constraints, routes []byte
+ 	var healthcheck []byte
+ 	err := row.Scan(
+ 		&id,
+ 		&service.Namespace,
+ 		&service.Spec.Name,
+ 		&service.Spec.Image,
++		&imageMetadata,
+ 		&service.Spec.ImagePullSecret,
+ 		&service.Spec.Stateful,
+ 		&service.Spec.Replicas,
+@@ -1283,6 +1549,11 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		return types.Service{}, err
+ 	}
++	if len(imageMetadata) > 0 {
++		if err := json.Unmarshal(imageMetadata, &service.Spec.ImageMetadata); err != nil {
++			return types.Service{}, fmt.Errorf("decode image metadata: %w", err)
++		}
++	}
+ 	service.CreatedAt = service.CreatedAt.UTC()
+ 	service.UpdatedAt = service.UpdatedAt.UTC()
+ 	return service, nil
+@@ -1291,7 +1562,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ func scanTask(row pgx.Row) (types.Task, error) {
+ 	var task types.Task
+ 	var id, serviceID string
+-	var nodeID, containerID, failureReason *string
++	var nodeID, containerID, requestedImage, resolvedDigest, imageRegistry, imageName, imageTag, failureReason *string
+ 	var ports, conditions []byte
+ 	var startedAt, finishedAt *time.Time
+ 	err := row.Scan(
+@@ -1303,6 +1574,11 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 		&task.DesiredStatus,
+ 		&task.ActualStatus,
+ 		&task.Image,
++		&requestedImage,
++		&resolvedDigest,
++		&imageRegistry,
++		&imageName,
++		&imageTag,
+ 		&task.Version,
+ 		&ports,
+ 		&conditions,
+@@ -1327,6 +1603,21 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	if failureReason != nil {
+ 		task.FailureReason = *failureReason
+ 	}
++	if requestedImage != nil {
++		task.RequestedImage = *requestedImage
++	}
++	if resolvedDigest != nil {
++		task.ResolvedImageDigest = *resolvedDigest
++	}
++	if imageRegistry != nil {
++		task.ImageRegistry = *imageRegistry
++	}
++	if imageName != nil {
++		task.ImageName = *imageName
++	}
++	if imageTag != nil {
++		task.ImageTag = *imageTag
++	}
+ 	if len(ports) > 0 {
+ 		if err := json.Unmarshal(ports, &task.Ports); err != nil {
+ 			return types.Task{}, fmt.Errorf("decode task ports: %w", err)
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 8938212..3a7e528 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -12,6 +12,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/quota"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/jackc/pgx/v5"
+ 	"github.com/jackc/pgx/v5/pgconn"
+@@ -131,6 +132,25 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if !service.Spec.Stateful {
+ 		t.Fatalf("expected stateful service to round trip")
+ 	}
++	if service.Spec.ImageMetadata.Digest == "" {
++		t.Fatalf("expected image metadata to round trip, got %#v", service.Spec.ImageMetadata)
++	}
++	if _, _, err := store.SetResourceQuota(ctx, types.ResourceQuota{MaxReplicas: 2}); err != nil {
++		t.Fatalf("set quota: %v", err)
++	}
++	overQuota := service.Spec
++	overQuota.Replicas = 3
++	if _, err := store.UpdateService(ctx, service.ID, overQuota, service.UpdatedAt); err == nil {
++		t.Fatal("expected quota rejection")
++	} else {
++		var quotaErr *quota.Error
++		if !errors.As(err, &quotaErr) || quotaErr.Resource != "replicas" {
++			t.Fatalf("expected replicas quota error, got %v", err)
++		}
++	}
++	if _, _, err := store.SetResourceQuota(ctx, types.ResourceQuota{}); err != nil {
++		t.Fatalf("reset quota: %v", err)
++	}
+ 	if _, err := store.CreateService(ctx, serviceSpecFixture()); !errors.Is(err, ErrDuplicate) {
+ 		t.Fatalf("expected duplicate service name, got %v", err)
+ 	}
+@@ -158,17 +178,25 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	}
+ 
+ 	task, err := store.CreateTask(ctx, types.Task{
+-		ServiceID:     service.ID,
+-		NodeID:        updatedNode.ID,
+-		DesiredStatus: types.TaskRunning,
+-		ActualStatus:  types.TaskPending,
+-		Image:         service.Spec.Image,
+-		Version:       service.DeploymentVersion,
+-		Ports:         []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080}},
++		ServiceID:           service.ID,
++		NodeID:              updatedNode.ID,
++		DesiredStatus:       types.TaskRunning,
++		ActualStatus:        types.TaskPending,
++		Image:               service.Spec.Image,
++		RequestedImage:      service.Spec.Image,
++		ResolvedImageDigest: service.Spec.ImageMetadata.Digest,
++		ImageRegistry:       service.Spec.ImageMetadata.Registry,
++		ImageName:           service.Spec.ImageMetadata.Name,
++		ImageTag:            service.Spec.ImageMetadata.Tag,
++		Version:             service.DeploymentVersion,
++		Ports:               []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080}},
+ 	})
+ 	if err != nil {
+ 		t.Fatalf("create task: %v", err)
+ 	}
++	if task.ResolvedImageDigest != service.Spec.ImageMetadata.Digest || task.ImageRegistry != "docker.io" {
++		t.Fatalf("expected task image metadata to round trip, got %#v", task)
++	}
+ 	assignedPorts := []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}
+ 	assigned, err := store.AssignTask(ctx, task.ID, updatedNode.ID, assignedPorts, task.UpdatedAt)
+ 	if err != nil {
+@@ -259,6 +287,71 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if auditLogs[0].Metadata["password"] != "[REDACTED]" || auditLogs[0].Metadata["name"] != service.Spec.Name {
+ 		t.Fatalf("unexpected audit metadata %#v", auditLogs[0].Metadata)
+ 	}
++
++	source, err := store.CreateGitOpsSource(ctx, types.GitOpsSource{RepositoryURL: "https://example.com/repo.git", Branch: "main", Path: "services", SyncInterval: time.Minute, Prune: true})
++	if err != nil {
++		t.Fatalf("create GitOps source: %v", err)
++	}
++	source.ManagedServices = []string{"web"}
++	source.LastRevision = "abc123"
++	source.LastSyncedAt = time.Now().UTC()
++	updatedSource, err := store.UpdateGitOpsSource(ctx, source)
++	if err != nil {
++		t.Fatalf("update GitOps source: %v", err)
++	}
++	listedSources, err := store.ListGitOpsSources(ctx)
++	if err != nil || len(listedSources) != 1 || updatedSource.LastRevision != "abc123" || len(updatedSource.ManagedServices) != 1 {
++		t.Fatalf("GitOps source did not round trip: updated=%#v listed=%#v err=%v", updatedSource, listedSources, err)
++	}
++	if err := store.DeleteGitOpsSource(ctx, source.ID); err != nil {
++		t.Fatalf("delete GitOps source: %v", err)
++	}
++
++	if _, err := store.CreateNamespace(ctx, "quota-test"); err != nil {
++		t.Fatalf("create quota test namespace: %v", err)
++	}
++	quotaCtx := namespace.WithContext(ctx, "quota-test")
++	firstSpec := serviceSpecFixture()
++	firstSpec.Name, firstSpec.Replicas = "first", 1
++	secondSpec := serviceSpecFixture()
++	secondSpec.Name, secondSpec.Replicas = "second", 1
++	first, err := store.CreateService(quotaCtx, firstSpec)
++	if err != nil {
++		t.Fatal(err)
++	}
++	second, err := store.CreateService(quotaCtx, secondSpec)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, _, err := store.SetResourceQuota(quotaCtx, types.ResourceQuota{MaxReplicas: 3}); err != nil {
++		t.Fatal(err)
++	}
++	results := make(chan error, 2)
++	for _, candidate := range []types.Service{first, second} {
++		go func(candidate types.Service) {
++			spec := candidate.Spec
++			spec.Replicas = 2
++			_, err := store.UpdateService(quotaCtx, candidate.ID, spec, candidate.UpdatedAt)
++			results <- err
++		}(candidate)
++	}
++	succeeded, denied := 0, 0
++	for range 2 {
++		err := <-results
++		if err == nil {
++			succeeded++
++			continue
++		}
++		var quotaErr *quota.Error
++		if errors.As(err, &quotaErr) {
++			denied++
++			continue
++		}
++		t.Fatalf("unexpected concurrent quota error: %v", err)
++	}
++	if succeeded != 1 || denied != 1 {
++		t.Fatalf("expected one quota-safe update and one denial, got success=%d denied=%d", succeeded, denied)
++	}
+ }
+ 
+ func TestPostgresStoreWithTxRollsBackOnError(t *testing.T) {
+@@ -408,8 +501,12 @@ func TestPostgresStoreConcurrentAssignTaskOnce(t *testing.T) {
+ 
+ func serviceSpecFixture() types.ServiceSpec {
+ 	return types.ServiceSpec{
+-		Name:     "web",
+-		Image:    "nginx:1.27",
++		Name:  "web",
++		Image: "nginx:1.27",
++		ImageMetadata: types.ImageMetadata{
++			RequestedImage: "nginx:1.27", Registry: "docker.io", Name: "library/nginx", Tag: "1.27",
++			Digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Pinned: true,
++		},
+ 		Stateful: true,
+ 		Replicas: 2,
+ 		Env: map[string]string{
+@@ -481,6 +578,9 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 		"000009_service_security_context.up.sql",
+ 		"000010_service_autoscaling.up.sql",
+ 		"000011_namespaces.up.sql",
++		"000012_resource_quotas.up.sql",
++		"000013_image_metadata.up.sql",
++		"000014_gitops_sources.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+diff --git a/internal/store/store.go b/internal/store/store.go
+index a10e573..aa91b4c 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -22,6 +22,19 @@ type NamespaceStore interface {
+ 	DeleteNamespace(ctx context.Context, name string) error
+ }
+ 
++type ResourceQuotaStore interface {
++	GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error)
++	SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error)
++}
++
++type GitOpsStore interface {
++	CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error)
++	ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error)
++	GetGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error)
++	UpdateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error)
++	DeleteGitOpsSource(ctx context.Context, id string) error
++}
++
+ type ServiceStore interface {
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+@@ -69,6 +82,8 @@ type RegistryCredentialStore interface {
+ 
+ type Store interface {
+ 	NamespaceStore
++	ResourceQuotaStore
++	GitOpsStore
+ 	NodeStore
+ 	ServiceStore
+ 	TaskStore
+diff --git a/migrations/000012_resource_quotas.down.sql b/migrations/000012_resource_quotas.down.sql
+new file mode 100644
+index 0000000..709b078
+--- /dev/null
++++ b/migrations/000012_resource_quotas.down.sql
+@@ -0,0 +1 @@
++DROP TABLE resource_quotas;
+diff --git a/migrations/000012_resource_quotas.up.sql b/migrations/000012_resource_quotas.up.sql
+new file mode 100644
+index 0000000..8d58965
+--- /dev/null
++++ b/migrations/000012_resource_quotas.up.sql
+@@ -0,0 +1,14 @@
++CREATE TABLE resource_quotas (
++    namespace TEXT PRIMARY KEY REFERENCES namespaces (name) ON DELETE CASCADE,
++    max_services INTEGER NOT NULL DEFAULT 0 CHECK (max_services >= 0),
++    max_replicas INTEGER NOT NULL DEFAULT 0 CHECK (max_replicas >= 0),
++    max_cpu_millicores BIGINT NOT NULL DEFAULT 0 CHECK (max_cpu_millicores >= 0),
++    max_memory_bytes BIGINT NOT NULL DEFAULT 0 CHECK (max_memory_bytes >= 0),
++    max_public_ports INTEGER NOT NULL DEFAULT 0 CHECK (max_public_ports >= 0),
++    max_secrets INTEGER NOT NULL DEFAULT 0 CHECK (max_secrets >= 0),
++    max_registry_credentials INTEGER NOT NULL DEFAULT 0 CHECK (max_registry_credentials >= 0),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
++
++INSERT INTO resource_quotas (namespace)
++SELECT name FROM namespaces;
+diff --git a/migrations/000013_image_metadata.down.sql b/migrations/000013_image_metadata.down.sql
+new file mode 100644
+index 0000000..bcc1ad3
+--- /dev/null
++++ b/migrations/000013_image_metadata.down.sql
+@@ -0,0 +1,6 @@
++ALTER TABLE tasks DROP COLUMN image_tag;
++ALTER TABLE tasks DROP COLUMN image_name;
++ALTER TABLE tasks DROP COLUMN image_registry;
++ALTER TABLE tasks DROP COLUMN resolved_image_digest;
++ALTER TABLE tasks DROP COLUMN requested_image;
++ALTER TABLE services DROP COLUMN image_metadata;
+diff --git a/migrations/000013_image_metadata.up.sql b/migrations/000013_image_metadata.up.sql
+new file mode 100644
+index 0000000..866552c
+--- /dev/null
++++ b/migrations/000013_image_metadata.up.sql
+@@ -0,0 +1,9 @@
++ALTER TABLE services ADD COLUMN image_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
++
++ALTER TABLE tasks ADD COLUMN requested_image TEXT;
++ALTER TABLE tasks ADD COLUMN resolved_image_digest TEXT;
++ALTER TABLE tasks ADD COLUMN image_registry TEXT;
++ALTER TABLE tasks ADD COLUMN image_name TEXT;
++ALTER TABLE tasks ADD COLUMN image_tag TEXT;
++
++UPDATE tasks SET requested_image = image WHERE requested_image IS NULL;
+diff --git a/migrations/000014_gitops_sources.down.sql b/migrations/000014_gitops_sources.down.sql
+new file mode 100644
+index 0000000..eb16fe2
+--- /dev/null
++++ b/migrations/000014_gitops_sources.down.sql
+@@ -0,0 +1 @@
++DROP TABLE gitops_sources;
+diff --git a/migrations/000014_gitops_sources.up.sql b/migrations/000014_gitops_sources.up.sql
+new file mode 100644
+index 0000000..8d93bbf
+--- /dev/null
++++ b/migrations/000014_gitops_sources.up.sql
+@@ -0,0 +1,17 @@
++CREATE TABLE gitops_sources (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    namespace TEXT NOT NULL REFERENCES namespaces (name) ON DELETE CASCADE,
++    repository_url TEXT NOT NULL,
++    branch TEXT NOT NULL,
++    path TEXT NOT NULL,
++    sync_interval_ns BIGINT NOT NULL CHECK (sync_interval_ns > 0),
++    prune BOOLEAN NOT NULL DEFAULT false,
++    managed_services JSONB NOT NULL DEFAULT '[]'::jsonb,
++    last_revision TEXT,
++    last_error TEXT,
++    last_synced_at TIMESTAMPTZ,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
++
++CREATE INDEX idx_gitops_sources_namespace ON gitops_sources (namespace, created_at);
+diff --git a/pkg/client/client.go b/pkg/client/client.go
+index eb036cb..c68ae03 100644
+--- a/pkg/client/client.go
++++ b/pkg/client/client.go
+@@ -107,6 +107,51 @@ func (c *Client) DeleteNamespace(ctx context.Context, name string) error {
+ 	return c.do(ctx, http.MethodDelete, "/v1/namespaces/"+url.PathEscape(name), nil, nil)
+ }
+ 
++func (c *Client) GetResourceQuota(ctx context.Context) (types.ResourceQuota, types.ResourceUsage, error) {
++	var out resourceQuotaResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/quota", nil, &out); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	return out.Quota, out.Usage, nil
++}
++
++func (c *Client) SetResourceQuota(ctx context.Context, value types.ResourceQuota) (types.ResourceQuota, types.ResourceUsage, error) {
++	var out resourceQuotaResponse
++	if err := c.do(ctx, http.MethodPut, "/v1/quota", value, &out); err != nil {
++		return types.ResourceQuota{}, types.ResourceUsage{}, err
++	}
++	return out.Quota, out.Usage, nil
++}
++
++func (c *Client) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
++	var out gitOpsSourceResponse
++	request := createGitOpsSourceRequest{RepositoryURL: source.RepositoryURL, Branch: source.Branch, Path: source.Path, SyncInterval: source.SyncInterval.String(), Prune: source.Prune}
++	if err := c.do(ctx, http.MethodPost, "/v1/gitops/sources", request, &out); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	return out.Source, nil
++}
++
++func (c *Client) ListGitOpsSources(ctx context.Context) ([]types.GitOpsSource, error) {
++	var out listGitOpsSourcesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/gitops/sources", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Sources, nil
++}
++
++func (c *Client) SyncGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error) {
++	var out gitOpsSourceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/gitops/sources/"+url.PathEscape(id)+"/sync", nil, &out); err != nil {
++		return types.GitOpsSource{}, err
++	}
++	return out.Source, nil
++}
++
++func (c *Client) DeleteGitOpsSource(ctx context.Context, id string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/gitops/sources/"+url.PathEscape(id), nil, nil)
++}
++
+ func (c *Client) Health(ctx context.Context) (HealthResponse, error) {
+ 	var out HealthResponse
+ 	if err := c.do(ctx, http.MethodGet, "/healthz", nil, &out); err != nil {
+diff --git a/pkg/client/types.go b/pkg/client/types.go
+index 994efd9..1deff97 100644
+--- a/pkg/client/types.go
++++ b/pkg/client/types.go
+@@ -211,6 +211,27 @@ type listNamespacesResponse struct {
+ 	Namespaces []types.Namespace `json:"namespaces"`
+ }
+ 
++type resourceQuotaResponse struct {
++	Quota types.ResourceQuota `json:"quota"`
++	Usage types.ResourceUsage `json:"usage"`
++}
++
++type createGitOpsSourceRequest struct {
++	RepositoryURL string `json:"repository_url"`
++	Branch        string `json:"branch"`
++	Path          string `json:"path"`
++	SyncInterval  string `json:"sync_interval"`
++	Prune         bool   `json:"prune"`
++}
++
++type gitOpsSourceResponse struct {
++	Source types.GitOpsSource `json:"source"`
++}
++
++type listGitOpsSourcesResponse struct {
++	Sources []types.GitOpsSource `json:"sources"`
++}
++
+ type scaleServiceRequest struct {
+ 	Replicas int `json:"replicas"`
+ }
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index b05f53a..cf76c61 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -20,6 +20,53 @@ type Namespace struct {
+ 	CreatedAt time.Time `json:"created_at"`
+ }
+ 
++type ResourceQuota struct {
++	Namespace              string    `json:"namespace"`
++	MaxServices            int       `json:"max_services,omitempty"`
++	MaxReplicas            int       `json:"max_replicas,omitempty"`
++	MaxCPUMillicores       int64     `json:"max_cpu_millicores,omitempty"`
++	MaxMemoryBytes         int64     `json:"max_memory_bytes,omitempty"`
++	MaxPublicPorts         int       `json:"max_public_ports,omitempty"`
++	MaxSecrets             int       `json:"max_secrets,omitempty"`
++	MaxRegistryCredentials int       `json:"max_registry_credentials,omitempty"`
++	UpdatedAt              time.Time `json:"updated_at"`
++}
++
++type ResourceUsage struct {
++	Services            int   `json:"services"`
++	Replicas            int   `json:"replicas"`
++	CPUMillicores       int64 `json:"cpu_millicores"`
++	MemoryBytes         int64 `json:"memory_bytes"`
++	PublicPorts         int   `json:"public_ports"`
++	Secrets             int   `json:"secrets"`
++	RegistryCredentials int   `json:"registry_credentials"`
++}
++
++type ImageMetadata struct {
++	RequestedImage string `json:"requested_image" yaml:"requested_image"`
++	Digest         string `json:"digest,omitempty" yaml:"digest,omitempty"`
++	Registry       string `json:"registry" yaml:"registry"`
++	Name           string `json:"name" yaml:"name"`
++	Tag            string `json:"tag,omitempty" yaml:"tag,omitempty"`
++	Pinned         bool   `json:"pinned,omitempty" yaml:"pinned,omitempty"`
++}
++
++type GitOpsSource struct {
++	ID              string        `json:"id"`
++	Namespace       string        `json:"namespace"`
++	RepositoryURL   string        `json:"repository_url"`
++	Branch          string        `json:"branch"`
++	Path            string        `json:"path"`
++	SyncInterval    time.Duration `json:"sync_interval"`
++	Prune           bool          `json:"prune"`
++	ManagedServices []string      `json:"managed_services,omitempty"`
++	LastRevision    string        `json:"last_revision,omitempty"`
++	LastError       string        `json:"last_error,omitempty"`
++	LastSyncedAt    time.Time     `json:"last_synced_at,omitempty"`
++	CreatedAt       time.Time     `json:"created_at"`
++	UpdatedAt       time.Time     `json:"updated_at"`
++}
++
+ type Node struct {
+ 	ID               NodeID            `json:"id"`
+ 	Hostname         string            `json:"hostname"`
+@@ -158,6 +205,7 @@ const (
+ type ServiceSpec struct {
+ 	Name                 string                `json:"name"`
+ 	Image                string                `json:"image"`
++	ImageMetadata        ImageMetadata         `json:"image_metadata,omitempty"`
+ 	ImagePullSecret      string                `json:"image_pull_secret,omitempty"`
+ 	Stateful             bool                  `json:"stateful,omitempty"`
+ 	Replicas             int                   `json:"replicas"`
+@@ -173,6 +221,13 @@ type ServiceSpec struct {
+ 	Routes               []Route               `json:"routes,omitempty"`
+ }
+ 
++func (spec ServiceSpec) EffectiveImage() string {
++	if spec.ImageMetadata.Pinned && spec.ImageMetadata.Digest != "" && spec.ImageMetadata.Registry != "" && spec.ImageMetadata.Name != "" {
++		return strings.TrimSuffix(spec.ImageMetadata.Registry, "/") + "/" + strings.TrimPrefix(spec.ImageMetadata.Name, "/") + "@" + spec.ImageMetadata.Digest
++	}
++	return spec.Image
++}
++
+ func (spec ServiceSpec) Validate() error {
+ 	if strings.TrimSpace(spec.Name) == "" {
+ 		return fmt.Errorf("service name is required")
+@@ -706,23 +761,28 @@ const (
+ )
+ 
+ type Task struct {
+-	ID            TaskID          `json:"id"`
+-	Namespace     string          `json:"namespace"`
+-	ServiceID     ServiceID       `json:"service_id"`
+-	NodeID        NodeID          `json:"node_id,omitempty"`
+-	ContainerID   string          `json:"container_id,omitempty"`
+-	DesiredStatus TaskStatus      `json:"desired_status"`
+-	ActualStatus  TaskStatus      `json:"actual_status"`
+-	Image         string          `json:"image"`
+-	Version       int64           `json:"version"`
+-	Ports         []Port          `json:"ports,omitempty"`
+-	RestartCount  int             `json:"restart_count"`
+-	FailureReason string          `json:"failure_reason,omitempty"`
+-	Conditions    []TaskCondition `json:"conditions,omitempty"`
+-	CreatedAt     time.Time       `json:"created_at"`
+-	UpdatedAt     time.Time       `json:"updated_at"`
+-	StartedAt     time.Time       `json:"started_at,omitempty"`
+-	FinishedAt    time.Time       `json:"finished_at,omitempty"`
++	ID                  TaskID          `json:"id"`
++	Namespace           string          `json:"namespace"`
++	ServiceID           ServiceID       `json:"service_id"`
++	NodeID              NodeID          `json:"node_id,omitempty"`
++	ContainerID         string          `json:"container_id,omitempty"`
++	DesiredStatus       TaskStatus      `json:"desired_status"`
++	ActualStatus        TaskStatus      `json:"actual_status"`
++	Image               string          `json:"image"`
++	RequestedImage      string          `json:"requested_image,omitempty"`
++	ResolvedImageDigest string          `json:"resolved_image_digest,omitempty"`
++	ImageRegistry       string          `json:"image_registry,omitempty"`
++	ImageName           string          `json:"image_name,omitempty"`
++	ImageTag            string          `json:"image_tag,omitempty"`
++	Version             int64           `json:"version"`
++	Ports               []Port          `json:"ports,omitempty"`
++	RestartCount        int             `json:"restart_count"`
++	FailureReason       string          `json:"failure_reason,omitempty"`
++	Conditions          []TaskCondition `json:"conditions,omitempty"`
++	CreatedAt           time.Time       `json:"created_at"`
++	UpdatedAt           time.Time       `json:"updated_at"`
++	StartedAt           time.Time       `json:"started_at,omitempty"`
++	FinishedAt          time.Time       `json:"finished_at,omitempty"`
+ }
+ 
+ type TaskCondition struct {
+diff --git a/scripts/migrate-up.sh b/scripts/migrate-up.sh
+index 3abab12..216d18d 100755
+--- a/scripts/migrate-up.sh
++++ b/scripts/migrate-up.sh
+@@ -25,6 +25,9 @@ migration_present() {
+     000009) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='security_context')" ;;
+     000010) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='autoscaling')" ;;
+     000011) check="to_regclass('public.namespaces') IS NOT NULL" ;;
++    000012) check="to_regclass('public.resource_quotas') IS NOT NULL" ;;
++    000013) check="EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='image_metadata')" ;;
++    000014) check="to_regclass('public.gitops_sources') IS NOT NULL" ;;
+   esac
+   docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT $check" | grep -q t
+ }

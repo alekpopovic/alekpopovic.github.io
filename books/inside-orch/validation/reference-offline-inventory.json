@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "run",
+    "./book-reference"
+  ],
+  "cwd": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "go_version": "go version go1.25.0 linux/amd64",
+  "started_at_utc": "2026-10-13T01:44:18.548213+00:00",
+  "finished_at_utc": "2026-10-13T01:44:18.926514+00:00",
+  "exit_code": 0,
+  "scope": "Offline command constructors/config/lifecycle validators only; no server/runtime/DB.",
+  "stdout_path": "validation/reference-offline-inventory.stdout.json",
+  "stderr_path": "validation/reference-offline-inventory.stderr.txt"
+}

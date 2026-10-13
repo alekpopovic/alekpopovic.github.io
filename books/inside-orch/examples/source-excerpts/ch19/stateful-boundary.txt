@@ -1,0 +1,15 @@
+		task.Conditions = upsertTaskCondition(task.Conditions, types.TaskCondition{
+			Type:               types.TaskConditionNodeLost,
+			Message:            "node heartbeat timed out",
+			LastTransitionTime: timestamp,
+		})
+		service := s.services[task.ServiceID]
+		if !service.Spec.Stateful {
+			task.DesiredStatus = types.TaskRemoved
+			task.ActualStatus = types.TaskFailed
+			task.FailureReason = "node_lost"
+			task.FinishedAt = timestamp
+		}
+		task.UpdatedAt = timestamp
+		s.tasks[taskID] = task
+	}

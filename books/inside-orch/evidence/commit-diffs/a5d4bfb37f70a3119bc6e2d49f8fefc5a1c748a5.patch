@@ -1,0 +1,1162 @@
+commit a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5
+Date: 2026-07-14T15:54:16+02:00
+Subject: Add node offline monitor
+
+
+---
+ cmd/orch-server/main.go                    |   7 ++
+ cmd/orch-server/main_test.go               |   2 +
+ deployments/examples/.env.local.example    |   2 +
+ docker-compose.yml                         |   2 +
+ docs/API.md                                |   5 +-
+ docs/OPERATIONS.md                         |   3 +-
+ docs/RELIABILITY.md                        |   8 +-
+ docs/STATE_MACHINES.md                     |   4 +-
+ internal/agent/agent_test.go               |  29 +++++
+ internal/cli/deploy.go                     |   2 +
+ internal/cli/deploy_test.go                |   4 +
+ internal/config/config.go                  |  10 ++
+ internal/config/config_test.go             |   2 +
+ internal/controlplane/controlplane.go      |  91 ++++++++++++++
+ internal/controlplane/offline_test.go      | 193 +++++++++++++++++++++++++++++
+ internal/events/events.go                  |   1 +
+ internal/node/monitor.go                   |  72 +++++++++++
+ internal/node/monitor_test.go              |  59 +++++++++
+ internal/scheduler/scheduler_test.go       |   8 ++
+ internal/store/postgres.go                 |  65 ++++++----
+ internal/store/postgres_test.go            |   6 +
+ migrations/000006_task_conditions.down.sql |   5 +
+ migrations/000006_task_conditions.up.sql   |   5 +
+ pkg/types/types.go                         |  46 ++++---
+ prompts/EXECUTION_TRACKER.md               |   8 +-
+ 25 files changed, 589 insertions(+), 50 deletions(-)
+
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 8f545f1..fcb7f5f 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -16,6 +16,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
++	"github.com/alekpopovic/orch/internal/node"
+ 	"github.com/alekpopovic/orch/internal/rollout"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ )
+@@ -53,6 +54,12 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 			logger.Warn("rollout controller stopped", "error", err)
+ 		}
+ 	}()
++	nodeMonitor := node.NewMonitor(controlPlane, logger, cfg.HeartbeatTimeout, cfg.NodeMonitorInterval)
++	go func() {
++		if err := nodeMonitor.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
++			logger.Warn("node monitor stopped", "error", err)
++		}
++	}()
+ 
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+diff --git a/cmd/orch-server/main_test.go b/cmd/orch-server/main_test.go
+index ddcd725..e89ac0f 100644
+--- a/cmd/orch-server/main_test.go
++++ b/cmd/orch-server/main_test.go
+@@ -19,6 +19,8 @@ func TestServerStartsAndStopsCleanly(t *testing.T) {
+ 			BootstrapToken:      "test-registration-token",
+ 			SecretKey:           "test-secret-key",
+ 			GracefulShutdownTTL: time.Second,
++			HeartbeatTimeout:    time.Second,
++			NodeMonitorInterval: 10 * time.Millisecond,
+ 		})
+ 	}()
+ 
+diff --git a/deployments/examples/.env.local.example b/deployments/examples/.env.local.example
+index 70059ab..1d48762 100644
+--- a/deployments/examples/.env.local.example
++++ b/deployments/examples/.env.local.example
+@@ -3,6 +3,8 @@ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+ ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
+ ORCH_SECRET_KEY=dev-secret-key-change-me
++ORCH_NODE_HEARTBEAT_TIMEOUT=30s
++ORCH_NODE_MONITOR_INTERVAL=5s
+ ORCH_NODE_NAME=local-node
+ ORCH_ADVERTISE_ADDRESS=127.0.0.1
+ ORCH_NODE_LABELS=role=worker
+diff --git a/docker-compose.yml b/docker-compose.yml
+index c00b750..776ce99 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -28,6 +28,8 @@ services:
+       ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
+       ORCH_JWT_SECRET: ""
+       ORCH_SECRET_KEY: ${ORCH_SECRET_KEY:-dev-secret-key-change-me}
++      ORCH_NODE_HEARTBEAT_TIMEOUT: ${ORCH_NODE_HEARTBEAT_TIMEOUT:-30s}
++      ORCH_NODE_MONITOR_INTERVAL: ${ORCH_NODE_MONITOR_INTERVAL:-5s}
+       ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
+     ports:
+       - "8080:8080"
+diff --git a/docs/API.md b/docs/API.md
+index 647eb8f..ce30c56 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -59,7 +59,7 @@ Node operations:
+ 
+ - `drain` marks a node draining, excluding it from new scheduler placements.
+ - `uncordon` marks a node ready.
+-- Abrupt node heartbeat expiry is not implemented yet.
++- Abrupt heartbeat expiry marks stale ready/draining nodes `offline` through the server node monitor.
+ 
+ ## Services
+ 
+@@ -73,6 +73,7 @@ curl -X POST http://localhost:8080/v1/services \
+       "name": "web",
+       "image": "nginx:1.27",
+       "image_pull_secret": "ghcr-prod",
++      "stateful": false,
+       "replicas": 2,
+       "env": {"APP_ENV": "local"},
+       "secret_refs": [{"name": "prod/database-url", "env": "DATABASE_URL"}],
+@@ -207,6 +208,8 @@ Valid task statuses include:
+ 
+ Lifecycle transition rules are documented in [STATE_MACHINES.md](STATE_MACHINES.md).
+ 
++Tasks can include `conditions`; `node_lost` means the server detected a stale node heartbeat. Stateless lost tasks are failed/removed so replacements can be created on ready nodes. Stateful lost tasks keep the condition for operator-directed recovery.
++
+ ## Agent Registration And Heartbeat
+ 
+ Register:
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index a27696c..470c404 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -32,7 +32,6 @@ Before production use:
+ - configure JWT auth;
+ - protect agent registration token or replace with mTLS;
+ - run agents only on trusted nodes with Docker access;
+-- add heartbeat expiry;
+ - add real leader election before multiple controllers;
+ - define backup and restore procedures for PostgreSQL.
+ 
+@@ -47,6 +46,8 @@ Server:
+ - `ORCH_USERS`: optional static user role map.
+ - `ORCH_LOG_LEVEL`: log level.
+ - `ORCH_SHUTDOWN_TIMEOUT`: graceful shutdown timeout.
++- `ORCH_NODE_HEARTBEAT_TIMEOUT`: stale heartbeat timeout before a node is marked offline, default `30s`.
++- `ORCH_NODE_MONITOR_INTERVAL`: node monitor check interval, default `5s`.
+ 
+ Agent:
+ 
+diff --git a/docs/RELIABILITY.md b/docs/RELIABILITY.md
+index 4a0065b..fd88a22 100644
+--- a/docs/RELIABILITY.md
++++ b/docs/RELIABILITY.md
+@@ -38,12 +38,16 @@ Docker calls fail while unavailable. The agent does not create replacement conta
+ 
+ ### Node Goes Offline
+ 
+-Graceful shutdown sends a heartbeat with `shutdown=true`, marking the node `offline`. Abrupt loss is not detected by heartbeat expiry yet.
++Graceful shutdown sends a heartbeat with `shutdown=true`, marking the node `offline`. Abrupt loss is detected by the server node monitor when `last_heartbeat_at` is older than `ORCH_NODE_HEARTBEAT_TIMEOUT` (default `30s`). The monitor runs every `ORCH_NODE_MONITOR_INTERVAL` (default `5s`).
++
++When a node times out, active tasks on that node receive a `node_lost` condition. Stateless services are conservatively replaced after the timeout by marking lost tasks failed/removed and reconciling desired replicas onto ready nodes. Stateful services are not automatically replaced yet; their lost tasks keep the `node_lost` condition for operator recovery.
+ 
+ ### Node Returns
+ 
+ Registration with the same stable node name reuses the node ID in the current control plane and marks offline/unknown nodes ready.
+ 
++If a partition heals after stateless replacement, the returned node gets no assignment for removed `node_lost` tasks. The agent then reconciles local Docker containers by orch labels and stops/removes stale unassigned containers, avoiding duplicate live replicas.
++
+ ### Manual `docker rm`
+ 
+ If a task container was manually removed, the agent confirms no managed container exists for the task and recreates it for the same task ID if desired state is still running.
+@@ -109,8 +113,8 @@ Every reliability-sensitive change should add tests for:
+ ## Roadmap
+ 
+ - Wire server to PostgreSQL.
+-- Add heartbeat expiry and node-failure rebalancing.
+ - Add real leader election.
++- Add stateful volume-aware replacement policies.
+ - Add automatic transaction retries for serialization conflicts and deadlocks.
+ - Add progress deadlines for rollouts.
+ - Add persistent event export.
+diff --git a/docs/STATE_MACHINES.md b/docs/STATE_MACHINES.md
+index 0548636..83e5d1e 100644
+--- a/docs/STATE_MACHINES.md
++++ b/docs/STATE_MACHINES.md
+@@ -77,6 +77,8 @@ Desired state transitions:
+ 
+ Retryable behavior is policy-driven. `unhealthy` may recover to `running` or `healthy`; `failed` is terminal for that task, but the reconciler may create a replacement task when the service restart policy allows it.
+ 
++Task conditions are additive metadata and do not change lifecycle validity. `node_lost` records that the server marked the owning node offline after heartbeat expiry. Stateless `node_lost` tasks are failed/removed for replacement; stateful `node_lost` tasks remain assigned for manual recovery.
++
+ ## Node Lifecycle
+ 
+ States:
+@@ -94,7 +96,7 @@ Allowed transitions:
+ - `offline -> ready`
+ - same-state updates are idempotent
+ 
+-`offline -> ready` is the documented recovery path for a returning node that re-registers or is explicitly uncordoned.
++`offline -> ready` is the documented recovery path for a returning node that re-registers, heartbeats after a healed partition, or is explicitly uncordoned.
+ 
+ ## Deployment And Rollout Lifecycle
+ 
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index ad0972e..18d686c 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -293,6 +293,35 @@ func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
+ 	}
+ }
+ 
++func TestReturnedNodeRemovesNodeLostUnassignedContainer(t *testing.T) {
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	lostTaskID := types.TaskID("00000000-0000-4000-8000-000000000004")
++	client := &fakeAgentClient{}
++	runtime := orchdocker.NewFakeRuntime()
++	runtime.AddContainer(orchdocker.ContainerStatus{
++		ID: "lost-container",
++		Labels: map[string]string{
++			orchdocker.ManagedLabel: "true",
++			orchdocker.TaskIDLabel:  string(lostTaskID),
++			orchdocker.NodeIDLabel:  string(nodeID),
++		},
++	})
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
++
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("reconcile returned node: %v", err)
++	}
++
++	wantRuntimeCalls := []string{"list", "stop:lost-container", "remove:lost-container"}
++	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
++	}
++	wantStatuses := []types.TaskStatus{types.TaskRemoved}
++	if !equalStatuses(client.statuses, wantStatuses) {
++		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
++	}
++}
++
+ func TestReconcileRemovesAssignedStoppedTask(t *testing.T) {
+ 	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
+ 	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index ea7f2dd..aaf9c90 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -15,6 +15,7 @@ type DeployFile struct {
+ 	Name            string            `yaml:"name"`
+ 	Image           string            `yaml:"image"`
+ 	ImagePullSecret string            `yaml:"imagePullSecret"`
++	Stateful        bool              `yaml:"stateful"`
+ 	Replicas        int               `yaml:"replicas"`
+ 	Ports           []DeployPort      `yaml:"ports"`
+ 	Env             DeployEnv         `yaml:"env"`
+@@ -110,6 +111,7 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 		Name:            strings.TrimSpace(deploy.Name),
+ 		Image:           strings.TrimSpace(deploy.Image),
+ 		ImagePullSecret: strings.TrimSpace(deploy.ImagePullSecret),
++		Stateful:        deploy.Stateful,
+ 		Replicas:        deploy.Replicas,
+ 		ResourceRequirements: types.ResourceRequirements{
+ 			Requests: requests,
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index 4e57634..e0b2996 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -11,6 +11,7 @@ func TestParseDeploy(t *testing.T) {
+ name: api
+ image: ghcr.io/example/api:1.0.0
+ imagePullSecret: ghcr-prod
++stateful: true
+ replicas: 3
+ ports:
+   - container: 8080
+@@ -53,6 +54,9 @@ placement:
+ 	if spec.ImagePullSecret != "ghcr-prod" {
+ 		t.Fatalf("unexpected image pull secret %q", spec.ImagePullSecret)
+ 	}
++	if !spec.Stateful {
++		t.Fatal("expected stateful service")
++	}
+ 	if spec.Replicas != 3 {
+ 		t.Fatalf("expected 3 replicas, got %d", spec.Replicas)
+ 	}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index fb527e5..c1b6a7d 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -17,6 +17,8 @@ type ServerConfig struct {
+ 	Users               string
+ 	SecretKey           string
+ 	GracefulShutdownTTL time.Duration
++	HeartbeatTimeout    time.Duration
++	NodeMonitorInterval time.Duration
+ }
+ 
+ type AgentConfig struct {
+@@ -42,6 +44,8 @@ func LoadServer() ServerConfig {
+ 		Users:               getenv("ORCH_USERS", ""),
+ 		SecretKey:           getenv("ORCH_SECRET_KEY", "dev-secret-key-change-me"),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
++		HeartbeatTimeout:    durationFromEnv("ORCH_NODE_HEARTBEAT_TIMEOUT", 30*time.Second),
++		NodeMonitorInterval: durationFromEnv("ORCH_NODE_MONITOR_INTERVAL", 5*time.Second),
+ 	}
+ }
+ 
+@@ -116,6 +120,12 @@ func (cfg ServerConfig) Validate() error {
+ 	if cfg.GracefulShutdownTTL <= 0 {
+ 		return fmt.Errorf("shutdown timeout must be positive")
+ 	}
++	if cfg.HeartbeatTimeout <= 0 {
++		return fmt.Errorf("node heartbeat timeout must be positive")
++	}
++	if cfg.NodeMonitorInterval <= 0 {
++		return fmt.Errorf("node monitor interval must be positive")
++	}
+ 	if strings.TrimSpace(cfg.SecretKey) == "" {
+ 		return fmt.Errorf("secret encryption key is required")
+ 	}
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index ccc3537..9c18700 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -6,6 +6,8 @@ func TestLoadServerDefaultsAreValid(t *testing.T) {
+ 	t.Setenv("ORCH_SERVER_ADDR", "")
+ 	t.Setenv("DATABASE_URL", "")
+ 	t.Setenv("ORCH_SHUTDOWN_TIMEOUT", "")
++	t.Setenv("ORCH_NODE_HEARTBEAT_TIMEOUT", "")
++	t.Setenv("ORCH_NODE_MONITOR_INTERVAL", "")
+ 
+ 	cfg := LoadServer()
+ 	if err := cfg.Validate(); err != nil {
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 80ad293..4cb2d30 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -19,6 +19,7 @@ import (
+ type Service interface {
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
++	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
+ 	SetAgentCredential(ctx context.Context, nodeID types.NodeID, tokenHash string, expiresAt time.Time) (types.Node, error)
+ 	RevokeNode(ctx context.Context, nodeID types.NodeID) (types.Node, error)
+ 	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]AgentTask, error)
+@@ -270,10 +271,18 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 			return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 		}
+ 		node.Status = types.NodeOffline
++	} else if node.Status == types.NodeOffline {
++		if err := types.ValidateNodeTransition(node.Status, types.NodeReady); err != nil {
++			return NodeCommand{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++		}
++		node.Status = types.NodeReady
+ 	}
+ 	node.LastHeartbeatAt = now
+ 	node.UpdatedAt = now
+ 	s.nodes[node.ID] = node
++	if node.Status == types.NodeReady {
++		s.reconcileAllServicesLocked(now)
++	}
+ 
+ 	eventType := events.TypeNodeHeartbeat
+ 	message := "node heartbeat"
+@@ -285,6 +294,52 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ }
+ 
++func (s *MemoryService) MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	if timeout <= 0 {
++		return nil, fmt.Errorf("%w: heartbeat timeout must be positive", store.ErrInvalidState)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	now := s.now()
++	cutoff := now.Add(-timeout)
++	offline := make([]types.Node, 0)
++	for id, node := range s.nodes {
++		if node.Status != types.NodeReady && node.Status != types.NodeDraining {
++			continue
++		}
++		if node.LastHeartbeatAt.IsZero() || !node.LastHeartbeatAt.Before(cutoff) {
++			continue
++		}
++		if err := types.ValidateNodeTransition(node.Status, types.NodeOffline); err != nil {
++			return nil, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++		}
++		node.Status = types.NodeOffline
++		node.UpdatedAt = now
++		s.nodes[id] = node
++		s.markNodeLostTasksLocked(node.ID, now)
++		s.appendEventLocked(events.TypeNodeOfflineDetected, types.EventWarning, "controlplane", "node heartbeat timed out", "node", string(node.ID), now)
++		offline = append(offline, node)
++	}
++	if len(offline) > 0 {
++		s.reconcileAllServicesLocked(now)
++		slices.SortFunc(offline, func(a, b types.Node) int {
++			if a.ID < b.ID {
++				return -1
++			}
++			if a.ID > b.ID {
++				return 1
++			}
++			return 0
++		})
++	}
++	return offline, nil
++}
++
+ func (s *MemoryService) SetAgentCredential(ctx context.Context, nodeID types.NodeID, tokenHash string, expiresAt time.Time) (types.Node, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Node{}, err
+@@ -1344,6 +1399,42 @@ func (s *MemoryService) setNodeStatus(ctx context.Context, id types.NodeID, stat
+ 	return node, nil
+ }
+ 
++func (s *MemoryService) markNodeLostTasksLocked(nodeID types.NodeID, timestamp time.Time) {
++	for taskID, task := range s.tasks {
++		if task.NodeID != nodeID || !types.IsActiveTask(task) {
++			continue
++		}
++		task.Conditions = upsertTaskCondition(task.Conditions, types.TaskCondition{
++			Type:               types.TaskConditionNodeLost,
++			Message:            "node heartbeat timed out",
++			LastTransitionTime: timestamp,
++		})
++		service := s.services[task.ServiceID]
++		if !service.Spec.Stateful {
++			task.DesiredStatus = types.TaskRemoved
++			task.ActualStatus = types.TaskFailed
++			task.FailureReason = "node_lost"
++			task.FinishedAt = timestamp
++		}
++		task.UpdatedAt = timestamp
++		s.tasks[taskID] = task
++	}
++}
++
++func upsertTaskCondition(conditions []types.TaskCondition, condition types.TaskCondition) []types.TaskCondition {
++	condition.LastTransitionTime = condition.LastTransitionTime.UTC()
++	for i, existing := range conditions {
++		if existing.Type == condition.Type {
++			if existing.Message == condition.Message {
++				return conditions
++			}
++			conditions[i] = condition
++			return conditions
++		}
++	}
++	return append(conditions, condition)
++}
++
+ func (s *MemoryService) appendEventLocked(eventType string, severity types.EventSeverity, source string, message string, objectType string, objectID string, timestamp time.Time) {
+ 	s.events = append(s.events, types.Event{
+ 		ID:                types.EventID(newUUID()),
+diff --git a/internal/controlplane/offline_test.go b/internal/controlplane/offline_test.go
+new file mode 100644
+index 0000000..f1e9a73
+--- /dev/null
++++ b/internal/controlplane/offline_test.go
+@@ -0,0 +1,193 @@
++package controlplane
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestMarkStaleNodesOfflineReplacesStatelessTaskOnce(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	base := time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)
++	current := base
++	service.now = func() time.Time { return current }
++
++	nodeA := registerOfflineTestNode(t, ctx, service, "node-a")
++	created := createOfflineTestService(t, ctx, service, "api", false)
++	oldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)
++
++	current = base.Add(25 * time.Second)
++	nodeB := registerOfflineTestNode(t, ctx, service, "node-b")
++
++	current = base.Add(40 * time.Second)
++	offline, err := service.MarkStaleNodesOffline(ctx, 30*time.Second)
++	if err != nil {
++		t.Fatalf("mark stale nodes offline: %v", err)
++	}
++	if len(offline) != 1 || offline[0].ID != nodeA.Node.ID || offline[0].Status != types.NodeOffline {
++		t.Fatalf("unexpected offline nodes %#v", offline)
++	}
++
++	lost, err := service.GetTask(ctx, oldTask.ID)
++	if err != nil {
++		t.Fatalf("get lost task: %v", err)
++	}
++	if lost.DesiredStatus != types.TaskRemoved || lost.ActualStatus != types.TaskFailed || lost.FailureReason != "node_lost" {
++		t.Fatalf("expected lost task failed/removed, got %#v", lost)
++	}
++	if !hasTaskCondition(lost, types.TaskConditionNodeLost) {
++		t.Fatalf("expected node_lost condition, got %#v", lost.Conditions)
++	}
++
++	replacement := singleTaskOnNode(t, ctx, service, created.ID, nodeB.Node.ID)
++	if replacement.ID == oldTask.ID {
++		t.Fatalf("expected replacement on node-b, got old task")
++	}
++
++	before := taskCountForService(t, ctx, service, created.ID)
++	offline, err = service.MarkStaleNodesOffline(ctx, 30*time.Second)
++	if err != nil {
++		t.Fatalf("mark stale nodes offline again: %v", err)
++	}
++	if len(offline) != 0 {
++		t.Fatalf("expected no newly offline nodes, got %#v", offline)
++	}
++	after := taskCountForService(t, ctx, service, created.ID)
++	if after != before {
++		t.Fatalf("expected no duplicate replacement, before=%d after=%d", before, after)
++	}
++
++	items, err := service.ListEvents(ctx, events.Filter{NodeID: nodeA.Node.ID, Type: events.TypeNodeOfflineDetected})
++	if err != nil {
++		t.Fatalf("list events: %v", err)
++	}
++	if len(items) != 1 {
++		t.Fatalf("expected one offline event, got %#v", items)
++	}
++}
++
++func TestMarkStaleNodesOfflineDoesNotReplaceStatefulTask(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	base := time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)
++	current := base
++	service.now = func() time.Time { return current }
++
++	nodeA := registerOfflineTestNode(t, ctx, service, "node-a")
++	created := createOfflineTestService(t, ctx, service, "db", true)
++	oldTask := singleTaskOnNode(t, ctx, service, created.ID, nodeA.Node.ID)
++
++	current = base.Add(25 * time.Second)
++	nodeB := registerOfflineTestNode(t, ctx, service, "node-b")
++
++	current = base.Add(40 * time.Second)
++	if _, err := service.MarkStaleNodesOffline(ctx, 30*time.Second); err != nil {
++		t.Fatalf("mark stale nodes offline: %v", err)
++	}
++
++	lost, err := service.GetTask(ctx, oldTask.ID)
++	if err != nil {
++		t.Fatalf("get lost task: %v", err)
++	}
++	if lost.DesiredStatus != types.TaskRunning || lost.ActualStatus != types.TaskAssigned {
++		t.Fatalf("expected stateful task to stay assigned for manual recovery, got %#v", lost)
++	}
++	if !hasTaskCondition(lost, types.TaskConditionNodeLost) {
++		t.Fatalf("expected node_lost condition, got %#v", lost.Conditions)
++	}
++	tasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: created.ID, NodeID: nodeB.Node.ID})
++	if err != nil {
++		t.Fatalf("list replacement tasks: %v", err)
++	}
++	for _, task := range tasks {
++		if types.IsActiveTask(task) {
++			t.Fatalf("expected no stateful replacement on node-b, got %#v", tasks)
++		}
++	}
++}
++
++func TestHeartbeatReturnsOfflineNodeReady(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	base := time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)
++	current := base
++	service.now = func() time.Time { return current }
++
++	nodeA := registerOfflineTestNode(t, ctx, service, "node-a")
++	created := createOfflineTestService(t, ctx, service, "api", false)
++	current = base.Add(25 * time.Second)
++	registerOfflineTestNode(t, ctx, service, "node-b")
++
++	current = base.Add(40 * time.Second)
++	if _, err := service.MarkStaleNodesOffline(ctx, 30*time.Second); err != nil {
++		t.Fatalf("mark stale nodes offline: %v", err)
++	}
++	current = base.Add(41 * time.Second)
++	command, err := service.HeartbeatNode(ctx, NodeHeartbeat{NodeID: nodeA.Node.ID})
++	if err != nil {
++		t.Fatalf("heartbeat returned node: %v", err)
++	}
++	if command.Node.Status != types.NodeReady {
++		t.Fatalf("expected returned node ready, got %q", command.Node.Status)
++	}
++	assigned, err := service.ListAssignedTasks(ctx, nodeA.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	for _, task := range assigned {
++		if task.Task.ServiceID == created.ID {
++			t.Fatalf("expected removed node_lost task not to be reassigned to returned node, got %#v", assigned)
++		}
++	}
++}
++
++func registerOfflineTestNode(t *testing.T, ctx context.Context, service *MemoryService, name string) NodeCommand {
++	t.Helper()
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             name,
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node %s: %v", name, err)
++	}
++	return registered
++}
++
++func createOfflineTestService(t *testing.T, ctx context.Context, service *MemoryService, name string, stateful bool) types.Service {
++	t.Helper()
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 name,
++		Image:                "nginx:1.27",
++		Stateful:             stateful,
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return created
++}
++
++func hasTaskCondition(task types.Task, conditionType types.TaskConditionType) bool {
++	for _, condition := range task.Conditions {
++		if condition.Type == conditionType {
++			return true
++		}
++	}
++	return false
++}
++
++func taskCountForService(t *testing.T, ctx context.Context, service *MemoryService, serviceID types.ServiceID) int {
++	t.Helper()
++	tasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: serviceID})
++	if err != nil {
++		t.Fatalf("list tasks: %v", err)
++	}
++	return len(tasks)
++}
+diff --git a/internal/events/events.go b/internal/events/events.go
+index d7d0a03..f464912 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -13,6 +13,7 @@ const (
+ 	TypeNodeHeartbeat          = "node.heartbeat"
+ 	TypeNodeShutdown           = "node.shutdown"
+ 	TypeNodeStatusChanged      = "node.status.changed"
++	TypeNodeOfflineDetected    = "node.offline.detected"
+ 	TypeNodeDrainPending       = "node.drain.pending"
+ 	TypeServiceCreated         = "service.created"
+ 	TypeServiceUpdated         = "service.updated"
+diff --git a/internal/node/monitor.go b/internal/node/monitor.go
+new file mode 100644
+index 0000000..12c32d0
+--- /dev/null
++++ b/internal/node/monitor.go
+@@ -0,0 +1,72 @@
++package node
++
++import (
++	"context"
++	"fmt"
++	"log/slog"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type OfflineMarker interface {
++	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
++}
++
++type Monitor struct {
++	controlPlane OfflineMarker
++	logger       *slog.Logger
++	timeout      time.Duration
++	interval     time.Duration
++}
++
++func NewMonitor(controlPlane OfflineMarker, logger *slog.Logger, timeout time.Duration, interval time.Duration) *Monitor {
++	if logger == nil {
++		logger = slog.Default()
++	}
++	return &Monitor{
++		controlPlane: controlPlane,
++		logger:       logger,
++		timeout:      timeout,
++		interval:     interval,
++	}
++}
++
++func (m *Monitor) Run(ctx context.Context) error {
++	if _, err := m.CheckOnce(ctx); err != nil {
++		return err
++	}
++	if m.interval <= 0 {
++		return fmt.Errorf("node monitor interval must be positive")
++	}
++
++	ticker := time.NewTicker(m.interval)
++	defer ticker.Stop()
++	for {
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++			if _, err := m.CheckOnce(ctx); err != nil {
++				m.logger.Warn("node monitor check failed", "error", err)
++			}
++		}
++	}
++}
++
++func (m *Monitor) CheckOnce(ctx context.Context) ([]types.Node, error) {
++	if m.controlPlane == nil {
++		return nil, fmt.Errorf("node monitor control plane is required")
++	}
++	if m.timeout <= 0 {
++		return nil, fmt.Errorf("node heartbeat timeout must be positive")
++	}
++	offline, err := m.controlPlane.MarkStaleNodesOffline(ctx, m.timeout)
++	if err != nil {
++		return nil, err
++	}
++	for _, node := range offline {
++		m.logger.Warn("node marked offline after stale heartbeat", "node_id", node.ID, "last_heartbeat_at", node.LastHeartbeatAt)
++	}
++	return offline, nil
++}
+diff --git a/internal/node/monitor_test.go b/internal/node/monitor_test.go
+new file mode 100644
+index 0000000..6dde5da
+--- /dev/null
++++ b/internal/node/monitor_test.go
+@@ -0,0 +1,59 @@
++package node
++
++import (
++	"context"
++	"errors"
++	"io"
++	"log/slog"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestMonitorCheckOnceMarksStaleNodesOffline(t *testing.T) {
++	timeout := 30 * time.Second
++	marker := &fakeOfflineMarker{
++		nodes: []types.Node{{ID: "node-a", Status: types.NodeOffline}},
++	}
++	monitor := NewMonitor(marker, slog.New(slog.NewTextHandler(io.Discard, nil)), timeout, time.Second)
++
++	offline, err := monitor.CheckOnce(context.Background())
++	if err != nil {
++		t.Fatalf("check once: %v", err)
++	}
++	if marker.timeout != timeout {
++		t.Fatalf("expected timeout %s, got %s", timeout, marker.timeout)
++	}
++	if len(offline) != 1 || offline[0].ID != "node-a" {
++		t.Fatalf("unexpected offline nodes %#v", offline)
++	}
++}
++
++func TestMonitorCheckOnceRequiresControlPlane(t *testing.T) {
++	monitor := NewMonitor(nil, slog.New(slog.NewTextHandler(io.Discard, nil)), 30*time.Second, time.Second)
++
++	if _, err := monitor.CheckOnce(context.Background()); err == nil {
++		t.Fatal("expected missing control plane error")
++	}
++}
++
++func TestMonitorRunReturnsInitialCheckError(t *testing.T) {
++	expected := errors.New("marker failed")
++	monitor := NewMonitor(&fakeOfflineMarker{err: expected}, slog.New(slog.NewTextHandler(io.Discard, nil)), 30*time.Second, time.Second)
++
++	if err := monitor.Run(context.Background()); !errors.Is(err, expected) {
++		t.Fatalf("expected %v, got %v", expected, err)
++	}
++}
++
++type fakeOfflineMarker struct {
++	timeout time.Duration
++	nodes   []types.Node
++	err     error
++}
++
++func (f *fakeOfflineMarker) MarkStaleNodesOffline(_ context.Context, timeout time.Duration) ([]types.Node, error) {
++	f.timeout = timeout
++	return f.nodes, f.err
++}
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index c9303f6..4ba17e9 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -117,6 +117,14 @@ func TestPlanAssignments(t *testing.T) {
+ 			},
+ 			services: map[types.ServiceID]types.Service{"svc": service},
+ 		},
++		{
++			name:  "node offline",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeOffline, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++		},
+ 		{
+ 			name:  "prefer more free memory",
+ 			tasks: []types.Task{pendingTask("task-a", "svc")},
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index e6a309a..dbcc617 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -322,7 +322,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $3
+-		RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
++		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+@@ -523,14 +523,18 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	if err != nil {
+ 		return types.Task{}, err
+ 	}
++	conditions, err := jsonBytes(defaultSlice(task.Conditions))
++	if err != nil {
++		return types.Task{}, err
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+ 			service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, restart_count, failure_reason, started_at, finished_at
++			image, version, ports, conditions, restart_count, failure_reason, started_at, finished_at
+ 		)
+-		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, $9, nullif($10, ''), $11, $12)
++		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, $9, $10, nullif($11, ''), $12, $13)
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(task.ServiceID),
+ 		string(task.NodeID),
+ 		task.ContainerID,
+@@ -539,6 +543,7 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 		task.Image,
+ 		task.Version,
+ 		ports,
++		conditions,
+ 		task.RestartCount,
+ 		task.FailureReason,
+ 		nilTime(task.StartedAt),
+@@ -597,7 +602,7 @@ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $5 AND actual_status = 'pending'
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(nodeID),
+ 		string(types.TaskAssigned),
+@@ -632,7 +637,7 @@ func (s *postgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3 AND desired_status <> $2
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(types.TaskStopped),
+ 		expectedUpdatedAt.UTC(),
+@@ -675,7 +680,7 @@ func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $6
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(desired),
+ 		string(actual),
+@@ -902,16 +907,17 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+-			name, image, image_pull_secret, replicas, env, secret_refs, ports,
++			name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+-		RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
++		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
+ 		spec.ImagePullSecret,
++		spec.Stateful,
+ 		spec.Replicas,
+ 		env,
+ 		secretRefs,
+@@ -939,26 +945,28 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 			SET name = $2,
+ 				image = $3,
+ 				image_pull_secret = $4,
+-				replicas = $5,
+-				env = $6,
+-				secret_refs = $7,
+-				ports = $8,
+-				resource_requirements = $9,
+-				healthcheck = $10,
+-				restart_policy = $11,
+-				placement_constraints = $12,
+-				routes = $14,
++				stateful = $5,
++				replicas = $6,
++				env = $7,
++				secret_refs = $8,
++				ports = $9,
++				resource_requirements = $10,
++				healthcheck = $11,
++				restart_policy = $12,
++				placement_constraints = $13,
++				routes = $15,
+ 				deployment_version = deployment_version + 1,
+ 				updated_at = timezone('utc', now()),
+ 				version = version + 1
+-			WHERE id = $1 AND updated_at = $13
+-			RETURNING id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
++			WHERE id = $1 AND updated_at = $14
++			RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 				resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+ 		spec.Image,
+ 		spec.ImagePullSecret,
++		spec.Stateful,
+ 		spec.Replicas,
+ 		env,
+ 		secretRefs,
+@@ -996,14 +1004,14 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ }
+ 
+ func serviceSelectSQL() string {
+-	return `SELECT id, name, image, image_pull_secret, replicas, env, secret_refs, ports,
++	return `SELECT id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+ 		resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+ func taskSelectSQL() string {
+ 	return `SELECT id, service_id, node_id, container_id, desired_status, actual_status,
+-		image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
++		image, version, ports, conditions, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
+ }
+ 
+ func deploymentSelectSQL() string {
+@@ -1067,6 +1075,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&service.Spec.Name,
+ 		&service.Spec.Image,
+ 		&service.Spec.ImagePullSecret,
++		&service.Spec.Stateful,
+ 		&service.Spec.Replicas,
+ 		&env,
+ 		&secretRefs,
+@@ -1100,7 +1109,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	var task types.Task
+ 	var id, serviceID string
+ 	var nodeID, containerID, failureReason *string
+-	var ports []byte
++	var ports, conditions []byte
+ 	var startedAt, finishedAt *time.Time
+ 	err := row.Scan(
+ 		&id,
+@@ -1112,6 +1121,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 		&task.Image,
+ 		&task.Version,
+ 		&ports,
++		&conditions,
+ 		&task.RestartCount,
+ 		&failureReason,
+ 		&task.CreatedAt,
+@@ -1135,7 +1145,12 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	}
+ 	if len(ports) > 0 {
+ 		if err := json.Unmarshal(ports, &task.Ports); err != nil {
+-			return types.Task{}, err
++			return types.Task{}, fmt.Errorf("decode task ports: %w", err)
++		}
++	}
++	if len(conditions) > 0 {
++		if err := json.Unmarshal(conditions, &task.Conditions); err != nil {
++			return types.Task{}, fmt.Errorf("decode task conditions: %w", err)
+ 		}
+ 	}
+ 	task.CreatedAt = task.CreatedAt.UTC()
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 4f11c3d..c4a2714 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -118,6 +118,9 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatalf("create service: %v", err)
+ 	}
++	if !service.Spec.Stateful {
++		t.Fatalf("expected stateful service to round trip")
++	}
+ 	if _, err := store.CreateService(ctx, serviceSpecFixture()); !errors.Is(err, ErrDuplicate) {
+ 		t.Fatalf("expected duplicate service name, got %v", err)
+ 	}
+@@ -346,6 +349,7 @@ func serviceSpecFixture() types.ServiceSpec {
+ 	return types.ServiceSpec{
+ 		Name:     "web",
+ 		Image:    "nginx:1.27",
++		Stateful: true,
+ 		Replicas: 2,
+ 		Env: map[string]string{
+ 			"APP_ENV": "test",
+@@ -383,6 +387,7 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
+ 
+ 	for _, file := range []string{
++		"000006_task_conditions.down.sql",
+ 		"000005_registry_credentials.down.sql",
+ 		"000004_secrets.down.sql",
+ 		"000003_service_routes.down.sql",
+@@ -393,6 +398,7 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 		"000003_service_routes.up.sql",
+ 		"000004_secrets.up.sql",
+ 		"000005_registry_credentials.up.sql",
++		"000006_task_conditions.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+diff --git a/migrations/000006_task_conditions.down.sql b/migrations/000006_task_conditions.down.sql
+new file mode 100644
+index 0000000..ebac8e6
+--- /dev/null
++++ b/migrations/000006_task_conditions.down.sql
+@@ -0,0 +1,5 @@
++ALTER TABLE IF EXISTS tasks
++    DROP COLUMN IF EXISTS conditions;
++
++ALTER TABLE IF EXISTS services
++    DROP COLUMN IF EXISTS stateful;
+diff --git a/migrations/000006_task_conditions.up.sql b/migrations/000006_task_conditions.up.sql
+new file mode 100644
+index 0000000..a066818
+--- /dev/null
++++ b/migrations/000006_task_conditions.up.sql
+@@ -0,0 +1,5 @@
++ALTER TABLE services
++    ADD COLUMN stateful BOOLEAN NOT NULL DEFAULT false;
++
++ALTER TABLE tasks
++    ADD COLUMN conditions JSONB NOT NULL DEFAULT '[]'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index c3eb5de..11ce1d5 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -153,6 +153,7 @@ type ServiceSpec struct {
+ 	Name                 string                `json:"name"`
+ 	Image                string                `json:"image"`
+ 	ImagePullSecret      string                `json:"image_pull_secret,omitempty"`
++	Stateful             bool                  `json:"stateful,omitempty"`
+ 	Replicas             int                   `json:"replicas"`
+ 	Env                  map[string]string     `json:"env,omitempty"`
+ 	SecretRefs           []SecretRef           `json:"secret_refs,omitempty"`
+@@ -523,22 +524,35 @@ const (
+ )
+ 
+ type Task struct {
+-	ID            TaskID     `json:"id"`
+-	ServiceID     ServiceID  `json:"service_id"`
+-	NodeID        NodeID     `json:"node_id,omitempty"`
+-	ContainerID   string     `json:"container_id,omitempty"`
+-	DesiredStatus TaskStatus `json:"desired_status"`
+-	ActualStatus  TaskStatus `json:"actual_status"`
+-	Image         string     `json:"image"`
+-	Version       int64      `json:"version"`
+-	Ports         []Port     `json:"ports,omitempty"`
+-	RestartCount  int        `json:"restart_count"`
+-	FailureReason string     `json:"failure_reason,omitempty"`
+-	CreatedAt     time.Time  `json:"created_at"`
+-	UpdatedAt     time.Time  `json:"updated_at"`
+-	StartedAt     time.Time  `json:"started_at,omitempty"`
+-	FinishedAt    time.Time  `json:"finished_at,omitempty"`
+-}
++	ID            TaskID          `json:"id"`
++	ServiceID     ServiceID       `json:"service_id"`
++	NodeID        NodeID          `json:"node_id,omitempty"`
++	ContainerID   string          `json:"container_id,omitempty"`
++	DesiredStatus TaskStatus      `json:"desired_status"`
++	ActualStatus  TaskStatus      `json:"actual_status"`
++	Image         string          `json:"image"`
++	Version       int64           `json:"version"`
++	Ports         []Port          `json:"ports,omitempty"`
++	RestartCount  int             `json:"restart_count"`
++	FailureReason string          `json:"failure_reason,omitempty"`
++	Conditions    []TaskCondition `json:"conditions,omitempty"`
++	CreatedAt     time.Time       `json:"created_at"`
++	UpdatedAt     time.Time       `json:"updated_at"`
++	StartedAt     time.Time       `json:"started_at,omitempty"`
++	FinishedAt    time.Time       `json:"finished_at,omitempty"`
++}
++
++type TaskCondition struct {
++	Type               TaskConditionType `json:"type"`
++	Message            string            `json:"message,omitempty"`
++	LastTransitionTime time.Time         `json:"last_transition_time"`
++}
++
++type TaskConditionType string
++
++const (
++	TaskConditionNodeLost TaskConditionType = "node_lost"
++)
+ 
+ type TaskStatus string
+ 
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 8a870a9..e1c6e1e 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `39-node-drain-and-reschedule.md`
+-- Last matching commit: `same commit: Add node drain rescheduling`
+-- Completed prompt range: `00` through `39`
+-- Next prompt to execute: `40-node-offline-detection-and-recovery.md`
++- Last executed prompt: `40-node-offline-detection-and-recovery.md`
++- Last matching commit: `same commit: Add node offline monitor`
++- Completed prompt range: `00` through `40`
++- Next prompt to execute: `41-manual-docker-drift-reconciliation.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

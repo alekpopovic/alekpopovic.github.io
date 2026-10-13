@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "scope": "Only exact IDs captured by actual owned book Docker flow were inspected; absent after deferred cleanup",
+  "at_utc": "2026-10-13T01:14:25.309688+00:00",
+  "checks": [
+    {
+      "container_id": "3d5f67177718f7c8ddfbdb20a8b697a90e6bffffe1ad6d9484108ba7f76773b5",
+      "command": [
+        "docker",
+        "inspect",
+        "3d5f67177718f7c8ddfbdb20a8b697a90e6bffffe1ad6d9484108ba7f76773b5"
+      ],
+      "exit_code": 1,
+      "absent": true,
+      "stderr": "error: no such object: 3d5f67177718f7c8ddfbdb20a8b697a90e6bffffe1ad6d9484108ba7f76773b5\n"
+    },
+    {
+      "container_id": "9ea67e55ef60097ad361551eb40bdeb4981cb83e9eed010ee5eb1cd11f0a98e1",
+      "command": [
+        "docker",
+        "inspect",
+        "9ea67e55ef60097ad361551eb40bdeb4981cb83e9eed010ee5eb1cd11f0a98e1"
+      ],
+      "exit_code": 1,
+      "absent": true,
+      "stderr": "error: no such object: 9ea67e55ef60097ad361551eb40bdeb4981cb83e9eed010ee5eb1cd11f0a98e1\n"
+    },
+    {
+      "container_id": "f2f78b9a4f7cd448aa03dd7b466ae0734de1fea0f9664c04e686307278ea75c6",
+      "command": [
+        "docker",
+        "inspect",
+        "f2f78b9a4f7cd448aa03dd7b466ae0734de1fea0f9664c04e686307278ea75c6"
+      ],
+      "exit_code": 1,
+      "absent": true,
+      "stderr": "error: no such object: f2f78b9a4f7cd448aa03dd7b466ae0734de1fea0f9664c04e686307278ea75c6\n"
+    }
+  ]
+}

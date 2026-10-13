@@ -1,0 +1,318 @@
+commit 11e5172330871d16c0292fad9aedfd1a5eb3e45c
+Date: 2026-07-14T18:58:23+02:00
+Subject: ref
+
+
+---
+ RELEASE_NOTES.md   |  57 +++++++++++++++++++++++++++
+ compose.yaml       | 114 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ docker-compose.yml | 114 -----------------------------------------------------
+ 3 files changed, 171 insertions(+), 114 deletions(-)
+
+diff --git a/RELEASE_NOTES.md b/RELEASE_NOTES.md
+index e888584..4c8c95b 100644
+--- a/RELEASE_NOTES.md
++++ b/RELEASE_NOTES.md
+@@ -1,5 +1,62 @@
+ # Release Notes
+ 
++## v0.1.0 MVP
++
++This is the first MVP release candidate for `orch`, a Go-based Docker container orchestrator.
++
++### What Works
++
++- `orch-server` starts with structured logs, health endpoints, optional JWT auth, agent auth, request IDs, JSON errors, and Prometheus metrics.
++- `orch-agent` registers with the server, heartbeats, receives short-lived credentials, polls assigned tasks, and reconciles Docker containers.
++- `orch` CLI can deploy services from YAML, list/inspect services and nodes, scale services, view tasks, stream logs, list events, start rollouts, request rollback, and delete services.
++- Services model image, replicas, env, ports, resource requests/limits, healthchecks, restart policy, placement constraints, and deployment version.
++- Task lifecycle supports pending, assigned, pulling, created, running, healthy, unhealthy, failed, stopped, and removed states.
++- Scheduler and reconciler packages are deterministic and unit-tested.
++- Agent Docker execution is idempotent by task/container labels and handles process restart, missing containers, non-zero exits, pull failures, and create/start errors.
++- Soft service deletion marks services deleting, stops/removes task containers, and finalizes after tasks report removed.
++- Logs are proxied from the owning agent without unbounded buffering.
++- Events are queryable through the API and CLI for the active control-plane implementation.
++- PostgreSQL migrations and store implementation exist for nodes, services, service versions, tasks, deployments, and events.
++- Local Docker Compose environment starts PostgreSQL, server, and one agent.
++
++### Important MVP Limits
++
++- The default `orch-server` binary still uses the in-memory control plane. PostgreSQL-backed server state is not wired yet.
++- Server process restart loses in-memory services, tasks, deployments, events, node credentials, and node status.
++- No heartbeat-expiry controller marks abruptly lost nodes offline yet.
++- No HA leader election implementation yet.
++- Networking is Docker host/port based; no overlay networking or service discovery.
++- Agent authentication is token based; mTLS is roadmap.
++- Secrets are represented as references only.
++- Rollouts do not yet support manual pause/resume, progress deadlines, or automatic rollback.
++
++### Verification For This Candidate
++
++- Full Go test suite: `go test ./...`
++- Build: `go build ./...`
++- Vet: `go vet ./...`
++- Lint target: `make lint`
++- MVP fake-runtime E2E covers agent registration, service deploy, task creation/assignment, task running, log streaming, events, scale up/down, and delete cleanup.
++
++### Local Demo
++
++```sh
++./scripts/dev-up.sh
++./scripts/migrate-up.sh
++export ORCH_SERVER_URL=http://localhost:8080
++./scripts/demo-deploy.sh
++go run ./cmd/orch service ps http-api
++go run ./cmd/orch logs http-api --tail 100
++go run ./cmd/orch events --service http-api
++go run ./cmd/orch scale http-api --replicas 2
++go run ./cmd/orch delete http-api
++./scripts/dev-down.sh
++```
++
++### Upgrade Notes
++
++This is the first release; no upgrade path is required. For future releases, run migrations before deploying binaries that depend on schema changes.
++
+ ## v0.2.0 Production Hardening
+ 
+ `orch` v0.2.0 focuses on production hardening around observability, security, backup/restore, deployment manifests, autoscaling foundations, HA controller coordination, and reliability testing.
+diff --git a/compose.yaml b/compose.yaml
+new file mode 100644
+index 0000000..8004cc2
+--- /dev/null
++++ b/compose.yaml
+@@ -0,0 +1,114 @@
++services:
++  postgres:
++    image: postgres:16-alpine
++    environment:
++      POSTGRES_DB: orch
++      POSTGRES_USER: orch
++      POSTGRES_PASSWORD: orch
++    ports:
++      - "5432:5432"
++    volumes:
++      - postgres-data:/var/lib/postgresql/data
++    healthcheck:
++      test: ["CMD-SHELL", "pg_isready -U orch -d orch"]
++      interval: 5s
++      timeout: 3s
++      retries: 10
++
++  orch-server:
++    build:
++      context: .
++      dockerfile: deployments/examples/Dockerfile
++      args:
++        TARGET: orch-server
++    profiles: ["local-orch"]
++    environment:
++      DATABASE_URL: postgres://orch:orch@postgres:5432/orch?sslmode=disable
++      ORCH_SERVER_ADDR: :8080
++      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
++      ORCH_JWT_SECRET: ""
++      ORCH_SECRET_KEY: ${ORCH_SECRET_KEY:-dev-secret-key-change-me}
++      ORCH_NODE_HEARTBEAT_TIMEOUT: ${ORCH_NODE_HEARTBEAT_TIMEOUT:-30s}
++      ORCH_NODE_MONITOR_INTERVAL: ${ORCH_NODE_MONITOR_INTERVAL:-5s}
++      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
++    ports:
++      - "8080:8080"
++    depends_on:
++      postgres:
++        condition: service_healthy
++
++  orch-agent:
++    build:
++      context: .
++      dockerfile: deployments/examples/Dockerfile
++      args:
++        TARGET: orch-agent
++    profiles: ["local-orch"]
++    environment:
++      ORCH_SERVER_URL: http://orch-server:8080
++      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
++      ORCH_NODE_NAME: ${ORCH_NODE_NAME:-local-agent-1}
++      ORCH_AGENT_ADDR: :8081
++      ORCH_ADVERTISE_ADDRESS: http://orch-agent:8081
++      ORCH_NODE_LABELS: ${ORCH_NODE_LABELS:-role=worker}
++      ORCH_DOCKER_SOCKET: ${ORCH_DOCKER_SOCKET:-/var/run/docker.sock}
++      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
++      ORCH_AGENT_HEARTBEAT_INTERVAL: ${ORCH_AGENT_HEARTBEAT_INTERVAL:-5s}
++    ports:
++      - "8081:8081"
++    volumes:
++      - /var/run/docker.sock:/var/run/docker.sock
++    depends_on:
++      - orch-server
++
++  traefik:
++    image: traefik:v3.1
++    profiles: ["traefik"]
++    command:
++      - --api.insecure=true
++      - --entrypoints.web.address=:80
++      - --entrypoints.websecure.address=:443
++      - --providers.http.endpoint=http://orch-server:8080/v1/integrations/traefik/config
++      - --providers.http.pollInterval=2s
++    ports:
++      - "8088:8080"
++      - "8082:80"
++      - "8443:443"
++    depends_on:
++      - orch-server
++
++  demo-app:
++    image: nginx:1.27-alpine
++    profiles: ["demo"]
++    ports:
++      - "18080:80"
++
++  postgres-exporter:
++    image: prometheuscommunity/postgres-exporter:latest
++    profiles: ["monitoring"]
++    environment:
++      DATA_SOURCE_NAME: postgres://orch:orch@postgres:5432/orch?sslmode=disable
++    depends_on:
++      postgres:
++        condition: service_healthy
++
++  prometheus:
++    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
++    profiles: ["monitoring"]
++    command:
++      - --config.file=/etc/prometheus/prometheus.yml
++      - --storage.tsdb.path=/prometheus
++    ports:
++      - "9090:9090"
++    volumes:
++      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
++      - ./deploy/monitoring/prometheus-rules.yaml:/etc/prometheus/rules/prometheus-rules.yaml:ro
++      - prometheus-data:/prometheus
++    depends_on:
++      - orch-server
++      - orch-agent
++      - postgres-exporter
++
++volumes:
++  postgres-data:
++  prometheus-data:
+diff --git a/docker-compose.yml b/docker-compose.yml
+deleted file mode 100644
+index 8004cc2..0000000
+--- a/docker-compose.yml
++++ /dev/null
+@@ -1,114 +0,0 @@
+-services:
+-  postgres:
+-    image: postgres:16-alpine
+-    environment:
+-      POSTGRES_DB: orch
+-      POSTGRES_USER: orch
+-      POSTGRES_PASSWORD: orch
+-    ports:
+-      - "5432:5432"
+-    volumes:
+-      - postgres-data:/var/lib/postgresql/data
+-    healthcheck:
+-      test: ["CMD-SHELL", "pg_isready -U orch -d orch"]
+-      interval: 5s
+-      timeout: 3s
+-      retries: 10
+-
+-  orch-server:
+-    build:
+-      context: .
+-      dockerfile: deployments/examples/Dockerfile
+-      args:
+-        TARGET: orch-server
+-    profiles: ["local-orch"]
+-    environment:
+-      DATABASE_URL: postgres://orch:orch@postgres:5432/orch?sslmode=disable
+-      ORCH_SERVER_ADDR: :8080
+-      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
+-      ORCH_JWT_SECRET: ""
+-      ORCH_SECRET_KEY: ${ORCH_SECRET_KEY:-dev-secret-key-change-me}
+-      ORCH_NODE_HEARTBEAT_TIMEOUT: ${ORCH_NODE_HEARTBEAT_TIMEOUT:-30s}
+-      ORCH_NODE_MONITOR_INTERVAL: ${ORCH_NODE_MONITOR_INTERVAL:-5s}
+-      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
+-    ports:
+-      - "8080:8080"
+-    depends_on:
+-      postgres:
+-        condition: service_healthy
+-
+-  orch-agent:
+-    build:
+-      context: .
+-      dockerfile: deployments/examples/Dockerfile
+-      args:
+-        TARGET: orch-agent
+-    profiles: ["local-orch"]
+-    environment:
+-      ORCH_SERVER_URL: http://orch-server:8080
+-      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
+-      ORCH_NODE_NAME: ${ORCH_NODE_NAME:-local-agent-1}
+-      ORCH_AGENT_ADDR: :8081
+-      ORCH_ADVERTISE_ADDRESS: http://orch-agent:8081
+-      ORCH_NODE_LABELS: ${ORCH_NODE_LABELS:-role=worker}
+-      ORCH_DOCKER_SOCKET: ${ORCH_DOCKER_SOCKET:-/var/run/docker.sock}
+-      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
+-      ORCH_AGENT_HEARTBEAT_INTERVAL: ${ORCH_AGENT_HEARTBEAT_INTERVAL:-5s}
+-    ports:
+-      - "8081:8081"
+-    volumes:
+-      - /var/run/docker.sock:/var/run/docker.sock
+-    depends_on:
+-      - orch-server
+-
+-  traefik:
+-    image: traefik:v3.1
+-    profiles: ["traefik"]
+-    command:
+-      - --api.insecure=true
+-      - --entrypoints.web.address=:80
+-      - --entrypoints.websecure.address=:443
+-      - --providers.http.endpoint=http://orch-server:8080/v1/integrations/traefik/config
+-      - --providers.http.pollInterval=2s
+-    ports:
+-      - "8088:8080"
+-      - "8082:80"
+-      - "8443:443"
+-    depends_on:
+-      - orch-server
+-
+-  demo-app:
+-    image: nginx:1.27-alpine
+-    profiles: ["demo"]
+-    ports:
+-      - "18080:80"
+-
+-  postgres-exporter:
+-    image: prometheuscommunity/postgres-exporter:latest
+-    profiles: ["monitoring"]
+-    environment:
+-      DATA_SOURCE_NAME: postgres://orch:orch@postgres:5432/orch?sslmode=disable
+-    depends_on:
+-      postgres:
+-        condition: service_healthy
+-
+-  prometheus:
+-    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+-    profiles: ["monitoring"]
+-    command:
+-      - --config.file=/etc/prometheus/prometheus.yml
+-      - --storage.tsdb.path=/prometheus
+-    ports:
+-      - "9090:9090"
+-    volumes:
+-      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+-      - ./deploy/monitoring/prometheus-rules.yaml:/etc/prometheus/rules/prometheus-rules.yaml:ro
+-      - prometheus-data:/prometheus
+-    depends_on:
+-      - orch-server
+-      - orch-agent
+-      - postgres-exporter
+-
+-volumes:
+-  postgres-data:
+-  prometheus-data:

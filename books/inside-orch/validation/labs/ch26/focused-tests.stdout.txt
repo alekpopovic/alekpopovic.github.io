@@ -1,0 +1,52 @@
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext/privileged
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext/host_network
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext/host_pid
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext/capability_add
+=== RUN   TestDefaultPolicyRejectsUnsafeSecurityContext/host_path
+--- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext (0.00s)
+    --- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext/privileged (0.00s)
+    --- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext/host_network (0.00s)
+    --- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext/host_pid (0.00s)
+    --- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext/capability_add (0.00s)
+    --- PASS: TestDefaultPolicyRejectsUnsafeSecurityContext/host_path (0.00s)
+=== RUN   TestPolicyAllowsExplicitCapabilitiesAndHostPathPrefixes
+--- PASS: TestPolicyAllowsExplicitCapabilitiesAndHostPathPrefixes (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/policy	0.029s
+=== RUN   TestAdmissionPolicies
+=== RUN   TestAdmissionPolicies/requests
+=== RUN   TestAdmissionPolicies/limits
+=== RUN   TestAdmissionPolicies/privileged
+=== RUN   TestAdmissionPolicies/host_network
+=== RUN   TestAdmissionPolicies/host_pid
+=== RUN   TestAdmissionPolicies/registry
+=== RUN   TestAdmissionPolicies/latest
+=== RUN   TestAdmissionPolicies/healthcheck
+=== RUN   TestAdmissionPolicies/host_path
+=== RUN   TestAdmissionPolicies/replicas
+=== RUN   TestAdmissionPolicies/public_ports
+--- PASS: TestAdmissionPolicies (0.00s)
+    --- PASS: TestAdmissionPolicies/requests (0.00s)
+    --- PASS: TestAdmissionPolicies/limits (0.00s)
+    --- PASS: TestAdmissionPolicies/privileged (0.00s)
+    --- PASS: TestAdmissionPolicies/host_network (0.00s)
+    --- PASS: TestAdmissionPolicies/host_pid (0.00s)
+    --- PASS: TestAdmissionPolicies/registry (0.00s)
+    --- PASS: TestAdmissionPolicies/latest (0.00s)
+    --- PASS: TestAdmissionPolicies/healthcheck (0.00s)
+    --- PASS: TestAdmissionPolicies/host_path (0.00s)
+    --- PASS: TestAdmissionPolicies/replicas (0.00s)
+    --- PASS: TestAdmissionPolicies/public_ports (0.00s)
+=== RUN   TestAdmissionRejectsMutableImageTag
+--- PASS: TestAdmissionRejectsMutableImageTag (0.00s)
+=== RUN   TestRejectedAdmissionIsAudited
+--- PASS: TestRejectedAdmissionIsAudited (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/admission	0.017s
+=== RUN   TestAdmissionCannotBeBypassedByScaleOrRollout
+--- PASS: TestAdmissionCannotBeBypassedByScaleOrRollout (0.00s)
+=== RUN   TestClusterPolicyControlsSecurityContext
+--- PASS: TestClusterPolicyControlsSecurityContext (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/controlplane	0.004s

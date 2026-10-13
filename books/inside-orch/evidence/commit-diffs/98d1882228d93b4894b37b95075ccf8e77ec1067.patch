@@ -1,0 +1,1905 @@
+commit 98d1882228d93b4894b37b95075ccf8e77ec1067
+Date: 2026-06-11T23:49:04+02:00
+Subject: Refresh production documentation
+
+
+---
+ README.md             | 145 ++++++++++++++++++---------------
+ docs/AGENT.md         | 101 ++++++++++++++---------
+ docs/API.md           | 139 ++++++++++++++++++++++++++-----
+ docs/ARCHITECTURE.md  | 173 ++++++++++++++++++++++++++++++---------
+ docs/EVENTS.md        |  21 +++--
+ docs/HEALTHCHECKS.md  |  38 ++++++---
+ docs/OBSERVABILITY.md | 115 ++++++++++++++++++++------
+ docs/OPERATIONS.md    | 220 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ docs/RECONCILER.md    |  74 +++++++++++++++++
+ docs/RELIABILITY.md   | 140 +++++++++++++-------------------
+ docs/ROLLOUTS.md      |  98 +++++++++++-----------
+ docs/SCHEDULER.md     |  72 ++++++++++-------
+ docs/SECURITY.md      |  92 ++++++++++++++-------
+ 13 files changed, 1034 insertions(+), 394 deletions(-)
+
+diff --git a/README.md b/README.md
+index b529eea..85dcf08 100644
+--- a/README.md
++++ b/README.md
+@@ -2,111 +2,134 @@
+ 
+ [![CI](https://github.com/alekpopovic/orch/actions/workflows/ci.yml/badge.svg)](https://github.com/alekpopovic/orch/actions/workflows/ci.yml)
+ 
+-`orch` is a production-shaped Go container orchestrator scaffold. It targets multi-node Docker deployments through the Docker Engine API first, with package boundaries that can later support other runtimes.
++`orch` is a Go container orchestrator for small, Docker-based clusters. It provides a control-plane API, a worker agent, and a CLI for deploying services, scaling replicas, assigning tasks to nodes, running Docker containers, checking health, streaming logs, and recording events.
++
++The project is production-shaped but still an MVP. Package boundaries, tests, migrations, and interfaces are designed for production evolution; the default `orch-server` binary currently wires the in-memory control plane, so process restart recovery is not production-safe until the PostgreSQL-backed store is connected to the server runtime.
++
++## What It Solves
++
++- Deploy a named service from YAML or REST.
++- Keep service replica count converged through task creation and stop directives.
++- Assign pending tasks to ready nodes with deterministic scheduling.
++- Run tasks as Docker containers through the Docker Engine API.
++- Register agents, heartbeat nodes, and poll assigned tasks.
++- Perform HTTP/TCP health checks and report healthy/unhealthy task state.
++- Start rolling updates and rollbacks through asynchronous deployment objects.
++- Stream task logs through the server from the owning agent.
++- Emit event records through the active control plane implementation.
++- Expose Prometheus metrics for the server and agent.
++
++## What It Does Not Solve Yet
++
++- The shipped `orch-server` process does not yet use PostgreSQL for its control-plane state.
++- There is no HA leader election implementation; the reconciler has an abstraction only.
++- Abrupt node loss is not marked offline by heartbeat expiry yet.
++- Networking is Docker host/port based; there is no overlay network or service discovery.
++- Secrets are represented as references, not a complete secret storage system.
++- There is no multi-tenant isolation model.
++- Agent authentication is token based; mTLS is documented as roadmap.
++- Containerd support is a future runtime target.
++
++## Binaries
++
++- `orch-server`: REST API server and rollout controller.
++- `orch-agent`: worker node process that talks to Docker and the server.
++- `orch`: Cobra CLI for operators and scripts.
+ 
+ ## Quickstart
+ 
+-### Prerequisites
++Prerequisites:
+ 
+ - Go 1.25 or newer.
+-- Docker Engine with access to `/var/run/docker.sock`.
+-- Docker Compose v2, available as `docker compose`.
++- Docker Engine and permission to access `/var/run/docker.sock`.
++- Docker Compose v2.
+ - Bash, `curl`, and standard Unix shell tools.
+ 
+-No script requires root directly, but your user must be allowed to use Docker.
+-
+-### Local Development Environment
+-
+ Start PostgreSQL, `orch-server`, and one `orch-agent`:
+ 
+ ```sh
+ ./scripts/dev-up.sh
+ ```
+ 
+-Apply the initial database schema:
++Apply migrations:
+ 
+ ```sh
+ ./scripts/migrate-up.sh
+ ```
+ 
+-Confirm the agent registered with the control plane:
++The migrations prepare PostgreSQL for the store package and integration tests. The current local `orch-server` still uses in-memory state.
++
++Point the CLI at the server:
+ 
+ ```sh
+ export ORCH_SERVER_URL=http://localhost:8080
+ go run ./cmd/orch node ls
+ ```
+ 
+-Deploy the demo app:
++Deploy the demo service:
+ 
+ ```sh
+ ./scripts/demo-deploy.sh
+ ```
+ 
+-Scale it:
+-
+-```sh
+-go run ./cmd/orch scale http-api --replicas 2
+-```
+-
+-View tasks, logs, and events:
++Operate it:
+ 
+ ```sh
++go run ./cmd/orch service ls
+ go run ./cmd/orch service ps http-api
+-go run ./cmd/orch logs http-api --tail 100
++go run ./cmd/orch scale http-api --replicas 2
++go run ./cmd/orch rollout http-api --image nginx:1.28-alpine
+ go run ./cmd/orch events --service http-api
+-```
+-
+-Delete the demo app:
+-
+-```sh
++go run ./cmd/orch logs http-api --tail 100
+ go run ./cmd/orch delete http-api
+ ```
+ 
+-Stop the local environment:
++Stop local services:
+ 
+ ```sh
+ ./scripts/dev-down.sh
+ ```
+ 
+-Optional standalone demo container:
++## Build And Test
+ 
+ ```sh
+-docker compose --profile demo up -d demo-app
+-curl http://localhost:18080
++make build
++make test
++make lint
+ ```
+ 
+-Build and test:
++`make lint` requires `golangci-lint` on your `PATH`.
++
++Useful direct commands:
+ 
+ ```sh
+-make build
+-make test
++go test ./...
++go vet ./...
++go build ./...
+ ```
+ 
+-## Binaries
++## CLI Configuration
+ 
+-- `orch`: operator CLI
+-- `orch-server`: control plane API server
+-- `orch-agent`: worker node agent
++The CLI resolves the server URL in this order:
+ 
+-## CLI Examples
++1. `--server`
++2. `ORCH_SERVER_URL`
++3. `server_url` in `~/.config/orch/config.yaml`
+ 
+-The CLI reads the control-plane URL from `--server`, `ORCH_SERVER_URL`, or `server_url` in the CLI config file. By default the config file is `~/.config/orch/config.yaml`:
++Example:
+ 
+ ```yaml
+ server_url: http://localhost:8080
+ ```
+ 
+-```sh
+-export ORCH_SERVER_URL=http://localhost:8080
++Output formats:
+ 
+-orch version
+-orch node ls
+-orch node inspect 00000000-0000-4000-8000-000000000001
+-orch node drain 00000000-0000-4000-8000-000000000001
+-orch node uncordon 00000000-0000-4000-8000-000000000001
++```sh
++orch service ls --output table
++orch service inspect api --output json
+ ```
+ 
+-Deploy from YAML:
++Example deploy file:
+ 
+ ```yaml
+ name: api
+@@ -132,21 +155,17 @@ placement:
+     role: app
+ ```
+ 
+-```sh
+-orch deploy service.yaml
+-orch service ls --output table
+-orch service inspect api --output json
+-orch service ps api
+-orch scale api --replicas 5
+-orch rollout api --image ghcr.io/example/api:1.0.1
+-orch rollout status api
+-orch rollback api
+-orch events
+-orch logs api --tail 100
+-orch logs api --follow
+-orch delete api
+-```
+-
+-## Development
+-
+-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development commands and local workflow.
++## Documentation
++
++- [Architecture](docs/ARCHITECTURE.md)
++- [API](docs/API.md)
++- [Agent](docs/AGENT.md)
++- [Scheduler](docs/SCHEDULER.md)
++- [Reconciler](docs/RECONCILER.md)
++- [Rollouts](docs/ROLLOUTS.md)
++- [Health checks](docs/HEALTHCHECKS.md)
++- [Security](docs/SECURITY.md)
++- [Observability](docs/OBSERVABILITY.md)
++- [Reliability](docs/RELIABILITY.md)
++- [Operations](docs/OPERATIONS.md)
++- [Development](docs/DEVELOPMENT.md)
+diff --git a/docs/AGENT.md b/docs/AGENT.md
+index 1970c4f..bc3a2d2 100644
+--- a/docs/AGENT.md
++++ b/docs/AGENT.md
+@@ -1,65 +1,90 @@
+-# Agent Lifecycle
++# Agent
+ 
+-`orch-agent` is the worker process that represents one node to the control plane.
++`orch-agent` is the worker-node process. It is responsible for local Docker reconciliation only; the server remains the source of truth for desired tasks.
+ 
+-## Startup
++## Configuration
++
++Environment variables:
+ 
+-On startup the agent loads:
++- `ORCH_SERVER_URL`: control-plane URL. Default: `http://localhost:8080`.
++- `ORCH_NODE_NAME`: stable node name. Default: `local-node`.
++- `ORCH_ADVERTISE_ADDRESS`: address operators/server use to reach the agent log endpoint. Default: `http://127.0.0.1:8081`.
++- `ORCH_AGENT_ADDR`: listen address for agent logs/metrics. Default: `:8081`.
++- `ORCH_NODE_LABELS`: comma-separated labels such as `role=worker,zone=a`.
++- `ORCH_AGENT_HEARTBEAT_INTERVAL`: heartbeat interval. Default: `5s`.
++- `ORCH_DOCKER_SOCKET`: Docker socket path. Default: `/var/run/docker.sock`.
++- `ORCH_AGENT_REGISTRATION_TOKEN`: registration token.
++- `ORCH_LOG_LEVEL`: structured log level. Default: `info`.
++- `ORCH_SHUTDOWN_TIMEOUT`: graceful shutdown timeout. Default: `10s`.
+ 
+-- `ORCH_SERVER_URL`: control-plane API URL.
+-- `ORCH_NODE_NAME`: stable node name.
+-- `ORCH_ADVERTISE_ADDRESS`: address the control plane and operators should use for the node.
+-- `ORCH_NODE_LABELS`: comma-separated labels such as `role=app,zone=a`.
+-- `ORCH_AGENT_HEARTBEAT_INTERVAL`: heartbeat period.
+-- `ORCH_DOCKER_SOCKET`: Docker Engine socket path.
+-- `ORCH_AGENT_REGISTRATION_TOKEN`: static registration token used to obtain a short-lived agent credential until stronger node identity is added.
++## Startup
+ 
+-The agent detects local capacity from the host:
++On startup the agent:
+ 
+-- CPU as millicores from `runtime.NumCPU()`.
+-- Memory from `/proc/meminfo` when available.
++1. Loads config.
++2. Creates a Docker Engine runtime client.
++3. Detects CPU capacity from `runtime.NumCPU()`.
++4. Detects memory from `/proc/meminfo` when available.
++5. Calls `POST /v1/agent/register` with the registration token.
++6. Receives a node ID, node status, directives, and short-lived credential.
++7. Starts the heartbeat and task reconciliation loop.
+ 
+-It then calls `POST /v1/agent/register`. The control plane creates or updates the node record and returns the authoritative node status plus any directives.
++Registration is keyed by stable node name in the current in-memory control plane. If a node returns after graceful offline, registering with the same name reuses the node ID.
+ 
+ ## Heartbeats
+ 
+-After registration, the agent sends `POST /v1/agent/heartbeat` every configured interval. The loop uses context cancellation, exponential backoff, and jitter so reconnecting agents do not all retry at the same instant.
++The agent sends `POST /v1/agent/heartbeat` every interval. The loop supports context cancellation, exponential backoff, and jitter.
+ 
+-The agent does not choose to become draining on its own. Draining is controlled by the server response, usually after an operator calls `orch node drain`. The agent records and logs the returned status and directives.
++Heartbeats update capacity, allocatable resources, labels, and last heartbeat time. A graceful shutdown heartbeat sets `shutdown=true`; the server marks the node `offline` if it receives it.
+ 
+-## Task Assignment
++Roadmap: a server-side heartbeat expiry controller should mark abruptly lost nodes offline.
+ 
+-After each successful heartbeat, the agent calls `GET /v1/agent/tasks?node_id=<id>`. The control plane remains the source of truth and returns the desired tasks currently assigned to that node.
++## Task Polling
+ 
+-For each assigned task with desired status `running`, the agent reconciles Docker state idempotently:
++After successful heartbeats, the agent polls:
+ 
+-- report `pulling`, pull the image, and retry safely if the pull fails.
+-- create a managed container labeled with service, task, node, and version identity.
+-- report `created` once a container ID exists.
+-- start the container and report `running`.
++```text
++GET /v1/agent/tasks?node_id=<node-id>
++```
+ 
+-The agent may also report `unhealthy`, `failed`, `stopped`, or `removed` through `POST /v1/agent/tasks/{task_id}/status`. Status reports include the node ID so the server can reject updates for tasks assigned elsewhere.
++The response contains assigned tasks plus service healthcheck and port metadata.
+ 
+-On every poll, the agent lists locally managed Docker containers for its node. Containers whose `orch.task_id` is no longer assigned are stopped and removed. This makes process restarts safe without a local durable cache: Docker labels provide local identity, and the server provides desired state.
++## Docker Reconciliation
+ 
+-## Health Checks
++For each assigned task whose desired status is `running`, the agent:
+ 
+-For running assigned tasks with a service healthcheck, the agent performs HTTP or TCP probes and reports `healthy` or `unhealthy` only after the configured consecutive threshold is met. Probes respect context cancellation, use the service timeout, and add jitter to avoid synchronized checks. See `docs/HEALTHCHECKS.md`.
++1. Looks for an existing task container by container ID.
++2. If needed, searches Docker by orchestrator labels:
++   - `orch.managed=true`
++   - `orch.service_id`
++   - `orch.task_id`
++   - `orch.node_id`
++   - `orch.version`
++3. If a running container is found, reports `running` with the recovered container ID.
++4. If a stopped container exited non-zero, reports `failed`.
++5. If no container exists and Docker is reachable, pulls the image, creates the container, starts it, and reports status after each step.
+ 
+-## Shutdown
++The agent does not create a replacement if Docker cannot list managed containers. That avoids duplicates during Docker daemon restarts or transient Docker API failures.
+ 
+-On graceful shutdown, the agent sends a final heartbeat with `shutdown=true`. If the notification succeeds, the control plane marks the node offline. If it fails, the agent logs a warning and continues shutdown.
++## Stop And Cleanup
+ 
+-## Security
++For tasks whose desired status is `stopped` or `removed`, the agent stops and removes the managed container when possible, then reports terminal status.
+ 
+-Registration uses a static registration token:
++On every poll, the agent lists local managed containers for its node. Containers with `orch.managed=true` and no corresponding assigned task are stopped and removed. Cleanup is limited to orchestrator-managed containers for the current node.
+ 
+-```text
+-Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>
+-```
++## Health Checks
++
++The agent performs HTTP/TCP checks for running tasks with a configured healthcheck. It reports `healthy` or `unhealthy` only after the configured consecutive threshold is met. It does not restart containers based on health; restart/replacement is a control-plane decision.
++
++## Logs And Metrics
++
++The agent exposes:
++
++- `GET /metrics`
++- log streaming endpoints used by the server log proxy
+ 
+-After registration, the server returns a short-lived agent credential. The agent uses that credential for heartbeat, task polling, and task status updates. Heartbeat responses rotate the credential.
++The log endpoint reads from Docker and streams without loading unbounded logs into memory.
+ 
+-This is intentionally isolated to the agent endpoint boundary so mTLS-based node identity can replace or combine with token credentials later. Treat tokens as secrets. Do not commit them, print them, or expose them through logs.
++## Security Considerations
+ 
+-Access to the Docker socket is highly privileged. A compromised agent can control containers on the node and may be able to affect the host. See `docs/DEVELOPMENT.md` for Docker daemon permission risks.
++The Docker socket is highly privileged. A compromised agent can usually control containers on the node and may affect the host. Only run trusted agent binaries, protect the registration token, and restrict network access to the agent log endpoint.
+diff --git a/docs/API.md b/docs/API.md
+index 4eec65f..1011f6a 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -1,6 +1,12 @@
+ # API
+ 
+-The control-plane API uses JSON request and response bodies. Errors use a stable envelope:
++`orch-server` exposes a JSON REST API for operators and agents. User-facing routes are under `/v1/*`; agent routes are under `/v1/agent/*`.
++
++All responses use UTC timestamps.
++
++## Errors
++
++Errors use a stable envelope:
+ 
+ ```json
+ {
+@@ -12,29 +18,52 @@ The control-plane API uses JSON request and response bodies. Errors use a stable
+ }
+ ```
+ 
+-User-facing `/v1/*` endpoints require `Authorization: Bearer <jwt>` when `ORCH_JWT_SECRET` is configured. Agent endpoints use the separate bootstrap-token flow documented below.
++Clients may send `X-Request-ID`. If absent, the server generates one and includes it in errors and access logs.
++
++## Authentication
++
++User API:
++
++- If `ORCH_JWT_SECRET` is empty, user auth is disabled. This is the local-development default.
++- If `ORCH_JWT_SECRET` is set, user-facing `/v1/*` endpoints require `Authorization: Bearer <jwt>`.
++- Roles are `viewer`, `operator`, and `admin`.
+ 
+-Clients may send `X-Request-ID`; otherwise the server generates one.
++Agent API:
+ 
+-## Health
++- `POST /v1/agent/register` uses `Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>`.
++- Registration returns a short-lived agent credential.
++- Heartbeat, task polling, and task status updates use the issued credential.
++
++See [SECURITY.md](SECURITY.md).
++
++## Health And Metrics
+ 
+ ```sh
+ curl http://localhost:8080/healthz
+ curl http://localhost:8080/readyz
++curl http://localhost:8080/metrics
+ ```
+ 
++`readyz` currently reports readiness for the in-process server. It does not yet validate PostgreSQL connectivity because the shipped server is not wired to the PostgreSQL store.
++
+ ## Nodes
+ 
+ ```sh
+ curl http://localhost:8080/v1/nodes
+-curl http://localhost:8080/v1/nodes/00000000-0000-4000-8000-000000000001
+-curl -X POST http://localhost:8080/v1/nodes/00000000-0000-4000-8000-000000000001/drain
+-curl -X POST http://localhost:8080/v1/nodes/00000000-0000-4000-8000-000000000001/uncordon
++curl http://localhost:8080/v1/nodes/{node_id}
++curl -X POST http://localhost:8080/v1/nodes/{node_id}/drain
++curl -X POST http://localhost:8080/v1/nodes/{node_id}/uncordon
+ ```
+ 
++Node operations:
++
++- `drain` marks a node draining, excluding it from new scheduler placements.
++- `uncordon` marks a node ready.
++- Abrupt node heartbeat expiry is not implemented yet.
++
+ ## Services
+ 
+-Create a service:
++Create:
+ 
+ ```sh
+ curl -X POST http://localhost:8080/v1/services \
+@@ -61,12 +90,12 @@ curl -X POST http://localhost:8080/v1/services \
+         "unhealthy_threshold": 3
+       },
+       "restart_policy": {"condition": "on_failure", "max_attempts": 3},
+-      "placement_constraints": [{"key": "region", "operator": "equals", "value": "local"}]
++      "placement_constraints": [{"key": "role", "operator": "equals", "value": "worker"}]
+     }
+   }'
+ ```
+ 
+-List, fetch, and delete:
++Read and delete:
+ 
+ ```sh
+ curl http://localhost:8080/v1/services
+@@ -74,45 +103,100 @@ curl http://localhost:8080/v1/services/{service_id}
+ curl -X DELETE http://localhost:8080/v1/services/{service_id}
+ ```
+ 
+-Resource values are normalized as CPU millicores and memory bytes. The API also accepts string inputs such as `"500m"`, `"2.5"`, `"512Mi"`, and `"1Gi"` for resource fields.
++Delete is soft. It marks the service `deleting`, directs tasks to stop/remove, and marks the service `deleted` only after all tasks report `removed`.
+ 
+-Delete is safe by default: it marks the service `deleting`, asks agents to stop and remove task containers, and only moves the service to `deleted` after all tasks report `removed`.
+-
+-Scale and rollout operations:
++Scale:
+ 
+ ```sh
+ curl -X POST http://localhost:8080/v1/services/{service_id}/scale \
+   -H 'Content-Type: application/json' \
+   -d '{"replicas": 4}'
++```
++
++Rollout:
+ 
++```sh
+ curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
+   -H 'Content-Type: application/json' \
+   -d '{"image": "nginx:1.28", "maxUnavailable": 1, "maxSurge": 1}'
+ 
+ curl http://localhost:8080/v1/services/{service_id}/rollout
+ curl http://localhost:8080/v1/rollouts/{rollout_id}
++```
+ 
++Rollback:
++
++```sh
+ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ ```
+ 
++Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
++
+ ## Tasks
+ 
+ ```sh
+ curl http://localhost:8080/v1/tasks
+-curl http://localhost:8080/v1/tasks?service_id={service_id}
+-curl http://localhost:8080/v1/tasks?node_id={node_id}
+-curl http://localhost:8080/v1/tasks?status=running
++curl 'http://localhost:8080/v1/tasks?service_id={service_id}'
++curl 'http://localhost:8080/v1/tasks?node_id={node_id}'
++curl 'http://localhost:8080/v1/tasks?status=running'
+ curl http://localhost:8080/v1/tasks/{task_id}
+ ```
+ 
++Valid task statuses include:
++
++- `pending`
++- `assigned`
++- `pulling`
++- `created`
++- `starting`
++- `running`
++- `healthy`
++- `unhealthy`
++- `stopping`
++- `stopped`
++- `removed`
++- `failed`
++
++## Agent Registration And Heartbeat
++
++Register:
++
++```sh
++curl -X POST http://localhost:8080/v1/agent/register \
++  -H 'Authorization: Bearer <registration-token>' \
++  -H 'Content-Type: application/json' \
++  -d '{
++    "node_name": "node-a",
++    "advertise_address": "http://node-a:8081",
++    "labels": {"role": "worker"},
++    "capacity": {"cpu": 4000, "memory": 8589934592},
++    "allocatable": {"cpu": 3500, "memory": 7516192768}
++  }'
++```
++
++Heartbeat:
++
++```sh
++curl -X POST http://localhost:8080/v1/agent/heartbeat \
++  -H 'Authorization: Bearer <agent-credential>' \
++  -H 'Content-Type: application/json' \
++  -d '{"node_id": "{node_id}"}'
++```
++
++Heartbeat responses may include a rotated credential.
++
+ ## Agent Tasks
+ 
+-Agent registration requires `Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>`. Registration returns a short-lived agent credential used for heartbeat, task polling, and task status updates.
++Poll assigned tasks:
+ 
+ ```sh
+ curl -H 'Authorization: Bearer <agent-credential>' \
+   'http://localhost:8080/v1/agent/tasks?node_id={node_id}'
++```
++
++Report task status:
+ 
++```sh
+ curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
+   -H 'Authorization: Bearer <agent-credential>' \
+   -H 'Content-Type: application/json' \
+@@ -123,20 +207,31 @@ curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
+   }'
+ ```
+ 
+-The task poll response includes each task plus service healthcheck metadata and ports so the agent can probe running containers.
++Agents may report:
+ 
+-Agents may report `pulling`, `created`, `running`, `healthy`, `unhealthy`, `failed`, `stopped`, and `removed`.
++- `pulling`
++- `created`
++- `running`
++- `healthy`
++- `unhealthy`
++- `failed`
++- `stopped`
++- `removed`
++
++The server rejects status reports from the wrong node and rejects stale active reports for tasks that are stopping, removed, or terminal.
+ 
+ ## Events
+ 
+ ```sh
+ curl http://localhost:8080/v1/events
+ curl 'http://localhost:8080/v1/events?service_id={service_id}&limit=50'
+-curl 'http://localhost:8080/v1/events?task_id={task_id}&type=task.status'
++curl 'http://localhost:8080/v1/events?task_id={task_id}&type=task.failed'
+ curl 'http://localhost:8080/v1/events?node_id={node_id}&severity=warning'
+ curl 'http://localhost:8080/v1/events?since=2026-06-11T10:00:00Z'
+ ```
+ 
++Events support filtering by service, task, node, event type, severity, and `since`.
++
+ ## Logs
+ 
+ ```sh
+@@ -145,4 +240,4 @@ curl 'http://localhost:8080/v1/logs?service_id={service_id}&follow=true'
+ curl 'http://localhost:8080/v1/logs?service_id={service_id}&task_id={task_id}'
+ ```
+ 
+-The MVP response is newline-delimited text proxied from a worker agent.
++Logs are proxied from the agent that owns the task. The MVP uses newline-delimited text/chunked streaming and does not persist logs centrally.
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 74e2ba2..5cd9921 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -1,59 +1,152 @@
+ # Architecture
+ 
+-`orch` is a Go-based container orchestrator for multi-node Docker deployments. The first runtime target is Docker Engine API, with runtime access isolated behind interfaces so the control plane can later support containerd.
++`orch` is a Docker-first container orchestrator written in Go. It models services as desired state, tasks as per-replica work items, nodes as worker capacity, and Docker containers as local runtime artifacts managed by agents.
+ 
+-## System Overview
++The current codebase is built to separate control-plane decisions from runtime side effects. Scheduling, reconciliation, rollout progression, validation, and resource accounting are unit-testable without Docker.
+ 
+-The system has three primary binaries:
++## Current Implementation Boundary
+ 
+-- `orch-server`: control plane API server that owns desired state, scheduling decisions, deployment workflows, authentication, and persistence.
+-- `orch-agent`: worker node agent that reports node state, runs local reconciliation against assigned tasks, performs health checks, and streams node events.
+-- `orch`: Cobra-based CLI for operators and automation.
++Implemented today:
+ 
+-PostgreSQL stores durable desired state, observed state, deployment history, events, and rollout metadata. Prometheus metrics will expose control plane, agent, scheduler, reconciler, runtime, and health check behavior as the implementation grows.
++- REST API with request IDs, structured JSON errors, access logs, recovery middleware, timeouts, optional JWT user auth, and token-based agent auth.
++- In-memory control plane used by the default `orch-server` binary.
++- PostgreSQL migrations and a PostgreSQL store implementation with optimistic concurrency, but not yet wired into `orch-server`.
++- Docker Engine runtime package used by `orch-agent`.
++- Scheduler, reconciler, rollout controller, health checks, events, logs, and Prometheus metrics.
+ 
+-## Core Components
++Roadmap:
+ 
+-- API server: validates requests, enforces authorization, writes desired state, and exposes stable request/response contracts.
+-- Scheduler: deterministically places tasks on nodes based on inputs such as node health, capacity, constraints, and existing assignments.
+-- Reconciler: continuously compares desired state with observed state and issues idempotent runtime operations until the node converges.
+-- Store: owns PostgreSQL access through `sqlc` or `pgx` and hides persistence details from domain packages.
+-- Docker runtime: wraps Docker Engine API operations for image, network, volume, container, and health-related behavior.
+-- Healthchecker: performs HTTP and TCP checks with timeouts, context cancellation, and deterministic test doubles.
+-- Rollout manager: coordinates rolling updates, rollback, health gates, and deployment progress.
+-- Events, logs, and metrics: provide operator visibility and machine-readable orchestration history.
++- Wire `orch-server` to PostgreSQL for durable production state.
++- Add heartbeat-expiry node monitor.
++- Add real HA leader election.
++- Add mTLS node identity.
++- Add containerd runtime support.
+ 
+-## Control Flow
++## Components
+ 
+-1. A user or automation calls `orch` or the control plane API.
+-2. `orch-server` validates and persists desired state in PostgreSQL.
+-3. The scheduler computes deterministic task placements.
+-4. Agents receive or poll their assigned desired state.
+-5. Each agent reconciler compares desired task state with local Docker state.
+-6. The Docker runtime adapter performs idempotent Docker Engine API operations.
+-7. Health checks, events, logs, and metrics update observed state and deployment progress.
+-8. The rollout manager advances, pauses, or rolls back deployments based on health and policy.
++### orch-server
+ 
+-See [ROLLOUTS.md](ROLLOUTS.md) for the rolling update state machine.
++The server exposes operator and agent APIs. It validates requests, enforces optional JWT/RBAC for user-facing endpoints, validates agent credentials for agent endpoints, owns the active control-plane implementation, and runs the rollout controller loop.
+ 
+-## Service, Task, And Container Lifecycle
++In the current binary, the control plane is `internal/controlplane.MemoryService`. It is suitable for local development and tests, not for restart-safe production state.
+ 
+-A service is the durable desired-state object submitted by an operator. Its spec defines the image, replica count, environment, secret references, ports, resource requests and limits, restart policy, health check, placement constraints, and deployment version.
++### orch-agent
+ 
+-Services move through `active`, `deleting`, and `deleted` states. Delete requests are soft by default: the control plane marks the service `deleting`, the reconciler sets task desired status to `stopped`, agents stop and remove containers, and the service becomes `deleted` only after tasks report `removed`.
++The agent represents one worker node. It detects local CPU and memory, registers with the server, heartbeats, polls assigned tasks, reconciles Docker containers, runs health checks, streams logs, and reports task status.
+ 
+-When a service is created or updated, the control plane records a deployment version and the scheduler turns the service's replica intent into task assignments. Each task is an immutable unit of work for a specific service version and target node. Tasks carry both desired status and observed status so the control plane can reason about convergence without treating Docker as the source of truth.
++The agent does not schedule tasks and does not decide service replica count. It follows server desired state.
+ 
+-On each worker, the agent reconciler reads assigned tasks and asks the runtime adapter to create, update, stop, or remove the corresponding Docker container. The container ID is observed runtime state attached back to the task. Docker operations must be idempotent: repeating reconciliation should converge the same task to the same container state without creating duplicates.
++### CLI
+ 
+-Health checks, restart policy, and container exit state update the task's actual status, restart count, failure reason, and timestamps. Rollouts advance only when the expected tasks for the new service version become healthy; failed health checks or runtime failures can pause the deployment or trigger rollback to the previous version.
++`orch` is a Cobra CLI that calls the REST API. It supports table and JSON output, deploy YAML parsing, service operations, node operations, rollouts, events, and logs.
+ 
+-## Design Principles
++### Store
+ 
+-- Keep domain logic independent from Docker, PostgreSQL, clocks, and network probes.
+-- Make scheduler and reconciler behavior deterministic and unit-testable.
+-- Treat runtime operations as convergent, not one-shot commands.
+-- Keep APIs explicit, validated, and backward-compatible.
+-- Support graceful shutdown through context cancellation in every long-running loop.
+-- Store all timestamps in UTC.
+-- Protect secrets through encryption at rest and redaction everywhere else.
++`internal/store` defines interfaces and a PostgreSQL implementation. Migrations create tables for nodes, services, service versions, tasks, deployments, and events.
++
++The store uses UUID primary keys, UTC timestamps, indexes for common queries, optimistic concurrency through timestamps/versions, and domain errors such as `ErrNotFound`, `ErrConflict`, `ErrInvalidState`, and `ErrDuplicate`.
++
++### Scheduler
++
++The scheduler reads pending tasks, ready nodes, running tasks, and service specs. It computes deterministic assignments and persists them with optimistic concurrency. It does not call Docker.
++
++### Reconciler
++
++The reconciler keeps active services aligned with desired replica counts. It creates pending tasks, stops excess tasks, replaces failed restartable tasks, and finalizes soft deletion after tasks are removed. It does not schedule tasks or call Docker.
++
++### Rollout Controller
++
++The rollout controller advances deployments asynchronously. It creates target-version tasks subject to surge limits, waits for healthy target tasks, stops old-version tasks subject to availability limits, and marks deployments succeeded, failed, or rolled back.
++
++### Runtime
++
++`internal/docker` wraps the Docker Engine API behind a `Runtime` interface. All orchestrator-created containers carry labels identifying service, task, node, version, and `orch.managed=true`.
++
++## Core Data Model
++
++### Node
++
++A node records stable identity, hostname, advertise address, labels, capacity, allocatable resources, status, heartbeat time, and agent credential metadata.
++
++Node statuses:
++
++- `ready`
++- `draining`
++- `offline`
++- `unknown`
++
++### Service
++
++A service is desired state: name, image, replicas, environment, secret references, ports, resource requirements, healthcheck, restart policy, placement constraints, status, and deployment version.
++
++Service statuses:
++
++- `active`
++- `deleting`
++- `deleted`
++
++### Task
++
++A task is one service replica for one service version. It records service ID, node ID, container ID, desired status, actual status, image, version, restart count, failure reason, and timestamps.
++
++Task desired state is controlled by the server. Task actual state is reported by agents.
++
++### Deployment
++
++A deployment records rollout or rollback progress between service versions. It stores strategy, status, max unavailable, max surge, and timestamps.
++
++### Event
++
++Events record important control-plane and agent decisions with type, severity, source, message, related object, and timestamp.
++
++## Service To Container Lifecycle
++
++1. An operator creates a service through the CLI or API.
++2. The control plane stores service desired state.
++3. The reconciler creates pending tasks when replica count is below desired.
++4. The scheduler assigns pending tasks to ready nodes.
++5. The agent polls assigned tasks for its node.
++6. The agent pulls the image, creates a labeled Docker container, starts it, and reports task status after each step.
++7. Health checks report `healthy` or `unhealthy`.
++8. If a task fails and restart policy allows replacement, the reconciler creates a new pending task.
++9. When a service is deleted, tasks move toward stopped/removed and the service becomes `deleted` only after all tasks report removed.
++
++## Deployment Flow
++
++Create:
++
++1. `orch deploy service.yaml` parses and validates YAML.
++2. API receives `POST /v1/services`.
++3. Service is created as `active`, version `1`.
++4. Reconciliation creates tasks.
++5. Scheduling assigns tasks.
++6. Agents create containers and report status.
++
++Scale:
++
++1. `orch scale api --replicas N` calls `POST /v1/services/{id}/scale`.
++2. Service replica count changes.
++3. Reconciler creates missing tasks or stops extra tasks.
++4. Scheduler and agents converge actual state.
++
++Rolling update:
++
++1. `orch rollout api --image new:image` calls `POST /v1/services/{id}/rollout`.
++2. Service image and deployment version advance.
++3. Deployment starts as `pending`.
++4. Rollout controller creates new-version tasks and stops old-version tasks according to limits.
++5. Deployment succeeds only after old active tasks are gone and target-version healthy tasks meet replica count.
++
++Rollback:
++
++1. `orch rollback api` selects the previous successful service version.
++2. Service spec is restored.
++3. A rollback deployment runs through the same rollout controller.
++
++## Time, Context, And Determinism
++
++- All timestamps are UTC.
++- Long-running loops accept context cancellation.
++- Scheduler and reconciler logic are deterministic over sorted inputs.
++- External side effects are behind interfaces.
++- Docker operations are idempotent by task label and container ID.
+diff --git a/docs/EVENTS.md b/docs/EVENTS.md
+index e53c829..602d08a 100644
+--- a/docs/EVENTS.md
++++ b/docs/EVENTS.md
+@@ -1,21 +1,26 @@
+ # Events
+ 
+-Events are durable orchestration facts stored in PostgreSQL. They are emitted best-effort by default: critical control-plane paths should continue even if event storage is temporarily unavailable.
++Events are orchestration audit records emitted by the API, scheduler, reconciler, agent status path, health handling, and rollout controller.
++
++Current implementation note: the default `orch-server` stores events in memory because it uses the in-memory control plane. The PostgreSQL store can persist events once the server is wired to it.
+ 
+ ## Sources
+ 
+ Events are emitted by:
+ 
+-- API/control-plane service create, scale, rollout, rollback, and delete operations.
+-- scheduler task assignments.
+-- reconciler task creation and stop decisions.
+-- agent task status reports.
+-- healthcheck unhealthy transitions.
+-- rollout manager start decisions.
++- service create, scale, rollout, rollback, and delete operations;
++- scheduler task assignments;
++- reconciler task creation and stop decisions;
++- agent task status reports;
++- healthcheck unhealthy/failure transitions;
++- rollout status changes and task decisions;
++- node registration, heartbeat, shutdown, and status changes.
++
++Event emission is best-effort for most controller paths. A failure to append an event should not crash critical reconciliation unless a caller explicitly chooses that behavior.
+ 
+ ## Severity
+ 
+-Supported severities are:
++Supported severities:
+ 
+ - `info`
+ - `warning`
+diff --git a/docs/HEALTHCHECKS.md b/docs/HEALTHCHECKS.md
+index a38ae01..4041e23 100644
+--- a/docs/HEALTHCHECKS.md
++++ b/docs/HEALTHCHECKS.md
+@@ -1,8 +1,10 @@
+ # Health Checks
+ 
+-Services may define an optional healthcheck. Supported types are:
++Services may define an optional healthcheck. Health checks are performed by agents for running assigned tasks.
+ 
+-- `http`: sends `GET` to the configured path.
++## Supported Types
++
++- `http`: sends `GET` to the configured path and port.
+ - `tcp`: opens a TCP connection to the configured port.
+ - `none`: disables active probing.
+ 
+@@ -20,17 +22,33 @@ healthcheck:
+ 
+ ## Agent Behavior
+ 
+-The control plane includes service healthcheck metadata when the agent polls assigned tasks. For each running assigned task, the agent performs the configured check with context cancellation and timeout support.
+-
+-The agent keeps in-memory consecutive success and failure counters:
++The server includes healthcheck metadata in task poll responses. For each running task:
+ 
+-- after `healthyThreshold` consecutive successes, it reports `healthy`.
+-- after `unhealthyThreshold` consecutive failures, it reports `unhealthy`.
++1. The agent waits for the configured interval plus jitter.
++2. It performs the HTTP or TCP check with context cancellation and timeout.
++3. It tracks consecutive successes and failures in memory.
++4. It reports `healthy` after `healthyThreshold` consecutive successes.
++5. It reports `unhealthy` after `unhealthyThreshold` consecutive failures.
+ 
+-Checks include jitter derived from the service interval to avoid synchronized probing across tasks and nodes. The agent does not restart containers because of healthcheck failures; it only reports status to the control plane.
++The agent does not restart containers because of health failures.
+ 
+ ## Server Behavior
+ 
+-The control plane accepts `healthy` and `unhealthy` task status reports from agents. If a restartable service reports `unhealthy`, the control plane marks the task `failed` and emits a health failure event. The reconciler then creates replacement pending tasks according to service replica and restart policy rules.
++The server accepts `healthy` and `unhealthy` task status reports.
++
++For restartable services, an `unhealthy` report is converted to task `failed`; the event stream records a health failure and the reconciler can create a replacement task.
++
++For non-restartable services, the task remains `unhealthy` so an operator can inspect it.
++
++## Rollout Interaction
++
++Rollouts wait for target-version tasks to become `healthy`. A target-version `failed` task marks the rollout `failed`.
++
++Services without a healthcheck rely on task runtime status. In that case, rollout health gating is limited by the statuses the agent reports.
++
++## Current Limitations
+ 
+-For non-restartable services, unhealthy tasks remain `unhealthy` so operators can inspect them without automatic replacement.
++- Health counters are in agent memory; agent restart resets consecutive counts.
++- No global health history store yet.
++- No gRPC or command healthcheck type.
++- No service-level readiness aggregation endpoint.
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+index 8c08ed2..2438a78 100644
+--- a/docs/OBSERVABILITY.md
++++ b/docs/OBSERVABILITY.md
+@@ -1,38 +1,85 @@
+ # Observability
+ 
+-`orch-server` and `orch-agent` expose Prometheus metrics at:
++`orch-server` and `orch-agent` expose structured logs, events, and Prometheus metrics.
+ 
+-- `GET /metrics` on the server address, for example `http://localhost:8080/metrics`.
+-- `GET /metrics` on the agent address, for example `http://localhost:8081/metrics`.
++## Logs
++
++Both binaries use structured logging through `log/slog`.
++
++Important fields:
++
++- request ID;
++- method;
++- route/path;
++- status;
++- duration;
++- task ID, node ID, service ID, or rollout ID when relevant;
++- error messages.
++
++Do not log tokens, credentials, or secret values.
++
++## Events
++
++Events are operator-facing audit records. They include:
++
++- type;
++- severity: `info`, `warning`, or `error`;
++- source;
++- message;
++- related object type and ID;
++- timestamp.
++
++Events are emitted for service changes, scheduler assignments, reconciler decisions, agent status changes, health failures, rollouts, and rollbacks.
++
++Current implementation note: the default server stores events in memory. The PostgreSQL store can persist events, but server wiring to Postgres is not yet active.
++
++## Metrics Endpoints
++
++Server:
++
++```text
++GET /metrics
++```
++
++Agent:
++
++```text
++GET /metrics
++```
++
++In local Compose:
++
++- server: `http://localhost:8080/metrics`
++- agent: `http://localhost:8081/metrics`
+ 
+ ## Server Metrics
+ 
+-- `api_requests_total{method,route,status}`: API requests by HTTP method, route template, and status code.
+-- `api_request_duration_seconds{method,route,status}`: API request latency.
+-- `scheduler_runs_total`: scheduler pass count.
+-- `scheduler_errors_total`: scheduler pass failures.
+-- `scheduler_duration_seconds`: scheduler pass duration.
+-- `reconciler_runs_total`: reconciler pass count.
+-- `reconciler_errors_total`: reconciler pass failures.
+-- `reconciler_duration_seconds`: reconciler pass duration.
+-- `tasks_created_total`: tasks created by controllers.
+-- `tasks_failed_total`: tasks reported failed.
+-- `rollouts_total`: rollout or rollback requests accepted.
+-- `rollout_failures_total`: rollouts marked failed.
+-
+-API metrics use route templates such as `/v1/services/{id}` rather than raw paths. This keeps labels low-cardinality and avoids embedding service IDs, task IDs, node IDs, or names in Prometheus series.
++- `api_requests_total{method,route,status}`
++- `api_request_duration_seconds{method,route,status}`
++- `scheduler_runs_total`
++- `scheduler_errors_total`
++- `scheduler_duration_seconds`
++- `reconciler_runs_total`
++- `reconciler_errors_total`
++- `reconciler_duration_seconds`
++- `tasks_created_total`
++- `tasks_failed_total`
++- `rollouts_total`
++- `rollout_failures_total`
++
++Current implementation note: API, task failure, and rollout request metrics are wired into the server binary. Scheduler and reconciler metric types exist and are used by their packages, but those loops are not all wired into the default `orch-server` process yet.
+ 
+ ## Agent Metrics
+ 
+-- `heartbeat_success_total`: successful heartbeat attempts.
+-- `heartbeat_failure_total`: failed heartbeat attempts.
+-- `docker_operations_total{operation}`: Docker runtime operations by operation type.
+-- `docker_operation_errors_total{operation}`: Docker runtime operation failures by operation type.
+-- `task_state_changes_total{status}`: task status updates accepted by the control plane.
+-- `healthcheck_success_total`: successful health checks.
+-- `healthcheck_failure_total`: failed health checks.
++- `heartbeat_success_total`
++- `heartbeat_failure_total`
++- `docker_operations_total{operation}`
++- `docker_operation_errors_total{operation}`
++- `task_state_changes_total{status}`
++- `healthcheck_success_total`
++- `healthcheck_failure_total`
+ 
+-Agent labels are intentionally limited to operation and status enums. Do not add labels for service names, task IDs, container IDs, node IDs, image tags, or user-provided labels unless there is a reviewed operational reason.
++Labels are intentionally low-cardinality. Do not add service names, task IDs, node IDs, image tags, or user-provided labels to Prometheus metrics.
+ 
+ ## Prometheus Scrape Example
+ 
+@@ -47,4 +94,20 @@ scrape_configs:
+       - targets: ["localhost:8081"]
+ ```
+ 
+-For production, discover agents through your infrastructure inventory or service discovery rather than hard-coding every node.
++## Suggested Alerts
++
++For an MVP environment:
++
++- API 5xx rate above baseline.
++- Agent heartbeat failures increasing.
++- Docker operation errors increasing.
++- Task failures increasing.
++- Rollout failures non-zero.
++- No events or metrics from an expected node.
++
++Roadmap:
++
++- Add service-level SLO metrics.
++- Add node heartbeat expiry metrics.
++- Add persistent audit export.
++- Add trace spans around API/controller/store operations.
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+new file mode 100644
+index 0000000..621ee62
+--- /dev/null
++++ b/docs/OPERATIONS.md
+@@ -0,0 +1,220 @@
++# Operations
++
++This guide describes how to run and operate the current MVP safely.
++
++## Deployment Modes
++
++### Local Development
++
++Use Docker Compose:
++
++```sh
++./scripts/dev-up.sh
++./scripts/migrate-up.sh
++export ORCH_SERVER_URL=http://localhost:8080
++go run ./cmd/orch node ls
++```
++
++Stop:
++
++```sh
++./scripts/dev-down.sh
++```
++
++### Production Assumption
++
++The codebase is not production-ready as a durable orchestrator until `orch-server` is wired to PostgreSQL. The current server process stores control-plane state in memory.
++
++Before production use:
++
++- connect `orch-server` to `PostgresStore`;
++- run migrations at deploy time;
++- configure JWT auth;
++- protect agent registration token or replace with mTLS;
++- run agents only on trusted nodes with Docker access;
++- add heartbeat expiry;
++- add real leader election before multiple controllers;
++- define backup and restore procedures for PostgreSQL.
++
++## Configuration
++
++Server:
++
++- `ORCH_SERVER_ADDR`: listen address, default `:8080`.
++- `DATABASE_URL`: PostgreSQL URL, loaded but not used by the current server wiring.
++- `ORCH_AGENT_REGISTRATION_TOKEN`: agent bootstrap token.
++- `ORCH_JWT_SECRET`: enables JWT auth when set.
++- `ORCH_USERS`: optional static user role map.
++- `ORCH_LOG_LEVEL`: log level.
++- `ORCH_SHUTDOWN_TIMEOUT`: graceful shutdown timeout.
++
++Agent:
++
++- `ORCH_SERVER_URL`
++- `ORCH_NODE_NAME`
++- `ORCH_ADVERTISE_ADDRESS`
++- `ORCH_AGENT_ADDR`
++- `ORCH_NODE_LABELS`
++- `ORCH_AGENT_REGISTRATION_TOKEN`
++- `ORCH_DOCKER_SOCKET`
++- `ORCH_AGENT_HEARTBEAT_INTERVAL`
++- `ORCH_LOG_LEVEL`
++- `ORCH_SHUTDOWN_TIMEOUT`
++
++## Migrations
++
++Apply:
++
++```sh
++./scripts/migrate-up.sh
++```
++
++Rollback:
++
++```sh
++./scripts/migrate-down.sh
++```
++
++Migration files live in `migrations/`.
++
++## Runbooks
++
++### Check Cluster Health
++
++```sh
++curl http://localhost:8080/readyz
++orch node ls
++orch service ls
++orch events --output table
++```
++
++Check metrics:
++
++```sh
++curl http://localhost:8080/metrics
++curl http://localhost:8081/metrics
++```
++
++### Deploy A Service
++
++```sh
++orch deploy deployments/examples/http-api.yaml
++orch service inspect http-api
++orch service ps http-api
++```
++
++### Scale A Service
++
++```sh
++orch scale http-api --replicas 3
++orch service ps http-api
++orch events --service http-api
++```
++
++Expected behavior: the reconciler/control plane creates or stops tasks; scheduler assigns new pending tasks; agents converge Docker containers.
++
++### Roll Out A New Image
++
++```sh
++orch rollout http-api --image nginx:1.28-alpine
++orch rollout status http-api
++orch service ps http-api
++```
++
++If rollout fails, inspect:
++
++```sh
++orch events --service http-api
++orch service ps http-api --output json
++orch logs http-api --tail 100
++```
++
++### Roll Back
++
++```sh
++orch rollback http-api
++orch rollout status http-api
++```
++
++Rollback requires a previous successful version.
++
++### Drain A Node
++
++```sh
++orch node drain <node-id>
++orch node inspect <node-id>
++```
++
++Draining excludes the node from new scheduler placements. Existing task migration away from the node is limited in the current MVP; use service scale/rollout/delete flows to move work intentionally.
++
++Uncordon:
++
++```sh
++orch node uncordon <node-id>
++```
++
++### Investigate Task Failure
++
++```sh
++orch service ps <service>
++orch events --service <service>
++orch logs <service> --task <task-id> --tail 200
++```
++
++Common causes:
++
++- image pull failure;
++- port already allocated;
++- container exited non-zero;
++- healthcheck threshold exceeded;
++- Docker daemon unavailable.
++
++### Delete A Service
++
++```sh
++orch delete <service>
++orch service inspect <service>
++orch service ps <service>
++```
++
++Delete is soft. The service remains `deleting` until agents report task containers removed.
++
++### Agent Cannot Register
++
++Check:
++
++- `ORCH_SERVER_URL`;
++- `ORCH_AGENT_REGISTRATION_TOKEN` on both server and agent;
++- server logs;
++- network reachability from agent to server;
++- timeouts and DNS in Docker Compose.
++
++### Logs Unavailable
++
++Logs are proxied from the owning agent. Check:
++
++- task has a container ID;
++- node is not offline;
++- agent advertise address is reachable from server;
++- Docker daemon is reachable on the node;
++- agent log endpoint is running.
++
++## Backups
++
++For future PostgreSQL-backed production, back up:
++
++- `nodes`;
++- `services`;
++- `service_versions`;
++- `tasks`;
++- `deployments`;
++- `events`.
++
++Until server state is wired to PostgreSQL, backups do not preserve live orchestrator state.
++
++## Upgrade Notes
++
++- Drain or stop agents before changing Docker socket permissions.
++- Roll server and agents separately.
++- Avoid running multiple scheduler/reconciler instances without leader election.
++- Run migrations before deploying binaries that depend on schema changes.
+diff --git a/docs/RECONCILER.md b/docs/RECONCILER.md
+new file mode 100644
+index 0000000..3f7653e
+--- /dev/null
++++ b/docs/RECONCILER.md
+@@ -0,0 +1,74 @@
++# Reconciler
++
++The service reconciler keeps service replica intent aligned with task desired state. It creates pending tasks and stop directives; it does not schedule tasks and does not call Docker.
++
++## Responsibility
++
++The reconciler:
++
++- lists services;
++- lists tasks for each service;
++- creates missing pending tasks for active services;
++- stops excess active tasks;
++- replaces failed restartable tasks by creating new pending tasks;
++- stops tasks for deleted or missing services;
++- advances soft service deletion to `deleted` after all tasks report `removed`;
++- emits events for task creation, stop decisions, and deletion completion;
++- records metrics for runs, errors, duration, created tasks, and stopped tasks.
++
++## Loop
++
++`Run(ctx)` calls `ReconcileOnce(ctx)` immediately, then repeats on a configurable interval. The loop respects context cancellation.
++
++A leader-lock abstraction exists, but the current implementation uses a no-op lock. Do not run multiple production reconcilers against the same durable store until real locking is implemented.
++
++## Active Service Reconciliation
++
++For each active service:
++
++1. Load all service tasks.
++2. Separate current-version non-terminal tasks from outdated tasks.
++3. Stop outdated non-terminal tasks.
++4. Count current-version non-terminal tasks.
++5. Count failed current-version tasks only when restart policy does not allow replacement.
++6. If effective count is below replicas, create missing pending tasks.
++7. If current non-terminal count is above replicas, stop extra tasks in deterministic stop order.
++
++The scheduler later assigns pending tasks. Agents later run or stop containers.
++
++## Stop Order
++
++When reducing active tasks, the reconciler prefers stopping less-disruptive tasks first:
++
++1. `pending`
++2. `assigned`
++3. `pulling`, `created`, `starting`
++4. `unhealthy`
++5. `running`, `healthy`
++6. `stopping`
++
++Within the same priority, task IDs are ordered deterministically.
++
++## Restart Policy
++
++For `always`, `on_failure`, and the empty default, failed tasks do not count toward desired replicas. The reconciler creates replacements.
++
++For `never`, failed tasks count toward effective replicas. This preserves a stopped/failure state for operator inspection.
++
++## Service Deletion
++
++Delete is soft:
++
++1. API marks the service `deleting`.
++2. The reconciler sets non-removed service tasks to desired `stopped`.
++3. Agents stop/remove containers and report `removed`.
++4. When every service task is `removed`, the reconciler marks the service `deleted`.
++
++Repeated delete and reconcile passes are idempotent.
++
++## Current Limitations
++
++- No durable leader election yet.
++- No database transaction wrapping a full service reconciliation pass.
++- No controller for abrupt node heartbeat expiry yet.
++- The default `orch-server` binary currently uses the in-memory control plane rather than this store-backed reconciler loop.
+diff --git a/docs/RELIABILITY.md b/docs/RELIABILITY.md
+index 2c9b316..d04ec61 100644
+--- a/docs/RELIABILITY.md
++++ b/docs/RELIABILITY.md
+@@ -1,126 +1,98 @@
+ # Reliability
+ 
+-## Idempotency Rules
+-
+-Every controller and agent operation should be safe to retry after a timeout, process restart, or lost response.
+-
+-- API create/update handlers validate input before mutating state. Mutating handlers should return the existing in-progress object when the requested operation is already underway.
+-- Reconciler passes must derive work from current service and task state. A second pass must not create extra tasks, repeat stop events, or inflate metrics for tasks that already have a stop/remove desired state.
+-- Scheduler assignment must use optimistic concurrency on the task row. If another scheduler assigned the task first, the retry should reload state rather than assign a different node blindly.
+-- A scheduler pass returns and emits events only for assignments it actually persisted. Assignment conflicts and missing tasks are treated as benign races; the next pass recomputes from fresh state.
+-- Agent task status reports must not resurrect a task after the control plane has requested stop/remove or after the task is terminal. Exact duplicate terminal reports are idempotent and do not emit another event.
+-- Agent task execution must treat Docker operations as idempotent. Existing task containers are reused, stopped containers are safe to stop again, and missing containers are safe to remove again.
+-- Docker-created containers must carry `orch.managed=true` plus service, task, node, and version labels. Cleanup only targets managed containers for the current node.
+-- Rollout controllers must compute progress from task versions and terminal states. Repeated passes must not create more new-version tasks than `replicas + maxSurge`, stop more old tasks than allowed by `maxUnavailable`, or emit status-change events when the status did not change.
+-- Service deletion is soft by default. Repeated delete requests keep the service in `deleting`; final cleanup happens only after all service tasks report `removed`.
+-
+-## Current Audit Notes
+-
+-- The memory control plane ignores terminal tasks when reconciling service replicas, so retries after failed or removed tasks create replacements instead of counting dead tasks as active.
+-- The control plane rejects stale active agent reports for tasks whose desired state is stopped or removed.
+-- The reconciler treats already-stopped tasks as no-ops and only records stop metrics/events when it actually changes desired task state.
+-- PostgreSQL task assignment and stop operations return the existing task when a retry observes the requested state already applied.
+-- The rollout status helper emits events only on real status transitions.
+-- The Docker runtime wrapper already handles create conflicts by looking up the existing managed task container and treats stop/remove of already stopped or missing containers as success.
+-
+-## Failure Mode Behavior
++`orch` is designed around deterministic reconciliation. Controllers and agents should converge from current state instead of assuming one-shot commands always succeed.
+ 
+-### Agent Process Restarts
++## Reliability Boundary Today
+ 
+-Current behavior: the agent re-registers by node name, gets the existing node ID, heartbeats, and polls assigned tasks.
++The current `orch-server` binary uses in-memory control-plane state. That means server process restart loses services, tasks, deployments, events, node credentials, and node status. PostgreSQL migrations and store code exist, but durable server wiring is roadmap.
+ 
+-Unsafe behavior: if the server has a task without a container ID but Docker still has a managed container for that task, the agent could leave server state stale.
++The agent and Docker runtime contain recovery logic for local process restarts and Docker state drift, but durable cluster recovery requires PostgreSQL-backed control-plane state.
+ 
+-MVP fix: before creating a container, the agent searches Docker by managed task labels. If it finds a running task container, it reports `running` with the recovered container ID.
++## Idempotency Rules
+ 
+-### Server Process Restarts
++- API mutations validate input before changing state.
++- Repeated delete requests keep the service in `deleting`; hard delete is not default.
++- Reconciler passes derive work from current service/task state.
++- Scheduler assignment uses optimistic concurrency.
++- Scheduler emits events only for persisted assignments.
++- Assignment conflicts and missing tasks are benign races; the next pass recomputes.
++- Agent status reports cannot resurrect tasks after stop/remove or terminal state.
++- Duplicate terminal status reports are idempotent and do not emit duplicate events.
++- Docker containers are identified by orchestrator labels and task ID.
++- Docker stop/remove of already-stopped or missing containers is success.
++- Rollout passes recompute progress from tasks and deployment status.
+ 
+-Current behavior: the local `orch-server` binary currently uses the in-memory control plane, so service/task state is lost on restart. PostgreSQL store and migrations exist, but the server wiring is not fully persistent yet.
++## Failure Recovery
+ 
+-Unsafe behavior: agents can keep local containers running while the restarted control plane has no desired-state record for them.
++### Agent Process Restart
+ 
+-MVP rule: use this mode for local development only. Production wiring must use PostgreSQL-backed stores before relying on restart recovery.
++The agent re-registers, heartbeats, polls tasks, and searches Docker by managed labels. If it finds the task container, it reports the recovered container ID. No local durable cache is required for MVP.
+ 
+-### Docker Daemon Restarts
++### Server Process Restart
+ 
+-Current behavior: Docker calls fail while the daemon is unavailable.
++Current default behavior loses in-memory state. Use only for local development. Production requires wiring `orch-server` to PostgreSQL before relying on restart recovery.
+ 
+-Unsafe behavior: treating an inspect error as “container missing” can lead to duplicate create attempts after Docker returns.
++### Docker Daemon Restart
+ 
+-MVP fix: when inspect fails, the agent checks managed task labels. If Docker cannot list containers, the agent returns the error and does not create a replacement until Docker is reachable.
++Docker calls fail while unavailable. The agent does not create replacement containers if it cannot list managed containers. When Docker returns, the agent reconciles by labels and task desired state.
+ 
+ ### Node Goes Offline
+ 
+-Current behavior: graceful shutdown heartbeats mark the node `offline`. Unexpected loss is not detected by a lease/timeout controller yet.
+-
+-Unsafe behavior: without heartbeat expiry, an abruptly dead node can remain `ready`.
+-
+-MVP rule: graceful shutdown is handled; heartbeat-expiry based offline marking is future work and should be deterministic before HA scheduling is enabled.
+-
+-### Node Returns After Being Offline
+-
+-Current behavior: registering with the same node name reuses the existing node ID and marks `offline` or `unknown` nodes `ready`.
++Graceful shutdown sends a heartbeat with `shutdown=true`, marking the node `offline`. Abrupt loss is not detected by heartbeat expiry yet.
+ 
+-Unsafe behavior: returning as a new node would orphan assigned tasks.
++### Node Returns
+ 
+-MVP fix: node registration remains keyed by hostname for local MVP recovery and reuses existing identity.
++Registration with the same stable node name reuses the node ID in the current control plane and marks offline/unknown nodes ready.
+ 
+-### Task Is Manually Deleted With `docker rm`
++### Manual `docker rm`
+ 
+-Current behavior: the agent may have a stale container ID in server state.
+-
+-Unsafe behavior: failing permanently on the stale ID would leave the task stuck.
+-
+-MVP fix: the agent verifies by managed labels. If the container is truly absent and Docker is reachable, it pulls/creates/starts a replacement for the same task.
++If a task container was manually removed, the agent confirms no managed container exists for the task and recreates it for the same task ID if desired state is still running.
+ 
+ ### Container Exits Non-Zero
+ 
+-Current behavior: the agent inspects assigned containers.
+-
+-Unsafe behavior: blindly restarting an exited non-zero container hides the failure from the control plane.
+-
+-MVP fix: non-zero exited containers are reported as `failed` with an error event. Replacement is left to server-side reconciliation policy.
++The agent reports the task `failed` with a failure reason. Replacement is a reconciler decision based on restart policy.
+ 
+ ### Image Pull Fails
+ 
+-Current behavior: the agent reports task failure.
+-
+-Unsafe behavior: failure events were previously generic status events.
+-
+-MVP fix: task failures emit `task.failed` with `error` severity and preserve the failure reason.
++The agent reports `failed`; the event stream records `task.failed` with error severity.
+ 
+-### Port Is Already Allocated
++### Port Already Allocated
+ 
+-Current behavior: Docker create/start returns an error.
+-
+-Unsafe behavior: without a clear failed state, the task can look merely in progress.
+-
+-MVP fix: create/start errors are reported as `failed`; the failure reason is stored and an error event is emitted.
++Docker create/start failure is reported as `failed` with the runtime error as failure reason.
+ 
+ ### Database Temporarily Unavailable
+ 
+-Current behavior: store operations return errors to API handlers/controllers.
+-
+-Unsafe behavior: if a write partially succeeds and the response is lost, clients may retry and hit conflicts or duplicates depending on the operation.
+-
+-MVP rule: mutations use optimistic concurrency where implemented, and controllers retry from fresh state on the next loop. Full database retry/backoff policy remains future work.
++Store operations return errors. Controllers should retry from fresh state on the next loop. Full database retry/backoff policy is roadmap.
+ 
+ ### Rollout Interrupted Mid-Way
+ 
+-Current behavior: the rollout controller derives progress from deployment status and task versions.
++The rollout controller recomputes state from deployment and task records. It respects max surge and max unavailable on each pass.
++
++## Task Lifecycle Guardrails
+ 
+-Unsafe behavior: repeated passes could create too many surge tasks or emit duplicate status-change events.
++Task actual status is reported by agents, but control-plane desired status has priority.
+ 
+-MVP fix: rollout progress is recomputed from current tasks; max surge/unavailable limits are recalculated every pass, and status events are emitted only when the status changes.
++If desired status is `stopped` or `removed`, stale agent reports such as `running` are rejected. Agents may still report stopping/terminal statuses so cleanup can complete.
+ 
+-## Retry Guidance
++Once a task is `removed`, only a duplicate `removed` report is accepted.
+ 
+-Prefer polling current state with bounded timeouts over fixed sleeps. Tests and scripts should wait for observable state such as task status, service status, or health endpoints.
++## Testing Expectations
+ 
+-When adding a new mutating operation, add a table-driven test that calls the operation twice with the same input and verifies:
++Every reliability-sensitive change should add tests for:
+ 
+-- no duplicate database rows;
++- retrying the same API/controller operation;
++- process restart or stale state replay;
++- duplicate event prevention;
+ - no duplicate containers;
+-- no misleading events or metrics;
+-- no unrelated task or service is selected for stop/remove;
+-- all timestamps remain UTC.
++- no duplicate task assignments;
++- UTC timestamps;
++- context cancellation for loops.
++
++## Roadmap
++
++- Wire server to PostgreSQL.
++- Add heartbeat expiry and node-failure rebalancing.
++- Add real leader election.
++- Add database transaction boundaries around multi-row controller operations where needed.
++- Add progress deadlines for rollouts.
++- Add persistent event export.
+diff --git a/docs/ROLLOUTS.md b/docs/ROLLOUTS.md
+index 0f7c5e4..70c936d 100644
+--- a/docs/ROLLOUTS.md
++++ b/docs/ROLLOUTS.md
+@@ -1,67 +1,75 @@
+ # Rollouts
+ 
+-Rollouts are asynchronous. `POST /v1/services/{id}/rollout` records a new service version and creates a deployment row, then returns the rollout ID immediately. The rollout controller loop advances the deployment in later passes.
++Rollouts are asynchronous deployments between service versions. The API request starts the rollout and returns a deployment ID; the rollout controller advances it later.
+ 
+-## State Machine
++## API And CLI
+ 
+-- `pending`: rollout has been accepted but not yet processed by the controller.
+-- `running`: controller is creating new-version tasks and stopping old-version tasks.
+-- `succeeded`: all active tasks for the service are on the target version and enough target-version tasks are healthy.
+-- `failed`: at least one target-version task failed health checks or runtime startup.
+-- `paused`: reserved for operator-controlled pause behavior.
+-- `rolling_back`: rollback has selected a previous successful service version and is reconciling tasks back to that version.
+-- `rolled_back`: rollback completed; active tasks are back on the selected previous version.
++```sh
++orch rollout api --image ghcr.io/example/api:1.0.1
++orch rollout api --image ghcr.io/example/api:1.0.1 --max-unavailable 0 --max-surge 2
++orch rollout status api
++orch rollback api
++```
+ 
+-## Rolling Update Rules
++```sh
++curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
++  -H 'Content-Type: application/json' \
++  -d '{"image": "ghcr.io/example/api:1.0.1", "maxUnavailable": 1, "maxSurge": 1}'
++
++curl http://localhost:8080/v1/services/{service_id}/rollout
++curl http://localhost:8080/v1/rollouts/{rollout_id}
++curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
++```
+ 
+-For each running deployment, the controller:
++`maxUnavailable` and `maxSurge` must not both be zero.
+ 
+-1. Loads the service, deployment, and all service tasks.
+-2. Fails the rollout if any target-version task is failed.
+-3. Creates target-version tasks while respecting `replicas + maxSurge`.
+-4. Waits for target-version tasks to report `healthy`.
+-5. Stops old-version tasks only when `maxUnavailable` remains respected.
+-6. Marks the rollout `succeeded` when no old-version tasks remain active and target-version healthy tasks meet the replica count.
++## Deployment Statuses
+ 
+-Task execution remains the agent's responsibility. The rollout controller only creates desired tasks and marks old tasks desired-stopped; the scheduler places pending tasks, and agents reconcile Docker state.
++- `pending`: accepted but not yet processed by the controller.
++- `running`: creating target-version tasks and stopping old-version tasks.
++- `succeeded`: all active tasks are on the target version and enough target tasks are healthy.
++- `failed`: a target-version task failed.
++- `paused`: reserved for future operator-controlled pause behavior.
++- `rolling_back`: rollback deployment is active.
++- `rolled_back`: rollback completed.
+ 
+-## Idempotency
++## Rolling Update Flow
+ 
+-The controller derives every decision from persisted service, deployment, and task state. If it restarts, it resumes from the current tasks without creating duplicate target-version tasks beyond the allowed surge window.
++For each active deployment, the controller:
+ 
+-Rollback requests are also idempotent while a rollback is in flight. Repeating `POST /v1/services/{id}/rollback` returns the active rollback deployment instead of creating a duplicate deployment.
++1. Loads the service and all service tasks.
++2. Computes rollout state from task versions and statuses.
++3. Fails the rollout if any target-version task is `failed`.
++4. Moves `pending` deployments to `running`.
++5. Creates target-version tasks while `active < replicas + maxSurge`.
++6. Waits for target-version tasks to become `healthy`.
++7. Stops old-version tasks only while `maxUnavailable` remains respected.
++8. Marks the deployment terminal when old active tasks are gone and target healthy count meets replicas.
+ 
+-## Rollback
++The controller only creates tasks and stop directives. Scheduling and Docker execution remain separate.
+ 
+-Rollback preserves audit history. Failed rollout deployments remain in the deployment table and event stream.
++## Rollback Flow
+ 
+-When a rollback starts, the control plane:
++Rollback:
+ 
+-1. Finds the latest successful service version before the current version. The initial service version is considered a successful baseline.
++1. Finds the latest previous successful service version. Version 1 is treated as the initial baseline.
+ 2. Restores the service spec to that version.
+-3. Creates a rollback deployment from the current version to the selected previous version.
+-4. Emits rollback events.
+-5. Lets the rollout controller stop failed/current-version tasks only after previous-version tasks satisfy health and availability rules.
++3. Creates a rollback deployment from current version to previous version.
++4. Lets the rollout controller converge tasks through the same safety gates.
+ 
+-If no previous successful version exists, the API returns an invalid-state error.
++Failed rollout history is preserved.
+ 
+-## API
++If no previous successful version exists, rollback returns invalid state.
+ 
+-```sh
+-curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
+-  -H 'Content-Type: application/json' \
+-  -d '{"image": "ghcr.io/example/api:1.0.1", "maxUnavailable": 1, "maxSurge": 1}'
++## Safety And Idempotency
+ 
+-curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+-curl http://localhost:8080/v1/services/{service_id}/rollout
+-curl http://localhost:8080/v1/rollouts/{rollout_id}
+-```
++The controller recomputes progress from current task state every pass. Restarting the controller does not create duplicate target-version tasks beyond the surge limit.
+ 
+-## CLI
++Status-change events are emitted only when the deployment status actually changes. Repeated rollback requests return the active rollback deployment when one is already in flight.
+ 
+-```sh
+-orch rollout api --image ghcr.io/example/api:1.0.1
+-orch rollout api --image ghcr.io/example/api:1.0.1 --max-unavailable 0 --max-surge 2
+-orch rollout status api
+-orch rollback api
+-```
++## Current Limitations
++
++- No manual pause/resume endpoint yet.
++- No automatic rollback on failed rollout.
++- No progress deadline.
++- No per-step transaction wrapping deployment update plus events.
+diff --git a/docs/SCHEDULER.md b/docs/SCHEDULER.md
+index 72d795e..4a25ecd 100644
+--- a/docs/SCHEDULER.md
++++ b/docs/SCHEDULER.md
+@@ -1,48 +1,66 @@
+ # Scheduler
+ 
+-Scheduler v1 assigns pending tasks to ready worker nodes. It is deterministic and has no Docker dependency; the scheduler only reads desired/current state from the store and writes task assignments plus events.
++The scheduler assigns pending tasks to suitable ready nodes. It is deterministic, unit-testable, and has no Docker dependency.
++
++## Responsibility
++
++The scheduler:
++
++- reads pending tasks;
++- reads ready nodes;
++- reads already-placed non-terminal tasks;
++- reads service specs for resource requests and placement constraints;
++- writes task assignments with optimistic concurrency;
++- emits `task.assigned` events for assignments it actually persisted.
++
++The scheduler does not create tasks, stop tasks, start containers, or modify services. Those are reconciler, rollout, agent, and API responsibilities.
+ 
+ ## Inputs
+ 
+-- pending tasks with `actual_status=pending`.
+-- ready nodes with labels, status, capacity, and allocatable resources.
+-- running tasks already placed on each node.
+-- service specs for pending and running tasks, including resource requests and placement constraints.
++- Tasks with `actual_status=pending`.
++- Nodes with `status=ready`.
++- Existing tasks assigned to each ready node.
++- Service specs for pending and existing tasks.
+ 
+ ## Filtering
+ 
+-For each pending task, the scheduler considers nodes in stable `node_id` order and filters out nodes that are not suitable:
++A node is eligible for a pending task only if:
+ 
+-- node status must be `ready`.
+-- draining nodes are excluded because they are not `ready`.
+-- service placement constraints must match node labels.
+-- free allocatable CPU and memory must be greater than or equal to the service resource requests.
++- node status is `ready`;
++- service placement constraints match node labels;
++- free CPU and memory are greater than or equal to the service resource requests.
+ 
+-Free resources are calculated from node allocatable resources minus the resource requests of non-terminal tasks already assigned to that node, plus any assignments planned earlier in the same scheduler pass.
++Draining and offline nodes are excluded because they are not `ready`.
+ 
+-See [RESOURCES.md](RESOURCES.md) for accepted CPU and memory formats and normalization rules.
++Free resources are calculated as:
++
++```text
++node.allocatable - requests(non-terminal tasks already on node) - requests(tasks planned earlier in this pass)
++```
++
++See [RESOURCES.md](RESOURCES.md) for CPU and memory normalization.
+ 
+ ## Scoring
+ 
+ Eligible nodes are scored in this order:
+ 
+-1. Prefer more free memory after placing the task.
+-2. Prefer fewer running tasks for the same service.
+-3. Prefer fewer total running tasks.
+-4. Prefer the lexicographically smallest node ID as the final deterministic tie-breaker.
++1. More free memory after placement.
++2. Fewer active tasks for the same service.
++3. Fewer active tasks overall.
++4. Lexicographically smallest node ID.
++
++Pending tasks are processed in stable task ID order. Nodes are processed in stable node ID order. This makes repeated scheduling passes deterministic for the same input.
+ 
+-Pending tasks are processed in stable `task_id` order. After each assignment, the in-memory scheduling state is updated so later tasks see the planned CPU, memory, and task counts.
++## Persistence And Races
+ 
+-## Persistence
++Assignments are persisted through `AssignTask(ctx, taskID, nodeID, expectedUpdatedAt)`.
+ 
+-`RunOnce` performs one scheduling pass:
++If the store returns `ErrConflict` or `ErrNotFound`, the scheduler treats that as a benign race and skips that planned assignment. It returns and emits events only for assignments that were actually persisted. The next pass recomputes from fresh state.
+ 
+-1. Load pending tasks.
+-2. Load ready nodes.
+-3. Load running tasks for those nodes.
+-4. Load service specs needed for task resource and placement decisions.
+-5. Plan assignments.
+-6. Persist each assignment with optimistic concurrency using the task `updated_at`.
+-7. Emit a `task.assigned` event.
++## Current Limitations
+ 
+-The store remains the source of truth. If another scheduler or control-plane operation updates a task first, the store returns a conflict and the next scheduler pass can retry from fresh state.
++- No preemption.
++- No anti-affinity beyond the simple spreading score.
++- No taints/tolerations.
++- No heartbeat-expiry integration yet.
++- No volume, network topology, or port-conflict-aware scheduling.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index cf3a435..3700416 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -1,14 +1,18 @@
+ # Security
+ 
++`orch` separates user authentication from agent authentication. The current model is appropriate for local and controlled environments; production hardening requires the roadmap items listed below.
++
+ ## User API Authentication
+ 
+ User-facing REST API endpoints support JWT authentication when `ORCH_JWT_SECRET` is configured on `orch-server`.
+ 
+-Tokens use HMAC SHA-256 (`HS256`) and must include:
++If `ORCH_JWT_SECRET` is empty, user auth is disabled. This is the default in local Compose.
++
++JWTs use HMAC SHA-256 (`HS256`) and should include:
+ 
+ - `sub`: user identifier.
+-- `role`: one of `admin`, `operator`, or `viewer`.
+-- `exp`: recommended expiration timestamp.
++- `role`: `admin`, `operator`, or `viewer`.
++- `exp`: expiration timestamp.
+ 
+ Example claims:
+ 
+@@ -20,59 +24,85 @@ Example claims:
+ }
+ ```
+ 
+-The server validates the signature, role, and expiration before applying RBAC.
+-
+-For MVP static users can be configured with `ORCH_USERS`:
++Optional static user config:
+ 
+ ```sh
+ ORCH_USERS=alice:admin,bob:operator,carol:viewer
+ ```
+ 
+-When `ORCH_USERS` is set, the JWT `sub` must match a configured user and the configured role is authoritative. This prevents a token from escalating itself by changing the `role` claim.
++When `ORCH_USERS` is set, the JWT `sub` must match a configured user and the configured role is authoritative.
+ 
+ ## Roles
+ 
+-- `viewer`: list/read nodes, services, tasks, events, and logs.
++- `viewer`: read/list nodes, services, tasks, events, and logs.
+ - `operator`: viewer access plus deploy, scale, rollout, rollback, and delete services.
+ - `admin`: operator access plus node drain/uncordon and future cluster/user administration.
+ 
+-Roles are hierarchical: `admin` includes `operator` and `viewer`; `operator` includes `viewer`.
++Roles are hierarchical.
+ 
+ ## Agent Authentication
+ 
+-Agent authentication is separate from user authentication.
++Agent auth is separate from user JWT auth.
+ 
+-The registration token configured by `ORCH_AGENT_REGISTRATION_TOKEN` is only used for registration. An agent presents it to `POST /v1/agent/register`. After successful registration, the server issues a short-lived agent credential. The server stores only a hash of that credential on the node record, never the raw token.
++1. Agent registers with `Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>`.
++2. Server issues a short-lived agent credential.
++3. Server stores only a hash of the issued credential.
++4. Agent uses the credential for heartbeat, task polling, and task status updates.
++5. Heartbeat responses rotate the credential.
++6. Revoked nodes cannot authenticate with their current credential.
+ 
+-Agents use the issued credential for:
++Never log or store raw tokens.
+ 
+-- `POST /v1/agent/heartbeat`
+-- `GET /v1/agent/tasks`
+-- `POST /v1/agent/tasks/{task_id}/status`
++## Docker Socket Risk
+ 
+-Heartbeat responses rotate the credential. The new credential replaces the previous hash, so older credentials stop working. Nodes also have a server-side revocation flag; revoked nodes cannot authenticate with their current credential.
++The agent needs Docker Engine access. Mounting `/var/run/docker.sock` gives the agent broad control over the node. Treat agent compromise as node compromise.
+ 
+-Do not reuse user JWT secrets as agent registration tokens or agent credentials.
++Recommended controls:
+ 
+-## Future mTLS Design
++- Run agents only on trusted nodes.
++- Restrict access to the agent HTTP port.
++- Keep the agent image minimal and pinned.
++- Do not expose the Docker socket to service containers.
++- Monitor Docker operation error metrics and audit task events.
++
++## Secret Handling
+ 
+-The agent auth implementation is intentionally behind credential issuer/validator interfaces. A future mTLS authenticator can be added beside or instead of token auth:
++Service specs support secret references, not plaintext secret storage. Do not put secret values in service env vars, deploy YAML, logs, or events.
+ 
+-1. Issue each node a client certificate at registration or through external provisioning.
+-2. Bind the certificate subject or SPIFFE ID to the node ID.
+-3. Validate certificate chains and revocation status in middleware.
+-4. Optionally require both mTLS identity and short-lived token credentials during migration.
+-5. Remove static registration tokens once node identity is fully automated.
++Roadmap:
+ 
+-The API should continue to treat user JWT auth and agent identity as separate middleware chains.
++- Integrate a secret manager.
++- Encrypt sensitive persisted data.
++- Add server-side redaction for any future secret-bearing fields.
+ 
+ ## Logging
+ 
+-The API access log records request ID, method, path, status, and duration. It does not log `Authorization` headers, JWTs, registration tokens, agent credentials, or request bodies.
++The API access log records request ID, method, path, status, duration, and route. It must not log:
++
++- `Authorization` headers;
++- JWTs;
++- registration tokens;
++- agent credentials;
++- request bodies containing env or secret references.
++
++## Future mTLS Design
++
++The agent credential code is behind issuer/validator interfaces so mTLS can be added later.
++
++Target design:
++
++1. Provision each node with a client certificate or SPIFFE identity.
++2. Bind certificate identity to node ID.
++3. Validate certificate chain and revocation in agent middleware.
++4. Optionally require both mTLS and short-lived token credentials during migration.
++5. Remove static registration tokens after node identity is automated.
+ 
+-## MVP Limitations
++## Production Requirements Before Multi-Tenant Use
+ 
+-- Users are represented by signed JWT claims plus optional `ORCH_USERS` static config; there is no database-backed user management yet.
+-- Token issuance is external to the server for now.
+-- Use a long, random `ORCH_JWT_SECRET` and rotate it through your deployment secret manager.
+-- mTLS should replace or harden registration-token-based agent bootstrap before production multi-tenant use.
++- Wire `orch-server` to PostgreSQL durable state.
++- Enable JWT auth with a strong rotated secret.
++- Replace static registration bootstrap with mTLS or one-time enrollment.
++- Add TLS termination for server and agent endpoints.
++- Add audit export and retention.
++- Add secret manager integration.
++- Add network policy/firewall rules around server, agent, metrics, and Docker access.

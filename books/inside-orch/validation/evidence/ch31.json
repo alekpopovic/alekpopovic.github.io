@@ -1,0 +1,74 @@
+{
+  "chapter_id": "31",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch31.attempt",
+      "statement": "Focused Job fixture passed injected stopped-zero success and two-attempt nonzero terminal failure.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 184,
+      "line_end": 241,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch31/focused-tests.json",
+      "limitations": [
+        "Injected reports; no Docker execution or external exactly-once effects."
+      ]
+    },
+    {
+      "claim_id": "ch31.retry",
+      "statement": "BackoffLimit bounds retries beyond initial attempt; retry helper creates new pending task identity without a timed delay.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 217,
+      "line_end": 241,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Job adoption/credential paths differ from services; backoff name is not evidence of delay."
+      ]
+    },
+    {
+      "claim_id": "ch31.schedule",
+      "statement": "Five-field parser and explicit timezone arithmetic fixture passed UTC/Belgrade date and earliest two due minutes.",
+      "classification": "teaching extension",
+      "source_path": "internal/cronjobs/cronjobs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 148,
+      "line_end": 224,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch31/teaching-fixture.json",
+      "limitations": [
+        "Exact2026-10-13 case, not all DST transitions; narrow Cron CLI envelope is separately inspected."
+      ]
+    },
+    {
+      "claim_id": "ch31.concurrency",
+      "statement": "Fake-clock controller tests passed missed-limit, Forbid and Replace selected cases.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cronjobs/cronjobs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 75,
+      "line_end": 127,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch31/focused-tests.json",
+      "limitations": [
+        "Forbid backlog/same-pass multiple due and create-before-checkpoint limits disclosed; no physical fencing/exactly-once guarantee."
+      ]
+    }
+  ]
+}

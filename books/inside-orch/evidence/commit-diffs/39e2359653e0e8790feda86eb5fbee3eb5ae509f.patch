@@ -1,0 +1,914 @@
+commit 39e2359653e0e8790feda86eb5fbee3eb5ae509f
+Date: 2026-06-11T16:32:33+02:00
+Subject: Add basic log streaming
+
+
+---
+ .env.example                 |   3 +-
+ README.md                    |   4 +-
+ cmd/orch-agent/main.go       |  44 +++++++++++++++-
+ docs/API.md                  |  10 ++++
+ docs/LOGS.md                 |  30 +++++++++++
+ internal/agent/agent_test.go |  49 ++++++++++++++++--
+ internal/agent/logs.go       | 116 +++++++++++++++++++++++++++++++++++++++++++
+ internal/api/api.go          |  85 +++++++++++++++++++++++++++++++
+ internal/api/api_test.go     | 105 +++++++++++++++++++++++++++++++++++++++
+ internal/api/logs.go         |  73 +++++++++++++++++++++++++++
+ internal/cli/client.go       |  31 ++++++++++++
+ internal/cli/root.go         |  18 +++++--
+ internal/cli/root_test.go    |  41 +++++++++++++++
+ internal/config/config.go    |   7 ++-
+ 14 files changed, 603 insertions(+), 13 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 1a7de1d..0ac6373 100644
+--- a/.env.example
++++ b/.env.example
+@@ -3,7 +3,8 @@ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+ ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
+ ORCH_NODE_NAME=local-node
+-ORCH_ADVERTISE_ADDRESS=127.0.0.1
++ORCH_AGENT_ADDR=:8081
++ORCH_ADVERTISE_ADDRESS=http://127.0.0.1:8081
+ ORCH_NODE_LABELS=role=worker
+ ORCH_DOCKER_SOCKET=/var/run/docker.sock
+ ORCH_LOG_LEVEL=info
+diff --git a/README.md b/README.md
+index 6798711..de4b7fb 100644
+--- a/README.md
++++ b/README.md
+@@ -101,11 +101,11 @@ orch scale api --replicas 5
+ orch rollout api --image ghcr.io/example/api:1.0.1
+ orch rollback api
+ orch events
++orch logs api --tail 100
++orch logs api --follow
+ orch delete api
+ ```
+ 
+-`orch logs <service-name-or-id>` is present, but the server-side logs endpoint has not been implemented yet.
+-
+ ## Development
+ 
+ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development commands and local workflow.
+diff --git a/cmd/orch-agent/main.go b/cmd/orch-agent/main.go
+index d33df3d..c6a6679 100644
+--- a/cmd/orch-agent/main.go
++++ b/cmd/orch-agent/main.go
+@@ -2,13 +2,17 @@ package main
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"log/slog"
++	"net/http"
+ 	"os"
+ 	"os/signal"
+ 	"syscall"
++	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/agent"
+ 	"github.com/alekpopovic/orch/internal/config"
++	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ )
+ 
+@@ -25,6 +29,42 @@ func main() {
+ }
+ 
+ func run(ctx context.Context, logger *slog.Logger, cfg config.AgentConfig) error {
+-	runner := agent.NewRunner(cfg, nil, logger)
+-	return runner.Run(ctx)
++	runtime, err := orchdocker.NewEngineRuntimeFromEnv()
++	if err != nil {
++		return err
++	}
++	runner := agent.NewRunner(cfg, nil, logger).WithRuntime(runtime)
++	server := &http.Server{
++		Addr:              cfg.AgentAddr,
++		Handler:           agent.NewLogHandler(runtime, cfg.BootstrapToken, logger),
++		ReadHeaderTimeout: 5 * time.Second,
++	}
++
++	errCh := make(chan error, 2)
++	go func() {
++		logger.Info("starting agent log server", "addr", cfg.AgentAddr)
++		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
++			errCh <- err
++			return
++		}
++		errCh <- nil
++	}()
++	go func() {
++		errCh <- runner.Run(ctx)
++	}()
++
++	select {
++	case err := <-errCh:
++		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
++		defer cancel()
++		_ = server.Shutdown(shutdownCtx)
++		return err
++	case <-ctx.Done():
++		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.GracefulShutdownTTL)
++		defer cancel()
++		if err := server.Shutdown(shutdownCtx); err != nil {
++			return err
++		}
++		return nil
++	}
+ }
+diff --git a/docs/API.md b/docs/API.md
+index 5ba03fe..19c2de7 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -124,3 +124,13 @@ Agents may report `pulling`, `created`, `running`, `healthy`, `unhealthy`, `fail
+ curl http://localhost:8080/v1/events
+ curl 'http://localhost:8080/v1/events?related_object_type=service&related_object_id={service_id}&limit=50'
+ ```
++
++## Logs
++
++```sh
++curl 'http://localhost:8080/v1/logs?service_id={service_id}&tail=100'
++curl 'http://localhost:8080/v1/logs?service_id={service_id}&follow=true'
++curl 'http://localhost:8080/v1/logs?service_id={service_id}&task_id={task_id}'
++```
++
++The MVP response is newline-delimited text proxied from a worker agent.
+diff --git a/docs/LOGS.md b/docs/LOGS.md
+new file mode 100644
+index 0000000..41b3d95
+--- /dev/null
++++ b/docs/LOGS.md
+@@ -0,0 +1,30 @@
++# Logs
++
++The MVP logs path streams container logs from worker agents through the control-plane API.
++
++```sh
++orch logs api
++orch logs api --tail 100
++orch logs api --follow
++orch logs api --task 00000000-0000-4000-8000-000000000123
++```
++
++## Flow
++
++1. The CLI resolves the service name or ID and calls `GET /v1/logs`.
++2. The server selects a running task for the service, or uses the explicit `task_id`.
++3. The server checks that the task has a container and that its node is not offline.
++4. The server proxies the request to the node agent at `GET /v1/agent/logs`.
++5. The agent streams Docker logs for the managed container with the matching `orch.task_id` label.
++
++The response is newline-delimited text over chunked HTTP. `--follow` keeps the stream open until the client disconnects or the request context is canceled.
++
++## Limitations
++
++- Logs are proxied from one task at a time.
++- Service-level logs pick the first running or healthy task with a container.
++- There is no persisted log store yet.
++- If the node is offline or unreachable, logs are unavailable.
++- The control plane depends on each node's `advertise_address` pointing to the agent HTTP listener.
++
++Agents protect the log endpoint with the bootstrap token for now. mTLS should replace this before production multi-tenant use.
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index d96669b..2749d5c 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -4,6 +4,8 @@ import (
+ 	"context"
+ 	"io"
+ 	"log/slog"
++	"net/http"
++	"net/http/httptest"
+ 	"testing"
+ 	"time"
+ 
+@@ -126,6 +128,37 @@ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ 	}
+ }
+ 
++func TestLogHandlerStopsOnCancellation(t *testing.T) {
++	runtime := &fakeRuntime{
++		managed: []orchdocker.ContainerStatus{{
++			ID: "container-1",
++			Labels: map[string]string{
++				orchdocker.TaskIDLabel: "task-1",
++			},
++		}},
++		logStarted: make(chan struct{}),
++		logBlock:   true,
++	}
++	handler := NewLogHandler(runtime, "secret", slog.New(slog.NewTextHandler(io.Discard, nil)))
++	ctx, cancel := context.WithCancel(context.Background())
++	req := httptest.NewRequest(http.MethodGet, "/v1/agent/logs?task_id=task-1&follow=true", nil).WithContext(ctx)
++	req.Header.Set("Authorization", "Bearer secret")
++	rec := httptest.NewRecorder()
++	done := make(chan struct{})
++	go func() {
++		handler.ServeHTTP(rec, req)
++		close(done)
++	}()
++
++	<-runtime.logStarted
++	cancel()
++	select {
++	case <-done:
++	case <-time.After(time.Second):
++		t.Fatalf("log handler did not stop after cancellation")
++	}
++}
++
+ type fakeAgentClient struct {
+ 	tasks    []api.AgentTask
+ 	statuses []types.TaskStatus
+@@ -155,10 +188,12 @@ func (c *fakeAgentClient) ReportTaskStatus(_ context.Context, taskID types.TaskI
+ }
+ 
+ type fakeRuntime struct {
+-	calls     []string
+-	createdID orchdocker.ContainerID
+-	managed   []orchdocker.ContainerStatus
+-	inspect   map[orchdocker.ContainerID]orchdocker.ContainerStatus
++	calls      []string
++	createdID  orchdocker.ContainerID
++	managed    []orchdocker.ContainerStatus
++	inspect    map[orchdocker.ContainerID]orchdocker.ContainerStatus
++	logStarted chan struct{}
++	logBlock   bool
+ }
+ 
+ func (r *fakeRuntime) PullImage(_ context.Context, image string, _ *orchdocker.RegistryAuth) error {
+@@ -206,6 +241,12 @@ func (r *fakeRuntime) ListManagedContainers(_ context.Context, _ map[string]stri
+ func (r *fakeRuntime) StreamLogs(context.Context, orchdocker.ContainerID, orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
+ 	lines := make(chan orchdocker.LogLine)
+ 	errs := make(chan error)
++	if r.logStarted != nil {
++		close(r.logStarted)
++	}
++	if r.logBlock {
++		return lines, errs
++	}
+ 	close(lines)
+ 	close(errs)
+ 	return lines, errs
+diff --git a/internal/agent/logs.go b/internal/agent/logs.go
+new file mode 100644
+index 0000000..ff82e54
+--- /dev/null
++++ b/internal/agent/logs.go
+@@ -0,0 +1,116 @@
++package agent
++
++import (
++	"context"
++	"fmt"
++	"log/slog"
++	"net/http"
++	"strconv"
++	"strings"
++
++	orchdocker "github.com/alekpopovic/orch/internal/docker"
++)
++
++func NewLogHandler(runtime orchdocker.Runtime, token string, logger *slog.Logger) http.Handler {
++	if logger == nil {
++		logger = slog.Default()
++	}
++	server := &logServer{runtime: runtime, token: token, logger: logger}
++	mux := http.NewServeMux()
++	mux.HandleFunc("GET /v1/agent/logs", server.streamLogs)
++	return mux
++}
++
++type logServer struct {
++	runtime orchdocker.Runtime
++	token   string
++	logger  *slog.Logger
++}
++
++func (s *logServer) streamLogs(w http.ResponseWriter, r *http.Request) {
++	if !s.authorize(w, r) {
++		return
++	}
++	if s.runtime == nil {
++		http.Error(w, "runtime is not configured", http.StatusServiceUnavailable)
++		return
++	}
++	taskID := strings.TrimSpace(r.URL.Query().Get("task_id"))
++	if taskID == "" {
++		http.Error(w, "task_id is required", http.StatusBadRequest)
++		return
++	}
++	container, err := s.containerForTask(r.Context(), taskID)
++	if err != nil {
++		http.Error(w, err.Error(), http.StatusNotFound)
++		return
++	}
++
++	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
++	w.Header().Set("X-Content-Type-Options", "nosniff")
++	flusher, _ := w.(http.Flusher)
++
++	lines, errs := s.runtime.StreamLogs(r.Context(), container.ID, orchdocker.LogOptions{
++		Follow: r.URL.Query().Get("follow") == "true",
++		Tail:   tailValue(r.URL.Query().Get("tail")),
++		Stdout: true,
++		Stderr: true,
++	})
++	for {
++		select {
++		case <-r.Context().Done():
++			return
++		case line, ok := <-lines:
++			if !ok {
++				if err := <-errs; err != nil {
++					s.logger.Warn("docker log stream failed", "task_id", taskID, "error", err)
++				}
++				return
++			}
++			if _, err := fmt.Fprintln(w, line.Line); err != nil {
++				return
++			}
++			if flusher != nil {
++				flusher.Flush()
++			}
++		}
++	}
++}
++
++func (s *logServer) authorize(w http.ResponseWriter, r *http.Request) bool {
++	if s.token == "" {
++		return true
++	}
++	token := strings.TrimSpace(r.Header.Get("X-Orch-Bootstrap-Token"))
++	if token == "" {
++		auth := strings.TrimSpace(r.Header.Get("Authorization"))
++		token = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
++	}
++	if token != s.token {
++		http.Error(w, "invalid agent bootstrap token", http.StatusUnauthorized)
++		return false
++	}
++	return true
++}
++
++func (s *logServer) containerForTask(ctx context.Context, taskID string) (orchdocker.ContainerStatus, error) {
++	containers, err := s.runtime.ListManagedContainers(ctx, map[string]string{orchdocker.TaskIDLabel: taskID})
++	if err != nil {
++		return orchdocker.ContainerStatus{}, err
++	}
++	if len(containers) == 0 {
++		return orchdocker.ContainerStatus{}, fmt.Errorf("managed container for task %s not found", taskID)
++	}
++	return containers[0], nil
++}
++
++func tailValue(raw string) string {
++	raw = strings.TrimSpace(raw)
++	if raw == "" {
++		return "all"
++	}
++	if _, err := strconv.Atoi(raw); err != nil {
++		return "all"
++	}
++	return raw
++}
+diff --git a/internal/api/api.go b/internal/api/api.go
+index ed5acf5..8f5a092 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -21,6 +21,7 @@ import (
+ 
+ type Server struct {
+ 	controlPlane   controlplane.Service
++	logStreamer    LogStreamer
+ 	logger         *slog.Logger
+ 	timeout        time.Duration
+ 	bootstrapToken string
+@@ -40,6 +41,12 @@ func WithBootstrapToken(token string) Option {
+ 	}
+ }
+ 
++func WithLogStreamer(streamer LogStreamer) Option {
++	return func(server *Server) {
++		server.logStreamer = streamer
++	}
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -52,6 +59,9 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	for _, opt := range opts {
+ 		opt(server)
+ 	}
++	if server.logStreamer == nil {
++		server.logStreamer = &AgentHTTPLogStreamer{}
++	}
+ 
+ 	mux := http.NewServeMux()
+ 	mux.HandleFunc("GET /healthz", server.healthz)
+@@ -74,6 +84,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/tasks", server.listTasks)
+ 	mux.HandleFunc("GET /v1/tasks/{id}", server.getTask)
+ 	mux.HandleFunc("GET /v1/events", server.listEvents)
++	mux.HandleFunc("GET /v1/logs", server.streamLogs)
+ 
+ 	return server.middleware(mux)
+ }
+@@ -501,6 +512,45 @@ func (s *Server) listEvents(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusOK, ListEventsResponse{Events: events})
+ }
+ 
++func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {
++	task, err := s.logTask(r)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	if task.NodeID == "" {
++		s.writeError(w, r, fmt.Errorf("%w: task is not assigned to a node", store.ErrInvalidState))
++		return
++	}
++	if task.ContainerID == "" {
++		s.writeError(w, r, fmt.Errorf("%w: task has no container yet", store.ErrInvalidState))
++		return
++	}
++	node, err := s.controlPlane.GetNode(r.Context(), task.NodeID)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	if node.Status == types.NodeOffline || node.Status == types.NodeUnknown {
++		s.writeError(w, r, fmt.Errorf("%w: node %s is %s", store.ErrInvalidState, node.ID, node.Status))
++		return
++	}
++	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
++	w.Header().Set("X-Content-Type-Options", "nosniff")
++	if flusher, ok := w.(http.Flusher); ok {
++		flusher.Flush()
++	}
++	if err := s.logStreamer.StreamLogs(r.Context(), LogStreamRequest{
++		AgentURL: node.AdvertiseAddress,
++		TaskID:   string(task.ID),
++		Follow:   r.URL.Query().Get("follow") == "true",
++		Tail:     strings.TrimSpace(r.URL.Query().Get("tail")),
++		Token:    s.bootstrapToken,
++	}, w); err != nil && !errors.Is(err, context.Canceled) {
++		s.logger.Warn("log stream failed", "task_id", task.ID, "error", err)
++	}
++}
++
+ func (s *Server) middleware(next http.Handler) http.Handler {
+ 	return requestIDMiddleware(s.accessLogMiddleware(s.recoveryMiddleware(s.timeoutMiddleware(authPlaceholderMiddleware(next)))))
+ }
+@@ -523,6 +573,10 @@ func requestIDMiddleware(next http.Handler) http.Handler {
+ 
+ func (s *Server) timeoutMiddleware(next http.Handler) http.Handler {
+ 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if r.URL.Path == "/v1/logs" && r.URL.Query().Get("follow") == "true" {
++			next.ServeHTTP(w, r)
++			return
++		}
+ 		ctx, cancel := context.WithTimeout(r.Context(), s.timeout)
+ 		defer cancel()
+ 		next.ServeHTTP(w, r.WithContext(ctx))
+@@ -685,6 +739,37 @@ func (s *Server) eventFilter(w http.ResponseWriter, r *http.Request) (controlpla
+ 	}, true
+ }
+ 
++func (s *Server) logTask(r *http.Request) (types.Task, error) {
++	query := r.URL.Query()
++	taskID := strings.TrimSpace(query.Get("task_id"))
++	serviceID := strings.TrimSpace(query.Get("service_id"))
++	if taskID == "" && serviceID == "" {
++		return types.Task{}, fmt.Errorf("%w: service_id or task_id is required", store.ErrInvalidState)
++	}
++	if taskID != "" {
++		if !validUUID(taskID) {
++			return types.Task{}, fmt.Errorf("%w: task_id must be a UUID", store.ErrInvalidState)
++		}
++		return s.controlPlane.GetTask(r.Context(), types.TaskID(taskID))
++	}
++	if !validUUID(serviceID) {
++		return types.Task{}, fmt.Errorf("%w: service_id must be a UUID", store.ErrInvalidState)
++	}
++	tasks, err := s.controlPlane.ListTasks(r.Context(), controlplane.TaskFilter{ServiceID: types.ServiceID(serviceID)})
++	if err != nil {
++		return types.Task{}, err
++	}
++	for _, task := range tasks {
++		if task.ContainerID == "" || task.NodeID == "" {
++			continue
++		}
++		if task.ActualStatus == types.TaskRunning || task.ActualStatus == types.TaskHealthy || task.ActualStatus == types.TaskUnhealthy {
++			return task, nil
++		}
++	}
++	return types.Task{}, store.ErrNotFound
++}
++
+ func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
+ 	status, code := errorStatus(err)
+ 	message := err.Error()
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 857c91f..12ffd9c 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -2,12 +2,15 @@ package api
+ 
+ import (
+ 	"bytes"
++	"context"
+ 	"encoding/json"
++	"io"
+ 	"log/slog"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"strings"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -151,6 +154,65 @@ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 	}
+ }
+ 
++func TestStreamLogsCancellation(t *testing.T) {
++	streamer := &blockingLogStreamer{started: make(chan struct{}), done: make(chan struct{})}
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"), WithLogStreamer(streamer))
++	registered := registerTestNode(t, handler)
++	created := createLogTestService(t, handler)
++	tasks := listAgentTasks(t, handler, registered.Node.ID)
++	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRunning,
++		ContainerID: "container-1",
++	})
++	if report.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
++	}
++
++	ctx, cancel := context.WithCancel(context.Background())
++	req := httptest.NewRequest(http.MethodGet, "/v1/logs?service_id="+string(created.Service.ID)+"&follow=true", nil).WithContext(ctx)
++	rec := httptest.NewRecorder()
++	go func() {
++		handler.ServeHTTP(rec, req)
++		close(streamer.done)
++	}()
++	<-streamer.started
++	cancel()
++
++	select {
++	case <-streamer.done:
++	case <-time.After(time.Second):
++		t.Fatalf("log stream did not stop after cancellation")
++	}
++}
++
++func TestStreamLogsRejectsOfflineNode(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++	created := createLogTestService(t, handler)
++	tasks := listAgentTasks(t, handler, registered.Node.ID)
++	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRunning,
++		ContainerID: "container-1",
++	})
++	if report.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
++	}
++	heartbeat := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
++		"node_id": "`+string(registered.Node.ID)+`",
++		"shutdown": true
++	}`)
++	if heartbeat.Code != http.StatusOK {
++		t.Fatalf("expected heartbeat status %d, got %d: %s", http.StatusOK, heartbeat.Code, heartbeat.Body.String())
++	}
++
++	rec := doRequest(t, handler, http.MethodGet, "/v1/logs?service_id="+string(created.Service.ID), nil)
++	if rec.Code != http.StatusBadRequest {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, rec.Code, rec.Body.String())
++	}
++}
++
+ func TestCreateService(t *testing.T) {
+ 	rec := doRequest(t, newTestHandler(), http.MethodPost, "/v1/services", `{
+ 		"spec": {
+@@ -343,6 +405,49 @@ func registerTestNode(t *testing.T, handler http.Handler) AgentResponse {
+ 	return registered
+ }
+ 
++func createLogTestService(t *testing.T, handler http.Handler) ServiceResponse {
++	t.Helper()
++	create := doRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "logs-api",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	if create.Code != http.StatusCreated {
++		t.Fatalf("expected create status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
++	}
++	var created ServiceResponse
++	decodeResponse(t, create, &created)
++	return created
++}
++
++func listAgentTasks(t *testing.T, handler http.Handler, nodeID types.NodeID) AgentTasksResponse {
++	t.Helper()
++	list := doAgentRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(nodeID), nil)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected tasks status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	var tasks AgentTasksResponse
++	decodeResponse(t, list, &tasks)
++	if len(tasks.Tasks) == 0 {
++		t.Fatalf("expected assigned tasks")
++	}
++	return tasks
++}
++
++type blockingLogStreamer struct {
++	started chan struct{}
++	done    chan struct{}
++}
++
++func (s *blockingLogStreamer) StreamLogs(ctx context.Context, _ LogStreamRequest, _ io.Writer) error {
++	close(s.started)
++	<-ctx.Done()
++	return ctx.Err()
++}
++
+ func decodeResponse(t *testing.T, rec *httptest.ResponseRecorder, target any) {
+ 	t.Helper()
+ 	if err := json.Unmarshal(rec.Body.Bytes(), target); err != nil {
+diff --git a/internal/api/logs.go b/internal/api/logs.go
+new file mode 100644
+index 0000000..6d908fe
+--- /dev/null
++++ b/internal/api/logs.go
+@@ -0,0 +1,73 @@
++package api
++
++import (
++	"context"
++	"fmt"
++	"io"
++	"net/http"
++	"net/url"
++	"strings"
++)
++
++type LogStreamRequest struct {
++	AgentURL string
++	TaskID   string
++	Follow   bool
++	Tail     string
++	Token    string
++}
++
++type LogStreamer interface {
++	StreamLogs(ctx context.Context, req LogStreamRequest, w io.Writer) error
++}
++
++type AgentHTTPLogStreamer struct {
++	Client *http.Client
++}
++
++func (s *AgentHTTPLogStreamer) StreamLogs(ctx context.Context, req LogStreamRequest, w io.Writer) error {
++	client := s.Client
++	if client == nil {
++		client = http.DefaultClient
++	}
++	baseURL := normalizeAgentURL(req.AgentURL)
++	values := url.Values{}
++	values.Set("task_id", req.TaskID)
++	if req.Follow {
++		values.Set("follow", "true")
++	}
++	if strings.TrimSpace(req.Tail) != "" {
++		values.Set("tail", strings.TrimSpace(req.Tail))
++	}
++	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/v1/agent/logs?"+values.Encode(), nil)
++	if err != nil {
++		return fmt.Errorf("create agent logs request: %w", err)
++	}
++	if req.Token != "" {
++		httpReq.Header.Set("Authorization", "Bearer "+req.Token)
++	}
++	resp, err := client.Do(httpReq)
++	if err != nil {
++		return fmt.Errorf("request agent logs: %w", err)
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
++		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
++		return fmt.Errorf("agent returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
++	}
++	if _, err := io.Copy(w, resp.Body); err != nil {
++		return fmt.Errorf("copy agent logs: %w", err)
++	}
++	return nil
++}
++
++func normalizeAgentURL(raw string) string {
++	raw = strings.TrimRight(strings.TrimSpace(raw), "/")
++	if raw == "" {
++		return raw
++	}
++	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
++		return raw
++	}
++	return "http://" + raw
++}
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 320e6d4..e14356d 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -148,6 +148,37 @@ func (c *APIClient) ListEvents(ctx context.Context) ([]types.Event, error) {
+ 	return out.Events, nil
+ }
+ 
++func (c *APIClient) StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error {
++	values := url.Values{}
++	if strings.TrimSpace(taskID) != "" {
++		values.Set("task_id", strings.TrimSpace(taskID))
++	} else {
++		values.Set("service_id", serviceID)
++	}
++	if follow {
++		values.Set("follow", "true")
++	}
++	if strings.TrimSpace(tail) != "" {
++		values.Set("tail", strings.TrimSpace(tail))
++	}
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/v1/logs?"+values.Encode(), nil)
++	if err != nil {
++		return fmt.Errorf("create logs request: %w", err)
++	}
++	resp, err := c.httpClient.Do(req)
++	if err != nil {
++		return fmt.Errorf("request logs failed: %w", err)
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
++		return decodeAPIError(resp)
++	}
++	if _, err := io.Copy(out, resp.Body); err != nil {
++		return fmt.Errorf("stream logs: %w", err)
++	}
++	return nil
++}
++
+ func (c *APIClient) do(ctx context.Context, method string, path string, body any, out any) error {
+ 	var reader io.Reader
+ 	if body != nil {
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 4595a00..14a76db 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -32,6 +32,7 @@ type Client interface {
+ 	ListTasks(ctx context.Context, query url.Values) ([]types.Task, error)
+ 	GetTask(ctx context.Context, id string) (types.Task, error)
+ 	ListEvents(ctx context.Context) ([]types.Event, error)
++	StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error
+ }
+ 
+ type Config struct {
+@@ -379,14 +380,25 @@ func (a *app) eventsCommand() *cobra.Command {
+ }
+ 
+ func (a *app) logsCommand() *cobra.Command {
+-	return &cobra.Command{
++	var follow bool
++	var taskID string
++	var tail string
++	cmd := &cobra.Command{
+ 		Use:   "logs <service-name-or-id>",
+ 		Short: "Fetch service logs",
+ 		Args:  cobra.ExactArgs(1),
+-		RunE: func(_ *cobra.Command, _ []string) error {
+-			return fmt.Errorf("logs are not available yet: the control-plane API does not expose a logs endpoint")
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			return client.StreamLogs(cmd.Context(), string(service.ID), taskID, follow, tail, a.out)
+ 		},
+ 	}
++	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "follow log output")
++	cmd.Flags().StringVar(&taskID, "task", "", "specific task ID")
++	cmd.Flags().StringVar(&tail, "tail", "", "number of lines to show from the end")
++	return cmd
+ }
+ 
+ func (a *app) clientAndService(ctx context.Context, ref string) (Client, types.Service, error) {
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index da55d5d..e77f637 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -3,6 +3,7 @@ package cli
+ import (
+ 	"bytes"
+ 	"context"
++	"io"
+ 	"net/url"
+ 	"os"
+ 	"path/filepath"
+@@ -141,11 +142,43 @@ func TestScaleCommandResolvesServiceByName(t *testing.T) {
+ 	}
+ }
+ 
++func TestLogsCommandStreamsResolvedService(t *testing.T) {
++	client := &fakeClient{
++		services: []types.Service{{
++			ID:                "00000000-0000-4000-8000-000000000010",
++			Spec:              types.ServiceSpec{Name: "api", Image: "nginx", Replicas: 1},
++			DeploymentVersion: 1,
++		}},
++	}
++	cmd := NewRootCommand(Options{
++		Out: &bytes.Buffer{},
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "logs", "api", "--follow", "--task", "00000000-0000-4000-8000-000000000011", "--tail", "100"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute logs: %v", err)
++	}
++	if client.logServiceID != "00000000-0000-4000-8000-000000000010" || client.logTaskID != "00000000-0000-4000-8000-000000000011" {
++		t.Fatalf("unexpected log target service=%q task=%q", client.logServiceID, client.logTaskID)
++	}
++	if !client.logFollow || client.logTail != "100" {
++		t.Fatalf("unexpected log flags follow=%v tail=%q", client.logFollow, client.logTail)
++	}
++}
++
+ type fakeClient struct {
+ 	services       []types.Service
+ 	created        types.Service
+ 	scaledID       string
+ 	scaledReplicas int
++	logServiceID   string
++	logTaskID      string
++	logFollow      bool
++	logTail        string
+ }
+ 
+ func (f *fakeClient) ListNodes(context.Context) ([]types.Node, error) {
+@@ -217,3 +250,11 @@ func (f *fakeClient) GetTask(_ context.Context, id string) (types.Task, error) {
+ func (f *fakeClient) ListEvents(context.Context) ([]types.Event, error) {
+ 	return nil, nil
+ }
++
++func (f *fakeClient) StreamLogs(_ context.Context, serviceID string, taskID string, follow bool, tail string, _ io.Writer) error {
++	f.logServiceID = serviceID
++	f.logTaskID = taskID
++	f.logFollow = follow
++	f.logTail = tail
++	return nil
++}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 8059dc0..63b2ff3 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -19,6 +19,7 @@ type ServerConfig struct {
+ type AgentConfig struct {
+ 	NodeName            string
+ 	AdvertiseAddress    string
++	AgentAddr           string
+ 	Labels              map[string]string
+ 	ServerURL           string
+ 	BootstrapToken      string
+@@ -41,7 +42,8 @@ func LoadServer() ServerConfig {
+ func LoadAgent() AgentConfig {
+ 	return AgentConfig{
+ 		NodeName:            getenv("ORCH_NODE_NAME", getenv("ORCH_NODE_ID", "local-node")),
+-		AdvertiseAddress:    getenv("ORCH_ADVERTISE_ADDRESS", "127.0.0.1"),
++		AdvertiseAddress:    getenv("ORCH_ADVERTISE_ADDRESS", "http://127.0.0.1:8081"),
++		AgentAddr:           getenv("ORCH_AGENT_ADDR", ":8081"),
+ 		Labels:              labelsFromEnv("ORCH_NODE_LABELS"),
+ 		ServerURL:           getenv("ORCH_SERVER_URL", "http://localhost:8080"),
+ 		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
+@@ -118,6 +120,9 @@ func (cfg AgentConfig) Validate() error {
+ 	if cfg.AdvertiseAddress == "" {
+ 		return fmt.Errorf("advertise address is required")
+ 	}
++	if cfg.AgentAddr == "" {
++		return fmt.Errorf("agent address is required")
++	}
+ 	if cfg.ServerURL == "" {
+ 		return fmt.Errorf("server URL is required")
+ 	}

@@ -1,0 +1,13 @@
+func LoadServerWithFile(path string, overrides ServerOverrides) (ServerConfig, error) {
+	cfg := defaultServer()
+	if err := applyServerFile(&cfg, path); err != nil {
+		return ServerConfig{}, err
+	}
+	if err := applyServerEnv(&cfg); err != nil {
+		return ServerConfig{}, err
+	}
+	if err := applyServerOverrides(&cfg, overrides); err != nil {
+		return ServerConfig{}, err
+	}
+	return cfg, cfg.Validate()
+}

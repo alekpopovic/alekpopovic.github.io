@@ -1,0 +1,24 @@
+Manage GitOps sources
+
+Usage:
+  orch gitops [command]
+
+Available Commands:
+  add         Add a GitOps source
+  delete      Delete a GitOps source
+  diff        Compare live and Git desired service specs
+  ls          List GitOps sources
+  status      Show drift status for GitOps-managed services
+  sync        Synchronize a GitOps source now
+
+Flags:
+  -h, --help   help for gitops
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch gitops [command] --help" for more information about a command.

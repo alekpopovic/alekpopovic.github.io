@@ -1,0 +1,11 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "scope": "Index to actual guarded database runs performed sequentially by root; this index is not a new execution.",
+  "baseline": "validation/intake/postgres-store-owned.json",
+  "complete_schema_teaching_extension": "validation/intake/full-schema-recovery-corrected.json",
+  "schema_correction": "agent_version added by migrations/000016_operations_safety.up.sql line6; untouched fixture applies000001\u2013000014",
+  "outcomes": {
+    "baseline": "rollback test passed; other two tests failed missing agent_version",
+    "teaching_extension": "all16 migrations; one concurrent assignment winner and one conflict; owned database restore checks passed"
+  }
+}

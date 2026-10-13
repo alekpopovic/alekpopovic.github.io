@@ -1,0 +1,347 @@
+{
+  "status": "passed",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T01:12:39.511437+00:00",
+  "scope": "Verification of persisted author-run records and their byte integrity; no new application execution.",
+  "command_record": "validation/labs/lab05-security-local-probes.json",
+  "observation_record": "validation/labs/lab05-security-local-probes.stdout.txt",
+  "observation_sha256": "aed261c15eceda60945729949f437b4eba9caa4eb82c7d2382dfd831964454d1",
+  "checks": [
+    {
+      "name": "actual command exit zero",
+      "passed": true
+    },
+    {
+      "name": "at least twelve actual boundary cases",
+      "passed": true
+    },
+    {
+      "name": "HTTP missing-user-token",
+      "passed": true
+    },
+    {
+      "name": "HTTP viewer-read",
+      "passed": true
+    },
+    {
+      "name": "HTTP viewer-mutation-denied",
+      "passed": true
+    },
+    {
+      "name": "HTTP scoped-operator-create",
+      "passed": true
+    },
+    {
+      "name": "HTTP scoped-operator-other-namespace",
+      "passed": true
+    },
+    {
+      "name": "HTTP scoped-operator-cluster-admin-denied",
+      "passed": true
+    },
+    {
+      "name": "HTTP admin-audit",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-create-metadata",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-get-metadata",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-list-metadata",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-namespace-hidden",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-events-redacted",
+      "passed": true
+    },
+    {
+      "name": "HTTP secret-audit-redacted",
+      "passed": true
+    },
+    {
+      "name": "HTTP missing-secret-error",
+      "passed": true
+    },
+    {
+      "name": "HTTP bootstrap-missing",
+      "passed": true
+    },
+    {
+      "name": "HTTP bootstrap-issued",
+      "passed": true
+    },
+    {
+      "name": "HTTP assigned-agent-plaintext",
+      "passed": true
+    },
+    {
+      "name": "HTTP second-agent-issued",
+      "passed": true
+    },
+    {
+      "name": "HTTP wrong-node-credential",
+      "passed": true
+    },
+    {
+      "name": "HTTP heartbeat-rotates",
+      "passed": true
+    },
+    {
+      "name": "HTTP rotated-old-token-denied",
+      "passed": true
+    },
+    {
+      "name": "HTTP empty-user-jwt-auth-disabled",
+      "passed": true
+    },
+    {
+      "name": "probe same-origin-redirect",
+      "passed": true
+    },
+    {
+      "name": "only local probe destination",
+      "passed": true
+    },
+    {
+      "name": "probe cross-origin-blocked",
+      "passed": true
+    },
+    {
+      "name": "only local probe destination",
+      "passed": true
+    },
+    {
+      "name": "probe bounded-large-response",
+      "passed": true
+    },
+    {
+      "name": "only local probe destination",
+      "passed": true
+    },
+    {
+      "name": "probe timeout-unhealthy",
+      "passed": true
+    },
+    {
+      "name": "only local probe destination",
+      "passed": true
+    },
+    {
+      "name": "wrong node refused without mutation",
+      "passed": true
+    },
+    {
+      "name": "rotated old credential rejected",
+      "passed": true
+    },
+    {
+      "name": "cross-origin target never contacted",
+      "passed": true
+    },
+    {
+      "name": "permitted plaintext verified separately",
+      "passed": true
+    },
+    {
+      "name": "envelope roundtrip and key loss boundaries",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: missing-user-token.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: viewer-read.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: viewer-mutation-denied.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: admin-audit.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-list-metadata.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-audit-redacted.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: bootstrap-missing.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: scoped-operator-create.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: scoped-operator-other-namespace.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: scoped-operator-cluster-admin-denied.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-namespace-hidden.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-events-redacted.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: rotated-old-token-denied.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-create-metadata.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: secret-get-metadata.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: missing-secret-error.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: same-origin-redirect.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: cross-origin-blocked.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: bounded-large-response.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: timeout-unhealthy.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: wrong-envelope-error.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: wrong-node-credential.txt",
+      "passed": true
+    },
+    {
+      "name": "scanned channel stays inside owned directory",
+      "passed": true
+    },
+    {
+      "name": "scanned bytes unchanged: captured-logs.txt",
+      "passed": true
+    },
+    {
+      "name": "logs, errors, metadata and audits scanned",
+      "passed": true
+    }
+  ]
+}

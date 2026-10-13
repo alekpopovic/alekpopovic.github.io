@@ -1,0 +1,11 @@
+	policy := effectivePolicy(service.Spec.Autoscaling)
+	if last := c.lastScaleAt[service.ID]; !last.IsZero() && c.now().Sub(last) < policy.Cooldown {
+		c.metrics.IncAutoscalerDecision("skip_cooldown")
+		c.emit(ctx, service, events.TypeAutoscalerSkipped, types.EventInfo, "autoscaling skipped during cooldown", map[string]string{"reason": "cooldown"})
+		return nil
+	}
+	utilization, err := c.provider.ServiceCPUUtilization(ctx, service)
+	if err != nil {
+		c.metrics.IncAutoscalerDecision("skip_metrics")
+		c.emit(ctx, service, events.TypeAutoscalerSkipped, types.EventWarning, "autoscaling skipped because metrics are unavailable", map[string]string{"reason": "metrics_unavailable"})
+		return nil

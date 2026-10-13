@@ -1,0 +1,438 @@
+{
+  "snapshot_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T01:47:21.385706+00:00",
+  "conflicts": [
+    {
+      "id": "DOC-001",
+      "documentation": {
+        "path": "docs/ARCHITECTURE.md",
+        "start_line": 20,
+        "end_line": 20,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/ARCHITECTURE.md#L20"
+      },
+      "authoritative_source": {
+        "path": "cmd/orch-server/main.go",
+        "start_line": 225,
+        "end_line": 225,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L225"
+      },
+      "kind": "stale roadmap",
+      "engineering_consequence": "Reader might omit offline-monitor timing and replacement risks.",
+      "proposed_book_wording": "The roadmap predates the constructed monitor; current startup runs it with configured timeout and interval.",
+      "chapters": [
+        2,
+        19
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-002",
+      "documentation": {
+        "path": "docs/ARCHITECTURE.md",
+        "start_line": 106,
+        "end_line": 106,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/ARCHITECTURE.md#L106"
+      },
+      "authoritative_source": {
+        "path": "internal/controlplane/controlplane.go",
+        "start_line": 2292,
+        "end_line": 2292,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2292"
+      },
+      "kind": "package graph presented as executable graph",
+      "engineering_consequence": "Reader assumes normal service placement obeys Plan fit checks.",
+      "proposed_book_wording": "The generic pending\u2192scheduler lifecycle describes standalone modules. Normal MemoryService service creation instead makes assigned tasks immediately.",
+      "chapters": [
+        2,
+        6,
+        12,
+        14
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-003",
+      "documentation": {
+        "path": "docs/RECONCILER.md",
+        "start_line": 27,
+        "end_line": 27,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/RECONCILER.md#L27"
+      },
+      "authoritative_source": {
+        "path": "cmd/orch-server/main.go",
+        "start_line": 146,
+        "end_line": 146,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146"
+      },
+      "kind": "conditional storage assumption",
+      "engineering_consequence": "Controller restart can be confused with process restart durability.",
+      "proposed_book_wording": "Recomputation uses supplied store state. A fresh default server reconstructs empty maps, and standalone reconciler is not started there.",
+      "chapters": [
+        9,
+        14,
+        15
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-004",
+      "documentation": {
+        "path": "docs/SECURITY_REVIEW.md",
+        "start_line": 112,
+        "end_line": 112,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/SECURITY_REVIEW.md#L112"
+      },
+      "authoritative_source": {
+        "path": "pkg/types/types.go",
+        "start_line": 219,
+        "end_line": 219,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go#L219"
+      },
+      "kind": "historical review stale after code additions",
+      "engineering_consequence": "Reader misses privileged/host security settings and policy gates.",
+      "proposed_book_wording": "The July review preceded securityContext support. Current policy gates and adapter mappings are the authority for present exposed fields.",
+      "chapters": [
+        5,
+        24,
+        25
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-005",
+      "documentation": {
+        "path": "docs/RESOURCES.md",
+        "start_line": 35,
+        "end_line": 35,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/RESOURCES.md#L35"
+      },
+      "authoritative_source": {
+        "path": "internal/controlplane/controlplane.go",
+        "start_line": 2292,
+        "end_line": 2292,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2292"
+      },
+      "kind": "package guarantee lacks composition qualifier",
+      "engineering_consequence": "Planner guarantee misapplied to ordinary deployments.",
+      "proposed_book_wording": "Request accounting constrains Plan; the active immediate service path needs its own fit checks before that guarantee can be promoted.",
+      "chapters": [
+        5,
+        12,
+        13
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-006",
+      "documentation": {
+        "path": "docs/REGISTRIES.md",
+        "start_line": 48,
+        "end_line": 48,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/REGISTRIES.md#L48"
+      },
+      "authoritative_source": {
+        "path": "internal/image/reference.go",
+        "start_line": 21,
+        "end_line": 21,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L21"
+      },
+      "kind": "terminology ambiguity",
+      "engineering_consequence": "Parsed supplied digest can be mistaken for fetched registry identity.",
+      "proposed_book_wording": "The built-in resolver parses supplied references. Remote registry resolution requires a different configured implementation; mutable tags stay mutable.",
+      "chapters": [
+        28,
+        29
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-007",
+      "documentation": {
+        "path": "docs/CHAOS_TESTING.md",
+        "start_line": 10,
+        "end_line": 10,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/CHAOS_TESTING.md#L10"
+      },
+      "authoritative_source": {
+        "path": "internal/e2e/chaos_test.go",
+        "start_line": 41,
+        "end_line": 41,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/chaos_test.go#L41"
+      },
+      "kind": "test name overstates failure boundary",
+      "engineering_consequence": "Reader falsely infers fresh-process/durable recovery.",
+      "proposed_book_wording": "This subtest reconstructs rollout controller while retaining the same MemoryService; it demonstrates controller resume, not server process durability.",
+      "chapters": [
+        16,
+        17,
+        39
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-008",
+      "documentation": {
+        "path": "docs/BACKUP_RESTORE.md",
+        "start_line": 67,
+        "end_line": 67,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/BACKUP_RESTORE.md#L67"
+      },
+      "authoritative_source": {
+        "path": "cmd/orch-server/main.go",
+        "start_line": 146,
+        "end_line": 146,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146"
+      },
+      "kind": "conditional runbook exceeds default wiring",
+      "engineering_consequence": "Restored tables cannot restore active default server maps.",
+      "proposed_book_wording": "Database restoration applies to persisted store fixtures or a future durable composition. Default server state is not restored by setting DatabaseURL.",
+      "chapters": [
+        9,
+        10,
+        35
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-009",
+      "documentation": {
+        "path": "docs/HA_CONTROL_PLANE_DESIGN.md",
+        "start_line": 102,
+        "end_line": 102,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/HA_CONTROL_PLANE_DESIGN.md#L102"
+      },
+      "authoritative_source": {
+        "path": "internal/leadership/postgres.go",
+        "start_line": 105,
+        "end_line": 105,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L105"
+      },
+      "kind": "session death versus pool return",
+      "engineering_consequence": "Cancellation returns connection to pool and may retain session advisory lock.",
+      "proposed_book_wording": "Session termination releases session locks; returning a live pooled session is different. Measure cancellation/reacquisition on real PostgreSQL before claiming cleanup.",
+      "chapters": [
+        21,
+        22
+      ],
+      "resolution": "unresolved hypothesis; planned isolated two-session cancellation/failed-unlock experiment; not a demonstrated outage"
+    },
+    {
+      "id": "DOC-010",
+      "documentation": {
+        "path": "docs/INSTALLATION.md",
+        "start_line": 3,
+        "end_line": 3,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/INSTALLATION.md#L3"
+      },
+      "authoritative_source": {
+        "path": "RELEASE_NOTES.md",
+        "start_line": 1,
+        "end_line": 1,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/RELEASE_NOTES.md#L1"
+      },
+      "kind": "publication assertion outside source evidence",
+      "engineering_consequence": "Source-only edition could promise nonexistent/unverified assets.",
+      "proposed_book_wording": "The inspected installation guide documents platform archives. This source lock establishes tags and files, not GitHub release publication or download availability.",
+      "chapters": [
+        3,
+        35
+      ],
+      "resolution": "unresolved external release metadata; source archive cannot independently certify release assets"
+    },
+    {
+      "id": "DOC-011",
+      "documentation": {
+        "path": "AGENTS.md",
+        "start_line": 3,
+        "end_line": 3,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/AGENTS.md#L3"
+      },
+      "authoritative_source": {
+        "path": "docs/RELIABILITY.md",
+        "start_line": 7,
+        "end_line": 7,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/RELIABILITY.md#L7"
+      },
+      "kind": "aspirational project positioning",
+      "engineering_consequence": "Reader could treat intent as reliability certification.",
+      "proposed_book_wording": "orch is a Docker-first engineering project with substantial implemented packages; current default composition remains an in-memory development boundary.",
+      "chapters": [
+        1,
+        2,
+        40
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-012",
+      "documentation": {
+        "path": "docs/AUTOSCALING.md",
+        "start_line": 3,
+        "end_line": 3,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/AUTOSCALING.md#L3"
+      },
+      "authoritative_source": {
+        "path": "cmd/orch-server/main.go",
+        "start_line": 103,
+        "end_line": 103,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L103"
+      },
+      "kind": "package presence versus enabled loop",
+      "engineering_consequence": "Spec autoscaling flag may seem sufficient to activate a controller.",
+      "proposed_book_wording": "The repository includes an autoscaler package; startup does not construct it or a metrics provider. This chapter teaches the package and explicitly labels integration work.",
+      "chapters": [
+        23,
+        36
+      ],
+      "resolution": "resolved by source inspection"
+    },
+    {
+      "id": "DOC-013",
+      "documentation": {
+        "path": "internal/store/postgres_test.go",
+        "start_line": 583,
+        "end_line": 583,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres_test.go#L583"
+      },
+      "authoritative_source": {
+        "path": "internal/store/postgres.go",
+        "start_line": 369,
+        "end_line": 369,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L369"
+      },
+      "kind": "executed fixture/schema mismatch",
+      "engineering_consequence": "Original store suite cannot exercise current node queries against its own reset schema.",
+      "proposed_book_wording": "Root execution record validation/intake/postgres-store-owned.json reports two guarded PostgreSQL store tests failing with SQLSTATE42703 (missing agent_version). The original fixture applies migrations1\u201314 while current node queries expect agent_version introduced by migration16 (000016_operations_safety.up.sql:6). This is a demonstrated fixture/schema mismatch, not an invented runtime failure or a source change. Full-schema extension execution is tracked separately; it cannot retroactively turn the original suite green.",
+      "chapters": [
+        9,
+        10,
+        11,
+        35,
+        39
+      ],
+      "resolution": "observed failure retained; separately labeled full-schema teaching fixture required"
+    },
+    {
+      "id": "DOC-014",
+      "documentation": {
+        "path": "docs/RESOURCES.md",
+        "start_line": 31,
+        "end_line": 35,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/RESOURCES.md#L31-L35"
+      },
+      "authoritative_source": {
+        "path": "internal/controlplane/controlplane.go",
+        "start_line": 2552,
+        "end_line": 2573,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2552-L2573"
+      },
+      "kind": "planner guarantee differs from immediate service path",
+      "engineering_consequence": "Valid fixed-host-port replica specifications can reach Docker with duplicate node/protocol bindings.",
+      "proposed_book_wording": "Scheduler.allocatePorts rejects reserved explicit ports; MemoryService immediate assignment reserves explicit ports without rejecting collisions. Do not infer service-path protection from planner tests.",
+      "chapters": [
+        5,
+        6,
+        12,
+        13
+      ],
+      "resolution": "source-confirmed integration gap; no shared-host collision experiment or baseline fix"
+    },
+    {
+      "id": "DOC-015",
+      "documentation": {
+        "path": "api/openapi_test.go",
+        "start_line": 11,
+        "end_line": 38,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/api/openapi_test.go#L11-L38"
+      },
+      "authoritative_source": {
+        "path": "internal/api/api.go",
+        "start_line": 199,
+        "end_line": 201,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L199-L201"
+      },
+      "kind": "public method/path omissions in OpenAPI",
+      "engineering_consequence": "Schema-driven consumers miss discovery services and Traefik integration operations; selected-path test does not detect these omissions.",
+      "proposed_book_wording": "Three registered public GET operations are absent from OpenAPI: discovery/services, discovery/services/{name}, integrations/traefik/config. Internal agent exclusion is intentional and is not a gap.",
+      "chapters": [
+        7,
+        23,
+        26
+      ],
+      "resolution": "actual static parsed comparison validation/labs/ch07/openapi-routes.json; no upstream schema changes"
+    },
+    {
+      "id": "DOC-016",
+      "documentation": {
+        "path": "pkg/types/types.go",
+        "start_line": 88,
+        "end_line": 93,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go#L88-L93"
+      },
+      "authoritative_source": {
+        "path": "pkg/types/types.go",
+        "start_line": 115,
+        "end_line": 147,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go#L115-L147"
+      },
+      "kind": "raw zero-value DTO serialization differs from accepted resource omission",
+      "engineering_consequence": "Raw json.Marshal of zero ServiceSpec emits resource numeric zeros rejected at HTTP decoding; client normalization masks this boundary.",
+      "proposed_book_wording": "Omitted fields/empty resource objects can default; explicit numeric CPU or memory zero is rejected. Public client CreateService normalizes before serialization, so client and raw HTTP examples differ.",
+      "chapters": [
+        5,
+        7,
+        8,
+        24
+      ],
+      "resolution": "observed raw HTTP400 versus normalized client creation, validation/labs/ch07/public-contract-final.json; upstream unchanged"
+    },
+    {
+      "id": "DOC-017",
+      "documentation": {
+        "path": "docs/TESTING.md",
+        "start_line": 14,
+        "end_line": 16,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/TESTING.md#L14-L16"
+      },
+      "authoritative_source": {
+        "path": "pkg/types/fuzz_test.go",
+        "start_line": 11,
+        "end_line": 16,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/fuzz_test.go#L11-L16"
+      },
+      "kind": "incorrect fuzz target name",
+      "engineering_consequence": "Documented FuzzParsePortSpec command does not select actual FuzzPortSpec.",
+      "proposed_book_wording": "Use exact source-declared FuzzPortSpec; actual two-second single-worker run passed.",
+      "chapters": [
+        36
+      ],
+      "resolution": "source-inspected name; actual correct-target record validation/labs/ch36/bounded-port-fuzz.json"
+    },
+    {
+      "id": "DOC-018",
+      "documentation": {
+        "path": "docs/RESOURCES.md",
+        "start_line": 31,
+        "end_line": 35,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/RESOURCES.md#L31-L35"
+      },
+      "authoritative_source": {
+        "path": "pkg/types/lifecycle.go",
+        "start_line": 269,
+        "end_line": 275,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L269-L275"
+      },
+      "kind": "physical terminal versus desired-state accounting",
+      "engineering_consequence": "Desired stopped/removed tasks free controller capacity while actual stopping containers may still run, exposing physical overlap.",
+      "proposed_book_wording": "IsActiveTask excludes desired stopped/removed immediately; actual terminal acknowledgement is not required for this accounting.",
+      "chapters": [
+        5,
+        10,
+        17,
+        35
+      ],
+      "resolution": "source inspected; root Lab02 asserts desiredRunning+actualStopping counted versus desiredStopped+actualStopping excluded; actual lab04 succeeds with pending_stops=1"
+    }
+  ],
+  "scope": "source comparison plus referenced real root execution; immutable source unchanged"
+}

@@ -1,0 +1,175 @@
+{
+  "status": "applied",
+  "at_utc": "2026-10-13T01:48:34.722800+00:00",
+  "scope": "Narrow spacing copyedit only; no semantic or source-listing changes. Final whole-book copyedit remains separate.",
+  "changes": [
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 15,
+      "before": "Later migrations change this initial model. Namespace uniqueness, image metadata and node agent_version are not present in the first migration. Reading000001 alone therefore describes a historical starting point, not the complete baseline schema. The source lock contains16 up/down pairs. When a test applies a hand-maintained subset, compare that list to fields selected by current SQL before treating a failure as an algorithmic bug.",
+      "after": "Later migrations change this initial model. Namespace uniqueness, image metadata and node agent_version are not present in the first migration. Reading 000001 alone therefore describes a historical starting point, not the complete baseline schema. The source lock contains 16 up/down pairs. When a test applies a hand-maintained subset, compare that list to fields selected by current SQL before treating a failure as an algorithmic bug."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 93,
+      "before": "The actual guarded run is preserved in [database evidence](../../validation/intake/postgres-store-owned.json). WithTxRollsBackOnError passed. Integration and ConcurrentAssignTaskOnce failed with SQLSTATE 42703: current node queries require agent_version, while the reset helper applies only migrations 000001\u2013000014 and the column arrives in000016. This is an executed fixture/schema mismatch. It is not a passing concurrency experiment, nor a reason to erase the failure and rerun altered upstream code under the same label.",
+      "after": "The actual guarded run is preserved in [database evidence](../../validation/intake/postgres-store-owned.json). WithTxRollsBackOnError passed. Integration and ConcurrentAssignTaskOnce failed with SQLSTATE 42703: current node queries require agent_version, while the reset helper applies only migrations 000001\u2013000014 and the column arrives in 000016. This is an executed fixture/schema mismatch. It is not a passing concurrency experiment, nor a reason to erase the failure and rerun altered upstream code under the same label."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 49,
+      "before": "Port allocation adds another finite resource. A fixed published TCP port cannot be reused on the same node in one plan. Dynamic ports come from the planner's30000\u201332767 interval, excluding reservations already seen in the snapshot or selected earlier in the current plan. A port failure can remain reserved in accounting to avoid immediately repeating an observed conflict. This logic concerns node-scoped host bindings; it is not a cluster-wide virtual service address.",
+      "after": "Port allocation adds another finite resource. A fixed published TCP port cannot be reused on the same node in one plan. Dynamic ports come from the planner's 30000\u201332767 interval, excluding reservations already seen in the snapshot or selected earlier in the current plan. A port failure can remain reserved in accounting to avoid immediately repeating an observed conflict. This logic concerns node-scoped host bindings; it is not a cluster-wide virtual service address."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 51,
+      "before": "The following fixture is calculated before running it. Atlas requests 400m CPU,128Mi memory and fixed published port 31080. There are two pending tasks, atlas-01 and atlas-02, processed in ID order. Nodeb already runs an unrelated service using 100m,64Mi and port 31080.",
+      "after": "The following fixture is calculated before running it. Atlas requests 400m CPU, 128Mi memory and fixed published port 31080. There are two pending tasks, atlas-01 and atlas-02, processed in ID order. Node b already runs an unrelated service using 100m, 64Mi and port 31080."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 56,
+      "before": "| b | ready | 1000m /512Mi | 100m /64Mi, TCP31080 | Rejected by fixed port |",
+      "after": "| b | ready | 1000m /512Mi | 100m /64Mi, TCP 31080 | Rejected by fixed port |"
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 59,
+      "before": "After atlas-01, nodec has 600m and 128Mi free. atlas-02 would fit its CPU and memory exactly, but port 31080 is now reserved. Nodeb remains port-conflicted and nodea remains offline, so the second task has no assignment. The limiting factor is the published port, not CPU. Changing the request's public port to dynamic would create a different experiment rather than retroactively changing this result.",
+      "after": "After atlas-01, node c has 600m and 128Mi free. atlas-02 would fit its CPU and memory exactly, but port 31080 is now reserved. Node b remains port-conflicted and node a remains offline, so the second task has no assignment. The limiting factor is the published port, not CPU. Changing the request's public port to dynamic would create a different experiment rather than retroactively changing this result."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 118,
+      "before": "Run that only from the disposable Orch copy, after copying the fixture and verifying the source bytes. Expected success is one assignment for atlas-01 to nodec, atlas-02 absent, and an unchanged result after input permutation. The actual recorded run passed. Remove only the book-scheduler teaching directory when finished; never modify or build in the immutable snapshot.",
+      "after": "Run that only from the disposable Orch copy, after copying the fixture and verifying the source bytes. Expected success is one assignment for atlas-01 to node c, atlas-02 absent, and an unchanged result after input permutation. The actual recorded run passed. Remove only the book-scheduler teaching directory when finished; never modify or build in the immutable snapshot."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 124,
+      "before": "Now remove only the existing reservation on nodeb in a copied fixture. Both ready nodes become eligible for the first task, but nodeb has more memory remaining after placement and wins that comparison. Its chosen fixed port then prevents the second Atlas task from sharing nodeb, while nodec remains available. Predict two assignments to different nodes before running the changed fixture. This small change demonstrates why a constraint must be applied before a score: a high-scoring node with a conflicting fixed port was previously ineligible, whereas the same node without that reservation can participate. Keep the modified result separate from the recorded baseline experiment.",
+      "after": "Now remove only the existing reservation on node b in a copied fixture. Both ready nodes become eligible for the first task, but node b has more memory remaining after placement and wins that comparison. Its chosen fixed port then prevents the second Atlas task from sharing node b, while node c remains available. Predict two assignments to different nodes before running the changed fixture. This small change demonstrates why a constraint must be applied before a score: a high-scoring node with a conflicting fixed port was previously ineligible, whereas the same node without that reservation can participate. Keep the modified result separate from the recorded baseline experiment."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 128,
+      "before": "1. Calculate why nodeb loses despite having more free memory than nodec. Which condition precedes scoring?",
+      "after": "1. Calculate why node b loses despite having more free memory than node c. Which condition precedes scoring?"
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 129,
+      "before": "2. Change only Atlas to two dynamic published ports. Predict whether the second task can now fit nodec and which score comparison matters.",
+      "after": "2. Change only Atlas to two dynamic published ports. Predict whether the second task can now fit node c and which score comparison matters."
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "line": 55,
+      "before": "This is the concrete failure window: passA and passB both observe one missing replica; each creates a distinct pending task. Task IDs are unique, but the total desired work is now excessive. A later iteration may scale down, yet temporary over-creation still happened. The appropriate claim is eventual correction under the tested model, not an invented exactly-once creation guarantee under arbitrary concurrent controllers.",
+      "after": "This is the concrete failure window: pass A and pass B both observe one missing replica; each creates a distinct pending task. Task IDs are unique, but the total desired work is now excessive. A later iteration may scale down, yet temporary over-creation still happened. The appropriate claim is eventual correction under the tested model, not an invented exactly-once creation guarantee under arbitrary concurrent controllers."
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "line": 100,
+      "before": "Use owned local handlers to test this. HandlerA can redirect to handlerB on a different port; the result should be unhealthy and B should not be treated as the approved target. A same-origin redirect can reach another path on A. There is no need to contact a real metadata address to establish that cross-origin behavior. A fake HTTP transport is also appropriate when testing request construction without listeners.",
+      "after": "Use owned local handlers to test this. Handler A can redirect to handler B on a different port; the result should be unhealthy and B should not be treated as the approved target. A same-origin redirect can reach another path on A. There is no need to contact a real metadata address to establish that cross-origin behavior. A fake HTTP transport is also appropriate when testing request construction without listeners."
+    },
+    {
+      "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "line": 63,
+      "before": "The notifier has an explicit set of event types eligible for delivery. Dispatcher.Notify ignores unrelated types, loads sinks and sends to them sequentially. Sender.Deliver validates a sink, redacts the event, builds a JSON Delivery payload and performs HTTP POST attempts. Default settings are three attempts,100millisecond base exponential backoff and a client timeout. [Claim ch15.delivery](../../validation/evidence/ch15.json).",
+      "after": "The notifier has an explicit set of event types eligible for delivery. Dispatcher.Notify ignores unrelated types, loads sinks and sends to them sequentially. Sender.Deliver validates a sink, redacts the event, builds a JSON Delivery payload and performs HTTP POST attempts. Default settings are three attempts, 100millisecond base exponential backoff and a client timeout. [Claim ch15.delivery](../../validation/evidence/ch15.json)."
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "line": 27,
+      "before": "Suppose Atlas has two replicas, each requesting 250m CPU and 128Mi memory, and its spec declares one positive published TCP port. The service contributes one service, two replicas,500 millicores,268435456 memory bytes and one public-port declaration. A dynamic declaration with published_port zero does not add that same positive-port count at this boundary. This is declared service usage, not the number of actual host socket bindings.",
+      "after": "Suppose Atlas has two replicas, each requesting 250m CPU and 128Mi memory, and its spec declares one positive published TCP port. The service contributes one service, two replicas, 500 millicores, 268435456 memory bytes and one public-port declaration. A dynamic declaration with published_port zero does not add that same positive-port count at this boundary. This is declared service usage, not the number of actual host socket bindings."
+    }
+  ],
+  "reviewed_paths": [
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md"
+  ],
+  "final_hashes": {
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "fde6ef7a6e713cda32b83450da91cbc35d7cc8e2616dfd72cd24a24e3a42a076",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "fd91e35f33169262a9416b3db58463088b3e477ca1fef7da023e2b4caa6643f5",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md": "8701625187ca2c56cee26d16aa640aa55719bfeb42bbd19f35821ce01795b30a",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md": "dd1dd3efa899e51533788cc23f69c709acabcc3918ecb2b3f540b612b8f534f3",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md": "855850d157140be7083f89d547ecfbb20bc797b98452e49788fa58960be81d52",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md": "964bceb4cc14a71ceb77dadeceb62cb09a2b1f9c2cf55fae602b6f553464b6aa"
+  }
+}

@@ -1,0 +1,16 @@
+{"time":"2026-10-13T02:57:33.042220182+02:00","level":"INFO","msg":"starting server","addr":"127.0.0.1:32883"}
+{"time":"2026-10-13T02:57:33.045474596+02:00","level":"INFO","msg":"http request","request_id":"8abe5623-0ef0-4f54-bc3f-b29fb97cc577","method":"GET","path":"/readyz","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.046303844+02:00","level":"INFO","msg":"http request","request_id":"4f599fd9-4fd7-4b12-b0f1-05c2eba5e780","method":"GET","path":"/v1/version","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.04701869+02:00","level":"INFO","msg":"http request","request_id":"ae0acecf-e44a-438c-b61b-672c09ca8023","method":"POST","path":"/v1/namespaces","status":201,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.047625208+02:00","level":"INFO","msg":"http request","request_id":"73092e32-7e9a-4617-b747-978fbe35737a","method":"POST","path":"/v1/agent/register","status":201,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.048348644+02:00","level":"INFO","msg":"http request","request_id":"5fe13132-a8d0-46cf-9a51-2161cf641724","method":"POST","path":"/v1/services","status":201,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.048748147+02:00","level":"INFO","msg":"http request","request_id":"4bcbe7c9-badd-4fcd-a038-fcfe53e1fcb2","method":"GET","path":"/v1/services","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.049227481+02:00","level":"INFO","msg":"http request","request_id":"d1ffa1b0-9b3e-4a76-9032-601a9d230f33","method":"GET","path":"/v1/tasks","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.049642908+02:00","level":"INFO","msg":"http request","request_id":"95816ced-5be0-468e-87bc-8ad61b93fb67","method":"GET","path":"/v1/nodes","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.050018874+02:00","level":"INFO","msg":"http request","request_id":"5837bf55-1825-4788-81b1-34201d53d9bb","method":"GET","path":"/v1/namespaces","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.05049744+02:00","level":"INFO","msg":"http request","request_id":"2925c588-442e-486c-a785-550eaac237de","method":"POST","path":"/v1/agent/tasks/ca530767-c78a-4acd-a8be-e8fd56d29e69/status","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.05088458+02:00","level":"INFO","msg":"http request","request_id":"4cc9f79e-1f07-464c-9032-f0a194aeea99","method":"GET","path":"/v1/services","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.051387452+02:00","level":"INFO","msg":"http request","request_id":"d02bcfa8-036f-4c47-9674-fb85640505f4","method":"GET","path":"/v1/tasks","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.051842759+02:00","level":"INFO","msg":"http request","request_id":"86579421-cc98-4416-b8f9-c1a24e3d6549","method":"GET","path":"/v1/nodes","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.052222148+02:00","level":"INFO","msg":"http request","request_id":"c0b09ccf-e8f0-41c4-8892-19471131448f","method":"GET","path":"/v1/namespaces","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.052476866+02:00","level":"INFO","msg":"shutting down server"}

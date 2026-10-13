@@ -1,0 +1,30 @@
+=== RUN   TestChaosScenarios
+=== RUN   TestChaosScenarios/agent_restarts_during_task_start
+=== RUN   TestChaosScenarios/server_restarts_during_rollout
+=== RUN   TestChaosScenarios/docker_runtime_fails_to_start_container
+=== RUN   TestChaosScenarios/image_pull_fails_repeatedly
+=== RUN   TestChaosScenarios/node_goes_offline_during_scale-up
+=== RUN   TestChaosScenarios/node_returns_with_stale_containers
+=== RUN   TestChaosScenarios/database_write_fails_during_scheduler_assignment
+=== RUN   TestChaosScenarios/user_deletes_service_during_rollout
+--- PASS: TestChaosScenarios (0.00s)
+    --- PASS: TestChaosScenarios/agent_restarts_during_task_start (0.00s)
+    --- PASS: TestChaosScenarios/server_restarts_during_rollout (0.00s)
+    --- PASS: TestChaosScenarios/docker_runtime_fails_to_start_container (0.00s)
+    --- PASS: TestChaosScenarios/image_pull_fails_repeatedly (0.00s)
+    --- PASS: TestChaosScenarios/node_goes_offline_during_scale-up (0.00s)
+    --- PASS: TestChaosScenarios/node_returns_with_stale_containers (0.00s)
+    --- PASS: TestChaosScenarios/database_write_fails_during_scheduler_assignment (0.00s)
+    --- PASS: TestChaosScenarios/user_deletes_service_during_rollout (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/e2e	0.006s
+=== RUN   TestReconcileAssignedTaskDoesNotRecreateWhenDockerUnavailable
+--- PASS: TestReconcileAssignedTaskDoesNotRecreateWhenDockerUnavailable (0.00s)
+=== RUN   TestReturnedNodeRemovesNodeLostUnassignedContainer
+--- PASS: TestReturnedNodeRemovesNodeLostUnassignedContainer (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/agent	0.005s
+=== RUN   TestFakeRuntimeFailureInjection
+--- PASS: TestFakeRuntimeFailureInjection (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/docker	0.004s

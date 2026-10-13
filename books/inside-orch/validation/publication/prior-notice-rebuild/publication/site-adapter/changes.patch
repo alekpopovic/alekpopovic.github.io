@@ -1,0 +1,753 @@
+diff --git a/_config.yml b/_config.yml
+index 443d0ab..6b72e84 100644
+--- a/_config.yml
++++ b/_config.yml
+@@ -48,6 +48,7 @@ exclude:
+   - books/agentplane-book
+   - books/Secret_Contract_Operator
+   - books/universal-tracking-technical-book
++  - books/inside-orch
+   - books/ScreenShot Tool -20261010164007.png
+   - logbranik-leanpub-complete-pack.zip
+   - modern-ci-book-open-source.zip
+diff --git a/_data/glossary.yml b/_data/glossary.yml
+index 2b6cae5..16fc42d 100644
+--- a/_data/glossary.yml
++++ b/_data/glossary.yml
+@@ -48,3 +48,13 @@ universal-tracking:
+   - term: Realtime delivery
+     definition: Delivering changing tracking state to connected clients with explicit ordering, authorization, and recovery behavior when a connection drops.
+     chapter: 16-realtime
++inside-orch:
++  - term: Active state owner
++    definition: The concrete implementation selected by the executable to hold live intent and observations. The default Orch server uses process-local MemoryService even when database configuration is present.
++    chapter: 06-follow-one-request-through-the-control-plane
++  - term: Resource propagation
++    definition: Preserving requested fields through parsing, assignment, transport and runtime conversion. A Docker adapter supporting limits does not prove the ordinary agent forwards them.
++    chapter: 05-service-specifications-resources-and-ports
++  - term: Physical fencing
++    definition: Preventing an obsolete worker from performing protected effects at the receiving authority. Heartbeat expiry and node-offline status alone do not stop an unreachable container.
++    chapter: 19-offline-nodes-draining-and-rescheduling
+diff --git a/_data/updates.yml b/_data/updates.yml
+index d24c341..27bdb84 100644
+--- a/_data/updates.yml
++++ b/_data/updates.yml
+@@ -1,3 +1,8 @@
++- id: inside-orch-engineering-edition
++  date: 2026-10-13
++  title: Inside orch joins the engineering bookshelf
++  description: Study a Go and Docker orchestrator through 40 chapters, six appendices, worked exercises and eight recorded laboratories. Read online or download the same edition as PDF and EPUB, with three practical companion articles.
++  url: /books/inside-orch/
+ - id: compact-footer-navigation
+   date: 2026-10-13
+   title: A shorter, more balanced footer
+diff --git a/scripts/book_catalog.py b/scripts/book_catalog.py
+index b9494b6..78658ba 100644
+--- a/scripts/book_catalog.py
++++ b/scripts/book_catalog.py
+@@ -19,6 +19,9 @@ secret_spec.loader.exec_module(secret_publication)
+ tracking_spec = importlib.util.spec_from_file_location('tracking_publication', ROOT / 'books/universal-tracking-technical-book/scripts/site.py')
+ tracking_publication = importlib.util.module_from_spec(tracking_spec)
+ tracking_spec.loader.exec_module(tracking_publication)
++orch_spec = importlib.util.spec_from_file_location('orch_publication', ROOT / 'books/inside-orch/scripts/build.py')
++orch_publication = importlib.util.module_from_spec(orch_spec)
++orch_spec.loader.exec_module(orch_publication)
+ 
+ 
+ def catalog():
+@@ -91,7 +94,22 @@ def catalog():
+                  publication_notes='# Publication and attribution\n\nEngineering a Universal Real-Time Tracking Platform. Aleksandar Popovic, first edition, October 2026.\n\nCopyright (c) 2026 Aleksandar Popovic. All rights reserved. The website preserves the supplied manuscript, cover, diagrams, and complete PDF/EPUB editions. No Creative Commons or MIT grant is added.\n\nThe book describes a reference architecture and implementation guidance. Its examples are educational; the supplied publication is not a deployed tracking service.\n\nSee the [publication guide](companion/README.html) and [original validation report](companion/VALIDATION_REPORT.html) for source layout, build instructions, and recorded publication checks.'),
+              paths=tracking_publication.selection(), editions=tracking_source, filename=tracking_publication.NAME,
+              epub_chapters=tracking_publication.epub_sections(),
+-             chapter_group='Chapters', chapter_label='Chapter', cover='assets/cover.png', licenses=[])
++             chapter_group='Chapters', chapter_label='Chapter', cover='assets/cover.png', licenses=[]),
++        dict(id='inside-orch', source=orch_publication.ROOT,
++             output=ROOT / 'book-pages/inside-orch', files=ROOT / 'assets/books/inside-orch',
++             files_url='/assets/books/inside-orch',
++             metadata=orch_publication.meta() | dict(
++                 language_label='English', edition_label='Edition',
++                 cover_image='/assets/books/inside-orch/publication/cover.png',
++                 license_note='Copyright © 2026 Aleksandar Popovic · All rights reserved',
++                 publication_notes='# Publication and attribution\n\nInside orch: Building and Operating a Docker Orchestrator in Go. Aleksandar Popovic, edition 1.0, October 13, 2026.\n\nCopyright © 2026 Aleksandar Popovic. All rights reserved. No new public license is granted for the original manuscript. Exact source excerpts and third-party materials retain their existing rights and notices; the book does not relicense the Orch repository.\n\nThis source-based engineering edition distinguishes executable behavior, package-level experiments, teaching extensions and proposed improvements. Laboratory results describe their recorded environments, not production certification.\n\nSee the [rights statement](/assets/books/inside-orch/publication/RIGHTS.md) and [attribution notices](/assets/books/inside-orch/publication/NOTICE.md).'),
++             paths=orch_publication.selection(), editions=orch_publication.DIST,
++             filename=orch_publication.NAME, epub_chapters=orch_publication.epub_sections(),
++             chapter_group='Chapters', chapter_label='Chapter', cover='publication/cover.png',
++             licenses=['publication/RIGHTS.md', 'publication/NOTICE.md',
++                       'publication/fonts/dm-sans-OFL.txt', 'publication/fonts/passion-one-OFL.txt',
++                       'publication/fonts/dejavu-sans-mono-LICENSE.txt',
++                       'publication/fonts/noto-color-emoji-OFL.txt'])
+     ]
+     for book in books:
+         book['metadata'].setdefault('language_label', 'English')
+@@ -107,6 +125,8 @@ def catalog():
+ 
+ 
+ def chapter_title(book, path):
++    if book['id'] == 'inside-orch':
++        return orch_publication.title(path)
+     return tracking_publication.title(path) if book['id'] == 'universal-tracking' else publication.title(path)
+ 
+ 
+@@ -124,6 +144,11 @@ def section(book, path, index):
+ 
+ 
+ def resolve_reference(book, origin, target):
++    if book['id'] == 'inside-orch':
++        path = orch_publication.source_reference(origin, target)
++        if path and path not in book['paths'] and not orch_publication.permitted_companion(path):
++            raise ValueError(f'Unapproved Orch companion: {path}')
++        return path
+     url = urlsplit(target)
+     if url.scheme or url.netloc or not url.path:
+         return None
+@@ -163,6 +188,8 @@ def local_references(book, path):
+ 
+ 
+ def render(book, path):
++    if book['id'] == 'inside-orch':
++        return orch_publication.render(path, 'site', book['paths'])
+     if book['id'] == 'agentplane':
+         text = agent_publication.LINK_RE.sub(
+             lambda m: f'{m[1]}({public_reference(book, path, m[2])})', path.read_text(encoding='utf-8'))
+diff --git a/scripts/build-books.py b/scripts/build-books.py
+index 3954e1a..d0e05d9 100644
+--- a/scripts/build-books.py
++++ b/scripts/build-books.py
+@@ -17,11 +17,13 @@ def write_page(path: Path, metadata: dict, content: str = '') -> None:
+ 
+ 
+ def build_book(source, publication, render) -> dict:
+-    from book_catalog import agent_publication, tracking_publication, chapter_title, local_references, section
++    from book_catalog import agent_publication, tracking_publication, orch_publication, chapter_title, local_references, section
+     paths, metadata = source['paths'], source['metadata']
+     output, files = source['output'], source['files']
+     book_id = source['id']
+     book_url = f'/books/{book_id}/'
++    if book_id == 'inside-orch' and orch_publication.assemble() != (source['editions'] / (source['filename'] + '.md')).read_text():
++        raise ValueError('Inside orch editions are out of date. Rebuild the canonical publication first.')
+     if book_id == 'logbranik':
+         expected = '\n\n'.join(path.read_text() for path in paths)
+         if expected != (source['editions'] / 'nginx-log-security.md').read_text():
+@@ -54,6 +56,19 @@ def build_book(source, publication, render) -> dict:
+ 
+     # Publish only referenced companion documents/files, preserving their links.
+     # Canonical package directories remain excluded from Jekyll's static copy.
++    if book_id == 'inside-orch':
++        for path in orch_publication.companions():
++            rel = path.relative_to(source['source'])
++            if path.suffix == '.md':
++                target = output / 'companion' / rel.with_suffix('.html')
++                target.parent.mkdir(parents=True, exist_ok=True)
++                write_page(target, dict(layout='book-license', title=f'{orch_publication.title(path)} · {metadata["title"]}',
++                    description=f'Companion material for {metadata["title"]}.', book_id=book_id,
++                    noindex=True, sitemap=False, permalink=f'{book_url}companion/{rel.with_suffix(".html")}'), render(source, path))
++            else:
++                target = files / rel
++                target.parent.mkdir(parents=True, exist_ok=True)
++                shutil.copy2(path, target)
+     if book_id in {'agentplane', 'secret-contract-operator', 'universal-tracking'}:
+         pending = paths + [source['source'] / 'README.md']
+         if book_id == 'secret-contract-operator':
+@@ -133,11 +148,12 @@ def main() -> None:
+     if local_python.exists() and Path(sys.prefix).resolve() != (ROOT / '.venv').resolve():
+         import os
+         os.execv(str(local_python), [str(local_python), str(Path(__file__).resolve())])
+-    from book_catalog import catalog, publication, render, secret_publication
++    from book_catalog import catalog, publication, render, secret_publication, orch_publication
+     print('Building complete book editions and reading pages…', flush=True)
+     publication.epub()
+     publication.pdf()
+     secret_publication.build()
++    orch_publication.build()
+     books = [build_book(source, publication, render) for source in catalog()]
+     data = ROOT / '_data'
+     data.mkdir(exist_ok=True)
+diff --git a/scripts/check-performance.mjs b/scripts/check-performance.mjs
+index 434d7fa..164debe 100644
+--- a/scripts/check-performance.mjs
++++ b/scripts/check-performance.mjs
+@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test';
+ 
+ const external = process.argv[2]?.startsWith('https://') ? process.argv[2] : null;
+ const origin = 'http://127.0.0.1:4174';
+-const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/workspace/', '/learn/start/', '/videos/cloudivision-delivery/', '/learn/ai-workflows/', '/learn/secret-contracts/', '/learn/universal-tracking/', '/newsletter/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
++const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/workspace/', '/learn/start/', '/videos/cloudivision-delivery/', '/learn/ai-workflows/', '/learn/secret-contracts/', '/learn/universal-tracking/', '/newsletter/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/inside-orch/', '/books/inside-orch/06-follow-one-request-through-the-control-plane.html', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
+ let server, chrome;
+ fs.mkdirSync('reports', { recursive: true });
+ try {
+diff --git a/tests/workspace-editor.spec.js b/tests/workspace-editor.spec.js
+index b83d0aa..696045e 100644
+--- a/tests/workspace-editor.spec.js
++++ b/tests/workspace-editor.spec.js
+@@ -156,7 +156,7 @@ test('workspace and newsletter archive stay useful without JavaScript or email s
+   const context = await browser.newContext({ javaScriptEnabled: false }), page = await context.newPage();
+   try {
+     await page.goto('http://127.0.0.1:4173/learn/workspace/');
+-    await expect(page.locator('[data-workspace-book]')).toHaveCount(5);
++    await expect(page.locator('[data-workspace-book]')).toHaveCount(6);
+     await expect(page.locator('[data-workspace-path]')).toHaveCount(5);
+     await expect(page.locator('[data-workspace-workshop]')).toHaveCount(6);
+     await page.goto('http://127.0.0.1:4173/newsletter/');
+diff --git a/_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md b/_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md
+new file mode 100644
+index 0000000..95c647d
+--- /dev/null
++++ b/_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md
+@@ -0,0 +1,46 @@
++---
++layout: post
++title: "A ready server may have forgotten your cluster"
++description: "Trace active state ownership before using a healthy HTTP response as evidence that an orchestrator recovered its workloads."
++category: Reliability
++book_id: inside-orch
++chapter_slug: 06-follow-one-request-through-the-control-plane
++illustration: package
++tags: [orchestration, recovery, persistence, Go, readiness]
++---
++
++An operator restarts a control-plane process. The HTTP endpoint answers, the application still serves requests, and PostgreSQL is reachable. Those observations look reassuring. They answer three separate questions, however: whether an HTTP handler is available, whether a workload remains alive, and whether a database accepts connections.
++
++They leave the recovery question open: does the new process know which services, versions, tasks, and agents it owns?
++
++## Find the owner of active state
++
++In the pinned orch source, normal `orch-server` startup constructs `controlplane.NewMemoryService`. The surrounding configuration accepts a database URL, and the repository contains a PostgreSQL store. Neither fact changes that constructor. The active implementation remains the memory service selected by the executable. See the [server composition root](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L142-L149).
++
++This is a useful source-review technique for any service with interchangeable backends. Begin at startup, follow the concrete value supplied to handlers and controllers, and identify where its records live. Reading a persistence interface alone cannot establish that production requests reach it.
++
++The distinction also changes backup planning. A PostgreSQL backup protects the records written to PostgreSQL. It cannot capture live records that this executable keeps elsewhere. State ownership has to be established before writing a recovery runbook around a database restore.
++
++## Give readiness a precise meaning
++
++At this snapshot, orch's `/readyz` handler returns a fixed `ready` response and a current timestamp. It does not reconstruct missing services, compare persisted task identities, or prove that agent credentials survived a restart. Read the [actual readiness handler](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L440-L442).
++
++A readiness result can still be useful within that scope. The mistake is assigning it a larger meaning than its checks establish. A deployment gate should name the conditions it requires: API availability, durable state availability, controller authority, or successful workload recovery. Each needs its own evidence.
++
++For an orchestrator, an existing container is another independent observation. Docker can keep a workload running while its control plane loses the records needed to manage it. A responding application does not reveal whether the new server can scale that service or resume its interrupted rollout.
++
++## Design the experiment around preserved identity
++
++Use a disposable source-pinned environment. Before restarting the server, record a service identity, its version, task identities, and the expected node relationship. After a fresh process starts, query those same identities. Creating replacement objects after restart would conceal the failure you intend to investigate.
++
++Then check the management path: can the server recognize the existing task, authorize its agent report, and continue the intended operation? Keep application reachability in a separate observation column. An answer can be positive for traffic and negative for orchestration ownership.
++
++The book’s recorded experiment starts two distinct server processes and queries the same service and node identities after restart. Their records disappear while the default namespace is recreated. A separate Docker experiment keeps a run-owned container alive through the restart. Those observations establish process-local state loss and runtime survival in that disposable environment; they do not establish automatic container adoption. See the [worked restart laboratory](/books/inside-orch/companion/labs/01-initialization-restart/README.html).
++
++## A persistence change needs a recovery contract
++
++A durable backend must support the domain operations the API and controllers actually use, including later workload features and credentials. Replacing a constructor without checking interface coverage, transaction behavior, and restart recovery leaves important questions unanswered.
++
++Write the acceptance test before calling the integration complete. Terminate the process after a committed mutation, restart it, and verify the same logical objects. Add a case where Docker created a container before its status report arrived. Stable identity and repeatable reconciliation become essential when the outcome of an external effect is uncertain.
++
++A green endpoint earns its documented meaning. Recovery earns a stronger claim only after the system demonstrates preserved ownership across a real process boundary.
+diff --git a/_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md b/_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md
+new file mode 100644
+index 0000000..8c781ed
+--- /dev/null
++++ b/_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md
+@@ -0,0 +1,50 @@
++---
++layout: post
++title: "An offline node is not proof that its workload stopped"
++description: "Heartbeat expiry supports a replacement decision, but preventing a disconnected workload from continuing requires a separate authority boundary."
++category: Reliability
++book_id: inside-orch
++chapter_slug: 19-offline-nodes-draining-and-rescheduling
++illustration: network
++tags: [orchestration, heartbeats, partitions, fencing, recovery]
++---
++
++A worker stops sending heartbeats. The control plane marks it offline and schedules replacement work elsewhere. Meanwhile, the old worker still reaches the application database and its container keeps running.
++
++Both observations can be true. Losing communication with the controller does not establish that a workload lost power, runtime access, or permission to affect another system.
++
++## Read what the timeout changes
++
++In the pinned orch implementation, `MarkStaleNodesOffline` compares heartbeat timestamps with a cutoff. It updates eligible nodes to offline, records lost-task state, emits an event, and reconciles services when nodes have expired. This is a control-plane state transition. See the [timeout implementation](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L670-L712).
++
++The code does not establish that Docker on an unreachable worker stopped a container before the replacement decision. That is a different fact requiring another observation or mechanism.
++
++This distinction is especially important for side effects. In an illustrative report-processing service, an old and replacement instance could both reach the system receiving reports. Whether duplicate work occurs depends on that application's coordination and idempotency contract; a missed heartbeat alone does not resolve it.
++
++## Inspect the stateful exception
++
++orch's lost-task handling marks active tasks with a `NodeLost` condition. For services not marked stateful, it also changes desired state to removed and actual state to failed, with a `node_lost` reason. Stateful services retain their task state rather than following that same automatic replacement path. See [markNodeLostTasksLocked](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2073-L2093).
++
++That exception is useful evidence of a cautious replacement policy. It does not create replicated storage, revoke an old writer's database credentials, or prove exclusive access to data. Keeping the uncertain task visible and enforcing exclusive write authority are separate responsibilities.
++
++The incident interface should reflect that uncertainty. “Controller cannot reach node” conveys a known observation. “Workload definitely stopped” would require evidence the controller has not obtained through this timeout path.
++
++## Fencing belongs where authority is enforced
++
++A stronger design might use node isolation or an external resource that rejects writes from an obsolete owner. For example, a proposed monotonic ownership token can help only if the receiving system checks it before accepting each protected operation.
++
++Merely storing a token in the controller is insufficient. The disconnected workload might continue presenting an older token to a resource that never validates it. Similarly, a controller leadership lock limits controller participation; it does not automatically revoke authority from an existing application container.
++
++These are architectural options, not implemented orch fencing guarantees. Their acceptance tests must include the resource that ultimately decides whether the operation is allowed.
++
++## A drain exercises a different failure path
++
++A planned drain updates node status and reconciles workloads through an explicit control-plane operation. With a reachable worker, task removal can flow through the normal agent path. See [DrainNode](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L994-L1022).
++
++Successful drain tests therefore do not establish partition safety. A disconnected agent cannot necessarily fetch its new desired task state. In orch, assigned-task reconciliation follows a successful heartbeat response in the [agent loop](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L155-L175).
++
++## Observe both sides of the partition
++
++For a disposable experiment, interrupt only worker-to-controller communication while keeping the workload's external destination reachable. Record the server's node/task state and independently observe whether the old workload still acts. Then inspect replacement behavior, recovery after connectivity returns, and residual containers.
++
++Those are proposed observation criteria, not recorded test results. A useful recovery claim names the scope proved: detection, replacement, eventual cleanup, or rejection of stale work. It earns stronger exclusivity language only when the final authority boundary has been tested.
+diff --git a/_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md b/_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md
+new file mode 100644
+index 0000000..4449804
+--- /dev/null
++++ b/_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md
+@@ -0,0 +1,46 @@
++---
++layout: post
++title: "Follow a resource limit all the way to Docker"
++description: "A valid resource field and a tested scheduler do not prove that a running container receives the corresponding CPU and memory controls."
++category: Verification
++book_id: inside-orch
++chapter_slug: 05-service-specifications-resources-and-ports
++illustration: queue
++tags: [Docker, resources, CPU, memory, scheduling, verification]
++---
++
++A deployment declares CPU and memory. Validation accepts it, the scheduler has capacity tests, and the Docker adapter knows how to set limits. It is tempting to conclude that the container will receive those controls.
++
++The conclusion depends on a chain of transformations. A field can be understood at several layers and still disappear before the final runtime request.
++
++## Separate three resource questions
++
++Consider a hypothetical service with three replicas, each requesting 500 millicores and 256 MiB. Its requested aggregate is 1,500 millicores and 768 MiB. That arithmetic describes capacity accounting. A larger declared limit describes a different intended boundary for each running container.
++
++Parsing answers whether the values are valid. Placement answers whether a chosen node satisfies the planner's admission rules. Runtime enforcement answers what Docker actually configures. Evidence for one question does not automatically settle the others.
++
++orch represents requests and limits in [ResourceRequirements](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/types.go#L516-L519). The names establish the domain shape. To establish enforcement, follow those values out of that shape and into the container-creation call.
++
++## Check the adapter and its caller
++
++The Docker adapter's conversion is concrete: `Memory` comes from `spec.Resources.Memory`, and `NanoCPUs` comes from `spec.Resources.CPUMilli * 1_000_000`. A supplied value can therefore become Docker host configuration. See [dockerContainerConfig](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L412-L451).
++
++Now inspect the active agent. Its `ensureTask` method constructs a `ContainerSpec` with image, task identity, environment, ports, security context, command, and volume mounts. In this pinned source, that literal does not populate `Resources`. The adapter's supported feature is consequently not evidence that ordinary service containers receive their declared limits through this path. See the [agent's create call](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253-L266).
++
++There is an earlier transport boundary too. The [AgentTask response type](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L130-L137) carries several workload fields but has no explicit resource requirements field. A complete repair must inspect the whole contract rather than adding an assignment at the final call and assuming the required data exists.
++
++## Verify which placement path your service uses
++
++A similar question applies to scheduling. The standalone planner has meaningful constraint logic. Normal MemoryService service reconciliation can create tasks already assigned to ready nodes. Those paths require separate analysis; planner tests alone cannot prove that an ordinary service followed the planner.
++
++The [service reconciliation method](https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2249-L2311) makes that distinction visible. Describe guarantees according to the path actually executed, including any checks that path performs. Avoid turning a useful library invariant into a system-wide capacity promise.
++
++## Use two complementary acceptance tests
++
++A focused test should capture the `ContainerSpec` the agent passes to its runtime and compare its resource values with the assigned workload contract. This identifies missing propagation without requiring a live Docker daemon.
++
++A disposable Docker integration test should then inspect the created container's `HostConfig.Memory` and `HostConfig.NanoCpus`. That proves the final API configuration for the tested path. Workload measurements can investigate behavior under pressure, but they should remain separate from assertions about configured fields.
++
++The book records both boundaries. Its real Docker comparison observes zero memory and NanoCPU limits through the ordinary agent path. A direct call to the Docker adapter sets 128 MiB and 250 millicores, yielding 134,217,728 bytes and 250,000,000 NanoCPUs. This isolates missing propagation from adapter conversion; it does not measure performance under resource pressure. The [initialization laboratory](/books/inside-orch/companion/labs/01-initialization-restart/README.html) records the exact scope and cleanup.
++
++The practical review rule is to preserve the field's identity through parsing, storage, assignment, transport, and runtime conversion. When a link is absent, document the gap and test the eventual change at both the caller boundary and Docker boundary.
+diff --git a/tests/inside-orch.spec.js b/tests/inside-orch.spec.js
+new file mode 100644
+index 0000000..b72b50f
+--- /dev/null
++++ b/tests/inside-orch.spec.js
+@@ -0,0 +1,82 @@
++const { test, expect } = require('./fixtures');
++const AxeBuilder = require('@axe-core/playwright').default;
++const fs = require('node:fs');
++
++const root = '/books/inside-orch/';
++const chapter = `${root}06-follow-one-request-through-the-control-plane.html`;
++
++test('Inside orch exposes all 47 sections and exact reviewed download copies', async ({ page, request }) => {
++  await page.goto(root);
++  await expect(page.locator('.book-contents-list li')).toHaveCount(47);
++  const image = page.locator('.overview-cover img');
++  await expect.poll(() => image.evaluate(value => value.complete && value.naturalWidth > 0)).toBe(true);
++  for (const format of ['pdf', 'epub']) {
++    const url = `/assets/books/inside-orch/downloads/inside-orch.${format}`;
++    await expect(page.locator(`a[download][href="${url}"]`)).toBeVisible();
++    const response = await request.get(url);
++    expect(response.status()).toBe(200);
++    expect(await response.body()).toEqual(fs.readFileSync(`books/inside-orch/dist/inside-orch.${format}`));
++  }
++});
++
++test('Inside orch connects chapter notes, saved reading and combined post filters', async ({ page }) => {
++  await page.goto(chapter);
++  await expect(page.locator('.reader-chapters li')).toHaveCount(47);
++  await expect(page.locator('.book-article h1')).toHaveText('Chapter 6 - Follow One Request Through the Control Plane');
++  await page.locator('.book-related-notes a').first().click();
++  await expect(page.locator(`.post-article a[href="${chapter}"]`).first()).toBeVisible();
++  await page.goto(root);
++  await expect(page.locator('[data-resume-book="inside-orch"]')).toHaveAttribute('href', `${chapter}?resume=1`);
++  await page.goto('/posts/?book=inside-orch&category=Reliability&q=ready');
++  await expect(page.locator('#posts-grid .post-card:visible')).toHaveCount(1);
++  await page.reload();
++  await expect(page.locator('#posts-grid .post-card:visible')).toHaveCount(1);
++  await page.locator('#post-search').fill('no-orch-topic-918273');
++  await expect(page.locator('[data-post-empty]')).toBeVisible();
++});
++
++test('Inside orch mobile reading retains keyboard controls and accessible diagrams', async ({ page }) => {
++  await page.setViewportSize({ width: 390, height: 844 });
++  await page.goto(`${root}04-domain-models-and-state-machines.html`);
++  const figure = page.locator('.book-article img');
++  await expect(figure).toHaveAttribute('alt', /task|lifecycle|transition/i);
++  await expect.poll(() => figure.evaluate(value => value.complete && value.naturalWidth > 0)).toBe(true);
++  const notes = page.getByRole('button', { name: 'Open bookmarks and notes' });
++  await notes.focus(); await page.keyboard.press('Enter');
++  await expect(page.locator('#reader-note')).toBeFocused();
++  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
++  const audit = await new AxeBuilder({ page }).analyze();
++  expect(audit.violations.filter(item => ['serious', 'critical'].includes(item.impact))).toEqual([]);
++});
++
++test('Inside orch answers and full contents remain readable without JavaScript', async ({ browser }) => {
++  const context = await browser.newContext({ javaScriptEnabled: false });
++  const page = await context.newPage();
++  try {
++    await page.goto(`http://127.0.0.1:4173${chapter}`);
++    await expect(page.locator('.book-article h1')).toBeVisible();
++    await expect(page.locator('.reader-chapters li')).toHaveCount(47);
++    await page.locator('.book-article a[href*="/companion/manuscript/solutions/ch06.html"]').click();
++    await expect(page.locator('main')).toContainText(/answer|solution/i);
++    const response = await page.goto(`http://127.0.0.1:4173${root}nonexistent-section.html`);
++    expect(response.status()).toBe(404);
++  } finally {
++    await context.close();
++  }
++});
++
++test('Inside orch notes still export when browser storage is unavailable', async ({ page }) => {
++  await page.addInitScript(() => {
++    Storage.prototype.getItem = () => { throw new DOMException('Unavailable', 'SecurityError'); };
++    Storage.prototype.setItem = () => { throw new DOMException('Unavailable', 'SecurityError'); };
++  });
++  await page.goto(chapter);
++  await page.getByRole('button', { name: 'Open bookmarks and notes' }).click();
++  await page.locator('#reader-note').fill('Synthetic Inside orch reading note.');
++  await page.getByRole('button', { name: 'Save note', exact: true }).click();
++  await expect(page.locator('[data-study-status]')).toContainText('Saving is unavailable');
++  const pending = page.waitForEvent('download');
++  await page.getByRole('button', { name: 'Export notes', exact: true }).click();
++  const download = await pending;
++  expect(fs.readFileSync(await download.path(), 'utf8')).toContain('Synthetic Inside orch reading note.');
++});
+diff --git a/books/inside-orch/scripts/build.py b/books/inside-orch/scripts/build.py
+new file mode 100644
+index 0000000..1d895cc
+--- /dev/null
++++ b/books/inside-orch/scripts/build.py
+@@ -0,0 +1,233 @@
++#!/usr/bin/env python3
++"""Publish the canonical Inside orch manuscript locally. No network or deployment."""
++from __future__ import annotations
++import argparse,hashlib,html,json,os,re,shutil,zipfile
++from pathlib import Path
++from urllib.parse import unquote,urlsplit
++from xml.etree import ElementTree as ET
++from markdown_it import MarkdownIt
++ROOT=Path(__file__).resolve().parents[1]
++SITE=ROOT.parents[1]
++DIST=ROOT/'dist'
++NAME='inside-orch'
++MD=MarkdownIt('commonmark',{'html':False,'xhtmlOut':True}).enable('table')
++
++def meta():return json.loads((ROOT/'book.json').read_text())
++def selection(manuscript=None):
++ base=(manuscript or ROOT/'manuscript').resolve();result=[]
++ for entry in (base/'Book.txt').read_text().splitlines():
++  if not entry.strip():continue
++  p=(base/entry.strip()).resolve()
++  if not p.is_relative_to(base) or p.suffix!='.md' or not p.is_file():raise ValueError('Invalid manuscript entry: '+entry)
++  if p.parent not in (base,base/'chapters',base/'appendices'):raise ValueError('Unsupported manuscript directory: '+entry)
++  result.append(p)
++ if len(result)!=47 or len({p.stem for p in result})!=47:raise ValueError('Expected 47 unique source stems')
++ if title(result[0])!='Preface':raise ValueError('Preface must be first')
++ for n,p in enumerate(result[1:41],1):
++  if not title(p).startswith(f'Chapter {n} - '):raise ValueError('Incorrect chapter order/title: '+str(p))
++ for letter,p in zip('ABCDEF',result[41:]):
++  if not title(p).startswith(f'Appendix {letter} - '):raise ValueError('Incorrect appendix order/title: '+str(p))
++ return result
++
++def title(path):
++ headings=re.findall(r'^# (.+)$',path.read_text(),re.M)
++ if len(headings)!=1:raise ValueError('Exactly one H1 required: '+str(path))
++ return headings[0]
++def slug(text):return re.sub(r'[^a-z0-9]+','-',text.lower()).strip('-') or 'section'
++def assemble():return '\n\n'.join(p.read_text().rstrip() for p in selection())+'\n'
++def epub_sections():return {p.stem:['EPUB/text/'+p.stem+'.xhtml'] for p in selection()}
++def source_reference(origin,target):
++ u=urlsplit(target)
++ if u.scheme or u.netloc or not u.path:return None
++ p=(origin.parent/unquote(u.path)).resolve()
++ if not p.is_relative_to(ROOT) or not p.is_file():raise ValueError(f'Broken/escaped book reference {origin}: {target}')
++ return p
++
++def permitted_companion(path):
++ rel=path.relative_to(ROOT).as_posix()
++ # Never traverse the pack, source corpus, credentials or raw infrastructure exports.
++ if rel.startswith(('prompts/','evidence/','state/','dist/')):return False
++ if path.suffix.lower() not in {'.md','.json','.txt','.go','.py','.sh','.yaml','.yml','.svg','.png','.csv'}:return False
++ if path.name.startswith('.') or any(x in path.name.lower() for x in ('credential','private-key','.env')):return False
++ if rel in {'scripts/observe_database_recovery.py','scripts/observe_process_restart.py','scripts/run_database_tests.py','scripts/verify_lab_records.py','scripts/verify_rollout_security_labs.py','scripts/run_recorded.py','tests/test_recovery_targets.py'}:return True
++ return rel.startswith(('manuscript/solutions/','exercises/','validation/exercises/','examples/','labs/','validation/evidence/','validation/labs/','validation/intake/')) or rel in ('validation/reviews/ch17-24-source-tests.json','validation/reviews/ch17-24-fresh-source-tests.json','publication/RIGHTS.md','publication/NOTICE.md','editorial/REFERENCES.md')
++
++def references(path):
++ result=[]
++ for t in MD.parse(path.read_text()):
++  for c in t.children or []:
++   attr='href' if c.type=='link_open' else 'src' if c.type=='image' else None
++   if attr and (p:=source_reference(path,c.attrGet(attr) or '')) is not None:result.append(p)
++ return result
++
++def companions():
++ selected=selection();seen=set(selected);pending=list(selected);found=[]
++ while pending:
++  origin=pending.pop()
++  for p in references(origin):
++   if p in seen:continue
++   if not permitted_companion(p):raise ValueError('Unapproved public companion: '+str(p.relative_to(ROOT)))
++   seen.add(p);found.append(p)
++   if p.suffix=='.md':pending.append(p)
++ return found
++
++def target_reference(origin,target,mode,paths):
++ u=urlsplit(target)
++ if u.scheme or u.netloc:return target
++ if not u.path:
++  root=origin.stem if origin in paths else 'companion-'+slug(origin.relative_to(ROOT).as_posix())
++  return '#'+root+'-'+u.fragment if mode=='print' and u.fragment and u.fragment!=origin.stem else ('#'+root if mode=='print' and u.fragment==origin.stem else target)
++ p=source_reference(origin,target)
++ suffix=('?'+u.query if u.query else '')+('#'+u.fragment if u.fragment else '')
++ if p in paths:
++  if mode=='print':return '#'+(p.stem+'-'+u.fragment if u.fragment and u.fragment!=p.stem else p.stem)
++  if mode=='offline':return offline_relative(origin,Path(p.stem+'.html'),paths)+suffix
++  return p.stem+'.xhtml'+suffix if mode=='epub' else '/books/inside-orch/'+p.stem+'.html'+suffix
++ rel=p.relative_to(ROOT).as_posix()
++ if not permitted_companion(p):raise ValueError('Unapproved public reference: '+rel)
++ if mode=='offline':
++  destination=Path('companion')/Path(rel).with_suffix('.html') if p.suffix=='.md' else Path('assets')/rel
++  return offline_relative(origin,destination,paths)+suffix
++ if mode=='site':
++  return ('/books/inside-orch/companion/'+str(Path(rel).with_suffix('.html')) if p.suffix=='.md' else '/assets/books/inside-orch/'+rel)+suffix
++ if mode=='epub':
++  return ('../media/'+rel if p.suffix in {'.png','.svg'} else 'companion-'+slug(rel)+'.xhtml')+suffix
++ if p.suffix=='.md':return '#companion-'+slug(rel)+(('-'+u.fragment) if u.fragment else '')
++ return 'https://www.alekpopovic.com/assets/books/inside-orch/'+rel+suffix
++
++def offline_location(path,paths):
++ return Path(path.stem+'.html') if path in paths else Path('companion')/path.relative_to(ROOT).with_suffix('.html')
++
++def offline_relative(origin,destination,paths):
++ return Path(os.path.relpath(destination,offline_location(origin,paths).parent)).as_posix()
++
++def render(path,mode='site',paths=None):
++ paths=paths or selection();tokens=MD.parse(path.read_text());used={}
++ for i,t in enumerate(tokens):
++  if mode=='print' and t.type=='table_open':
++   if path.name.startswith('a-cli-api'):t.attrSet('class','cli-reference')
++   elif path.name.startswith('b-lifecycle'):
++    # Count only this table's header, not subsequent tables in the appendix.
++    header_end=next(j for j in range(i+1,len(tokens)) if tokens[j].type=='thead_close')
++    header_columns=sum(token.type=='th_open' for token in tokens[i+1:header_end])
++    t.attrSet('class','invariant-reference' if header_columns==4 else 'lifecycle-reference')
++   elif path.name.startswith('f-glossary'):t.attrSet('class','glossary-reference')
++  if mode=='print' and t.type=='paragraph_open' and i+3<len(tokens) and tokens[i+3].type=='fence':
++   t.attrSet('class','code-introduction')
++  if t.type=='heading_open':
++   base=path.stem if t.tag=='h1' else slug(tokens[i+1].content)
++   if mode=='print':
++    root=path.stem if path in paths else 'companion-'+slug(path.relative_to(ROOT).as_posix())
++    base=root if t.tag=='h1' else root+'-'+base
++   n=used.get(base,0);used[base]=n+1;t.attrSet('id',base if not n else f'{base}-{n}')
++  for c in t.children or []:
++   attr='href' if c.type=='link_open' else 'src' if c.type=='image' else None
++   if attr:
++    target=c.attrGet(attr) or '';resolved=source_reference(path,target)
++    if c.type=='image' and resolved is None and mode=='print':raise ValueError('Print images must be local approved assets: '+target)
++    if c.type=='image' and resolved is not None and mode=='site' and resolved.suffix.lower()=='.png':
++     from PIL import Image
++     with Image.open(resolved) as image:
++      c.attrSet('width',str(image.width));c.attrSet('height',str(image.height))
++    if c.type=='image' and resolved is not None and mode=='print':
++     if not permitted_companion(resolved):raise ValueError('Unapproved image: '+str(resolved))
++     c.attrSet(attr,resolved.as_uri())
++    else:c.attrSet(attr,target_reference(path,target,mode,paths))
++ return MD.renderer.render(tokens,MD.options,{})
++
++def hashes(paths):return {p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
++def evidence(name,data):
++ p=ROOT/'validation/publication'/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(data,indent=2)+'\n')
++
++def print_html():
++ m=meta();paths=selection();extra=[p for p in companions() if p.suffix=='.md']
++ contents=''.join('<section class="chapter">'+render(p,'print',paths)+'</section>' for p in paths)
++ answers=''.join('<section class="chapter companion">'+render(p,'print',paths)+'</section>' for p in extra)
++ toc='<nav class="toc"><h1>Contents</h1><ol>'+''.join(f'<li><a href="#{p.stem}">{html.escape(title(p))}</a></li>' for p in paths)+'</ol></nav>'
++ rights=html.escape(m.get('copyright','Copyright © 2026 Aleksandar Popovic. All rights reserved.'))
++ css=(ROOT/'publication/print.css').read_text().replace('../../../assets/fonts/dm-sans.ttf',(ROOT/'publication/fonts/dm-sans.ttf').as_uri())
++ for font in ('dejavu-sans-mono.ttf','dejavu-sans-mono-bold.ttf','noto-color-emoji.ttf'):
++  css=css.replace('fonts/'+font,(ROOT/'publication/fonts'/font).as_uri())
++ css+='\nhtml{font-family:DM,BookEmoji,sans-serif}pre{font-family:BookMono,BookEmoji,monospace}code{font-family:BookMono,BookEmoji,monospace}'
++ doc=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>{html.escape(m['title']+': '+m['subtitle'])}</title><meta name="author" content="{html.escape(m['author'])}"><meta name="dcterms.created" content="2026-10-13"><style>{css}</style></head><body><section class="cover"><img alt="Inside orch — Building and Operating a Docker Orchestrator in Go, by Aleksandar Popovic" src="{(ROOT/'publication/cover.png').as_uri()}"></section><section class="rights"><h1>{html.escape(m['title'])}</h1><p>{html.escape(m['subtitle'])}</p><p>{html.escape(m['author'])}</p><p>{rights}</p><p>Source-based engineering edition · {html.escape(m['edition'])}</p><p>Source revision <code>{m['source_sha']}</code>. Observations describe the inspected and tested boundaries; no production certification is implied.</p></section>{toc}{contents}{answers}</body></html>'''
++ out=ROOT/'publication/pdf-build/inside-orch.html';out.parent.mkdir(parents=True,exist_ok=True);out.write_text(doc);return out
++
++def pdf():
++ from weasyprint import HTML
++ doc=print_html();out=DIST/(NAME+'.pdf');DIST.mkdir(exist_ok=True)
++ HTML(filename=str(doc)).write_pdf(out,pdf_identifier=b'inside-orch-1.0-cbfc94ade5b5')
++ from pypdf import PdfReader
++ import weasyprint
++ r=PdfReader(out);evidence('pdf-build.json',{'status':'built_visual_review_pending','pages':len(r.pages),'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'inputs':hashes(selection()+companions()+[ROOT/'book.json',ROOT/'scripts/build.py',ROOT/'publication/cover.png',ROOT/'publication/print.css']+sorted((ROOT/'publication/fonts').glob('*'))),'tool':'WeasyPrint','tool_version':weasyprint.__version__,'author':meta()['author']});return out
++
++EPUB_CSS='''html{color-scheme:light dark}body{font-family:serif;line-height:1.55;margin:5%;overflow-wrap:anywhere;}h1,h2,h3{font-family:sans-serif;line-height:1.2;break-after:avoid}h1{font-size:1.7em}a{color:#2374e1}pre{font-size:.88em;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #718096;padding:.6em}code{font-family:monospace}table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:.9em}th,td{border:1px solid #718096;padding:.35em;text-align:left;overflow-wrap:anywhere}img,svg{max-width:100%;height:auto}blockquote{border-left:.2em solid #2374e1;padding-left:1em}@media(prefers-color-scheme:dark){a{color:#73c7ff}}'''
++def xhtml(name,body):return '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en"><head><title>'+html.escape(name)+'</title><link rel="stylesheet" type="text/css" href="../styles/book.css" /></head><body>'+body+'</body></html>'
++def epub():
++ m=meta();paths=selection();extra=companions();documents={p.stem+'.xhtml':(title(p),render(p,'epub',paths)) for p in paths}
++ for p in extra:
++  name='companion-'+slug(p.relative_to(ROOT).as_posix())+'.xhtml'
++  if name in documents:raise ValueError('EPUB companion filename collision: '+name)
++  if p.suffix=='.md':documents[name]=(title(p),render(p,'epub',paths))
++  elif p.suffix not in {'.png','.svg'}:documents[name]=(p.name,'<h1>'+html.escape(p.name)+'</h1><pre>'+html.escape(p.read_text())+'</pre>')
++ manifest=['<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>','<item id="css" href="styles/book.css" media-type="text/css"/>','<item id="cover-image" href="media/cover.png" media-type="image/png" properties="cover-image"/>','<item id="cover" href="text/cover.xhtml" media-type="application/xhtml+xml"/>'];spine=['<itemref idref="cover"/>']
++ files={'EPUB/styles/book.css':EPUB_CSS.encode(),'EPUB/media/cover.png':(ROOT/'publication/cover.png').read_bytes(),'EPUB/text/cover.xhtml':xhtml('Cover','<section epub:type="cover"><img src="../media/cover.png" alt="'+html.escape(m['title']+': '+m['subtitle']+' — '+m['author'],quote=True)+'" /></section>').encode()}
++ for n,(filename,(name,body)) in enumerate(documents.items()):
++  ident='doc-'+str(n);manifest.append(f'<item id="{ident}" href="text/{filename}" media-type="application/xhtml+xml"/>');spine.append(f'<itemref idref="{ident}"/>');files['EPUB/text/'+filename]=xhtml(name,body).encode()
++ mime={'.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.txt':'text/plain','.go':'text/plain','.py':'text/plain','.sh':'text/plain','.yaml':'text/plain','.yml':'text/plain','.csv':'text/csv'}
++ for n,p in enumerate(p for p in extra if p.suffix in {'.png','.svg'}):
++  rel=p.relative_to(ROOT).as_posix();manifest.append(f'<item id="asset-{n}" href="media/{rel}" media-type="{mime[p.suffix]}"/>');files['EPUB/media/'+rel]=p.read_bytes()
++ navlinks=''.join(f'<li><a href="text/{p.stem}.xhtml">{html.escape(title(p))}</a></li>' for p in paths)
++ files['EPUB/nav.xhtml']=('''<?xml version="1.0" encoding="UTF-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en"><head><title>Contents</title></head><body><nav epub:type="toc" id="toc"><h1>Contents</h1><ol>'''+navlinks+'''</ol></nav><nav epub:type="landmarks"><h2>Landmarks</h2><ol><li><a epub:type="cover" href="text/cover.xhtml">Cover</a></li><li><a epub:type="bodymatter" href="text/00-preface.xhtml">Start reading</a></li></ol></nav></body></html>''').encode()
++ files['EPUB/package.opf']=('''<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" xml:lang="en"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">urn:inside-orch:1.0:cbfc94ade5b57e449d6b73bf1485b1c5b1647022</dc:identifier><dc:title>'''+html.escape(m['title']+': '+m['subtitle'])+'</dc:title><dc:creator>'+html.escape(m['author'])+'</dc:creator><dc:language>en</dc:language><dc:rights>'+html.escape(m['copyright'])+'</dc:rights><meta property="dcterms:modified">2026-10-13T00:00:00Z</meta></metadata><manifest>'+''.join(manifest)+'</manifest><spine>'+''.join(spine)+'</spine></package>').encode()
++ files['META-INF/container.xml']=b'<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles></container>'
++ for path,data in files.items():
++  if path.endswith(('.opf','.xhtml','.xml')):ET.fromstring(data)
++ DIST.mkdir(exist_ok=True);out=DIST/(NAME+'.epub')
++ with zipfile.ZipFile(out,'w') as z:
++  info=zipfile.ZipInfo('mimetype',(2026,10,13,0,0,0));info.compress_type=zipfile.ZIP_STORED;z.writestr(info,b'application/epub+zip')
++  for path,data in sorted(files.items()):
++   info=zipfile.ZipInfo(path,(2026,10,13,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;z.writestr(info,data)
++ evidence('epub-build.json',{'status':'built_validation_pending','sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'reading_sections':len(paths),'companion_documents':len(documents)-len(paths),'epub_chapters':epub_sections(),'inputs':hashes(paths+extra+[ROOT/'publication/cover.png']),'files':sorted(files)});return out
++
++def build():
++ DIST.mkdir(exist_ok=True);(DIST/(NAME+'.md')).write_text(assemble());pdf();epub()
++
++def offline():
++ """Explicit downloadable edition; never alters the site's service worker."""
++ paths=selection();extra=companions();m=meta();out=DIST/'online'
++ if out.exists():shutil.rmtree(out)
++ out.mkdir(parents=True)
++ css=(ROOT/'publication/offline.css').read_text()
++ (out/'assets').mkdir();(out/'assets/reader.css').write_text(css)
++ for font in (ROOT/'publication/fonts').iterdir():
++  dest=out/'assets/fonts'/font.name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(font,dest)
++ for p in extra:
++  if p.suffix!='.md':
++   dest=out/'assets'/p.relative_to(ROOT);dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)
++ for origin in paths+[p for p in extra if p.suffix=='.md']:
++  location=offline_location(origin,paths);dest=out/location;dest.parent.mkdir(parents=True,exist_ok=True)
++  def relative(p):return Path(os.path.relpath(p,location.parent)).as_posix()
++  links=''.join('<li><a '+('aria-current="page" ' if p==origin else '')+'href="'+html.escape(relative(Path(p.stem+'.html')),quote=True)+'">'+html.escape(title(p))+'</a></li>' for p in paths)
++  pager=''
++  if origin in paths:
++   i=paths.index(origin)
++   for label,j in [('Previous',i-1),('Next',i+1)]:
++    if 0<=j<len(paths):pager+='<a rel="'+('prev' if label=='Previous' else 'next')+'" href="'+relative(Path(paths[j].stem+'.html'))+'">'+label+': '+html.escape(title(paths[j]))+'</a>'
++  body=render(origin,'offline',paths)
++  page='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="author" content="'+html.escape(m['author'],quote=True)+'"><title>'+html.escape(title(origin)+' · '+m['title'])+'</title><link rel="stylesheet" href="'+relative(Path('assets/reader.css'))+'"></head><body><a class="skip" href="#reading">Skip to reading</a><header><a href="'+relative(Path('index.html'))+'">Inside orch</a><span>Offline engineering edition · Aleksandar Popovic</span></header><div class="reader"><nav aria-label="Book contents"><details open><summary>Contents · 47 sections</summary><ol>'+links+'</ol></details></nav><main id="reading" tabindex="-1">'+body+'<nav class="pager" aria-label="Reading navigation">'+pager+'</nav><footer><p>Source revision <code>'+m['source_sha']+'</code>.</p><p>'+html.escape(m['copyright'])+'</p><p>External source links require an internet connection. Reading and navigation require no JavaScript.</p></footer></main></div></body></html>'
++  dest.write_text(page)
++ cover=out/'assets/cover.png';shutil.copy2(ROOT/'publication/cover.png',cover)
++ (out/'downloads').mkdir()
++ for ext in ['pdf','epub']:shutil.copy2(DIST/(NAME+'.'+ext),out/'downloads'/(NAME+'.'+ext))
++ (out/'index.html').write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inside orch · Offline edition</title><link rel="stylesheet" href="assets/reader.css"></head><body><main class="landing"><img class="cover" src="assets/cover.png" alt="Inside orch book cover"><h1>Inside orch</h1><p>'+html.escape(m['subtitle'])+'</p><p>By '+html.escape(m['author'])+'</p><p>47 complete reading sections, worked answers and selected companions. External repository references require internet access.</p><p><a href="00-preface.html">Start reading</a> · <a href="downloads/inside-orch.pdf">PDF</a> · <a href="downloads/inside-orch.epub">EPUB</a></p><p>'+html.escape(m['copyright'])+'</p></main></body></html>')
++ files={p.relative_to(out).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(out.rglob('*')) if p.is_file()}
++ evidence('offline-export.json',{'status':'exported_validation_pending','source_sha':m['source_sha'],'sections':len(paths),'files':files,'scope':'Explicit publisher offline export; no live worker or analytics changes.'})
++ return out
++if __name__=='__main__':
++ p=argparse.ArgumentParser(description=__doc__);p.add_argument('format',choices=['all','pdf','epub','markdown','offline','check'],default='all',nargs='?');a=p.parse_args()
++ if a.format=='all':build()
++ elif a.format=='pdf':print(pdf())
++ elif a.format=='epub':print(epub())
++ elif a.format=='offline':print(offline())
++ elif a.format=='markdown':DIST.mkdir(exist_ok=True);(DIST/(NAME+'.md')).write_text(assemble())
++ else:print(json.dumps({'sections':len(selection()),'companions':len(companions()),'metadata':meta()},indent=2))
+diff --git a/books/inside-orch/tests/test_publisher_adapter.py b/books/inside-orch/tests/test_publisher_adapter.py
+new file mode 100644
+index 0000000..b15fe00
+--- /dev/null
++++ b/books/inside-orch/tests/test_publisher_adapter.py
+@@ -0,0 +1,70 @@
++"""Boundary tests for nested source selection and native reference handling."""
++import importlib.util,tempfile,unittest
++from pathlib import Path
++spec=importlib.util.spec_from_file_location('orch_publisher',Path(__file__).resolve().parents[1]/'scripts/build.py');pub=importlib.util.module_from_spec(spec);spec.loader.exec_module(pub)
++class AdapterTests(unittest.TestCase):
++ def setUp(self):
++  self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);self.original=pub.ROOT;pub.ROOT=self.root
++  self.man=self.root/'manuscript';(self.man/'chapters').mkdir(parents=True);(self.man/'appendices').mkdir()
++  self.entries=['00-preface.md']+[f'chapters/{n:02d}-topic.md' for n in range(1,41)]+[f'appendices/{letter.lower()}-reference.md' for letter in 'ABCDEF']
++  self.titles=['Preface']+[f'Chapter {n} - Topic' for n in range(1,41)]+[f'Appendix {letter} - Reference' for letter in 'ABCDEF']
++  for entry,title in zip(self.entries,self.titles):(self.man/entry).write_text('# '+title+'\n\n## Repeat\nOne.\n\n## Repeat\nTwo.\n')
++  self.write_order()
++ def tearDown(self):pub.ROOT=self.original;self.tmp.cleanup()
++ def write_order(self):(self.man/'Book.txt').write_text('\n'.join(self.entries)+'\n')
++ def test_nested_order_and_native_titles(self):
++  paths=pub.selection();self.assertEqual(len(paths),47);self.assertEqual(pub.title(paths[40]),'Chapter 40 - Topic');self.assertEqual(pub.title(paths[41]),'Appendix A - Reference')
++ def test_traversal_rejected(self):
++  (self.root/'outside.md').write_text('# Preface\n');self.entries[0]='../outside.md';self.write_order()
++  with self.assertRaises(ValueError):pub.selection()
++ def test_symlink_escape_rejected(self):
++  outside=self.root/'outside.md';outside.write_text('# Preface\n');(self.man/'00-preface.md').unlink();(self.man/'00-preface.md').symlink_to(outside)
++  with self.assertRaises(ValueError):pub.selection()
++ def test_duplicate_stem_rejected(self):
++  p=self.man/'appendices/01-topic.md';p.write_text('# Appendix A - Reference\n');self.entries[41]='appendices/01-topic.md';self.write_order()
++  with self.assertRaises(ValueError):pub.selection()
++ def test_wrong_title_grammar_rejected(self):
++  (self.man/self.entries[1]).write_text('# Chapter 1: Topic\n')
++  with self.assertRaises(ValueError):pub.selection()
++ def test_duplicate_heading_ids_and_print_prefix(self):
++  p=pub.selection()[1];site=pub.render(p);self.assertIn('id="repeat"',site);self.assertIn('id="repeat-1"',site)
++  printed=pub.render(p,'print');self.assertIn('id="01-topic-repeat-1"',printed)
++ def test_lifecycle_and_invariant_tables_keep_distinct_column_layouts(self):
++  p=self.man/'appendices/b-lifecycle.md'
++  p.write_text('# Appendix B - Reference\n\n| From | Allowed | Duplicate |\n| --- | --- | --- |\n| running | stopped | yes |\n\n| ID | Invariant | Scope | Counterexample |\n| --- | --- | --- | --- |\n| I1 | Placement | Memory | Lost process |\n')
++  printed=pub.render(p,'print')
++  self.assertEqual(printed.count('class="lifecycle-reference"'),1)
++  self.assertEqual(printed.count('class="invariant-reference"'),1)
++ def test_cross_section_fragment_and_query(self):
++  paths=pub.selection();p=paths[1]
++  self.assertEqual(pub.target_reference(p,'02-topic.md?q=1#repeat','site',paths),'/books/inside-orch/02-topic.html?q=1#repeat')
++  self.assertEqual(pub.target_reference(p,'02-topic.md#repeat','print',paths),'#02-topic-repeat')
++  self.assertEqual(pub.target_reference(p,'02-topic.md#repeat','epub',paths),'02-topic.xhtml#repeat')
++ def test_companion_and_raw_evidence_boundaries(self):
++  paths=pub.selection();p=paths[1];sol=self.man/'solutions/ch01.md';sol.parent.mkdir();sol.write_text('# Worked answers\n')
++  self.assertEqual(pub.target_reference(p,'../solutions/ch01.md','site',paths),'/books/inside-orch/companion/manuscript/solutions/ch01.html')
++  p.write_text('# Chapter 1 - Topic\n\n[Answers](../solutions/ch01.md)\n');self.assertEqual(pub.companions(),[sol])
++  denied=self.root/'evidence/orch/internal.go';denied.parent.mkdir(parents=True);denied.write_text('package internal\n')
++  with self.assertRaises(ValueError):pub.target_reference(p,'../../evidence/orch/internal.go','site',paths)
++ def test_unsupported_and_missing_historical_path_rejected(self):
++  paths=pub.selection();p=paths[1];binary=self.root/'labs/blob.bin';binary.parent.mkdir();binary.write_bytes(b'xx')
++  with self.assertRaises(ValueError):pub.target_reference(p,'../../labs/blob.bin','site',paths)
++  with self.assertRaises(ValueError):pub.target_reference(p,'renamed-old-chapter.md','site',paths)
++ def test_print_companion_fragments_use_unique_document_prefix(self):
++  paths=pub.selection();p=self.man/'solutions/ch01.md';p.parent.mkdir();p.write_text('# Answers\n\n## Details\n[Jump](#details)\n')
++  rendered=pub.render(p,'print',paths)
++  self.assertIn('id="companion-manuscript-solutions-ch01-md-details"',rendered)
++  self.assertIn('href="#companion-manuscript-solutions-ch01-md-details"',rendered)
++ def test_print_images_use_local_files_without_network_fetch(self):
++  paths=pub.selection();p=paths[1];image=self.root/'examples/diagram.svg';image.parent.mkdir();image.write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
++  p.write_text('# Chapter 1 - Topic\n\n![A checked diagram](../../examples/diagram.svg)\n')
++  self.assertIn('src="'+image.as_uri()+'"',pub.render(p,'print',paths))
++  self.assertIn('/assets/books/inside-orch/examples/diagram.svg',pub.render(p,'site',paths))
++ def test_print_rejects_remote_image_fetches(self):
++  paths=pub.selection();p=paths[1];p.write_text('# Chapter 1 - Topic\n\n![Remote](https://example.com/image.png)\n')
++  with self.assertRaises(ValueError):pub.render(p,'print',paths)
++ def test_offline_companion_links_round_trip_without_root_paths(self):
++  paths=pub.selection();p=paths[1];sol=self.man/'solutions/ch01.md';sol.parent.mkdir();sol.write_text('# Answers\n')
++  self.assertEqual(pub.target_reference(p,'../solutions/ch01.md#details','offline',paths),'companion/manuscript/solutions/ch01.html#details')
++  self.assertEqual(pub.target_reference(sol,'../chapters/01-topic.md#repeat','offline',paths),'../../../01-topic.html#repeat')
++if __name__=='__main__':unittest.main()

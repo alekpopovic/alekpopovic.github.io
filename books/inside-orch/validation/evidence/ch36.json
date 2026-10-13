@@ -1,0 +1,92 @@
+{
+  "chapter": "36",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch36.fake",
+      "statement": "FakeRuntime provides task-key idempotency and mutex-protected simulated container state.",
+      "classification": "implemented package",
+      "source_path": "internal/docker/fake.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 135,
+      "line_end": 166,
+      "associated_commits": [
+        "c69f9ffa830284692aabf9e65ab9eb1f79d3a114"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch36/seeded-properties.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual fixed-seed tests and two-second single-worker FuzzPortSpec campaign passed; no crash or minimized failing input invented."
+      ]
+    },
+    {
+      "claim_id": "ch36.seeds",
+      "statement": "Scheduler properties use five fixed seeds and assert deterministic unique constrained capacity-safe placement.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/property_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 11,
+      "line_end": 90,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch36/seeded-properties.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual fixed-seed tests and two-second single-worker FuzzPortSpec campaign passed; no crash or minimized failing input invented."
+      ]
+    },
+    {
+      "claim_id": "ch36.port-fuzz",
+      "statement": "The actual port fuzz target is FuzzPortSpec and ignores parser results, asserting panic resistance.",
+      "classification": "implemented package",
+      "source_path": "pkg/types/fuzz_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 11,
+      "line_end": 16,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch36/bounded-port-fuzz.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual fixed-seed tests and two-second single-worker FuzzPortSpec campaign passed; no crash or minimized failing input invented."
+      ]
+    },
+    {
+      "claim_id": "ch36.fake-e2e",
+      "statement": "Default MVP E2E selects FakeRuntime while real Docker is explicitly gated.",
+      "classification": "implemented package",
+      "source_path": "internal/e2e/orchestrator_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 29,
+      "line_end": 42,
+      "associated_commits": [
+        "903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual fixed-seed tests and two-second single-worker FuzzPortSpec campaign passed; no crash or minimized failing input invented."
+      ]
+    },
+    {
+      "claim_id": "ch36.reconcile",
+      "statement": "Selected repeated reconciler tests retain the same store and do not prove fresh-server durability.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 124,
+      "line_end": 160,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch36/seeded-properties.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual fixed-seed tests and two-second single-worker FuzzPortSpec campaign passed; no crash or minimized failing input invented."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{"guard": "passed", "database": "inside_orch_lab_cbfc94ade5b5_test", "container_id": "720f1665d8caf8087d6032eec59141e1f0caeb5c78049d6aa5b8396452c8ee74", "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch", "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"}
+=== RUN   TestPostgresStoreIntegration
+    postgres_test.go:117: create node: ERROR: column "agent_version" does not exist (SQLSTATE 42703)
+--- FAIL: TestPostgresStoreIntegration (0.09s)
+=== RUN   TestPostgresStoreWithTxRollsBackOnError
+--- PASS: TestPostgresStoreWithTxRollsBackOnError (0.15s)
+=== RUN   TestPostgresStoreConcurrentAssignTaskOnce
+    postgres_test.go:432: create node: ERROR: column "agent_version" does not exist (SQLSTATE 42703)
+--- FAIL: TestPostgresStoreConcurrentAssignTaskOnce (0.14s)
+FAIL
+FAIL	github.com/alekpopovic/orch/internal/store	0.396s
+FAIL

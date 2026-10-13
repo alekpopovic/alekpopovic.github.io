@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py", line 51, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py", line 37, in main
+    prepared=bookgo(source,'prepare')
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py", line 31, in bookgo
+    data=run([a.go,'run','./.book-labs/full-schema',mode],cwd=work,env=env)
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py", line 26, in run
+    if result.returncode:raise RuntimeError('Command failed: '+repr(argv))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Command failed: ['/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go', 'run', './.book-labs/full-schema', 'prepare']

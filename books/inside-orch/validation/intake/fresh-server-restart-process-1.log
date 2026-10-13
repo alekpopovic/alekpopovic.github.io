@@ -1,0 +1,7 @@
+{"time":"2026-10-13T02:38:35.596766378+02:00","level":"INFO","msg":"starting server","addr":"127.0.0.1:49271"}
+{"time":"2026-10-13T02:38:35.600046564+02:00","level":"INFO","msg":"http request","request_id":"7bbebd28-7658-402b-a9bb-7719c03ed0a4","method":"GET","path":"/readyz","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:38:35.600707141+02:00","level":"INFO","msg":"http request","request_id":"3dd0eca9-67c6-4ca9-80d0-246585d69ea0","method":"GET","path":"/v1/version","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:38:35.601272382+02:00","level":"INFO","msg":"http request","request_id":"5ce49e13-905f-4af1-9647-f09ec76e12f6","method":"POST","path":"/v1/namespaces","status":201,"duration_ms":0}
+{"time":"2026-10-13T02:38:35.601708064+02:00","level":"WARN","msg":"api request failed","request_id":"29bbe463-cb24-406d-909f-093c5557fb83","method":"POST","path":"/v1/agent/register","status":401,"error_code":"unauthorized","error":"internal server error"}
+{"time":"2026-10-13T02:38:35.601765545+02:00","level":"INFO","msg":"http request","request_id":"29bbe463-cb24-406d-909f-093c5557fb83","method":"POST","path":"/v1/agent/register","status":401,"duration_ms":0}
+{"time":"2026-10-13T02:38:35.602005457+02:00","level":"INFO","msg":"shutting down server"}

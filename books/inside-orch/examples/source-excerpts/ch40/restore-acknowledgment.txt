@@ -1,0 +1,9 @@
+if [[ "$yes" != true ]]; then
+  cat >&2 <<'WARNING'
+Refusing to restore without --yes.
+
+Restore modifies the target database. If --clean is also supplied, existing
+objects in the target database may be dropped before being recreated.
+WARNING
+  exit 2
+fi

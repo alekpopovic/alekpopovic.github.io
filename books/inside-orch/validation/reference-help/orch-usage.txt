@@ -1,0 +1,22 @@
+Show namespace usage
+
+Usage:
+  orch usage [flags]
+  orch usage [command]
+
+Available Commands:
+  export      
+
+Flags:
+      --from string   start date or RFC3339
+  -h, --help          help for usage
+      --to string     end date or RFC3339
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch usage [command] --help" for more information about a command.

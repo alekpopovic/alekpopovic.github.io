@@ -1,0 +1,87 @@
+{
+  "lab_id": "03",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/03-reconciler-drift/lab.json",
+  "definition_sha256": "8d397e6bdd187b3b0c6db723d9b8076c381c98baae18b635429f17a4091ff214",
+  "guide": "labs/03-reconciler-drift/README.md",
+  "guide_sha256": "066553370074592b6c14d9778a7be69260d39eacdb6ca235ee6f33f42e9e960f",
+  "configuration_hashes": {
+    "examples/teaching-extensions/lab03/agent_contract_test.go": "cc3108e2229218d8ffcd91d41be62b4aa1ea1e0671a903e7abdf798a9a9bdf32",
+    "examples/teaching-extensions/lab03/reconciler_contract_test.go": "3df35a9d352261daf74e451e2a5c8e3db5cce1d17ee3b50bd62bafc97df2b69d",
+    "scripts/run_drift_lab.py": "8a14a1adf51e6eb3e4d3c0726ec1072a771f4cee889cfe923b9fb83aef51850c",
+    "labs/03-reconciler-drift/fixtures/cases.json": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "FakeRuntime agent drift and separate store-backed reconciler test doubles; fifteen asserted cases, no Docker/network/database.",
+  "state_continuity": "Fresh per-case MemoryService or store double; injected owned labels/IDs, no dependency on surviving Lab02 objects.",
+  "started_at_utc": "2026-10-13T01:57:38.284217+00:00",
+  "finished_at_utc": "2026-10-13T01:57:38.915385+00:00",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/run_drift_lab.py",
+        "--source-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go-root",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64",
+        "--output-prefix",
+        "validation/labs/review076/03-observed"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:57:38.284217+00:00",
+      "finished_at_utc": "2026-10-13T01:57:38.915385+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/03-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "case_count": 15,
+    "case_ids": [
+      "missing-assigned",
+      "missing-running",
+      "stopped-owned",
+      "image-mismatch-running",
+      "version-mismatch-assigned",
+      "service-label-mismatch-running",
+      "foreign-node-reference",
+      "unexpected-owned",
+      "unmanaged-name-similarity",
+      "soft-delete-owned",
+      "below-target",
+      "failed-always",
+      "failed-never",
+      "scale-order",
+      "soft-delete"
+    ],
+    "detailed_results": "validation/labs/review076/03-observed.json",
+    "limitations": [
+      "Copied private package access, no behavior changes to baseline sources.",
+      "FakeRuntime does not establish Docker daemon behavior.",
+      "Store-backed reconciler is not the shipped server MemoryService loop.",
+      "Expected lifecycle rejection is a passing assertion, not successful recreation."
+    ]
+  },
+  "original_records": [
+    "validation/labs/review076/03-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/03-command.stdout.txt",
+      "sha256": "1268817c5c4596d42511b0da7a347cd114cc0a30f0a9b4224f6e3b9bc17e683b",
+      "bytes": 2229
+    },
+    {
+      "path": "validation/labs/review076/03-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

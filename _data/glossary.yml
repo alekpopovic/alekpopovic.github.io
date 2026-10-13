@@ -48,3 +48,13 @@ universal-tracking:
   - term: Realtime delivery
     definition: Delivering changing tracking state to connected clients with explicit ordering, authorization, and recovery behavior when a connection drops.
     chapter: 16-realtime
+inside-orch:
+  - term: Active state owner
+    definition: The concrete implementation selected by the executable to hold live intent and observations. The default Orch server uses process-local MemoryService even when database configuration is present.
+    chapter: 06-follow-one-request-through-the-control-plane
+  - term: Resource propagation
+    definition: Preserving requested fields through parsing, assignment, transport and runtime conversion. A Docker adapter supporting limits does not prove the ordinary agent forwards them.
+    chapter: 05-service-specifications-resources-and-ports
+  - term: Physical fencing
+    definition: Preventing an obsolete worker from performing protected effects at the receiving authority. Heartbeat expiry and node-offline status alone do not stop an unreachable container.
+    chapter: 19-offline-nodes-draining-and-rescheduling

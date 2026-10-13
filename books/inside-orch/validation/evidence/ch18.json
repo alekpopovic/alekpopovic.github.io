@@ -1,0 +1,89 @@
+{
+  "chapter_id": "18",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch18.soft-delete",
+      "statement": "DeleteService preserves deleting identity and stops desired task work before finalization.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1436,
+      "line_end": 1473,
+      "associated_commits": [
+        "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+        "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No remote Docker acknowledgement in API request.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch18.guarded-remove",
+      "statement": "Agent verifies managed task/node labels before removing assigned container.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 436,
+      "line_end": 480,
+      "associated_commits": [
+        "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+        "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Label checks depend on trusted Docker host state.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch18.finalization",
+      "statement": "Default MemoryService finalization waits for every service task ActualStatus removed.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2646,
+      "line_end": 2665,
+      "associated_commits": [
+        "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+        "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "In-memory records can be lost on fresh process.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch18.retry",
+      "statement": "Adapter treats already stopped/removed objects idempotently.",
+      "classification": "implemented package",
+      "source_path": "internal/docker/docker_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 119,
+      "line_end": 156,
+      "associated_commits": [
+        "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+        "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Fake client behavior needs separate actual Docker evidence.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestDeleteServiceWithRunningTasksMarksDeleting",
+    "TestDeleteServiceWaitsWhenAgentOfflineAndFinalizesAfterReturn",
+    "TestReconcileDoesNotRemoveNonManagedAssignedContainerID",
+    "TestRemoveContainerAlreadyRemovedIsSuccess"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

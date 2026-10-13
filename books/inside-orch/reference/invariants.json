@@ -1,0 +1,145 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "invariants": [
+    {
+      "id": "INV-01",
+      "name": "Replica convergence",
+      "scope": "MemoryService active stateless service with eligible nodes and an allowed restart policy",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/controlplane/controlplane.go",
+        "symbol": "reconcileServiceTasksLocked",
+        "line_start": 2249,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2249"
+      },
+      "test": {
+        "path": "internal/controlplane/agent_test.go",
+        "symbol": "TestScaleServiceIgnoresTerminalTasksWhenReconcilingReplicas",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "Zero capacity or restart never can leave intent unfulfilled; initial immediate placement bypasses richer Plan constraints.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-02",
+      "name": "Atomic task claim",
+      "scope": "Store-backed scheduler with consistent expected state/timestamp",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/store/postgres.go",
+        "symbol": "AssignTask",
+        "line_start": 892,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892"
+      },
+      "test": {
+        "path": "internal/store/postgres_test.go",
+        "symbol": "TestPostgresStoreConcurrentAssignTaskOnce",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "One-winner claim does not establish default server persistence or remote process fencing.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-03",
+      "name": "State-change event ordering",
+      "scope": "Agent status handler after validated in-memory state write",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/controlplane/controlplane.go",
+        "symbol": "ReportTaskStatus",
+        "line_start": 877,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L877"
+      },
+      "test": {
+        "path": "internal/controlplane/agent_test.go",
+        "symbol": "TestAgentTaskStatusTerminalDuplicateIsIdempotent",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "Memory mutation and append are not a durable transaction across process failure; do not generalize to every controller append.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-04",
+      "name": "Assigned node owns reports",
+      "scope": "Known task and matching authorized node ID",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/controlplane/controlplane.go",
+        "symbol": "ReportTaskStatus",
+        "line_start": 877,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L877"
+      },
+      "test": {
+        "path": "internal/controlplane/agent_test.go",
+        "symbol": "TestAgentTaskStatusCannotResurrectStoppedTask",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "Credential validity alone cannot authorize a different node\u2019s task; physical old-worker activity is not fenced.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-05",
+      "name": "Namespace secrecy",
+      "scope": "Context-scoped resource lookup before metadata returned",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/controlplane/controlplane.go",
+        "symbol": "GetService",
+        "line_start": 1422,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L1422"
+      },
+      "test": {
+        "path": "internal/controlplane/namespace_test.go",
+        "symbol": "TestNamespaceIsolationAndDuplicateNames",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "A global identifier must not be returned before scope validation; inspect every newer workload surface separately.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-06",
+      "name": "Rollout availability budget",
+      "scope": "Controller snapshot with desired running old tasks and explicitly healthy new tasks",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/rollout/rollout.go",
+        "symbol": "reconcileDeployment",
+        "line_start": 126,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L126"
+      },
+      "test": {
+        "path": "internal/rollout/rollout_test.go",
+        "symbol": "TestControllerSuccessfulRollout",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "Running new tasks alone do not satisfy newHealthy; concurrent physical failure can invalidate a snapshot budget.",
+      "validation": "inspected"
+    },
+    {
+      "id": "INV-07",
+      "name": "Owned container cleanup",
+      "scope": "Agent removal path verifies node/task/managed labels before deleting",
+      "assumptions": "Pinned source, authorized context, specified constructor path and eventual successful calls; no durable/distributed guarantee inferred.",
+      "enforcing_symbol": {
+        "path": "internal/agent/agent.go",
+        "symbol": "removeAssignedTask",
+        "line_start": 418,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L418"
+      },
+      "test": {
+        "path": "internal/agent/agent_test.go",
+        "symbol": "TestReconcileDoesNotRemoveNonManagedAssignedContainerID",
+        "verified_exists": true
+      },
+      "test_gap": null,
+      "counterexample_outside_scope": "Server deleting status is not proof removal happened; cleanup can fail or old agent can remain unreachable.",
+      "validation": "inspected"
+    }
+  ]
+}

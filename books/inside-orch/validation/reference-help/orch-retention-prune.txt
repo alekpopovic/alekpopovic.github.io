@@ -1,0 +1,13 @@
+Usage:
+  orch retention prune [flags]
+
+Flags:
+      --dry-run   count without deleting
+  -h, --help      help for prune
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

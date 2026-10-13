@@ -1,0 +1,64 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "command": "python3 books/inside-orch/scripts/check_bibliography.py --git-dir /tmp/inside-orch-reference-history.git",
+  "glossary_count": 83,
+  "glossary_duplicate_ids": 0,
+  "bibliography_entries": 202,
+  "citations_resolved": 437,
+  "historical_blob_checks": 11,
+  "external_access_outcomes": [
+    {
+      "url": "https://go.dev/ref/mem",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://pkg.go.dev/context@go1.25.0",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://docs.docker.com/engine/security/",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://www.postgresql.org/docs/16/explicit-locking.html",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://raft.github.io/raft.pdf",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://prometheus.io/docs/practices/instrumentation/",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    },
+    {
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html",
+      "status": "retrieved",
+      "checked_at": "2026-10-13",
+      "source": "web.open with full page content, not search snippet"
+    }
+  ],
+  "unresolved_external": [],
+  "errors": [],
+  "pending_dependencies": [],
+  "scope": "Formal Markdown citations, immutable source/commit membership and term links. External page retrieval recorded separately; no claim that a reachable URL proves behavior.",
+  "status": "passed"
+}

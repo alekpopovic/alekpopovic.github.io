@@ -1,0 +1,17 @@
+Fetch service logs
+
+Usage:
+  orch logs <service-name-or-id> [flags]
+
+Flags:
+  -f, --follow        follow log output
+  -h, --help          help for logs
+      --tail string   number of lines to show from the end
+      --task string   specific task ID
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

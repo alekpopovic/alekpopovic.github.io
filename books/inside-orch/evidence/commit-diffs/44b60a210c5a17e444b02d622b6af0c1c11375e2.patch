@@ -1,0 +1,646 @@
+commit 44b60a210c5a17e444b02d622b6af0c1c11375e2
+Date: 2026-06-11T20:45:10+02:00
+Subject: Implement resource accounting
+
+
+---
+ docs/API.md                           |   2 +
+ docs/RESOURCES.md                     |  35 +++++++
+ docs/SCHEDULER.md                     |   4 +-
+ internal/api/api.go                   |   6 ++
+ internal/cli/deploy.go                |  63 ++----------
+ internal/controlplane/controlplane.go |   5 +
+ internal/scheduler/scheduler.go       |  25 ++++-
+ internal/scheduler/scheduler_test.go  |  34 ++++++
+ internal/store/postgres.go            |  10 ++
+ pkg/types/resources_test.go           |  83 +++++++++++++++
+ pkg/types/types.go                    | 188 ++++++++++++++++++++++++++++++++++
+ 11 files changed, 396 insertions(+), 59 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index 93a1feb..55e0d5a 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -72,6 +72,8 @@ curl http://localhost:8080/v1/services/{service_id}
+ curl -X DELETE http://localhost:8080/v1/services/{service_id}
+ ```
+ 
++Resource values are normalized as CPU millicores and memory bytes. The API also accepts string inputs such as `"500m"`, `"2.5"`, `"512Mi"`, and `"1Gi"` for resource fields.
++
+ Delete is safe by default: it marks the service `deleting`, asks agents to stop and remove task containers, and only moves the service to `deleted` after all tasks report `removed`.
+ 
+ Scale and rollout operations:
+diff --git a/docs/RESOURCES.md b/docs/RESOURCES.md
+new file mode 100644
+index 0000000..f4039b1
+--- /dev/null
++++ b/docs/RESOURCES.md
+@@ -0,0 +1,35 @@
++# Resources
++
++Resource values are normalized before services are stored:
++
++- CPU is stored in millicores.
++- Memory is stored in bytes.
++
++Accepted CPU formats:
++
++- `500m` means 500 millicores.
++- `1` means 1000 millicores.
++- `2.5` means 2500 millicores.
++
++Accepted memory formats:
++
++- `128Mi` and `512Mi` use binary mebibytes.
++- `1Gi` uses binary gibibytes.
++- `2G` uses decimal gigabytes.
++
++Explicit resource values must be positive. Missing request or limit values are filled from configurable defaults. The current default is:
++
++- request CPU: `100m`
++- request memory: `128Mi`
++- limit CPU: `100m`
++- limit memory: `128Mi`
++
++Requests must not exceed limits after defaults are applied.
++
++## Scheduler Accounting
++
++The scheduler uses service resource requests, not limits, when deciding whether a task fits on a node. Node capacity is measured from `node.allocatable`.
++
++Allocated resources are calculated from every assigned non-terminal task on the node, including tasks that are assigned, pulling, starting, running, healthy, unhealthy, or stopping. Tasks stop consuming scheduling capacity only after they reach a terminal status such as `stopped`, `removed`, or `failed`.
++
++This avoids overcommitting CPU and memory while containers are still being created, running, or torn down.
+diff --git a/docs/SCHEDULER.md b/docs/SCHEDULER.md
+index cc354be..72d795e 100644
+--- a/docs/SCHEDULER.md
++++ b/docs/SCHEDULER.md
+@@ -18,7 +18,9 @@ For each pending task, the scheduler considers nodes in stable `node_id` order a
+ - service placement constraints must match node labels.
+ - free allocatable CPU and memory must be greater than or equal to the service resource requests.
+ 
+-Free resources are calculated from node allocatable resources minus the resource requests of running tasks already on that node, plus any assignments planned earlier in the same scheduler pass.
++Free resources are calculated from node allocatable resources minus the resource requests of non-terminal tasks already assigned to that node, plus any assignments planned earlier in the same scheduler pass.
++
++See [RESOURCES.md](RESOURCES.md) for accepted CPU and memory formats and normalization rules.
+ 
+ ## Scoring
+ 
+diff --git a/internal/api/api.go b/internal/api/api.go
+index c8c9283..31a73dd 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -376,6 +376,12 @@ func (s *Server) createService(w http.ResponseWriter, r *http.Request) {
+ 	if !s.decodeJSON(w, r, &req) {
+ 		return
+ 	}
++	normalized, err := types.NormalizeServiceSpec(req.Spec, types.DefaultResourceDefaults())
++	if err != nil {
++		s.writeError(w, r, fmt.Errorf("%w: %v", store.ErrInvalidState, err))
++		return
++	}
++	req.Spec = normalized
+ 	if err := req.Spec.Validate(); err != nil {
+ 		s.writeError(w, r, fmt.Errorf("%w: %v", store.ErrInvalidState, err))
+ 		return
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index baf1535..3b07300 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -3,7 +3,6 @@ package cli
+ import (
+ 	"fmt"
+ 	"os"
+-	"strconv"
+ 	"strings"
+ 	"time"
+ 
+@@ -104,15 +103,19 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	if err := spec.Validate(); err != nil {
+ 		return types.ServiceSpec{}, fmt.Errorf("invalid deploy file: %w", err)
+ 	}
++	spec, err = types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
++	if err != nil {
++		return types.ServiceSpec{}, fmt.Errorf("invalid deploy file: %w", err)
++	}
+ 	return spec, nil
+ }
+ 
+ func (r DeployResources) toRequests() (types.Resources, error) {
+-	cpu, err := parseCPU(r.CPU)
++	cpu, err := types.ParseCPU(r.CPU)
+ 	if err != nil {
+ 		return types.Resources{}, err
+ 	}
+-	memory, err := parseMemory(r.Memory)
++	memory, err := types.ParseMemory(r.Memory)
+ 	if err != nil {
+ 		return types.Resources{}, err
+ 	}
+@@ -179,57 +182,3 @@ func parseOptionalDuration(value string) (time.Duration, error) {
+ 	}
+ 	return time.ParseDuration(value)
+ }
+-
+-func parseCPU(value string) (int64, error) {
+-	value = strings.TrimSpace(value)
+-	if value == "" {
+-		return 0, nil
+-	}
+-	if strings.HasSuffix(value, "m") {
+-		raw := strings.TrimSuffix(value, "m")
+-		parsed, err := strconv.ParseInt(raw, 10, 64)
+-		if err != nil {
+-			return 0, fmt.Errorf("invalid CPU value %q", value)
+-		}
+-		return parsed, nil
+-	}
+-	parsed, err := strconv.ParseFloat(value, 64)
+-	if err != nil {
+-		return 0, fmt.Errorf("invalid CPU value %q", value)
+-	}
+-	return int64(parsed * 1000), nil
+-}
+-
+-func parseMemory(value string) (int64, error) {
+-	value = strings.TrimSpace(value)
+-	if value == "" {
+-		return 0, nil
+-	}
+-
+-	units := []struct {
+-		suffix string
+-		scale  int64
+-	}{
+-		{"Gi", 1024 * 1024 * 1024},
+-		{"Mi", 1024 * 1024},
+-		{"Ki", 1024},
+-		{"G", 1000 * 1000 * 1000},
+-		{"M", 1000 * 1000},
+-		{"K", 1000},
+-	}
+-	for _, unit := range units {
+-		if strings.HasSuffix(value, unit.suffix) {
+-			raw := strings.TrimSuffix(value, unit.suffix)
+-			parsed, err := strconv.ParseInt(raw, 10, 64)
+-			if err != nil {
+-				return 0, fmt.Errorf("invalid memory value %q", value)
+-			}
+-			return parsed * unit.scale, nil
+-		}
+-	}
+-	parsed, err := strconv.ParseInt(value, 10, 64)
+-	if err != nil {
+-		return 0, fmt.Errorf("invalid memory value %q", value)
+-	}
+-	return parsed, nil
+-}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 1c9f0ef..5ba2c17 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -359,6 +359,11 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Service{}, err
+ 	}
++	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	spec = normalized
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index b8560c5..b1f9a5c 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -103,7 +103,7 @@ func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([
+ 			return nil, fmt.Errorf("list tasks for node %s: %w", node.ID, err)
+ 		}
+ 		for _, task := range tasks {
+-			if task.ActualStatus == types.TaskRunning || task.ActualStatus == types.TaskHealthy {
++			if consumesResources(task) {
+ 				running = append(running, task)
+ 			}
+ 		}
+@@ -111,6 +111,29 @@ func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([
+ 	return running, nil
+ }
+ 
++func consumesResources(task types.Task) bool {
++	if task.NodeID == "" {
++		return false
++	}
++	if task.DesiredStatus == types.TaskRemoved {
++		return false
++	}
++	switch task.ActualStatus {
++	case types.TaskPending,
++		types.TaskAssigned,
++		types.TaskPulling,
++		types.TaskCreated,
++		types.TaskStarting,
++		types.TaskRunning,
++		types.TaskHealthy,
++		types.TaskUnhealthy,
++		types.TaskStopping:
++		return true
++	default:
++		return false
++	}
++}
++
+ func (s *Scheduler) loadServices(ctx context.Context, taskSets ...[]types.Task) (map[types.ServiceID]types.Service, error) {
+ 	services := make(map[types.ServiceID]types.Service)
+ 	for _, tasks := range taskSets {
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 5e693d0..8b89b32 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -191,6 +191,40 @@ func TestRunOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 	}
+ }
+ 
++func TestRunOnceAccountsForNonTerminalAssignedTasks(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	store := &fakeStore{
++		pending: []types.Task{task},
++		nodes: []types.Node{
++			nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 1000, Memory: 1024}),
++		},
++		byNode: map[types.NodeID][]types.Task{
++			"node-a": {
++				{
++					ID:            "existing",
++					ServiceID:     "other",
++					NodeID:        "node-a",
++					DesiredStatus: types.TaskRunning,
++					ActualStatus:  types.TaskAssigned,
++				},
++			},
++		},
++		services: map[types.ServiceID]types.Service{
++			"svc":   serviceFixture("svc", types.Resources{CPU: 400, Memory: 512}, nil),
++			"other": serviceFixture("other", types.Resources{CPU: 700, Memory: 512}, nil),
++		},
++	}
++
++	assignments, err := New(store).RunOnce(context.Background())
++	if err != nil {
++		t.Fatalf("run scheduler: %v", err)
++	}
++	if len(assignments) != 0 {
++		t.Fatalf("expected no assignment because assigned task consumes resources, got %#v", assignments)
++	}
++}
++
+ type fakeStore struct {
+ 	pending    []types.Task
+ 	nodes      []types.Node
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index c387e0b..b20343c 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -173,6 +173,11 @@ func (s *PostgresStore) ListNodesByStatus(ctx context.Context, status types.Node
+ }
+ 
+ func (s *PostgresStore) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
++	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++	spec = normalized
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+@@ -227,6 +232,11 @@ func (s *PostgresStore) ListServices(ctx context.Context) ([]types.Service, erro
+ }
+ 
+ func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
++	if err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++	spec = normalized
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+diff --git a/pkg/types/resources_test.go b/pkg/types/resources_test.go
+new file mode 100644
+index 0000000..1a311b2
+--- /dev/null
++++ b/pkg/types/resources_test.go
+@@ -0,0 +1,83 @@
++package types
++
++import (
++	"encoding/json"
++	"testing"
++)
++
++func TestParseCPU(t *testing.T) {
++	tests := []struct {
++		value string
++		want  int64
++	}{
++		{value: "500m", want: 500},
++		{value: "1", want: 1000},
++		{value: "2.5", want: 2500},
++	}
++	for _, tt := range tests {
++		got, err := ParseCPU(tt.value)
++		if err != nil {
++			t.Fatalf("parse CPU %q: %v", tt.value, err)
++		}
++		if got != tt.want {
++			t.Fatalf("parse CPU %q = %d, want %d", tt.value, got, tt.want)
++		}
++	}
++}
++
++func TestParseMemory(t *testing.T) {
++	tests := []struct {
++		value string
++		want  int64
++	}{
++		{value: "128Mi", want: 128 * 1024 * 1024},
++		{value: "512Mi", want: 512 * 1024 * 1024},
++		{value: "1Gi", want: 1024 * 1024 * 1024},
++		{value: "2G", want: 2 * 1000 * 1000 * 1000},
++	}
++	for _, tt := range tests {
++		got, err := ParseMemory(tt.value)
++		if err != nil {
++			t.Fatalf("parse memory %q: %v", tt.value, err)
++		}
++		if got != tt.want {
++			t.Fatalf("parse memory %q = %d, want %d", tt.value, got, tt.want)
++		}
++	}
++}
++
++func TestResourcesUnmarshalJSONParsesStrings(t *testing.T) {
++	var resources Resources
++	if err := json.Unmarshal([]byte(`{"cpu":"2.5","memory":"1Gi"}`), &resources); err != nil {
++		t.Fatalf("unmarshal resources: %v", err)
++	}
++	if resources.CPU != 2500 || resources.Memory != 1024*1024*1024 {
++		t.Fatalf("unexpected resources %#v", resources)
++	}
++}
++
++func TestResourceRequirementsWithDefaults(t *testing.T) {
++	requirements, err := (ResourceRequirements{}).WithDefaults(ResourceDefaults{
++		Requests: Resources{CPU: 250, Memory: 64 * 1024 * 1024},
++		Limits:   Resources{CPU: 500, Memory: 128 * 1024 * 1024},
++	})
++	if err != nil {
++		t.Fatalf("apply defaults: %v", err)
++	}
++	if requirements.Requests.CPU != 250 || requirements.Requests.Memory != 64*1024*1024 {
++		t.Fatalf("unexpected request defaults %#v", requirements.Requests)
++	}
++	if requirements.Limits.CPU != 500 || requirements.Limits.Memory != 128*1024*1024 {
++		t.Fatalf("unexpected limit defaults %#v", requirements.Limits)
++	}
++}
++
++func TestResourceRequirementsRejectsInvalidValues(t *testing.T) {
++	_, err := (ResourceRequirements{
++		Requests: Resources{CPU: 600, Memory: 128 * 1024 * 1024},
++		Limits:   Resources{CPU: 500, Memory: 128 * 1024 * 1024},
++	}).WithDefaults(DefaultResourceDefaults())
++	if err == nil {
++		t.Fatalf("expected request exceeding limit to fail")
++	}
++}
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index d9168f9..d4e146a 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -1,7 +1,10 @@
+ package types
+ 
+ import (
++	"encoding/json"
+ 	"fmt"
++	"math"
++	"strconv"
+ 	"strings"
+ 	"time"
+ )
+@@ -30,6 +33,63 @@ type Resources struct {
+ 	Memory int64 `json:"memory"`
+ }
+ 
++func (resources *Resources) UnmarshalJSON(data []byte) error {
++	var raw struct {
++		CPU    json.RawMessage `json:"cpu"`
++		Memory json.RawMessage `json:"memory"`
++	}
++	if err := json.Unmarshal(data, &raw); err != nil {
++		return err
++	}
++	cpu, err := parseCPUValue(raw.CPU)
++	if err != nil {
++		return err
++	}
++	memory, err := parseMemoryValue(raw.Memory)
++	if err != nil {
++		return err
++	}
++	resources.CPU = cpu
++	resources.Memory = memory
++	return nil
++}
++
++func parseCPUValue(raw json.RawMessage) (int64, error) {
++	if len(raw) == 0 || string(raw) == "null" {
++		return 0, nil
++	}
++	var text string
++	if err := json.Unmarshal(raw, &text); err == nil {
++		return ParseCPU(text)
++	}
++	var number float64
++	if err := json.Unmarshal(raw, &number); err != nil {
++		return 0, fmt.Errorf("invalid CPU value")
++	}
++	if number <= 0 || math.Trunc(number) != number || math.IsNaN(number) || math.IsInf(number, 0) {
++		return 0, fmt.Errorf("invalid CPU value %v", number)
++	}
++	return int64(number), nil
++}
++
++func parseMemoryValue(raw json.RawMessage) (int64, error) {
++	if len(raw) == 0 || string(raw) == "null" {
++		return 0, nil
++	}
++	var text string
++	if err := json.Unmarshal(raw, &text); err == nil {
++		return ParseMemory(text)
++	}
++	var number int64
++	if err := json.Unmarshal(raw, &number); err != nil {
++		return 0, fmt.Errorf("invalid memory value")
++	}
++	if number <= 0 {
++		return 0, fmt.Errorf("invalid memory value %d", number)
++	}
++	return number, nil
++}
++
+ type NodeStatus string
+ 
+ const (
+@@ -175,6 +235,51 @@ type ResourceRequirements struct {
+ 	Limits   Resources `json:"limits"`
+ }
+ 
++type ResourceDefaults struct {
++	Requests Resources
++	Limits   Resources
++}
++
++func DefaultResourceDefaults() ResourceDefaults {
++	return ResourceDefaults{
++		Requests: Resources{CPU: 100, Memory: 128 * 1024 * 1024},
++		Limits:   Resources{CPU: 100, Memory: 128 * 1024 * 1024},
++	}
++}
++
++func (requirements ResourceRequirements) WithDefaults(defaults ResourceDefaults) (ResourceRequirements, error) {
++	if defaults.Requests.CPU <= 0 || defaults.Requests.Memory <= 0 {
++		return ResourceRequirements{}, fmt.Errorf("default resource requests must be positive")
++	}
++	if defaults.Limits.CPU <= 0 || defaults.Limits.Memory <= 0 {
++		return ResourceRequirements{}, fmt.Errorf("default resource limits must be positive")
++	}
++	if defaults.Requests.CPU > defaults.Limits.CPU {
++		return ResourceRequirements{}, fmt.Errorf("default requested CPU cannot exceed CPU limit")
++	}
++	if defaults.Requests.Memory > defaults.Limits.Memory {
++		return ResourceRequirements{}, fmt.Errorf("default requested memory cannot exceed memory limit")
++	}
++
++	normalized := requirements
++	if normalized.Requests.CPU == 0 {
++		normalized.Requests.CPU = defaults.Requests.CPU
++	}
++	if normalized.Requests.Memory == 0 {
++		normalized.Requests.Memory = defaults.Requests.Memory
++	}
++	if normalized.Limits.CPU == 0 {
++		normalized.Limits.CPU = defaults.Limits.CPU
++	}
++	if normalized.Limits.Memory == 0 {
++		normalized.Limits.Memory = defaults.Limits.Memory
++	}
++	if err := normalized.ValidateStrict(); err != nil {
++		return ResourceRequirements{}, err
++	}
++	return normalized, nil
++}
++
+ func (requirements ResourceRequirements) Validate() error {
+ 	if err := validateNonNegativeResources("resource requests", requirements.Requests); err != nil {
+ 		return err
+@@ -191,6 +296,35 @@ func (requirements ResourceRequirements) Validate() error {
+ 	return nil
+ }
+ 
++func (requirements ResourceRequirements) ValidateStrict() error {
++	if requirements.Requests.CPU <= 0 {
++		return fmt.Errorf("resource requests CPU must be positive")
++	}
++	if requirements.Requests.Memory <= 0 {
++		return fmt.Errorf("resource requests memory must be positive")
++	}
++	if requirements.Limits.CPU <= 0 {
++		return fmt.Errorf("resource limits CPU must be positive")
++	}
++	if requirements.Limits.Memory <= 0 {
++		return fmt.Errorf("resource limits memory must be positive")
++	}
++	return requirements.Validate()
++}
++
++func NormalizeServiceSpec(spec ServiceSpec, defaults ResourceDefaults) (ServiceSpec, error) {
++	normalized := spec
++	requirements, err := normalized.ResourceRequirements.WithDefaults(defaults)
++	if err != nil {
++		return ServiceSpec{}, err
++	}
++	normalized.ResourceRequirements = requirements
++	if err := normalized.Validate(); err != nil {
++		return ServiceSpec{}, err
++	}
++	return normalized, nil
++}
++
+ type Healthcheck struct {
+ 	Type               HealthcheckType `json:"type"`
+ 	Path               string          `json:"path,omitempty"`
+@@ -371,6 +505,60 @@ func validateNonNegativeResources(name string, resources Resources) error {
+ 	return nil
+ }
+ 
++func ParseCPU(value string) (int64, error) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return 0, nil
++	}
++	if strings.HasSuffix(value, "m") {
++		raw := strings.TrimSpace(strings.TrimSuffix(value, "m"))
++		parsed, err := strconv.ParseInt(raw, 10, 64)
++		if err != nil || parsed <= 0 {
++			return 0, fmt.Errorf("invalid CPU value %q", value)
++		}
++		return parsed, nil
++	}
++	parsed, err := strconv.ParseFloat(value, 64)
++	if err != nil || parsed <= 0 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
++		return 0, fmt.Errorf("invalid CPU value %q", value)
++	}
++	return int64(parsed * 1000), nil
++}
++
++func ParseMemory(value string) (int64, error) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return 0, nil
++	}
++
++	units := []struct {
++		suffix string
++		scale  int64
++	}{
++		{"Gi", 1024 * 1024 * 1024},
++		{"Mi", 1024 * 1024},
++		{"Ki", 1024},
++		{"G", 1000 * 1000 * 1000},
++		{"M", 1000 * 1000},
++		{"K", 1000},
++	}
++	for _, unit := range units {
++		if strings.HasSuffix(value, unit.suffix) {
++			raw := strings.TrimSpace(strings.TrimSuffix(value, unit.suffix))
++			parsed, err := strconv.ParseInt(raw, 10, 64)
++			if err != nil || parsed <= 0 {
++				return 0, fmt.Errorf("invalid memory value %q", value)
++			}
++			return parsed * unit.scale, nil
++		}
++	}
++	parsed, err := strconv.ParseInt(value, 10, 64)
++	if err != nil || parsed <= 0 {
++		return 0, fmt.Errorf("invalid memory value %q", value)
++	}
++	return parsed, nil
++}
++
+ func validRestartCondition(condition RestartCondition) bool {
+ 	switch condition {
+ 	case RestartNever, RestartOnFailure, RestartAlways:

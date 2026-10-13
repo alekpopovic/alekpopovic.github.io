@@ -50,8 +50,6 @@
   .book-article li { padding-left: 5px; margin-block: 8px; }
   .book-article strong { font-weight: 700; }
   .book-article code { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: .85em; color: #5136b5; }
-  .book-article pre { padding: 22px; margin-block: 25px; overflow-x: auto; border-radius: 15px; background: #f0edff; font-size: 13px; line-height: 1.75; }
-  .book-article pre code { font-size: 1em; color: var(--ink); overflow-wrap: normal; }
   .book-article blockquote { border-left: 4px solid var(--blue); padding-left: 22px; margin-block: 25px; }
   .book-table { overflow-x: auto; margin-block: 25px; border: 1px solid #20201e26; border-radius: 15px; }
   .book-article table { min-width: 520px; width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.65; }
@@ -156,9 +154,7 @@
   .book-reader[data-theme="light"] { --reader-sheet: #fff; }
   .book-reader[data-theme="dark"] { --reader-sheet: #192421; --reader-ink: #f5efd9; --reader-muted: #d5daca; --reader-line: #f5efd94d; background: #182029; }
   .book-reader[data-theme="dark"] :is(.book-article h1, .book-article h2, .book-article a, .reader-meta .eyebrow, .reader-page-header > span:last-child) { color: #aec8ff; }
-  .book-reader[data-theme="dark"] .book-article code { color: #e6cbff; }
-  .book-reader[data-theme="dark"] .book-article pre { background: #293c35; }
-  .book-reader[data-theme="dark"] .book-article pre code { color: #f5efd9; }
+  .book-reader[data-theme="dark"] .book-article :not(pre) > code { color: #e6cbff; }
   .book-reader[data-theme="dark"] .book-article tr:nth-child(even) { background: #293c35; }
   .book-reader[data-theme="dark"] :is(.book-article th, .book-article td) { border-color: #f5efd94d; }
   .book-reader[data-theme="dark"] .book-article img { background: white; }

@@ -1,0 +1,25 @@
+{
+  "id": "orch-module-download",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "mod",
+    "download"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOENV"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:30:15.333139+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:30:18.543539+00:00",
+  "duration_seconds": 3.21,
+  "stdout": "validation/intake/module-download.stdout.txt",
+  "stderr": "validation/intake/module-download.stderr.txt"
+}

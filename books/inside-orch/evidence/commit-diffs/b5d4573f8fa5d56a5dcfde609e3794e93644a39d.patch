@@ -1,0 +1,1074 @@
+commit b5d4573f8fa5d56a5dcfde609e3794e93644a39d
+Date: 2026-07-14T16:19:42+02:00
+Subject: Add structured error model
+
+
+---
+ docs/API.md                              |  20 ++-
+ internal/agent/agent.go                  |   9 +-
+ internal/api/api.go                      | 120 +++++++++++++-----
+ internal/api/api_test.go                 |  32 ++++-
+ internal/apperrors/errors.go             | 211 +++++++++++++++++++++++++++++++
+ internal/apperrors/errors_test.go        |  46 +++++++
+ internal/cli/client.go                   |  62 ++++++++-
+ internal/cli/client_test.go              |  54 ++++++++
+ internal/controlplane/controlplane.go    |  46 +++++--
+ internal/events/events.go                |   1 +
+ internal/rollout/rollout.go              |  25 ++++
+ internal/rollout/rollout_test.go         |  41 +++++-
+ internal/store/postgres.go               |  16 ++-
+ internal/store/postgres_test.go          |   4 +
+ migrations/000007_event_details.down.sql |   2 +
+ migrations/000007_event_details.up.sql   |   2 +
+ pkg/types/types.go                       |  17 +--
+ prompts/EXECUTION_TRACKER.md             |   8 +-
+ 18 files changed, 646 insertions(+), 70 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index a23e7bc..7d0a719 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -11,14 +11,28 @@ Errors use a stable envelope:
+ ```json
+ {
+   "error": {
+-    "code": "invalid_request",
++    "code": "invalid_argument",
+     "message": "invalid state: image is required",
+-    "request_id": "9f95d3c2-9a78-4b11-a11f-8991d45db5e1"
++    "request_id": "9f95d3c2-9a78-4b11-a11f-8991d45db5e1",
++    "details": {
++      "field": "image"
++    }
+   }
+ }
+ ```
+ 
+-Clients may send `X-Request-ID`. If absent, the server generates one and includes it in errors and access logs.
++`details` is optional and secret-like fields are redacted before they are returned. Stable error codes are:
++
++- `not_found`
++- `invalid_argument`
++- `conflict`
++- `unauthorized`
++- `forbidden`
++- `failed_precondition`
++- `unavailable`
++- `internal`
++
++Clients may send `X-Request-ID`. If absent, the server generates one and includes it in errors and access logs. Error logs include `error_code` plus related object identifiers such as `service_id`, `task_id`, or `node_id` when the request supplies them. Controllers emit `controller.error` events for important reconciliation failures with `details.error_code`.
+ 
+ ## Authentication
+ 
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index df564e4..391d454 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -869,7 +869,14 @@ func (c *HTTPClient) doMethod(ctx context.Context, method string, path string, b
+ 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+ 		var apiErr api.ErrorResponse
+ 		if err := json.NewDecoder(resp.Body).Decode(&apiErr); err == nil && apiErr.Error.Message != "" {
+-			return fmt.Errorf("%s", apiErr.Error.Message)
++			message := apiErr.Error.Message
++			if apiErr.Error.Code != "" {
++				message = strings.ReplaceAll(apiErr.Error.Code, "_", " ") + ": " + message
++			}
++			if apiErr.Error.RequestID != "" {
++				message += " [request_id=" + apiErr.Error.RequestID + "]"
++			}
++			return fmt.Errorf("%s", message)
+ 		}
+ 		return fmt.Errorf("server returned %s", resp.Status)
+ 	}
+diff --git a/internal/api/api.go b/internal/api/api.go
+index b4489cd..9ec664e 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -14,6 +14,7 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/apperrors"
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+@@ -177,9 +178,10 @@ type ErrorResponse struct {
+ }
+ 
+ type RequestError struct {
+-	Code      string `json:"code"`
+-	Message   string `json:"message"`
+-	RequestID string `json:"request_id,omitempty"`
++	Code      string         `json:"code"`
++	Message   string         `json:"message"`
++	RequestID string         `json:"request_id,omitempty"`
++	Details   map[string]any `json:"details,omitempty"`
+ }
+ 
+ type ListNodesResponse struct {
+@@ -1170,13 +1172,7 @@ func (s *Server) authorizeAgentRegistration(w http.ResponseWriter, r *http.Reque
+ 		token = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+ 	}
+ 	if token != s.bootstrapToken {
+-		writeJSON(w, http.StatusUnauthorized, ErrorResponse{
+-			Error: RequestError{
+-				Code:      "unauthorized",
+-				Message:   "invalid agent registration token",
+-				RequestID: requestID(r.Context()),
+-			},
+-		})
++		s.writeAuthError(w, r, http.StatusUnauthorized, string(apperrors.CodeUnauthorized), "invalid agent registration token")
+ 		return false
+ 	}
+ 	return true
+@@ -1217,6 +1213,7 @@ func (s *Server) issueAgentCredential(ctx context.Context, nodeID types.NodeID)
+ }
+ 
+ func (s *Server) writeAuthError(w http.ResponseWriter, r *http.Request, status int, code string, message string) {
++	s.logRequestError(r, status, apperrors.Code(code), errors.New(message))
+ 	writeJSON(w, status, ErrorResponse{
+ 		Error: RequestError{
+ 			Code:      code,
+@@ -1365,37 +1362,102 @@ func (s *Server) logTask(r *http.Request) (types.Task, error) {
+ }
+ 
+ func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
+-	status, code := errorStatus(err)
+-	message := err.Error()
+-	if status == http.StatusInternalServerError {
+-		message = "internal server error"
+-	}
++	status, code, message, details := errorAttributes(err)
++	s.logRequestError(r, status, code, err)
+ 	writeJSON(w, status, ErrorResponse{
+ 		Error: RequestError{
+-			Code:      code,
++			Code:      string(code),
+ 			Message:   message,
+ 			RequestID: requestID(r.Context()),
++			Details:   details,
+ 		},
+ 	})
+ }
+ 
+ func errorStatus(err error) (int, string) {
++	status, code, _, _ := errorAttributes(err)
++	return status, string(code)
++}
++
++func errorAttributes(err error) (int, apperrors.Code, string, map[string]any) {
++	code := apperrors.CodeOf(err)
++	message := apperrors.MessageOf(err)
++	details := apperrors.DetailsOf(err)
++	return statusForCode(code), code, message, details
++}
++
++func statusForCode(code apperrors.Code) int {
+ 	switch {
+-	case errors.Is(err, store.ErrNotFound):
+-		return http.StatusNotFound, "not_found"
+-	case errors.Is(err, store.ErrConflict):
+-		return http.StatusConflict, "conflict"
+-	case errors.Is(err, store.ErrInvalidState):
+-		return http.StatusBadRequest, "invalid_request"
+-	case errors.Is(err, store.ErrDuplicate):
+-		return http.StatusConflict, "duplicate"
+-	case errors.Is(err, context.Canceled):
+-		return http.StatusRequestTimeout, "request_canceled"
+-	case errors.Is(err, context.DeadlineExceeded):
+-		return http.StatusGatewayTimeout, "deadline_exceeded"
++	case code == apperrors.CodeNotFound:
++		return http.StatusNotFound
++	case code == apperrors.CodeInvalidArgument:
++		return http.StatusBadRequest
++	case code == apperrors.CodeConflict:
++		return http.StatusConflict
++	case code == apperrors.CodeUnauthorized:
++		return http.StatusUnauthorized
++	case code == apperrors.CodeForbidden:
++		return http.StatusForbidden
++	case code == apperrors.CodeFailedPrecondition:
++		return http.StatusPreconditionFailed
++	case code == apperrors.CodeUnavailable:
++		return http.StatusServiceUnavailable
+ 	default:
+-		return http.StatusInternalServerError, "internal"
++		return http.StatusInternalServerError
++	}
++}
++
++func (s *Server) logRequestError(r *http.Request, status int, code apperrors.Code, err error) {
++	if s.logger == nil {
++		return
++	}
++	fields := []any{
++		"request_id", requestID(r.Context()),
++		"method", r.Method,
++		"path", r.URL.Path,
++		"status", status,
++		"error_code", string(code),
++		"error", apperrors.MessageOf(err),
++	}
++	fields = append(fields, requestObjectFields(r)...)
++	if status >= http.StatusInternalServerError {
++		s.logger.Error("api request failed", fields...)
++		return
++	}
++	s.logger.Warn("api request failed", fields...)
++}
++
++func requestObjectFields(r *http.Request) []any {
++	fields := make([]any, 0, 8)
++	if id := strings.TrimSpace(r.PathValue("id")); id != "" {
++		switch {
++		case strings.HasPrefix(r.URL.Path, "/v1/services/"):
++			fields = append(fields, "service_id", id)
++		case strings.HasPrefix(r.URL.Path, "/v1/nodes/"):
++			fields = append(fields, "node_id", id)
++		case strings.HasPrefix(r.URL.Path, "/v1/tasks/"):
++			fields = append(fields, "task_id", id)
++		default:
++			fields = append(fields, "object_id", id)
++		}
++	}
++	if taskID := strings.TrimSpace(r.PathValue("task_id")); taskID != "" {
++		fields = append(fields, "task_id", taskID)
++	}
++	query := r.URL.Query()
++	for _, item := range []struct {
++		name  string
++		field string
++	}{
++		{name: "service_id", field: "service_id"},
++		{name: "task_id", field: "task_id"},
++		{name: "node_id", field: "node_id"},
++	} {
++		if value := strings.TrimSpace(query.Get(item.name)); value != "" {
++			fields = append(fields, item.field, value)
++		}
+ 	}
++	return fields
+ }
+ 
+ func writeJSON(w http.ResponseWriter, status int, value any) {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index bd85e88..5de5455 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -13,6 +13,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/apperrors"
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/metrics"
+@@ -628,14 +629,41 @@ func TestCreateServiceValidationError(t *testing.T) {
+ 
+ 	var body ErrorResponse
+ 	decodeResponse(t, rec, &body)
+-	if body.Error.Code != "invalid_request" {
+-		t.Fatalf("expected invalid_request, got %q", body.Error.Code)
++	if body.Error.Code != "invalid_argument" {
++		t.Fatalf("expected invalid_argument, got %q", body.Error.Code)
+ 	}
+ 	if body.Error.RequestID == "" {
+ 		t.Fatalf("expected request id in error")
+ 	}
+ }
+ 
++func TestWriteErrorMapsDomainErrorAndRedactsDetails(t *testing.T) {
++	server := &Server{logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
++	req := httptest.NewRequest(http.MethodPost, "/v1/services", nil)
++	req = req.WithContext(context.WithValue(req.Context(), requestIDKey{}, "req-structured"))
++	rec := httptest.NewRecorder()
++
++	server.writeError(rec, req, apperrors.New(apperrors.CodeFailedPrecondition, "service is deleting").WithDetails(map[string]any{
++		"field":    "status",
++		"password": "super-secret",
++	}))
++
++	if rec.Code != http.StatusPreconditionFailed {
++		t.Fatalf("expected status %d, got %d", http.StatusPreconditionFailed, rec.Code)
++	}
++	var body ErrorResponse
++	decodeResponse(t, rec, &body)
++	if body.Error.Code != "failed_precondition" || body.Error.RequestID != "req-structured" {
++		t.Fatalf("unexpected error response %#v", body.Error)
++	}
++	if body.Error.Details["field"] != "status" {
++		t.Fatalf("expected field detail, got %#v", body.Error.Details)
++	}
++	if body.Error.Details["password"] != "[REDACTED]" {
++		t.Fatalf("expected redacted password detail, got %#v", body.Error.Details)
++	}
++}
++
+ func TestGetUnknownService(t *testing.T) {
+ 	rec := doRequest(t, newTestHandler(), http.MethodGet, "/v1/services/00000000-0000-4000-8000-000000000999", nil)
+ 
+diff --git a/internal/apperrors/errors.go b/internal/apperrors/errors.go
+new file mode 100644
+index 0000000..4e2b1fa
+--- /dev/null
++++ b/internal/apperrors/errors.go
+@@ -0,0 +1,211 @@
++package apperrors
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"net/url"
++	"sort"
++	"strings"
++
++	"github.com/alekpopovic/orch/internal/store"
++)
++
++type Code string
++
++const (
++	CodeNotFound           Code = "not_found"
++	CodeInvalidArgument    Code = "invalid_argument"
++	CodeConflict           Code = "conflict"
++	CodeUnauthorized       Code = "unauthorized"
++	CodeForbidden          Code = "forbidden"
++	CodeFailedPrecondition Code = "failed_precondition"
++	CodeUnavailable        Code = "unavailable"
++	CodeInternal           Code = "internal"
++)
++
++type Error struct {
++	Code    Code
++	Message string
++	Details map[string]any
++	Err     error
++}
++
++func New(code Code, message string) *Error {
++	return &Error{Code: normalizeCode(code), Message: strings.TrimSpace(message)}
++}
++
++func Wrap(code Code, message string, err error) *Error {
++	return &Error{Code: normalizeCode(code), Message: strings.TrimSpace(message), Err: err}
++}
++
++func (e *Error) Error() string {
++	if e == nil {
++		return ""
++	}
++	if e.Message != "" {
++		return e.Message
++	}
++	if e.Err != nil {
++		return e.Err.Error()
++	}
++	return string(normalizeCode(e.Code))
++}
++
++func (e *Error) Unwrap() error {
++	if e == nil {
++		return nil
++	}
++	return e.Err
++}
++
++func (e *Error) WithDetails(details map[string]any) *Error {
++	if e == nil {
++		return e
++	}
++	e.Details = RedactDetails(details)
++	return e
++}
++
++func CodeOf(err error) Code {
++	if err == nil {
++		return CodeInternal
++	}
++	var appErr *Error
++	if errors.As(err, &appErr) {
++		return normalizeCode(appErr.Code)
++	}
++	switch {
++	case errors.Is(err, store.ErrNotFound):
++		return CodeNotFound
++	case errors.Is(err, store.ErrConflict), errors.Is(err, store.ErrDuplicate):
++		return CodeConflict
++	case errors.Is(err, store.ErrInvalidState):
++		return CodeInvalidArgument
++	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
++		return CodeUnavailable
++	default:
++		return CodeInternal
++	}
++}
++
++func MessageOf(err error) string {
++	if err == nil {
++		return ""
++	}
++	code := CodeOf(err)
++	if code == CodeInternal {
++		return "internal server error"
++	}
++	return err.Error()
++}
++
++func DetailsOf(err error) map[string]any {
++	var appErr *Error
++	if errors.As(err, &appErr) {
++		return RedactDetails(appErr.Details)
++	}
++	return nil
++}
++
++func RedactDetails(details map[string]any) map[string]any {
++	if len(details) == 0 {
++		return nil
++	}
++	keys := make([]string, 0, len(details))
++	for key := range details {
++		keys = append(keys, key)
++	}
++	sort.Strings(keys)
++	redacted := make(map[string]any, len(details))
++	for _, key := range keys {
++		redacted[key] = redactValue(key, details[key])
++	}
++	return redacted
++}
++
++func StringDetails(details map[string]any) map[string]string {
++	redacted := RedactDetails(details)
++	if len(redacted) == 0 {
++		return nil
++	}
++	keys := make([]string, 0, len(redacted))
++	for key := range redacted {
++		keys = append(keys, key)
++	}
++	sort.Strings(keys)
++	out := make(map[string]string, len(redacted))
++	for _, key := range keys {
++		out[key] = fmt.Sprint(redacted[key])
++	}
++	return out
++}
++
++func normalizeCode(code Code) Code {
++	switch code {
++	case CodeNotFound, CodeInvalidArgument, CodeConflict, CodeUnauthorized, CodeForbidden, CodeFailedPrecondition, CodeUnavailable, CodeInternal:
++		return code
++	default:
++		return CodeInternal
++	}
++}
++
++func redactValue(key string, value any) any {
++	if isSensitiveKey(key) {
++		return "[REDACTED]"
++	}
++	switch typed := value.(type) {
++	case map[string]any:
++		return RedactDetails(typed)
++	case map[string]string:
++		nested := make(map[string]any, len(typed))
++		for nestedKey, nestedValue := range typed {
++			nested[nestedKey] = nestedValue
++		}
++		return RedactDetails(nested)
++	case []any:
++		items := make([]any, len(typed))
++		for i, item := range typed {
++			items[i] = redactValue(key, item)
++		}
++		return items
++	case string:
++		return redactString(key, typed)
++	default:
++		return typed
++	}
++}
++
++func redactString(key string, value string) string {
++	if strings.TrimSpace(value) == "" {
++		return value
++	}
++	if strings.Contains(strings.ToLower(key), "url") {
++		parsed, err := url.Parse(value)
++		if err == nil && parsed.Scheme != "" && parsed.Host != "" && parsed.User != nil {
++			parsed.User = url.User("[REDACTED]")
++			return parsed.String()
++		}
++	}
++	return value
++}
++
++func isSensitiveKey(key string) bool {
++	normalized := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(key), "-", "_"))
++	for _, marker := range []string{
++		"authorization",
++		"cookie",
++		"credential",
++		"database_url",
++		"dsn",
++		"key",
++		"password",
++		"secret",
++		"token",
++	} {
++		if strings.Contains(normalized, marker) {
++			return true
++		}
++	}
++	return false
++}
+diff --git a/internal/apperrors/errors_test.go b/internal/apperrors/errors_test.go
+new file mode 100644
+index 0000000..ebd3b00
+--- /dev/null
++++ b/internal/apperrors/errors_test.go
+@@ -0,0 +1,46 @@
++package apperrors
++
++import (
++	"fmt"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/store"
++)
++
++func TestRedactDetails(t *testing.T) {
++	details := RedactDetails(map[string]any{
++		"field":        "image",
++		"password":     "secret-value",
++		"database_url": "postgres://user:pass@db/app",
++		"nested": map[string]any{
++			"token": "agent-token",
++			"hint":  "safe",
++		},
++	})
++
++	if details["field"] != "image" {
++		t.Fatalf("expected safe detail to remain, got %#v", details["field"])
++	}
++	if details["password"] != "[REDACTED]" {
++		t.Fatalf("expected password to be redacted, got %#v", details["password"])
++	}
++	if details["database_url"] != "[REDACTED]" {
++		t.Fatalf("expected database URL to be redacted, got %#v", details["database_url"])
++	}
++	nested, ok := details["nested"].(map[string]any)
++	if !ok {
++		t.Fatalf("expected nested details, got %#v", details["nested"])
++	}
++	if nested["token"] != "[REDACTED]" || nested["hint"] != "safe" {
++		t.Fatalf("unexpected nested redaction %#v", nested)
++	}
++}
++
++func TestCodeOfLegacyStoreErrors(t *testing.T) {
++	if got := CodeOf(fmt.Errorf("load service: %w", store.ErrNotFound)); got != CodeNotFound {
++		t.Fatalf("expected not_found, got %q", got)
++	}
++	if got := CodeOf(New(CodeForbidden, "nope")); got != CodeForbidden {
++		t.Fatalf("expected forbidden, got %q", got)
++	}
++}
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 32d5969..42e671e 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -8,11 +8,13 @@ import (
+ 	"io"
+ 	"net/http"
+ 	"net/url"
++	"sort"
+ 	"strconv"
+ 	"strings"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/apperrors"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+@@ -25,6 +27,38 @@ type APIClient struct {
+ 	token      string
+ }
+ 
++type APIError struct {
++	StatusCode int
++	Status     string
++	Code       string
++	Message    string
++	RequestID  string
++	Details    map[string]any
++}
++
++func (e *APIError) Error() string {
++	if e == nil {
++		return ""
++	}
++	code := strings.ReplaceAll(strings.TrimSpace(e.Code), "_", " ")
++	message := strings.TrimSpace(e.Message)
++	switch {
++	case code != "" && message != "":
++		message = code + ": " + message
++	case code != "":
++		message = code
++	case message == "":
++		message = "server returned " + e.Status
++	}
++	if details := formatDetails(e.Details); details != "" {
++		message += " (" + details + ")"
++	}
++	if e.RequestID != "" {
++		message += " [request_id=" + e.RequestID + "]"
++	}
++	return message
++}
++
+ func NewAPIClient(serverURL string) (*APIClient, error) {
+ 	serverURL = strings.TrimRight(strings.TrimSpace(serverURL), "/")
+ 	if serverURL == "" {
+@@ -296,10 +330,30 @@ func (c *APIClient) do(ctx context.Context, method string, path string, body any
+ func decodeAPIError(resp *http.Response) error {
+ 	var body api.ErrorResponse
+ 	if err := json.NewDecoder(resp.Body).Decode(&body); err == nil && body.Error.Message != "" {
+-		if body.Error.RequestID != "" {
+-			return fmt.Errorf("%s (request %s)", body.Error.Message, body.Error.RequestID)
++		return &APIError{
++			StatusCode: resp.StatusCode,
++			Status:     resp.Status,
++			Code:       body.Error.Code,
++			Message:    body.Error.Message,
++			RequestID:  body.Error.RequestID,
++			Details:    apperrors.RedactDetails(body.Error.Details),
+ 		}
+-		return fmt.Errorf("%s", body.Error.Message)
+ 	}
+-	return fmt.Errorf("server returned %s", resp.Status)
++	return &APIError{StatusCode: resp.StatusCode, Status: resp.Status}
++}
++
++func formatDetails(details map[string]any) string {
++	if len(details) == 0 {
++		return ""
++	}
++	keys := make([]string, 0, len(details))
++	for key := range details {
++		keys = append(keys, key)
++	}
++	sort.Strings(keys)
++	parts := make([]string, 0, len(keys))
++	for _, key := range keys {
++		parts = append(parts, fmt.Sprintf("%s=%v", key, details[key]))
++	}
++	return strings.Join(parts, ", ")
+ }
+diff --git a/internal/cli/client_test.go b/internal/cli/client_test.go
+new file mode 100644
+index 0000000..decb49a
+--- /dev/null
++++ b/internal/cli/client_test.go
+@@ -0,0 +1,54 @@
++package cli
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/api"
++)
++
++func TestAPIErrorRendering(t *testing.T) {
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++		w.WriteHeader(http.StatusConflict)
++		_ = json.NewEncoder(w).Encode(api.ErrorResponse{
++			Error: api.RequestError{
++				Code:      "conflict",
++				Message:   "rollout already active",
++				RequestID: "req-123",
++				Details: map[string]any{
++					"service": "api",
++					"token":   "secret-token",
++				},
++			},
++		})
++	}))
++	defer server.Close()
++
++	client, err := NewAPIClient(server.URL)
++	if err != nil {
++		t.Fatalf("new client: %v", err)
++	}
++
++	_, err = client.ListNodes(context.Background())
++	if err == nil {
++		t.Fatalf("expected API error")
++	}
++	var apiErr *APIError
++	if !errors.As(err, &apiErr) {
++		t.Fatalf("expected APIError, got %T %[1]v", err)
++	}
++	rendered := err.Error()
++	for _, want := range []string{"conflict: rollout already active", "service=api", "token=[REDACTED]", "request_id=req-123"} {
++		if !strings.Contains(rendered, want) {
++			t.Fatalf("expected %q in %q", want, rendered)
++		}
++	}
++	if strings.Contains(rendered, "secret-token") {
++		t.Fatalf("rendered error leaked token: %q", rendered)
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index a405e6b..e1d16ad 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -1520,15 +1520,7 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 		}
+ 		active = append(active, task)
+ 	}
+-	slices.SortFunc(active, func(a, b types.Task) int {
+-		if a.ID < b.ID {
+-			return -1
+-		}
+-		if a.ID > b.ID {
+-			return 1
+-		}
+-		return 0
+-	})
++	sortTasksForReplicaRetention(active)
+ 
+ 	nodes := s.readyNodesLocked()
+ 	if len(nodes) == 0 {
+@@ -1684,6 +1676,42 @@ func sortTasksByID(tasks []types.Task) {
+ 	})
+ }
+ 
++func sortTasksForReplicaRetention(tasks []types.Task) {
++	slices.SortFunc(tasks, func(a, b types.Task) int {
++		if rankA, rankB := taskRetentionRank(a), taskRetentionRank(b); rankA != rankB {
++			return rankA - rankB
++		}
++		if !a.CreatedAt.Equal(b.CreatedAt) {
++			if a.CreatedAt.Before(b.CreatedAt) {
++				return -1
++			}
++			return 1
++		}
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++}
++
++func taskRetentionRank(task types.Task) int {
++	switch task.ActualStatus {
++	case types.TaskHealthy, types.TaskRunning:
++		return 0
++	case types.TaskStarting, types.TaskCreated, types.TaskPulling:
++		return 1
++	case types.TaskAssigned, types.TaskPending:
++		return 2
++	case types.TaskUnhealthy:
++		return 3
++	default:
++		return 4
++	}
++}
++
+ func availableTaskCount(tasks []types.Task) int {
+ 	count := 0
+ 	for _, task := range tasks {
+diff --git a/internal/events/events.go b/internal/events/events.go
+index f464912..3fb5d0d 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -38,6 +38,7 @@ const (
+ 	TypeRolloutTaskCreated     = "rollout.task.created"
+ 	TypeRolloutTaskStopped     = "rollout.task.stopped"
+ 	TypeRolloutStatusChanged   = "rollout.status.changed"
++	TypeControllerError        = "controller.error"
+ )
+ 
+ type Event = types.Event
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index a1f26f6..c230169 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -7,6 +7,7 @@ import (
+ 	"sort"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/apperrors"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -97,6 +98,7 @@ func (c *Controller) RunOnce(ctx context.Context) error {
+ 			return err
+ 		}
+ 		if err := c.reconcileDeployment(ctx, deployment); err != nil {
++			c.emitControllerError(ctx, deployment, err)
+ 			return err
+ 		}
+ 	}
+@@ -308,6 +310,29 @@ func (c *Controller) eventOptions(transactional bool) []events.EmitOption {
+ 	return options
+ }
+ 
++func (c *Controller) emitControllerError(ctx context.Context, deployment types.Deployment, err error) {
++	code := apperrors.CodeOf(err)
++	c.logger.Warn("rollout controller error",
++		"error_code", string(code),
++		"service_id", deployment.ServiceID,
++		"deployment_id", deployment.ID,
++		"error", apperrors.MessageOf(err),
++	)
++	_ = events.Emit(ctx, c.store, types.Event{
++		Type:              events.TypeControllerError,
++		Severity:          types.EventError,
++		Source:            "rollout",
++		Message:           "rollout controller error: " + string(code),
++		RelatedObjectType: "service",
++		RelatedObjectID:   string(deployment.ServiceID),
++		Details: apperrors.StringDetails(map[string]any{
++			"deployment_id": deployment.ID,
++			"error_code":    code,
++		}),
++		Timestamp: c.now(),
++	}, events.WithLogger(c.logger))
++}
++
+ type rolloutState struct {
+ 	oldTasks    []types.Task
+ 	oldActive   int
+diff --git a/internal/rollout/rollout_test.go b/internal/rollout/rollout_test.go
+index 813a1a4..550ee3c 100644
+--- a/internal/rollout/rollout_test.go
++++ b/internal/rollout/rollout_test.go
+@@ -7,6 +7,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -64,6 +65,30 @@ func TestControllerDoesNotEmitStatusEventWhenStatusUnchanged(t *testing.T) {
+ 	}
+ }
+ 
++func TestControllerEmitsErrorEventOnReconcileFailure(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(1, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})
++	fake.getServiceErr = store.ErrInvalidState
++
++	err := NewController(fake, slog.Default()).RunOnce(ctx)
++	if !errors.Is(err, store.ErrInvalidState) {
++		t.Fatalf("expected invalid state error, got %v", err)
++	}
++	if len(fake.events) != 1 {
++		t.Fatalf("expected one controller error event, got %#v", fake.events)
++	}
++	event := fake.events[0]
++	if event.Type != events.TypeControllerError || event.Severity != types.EventError {
++		t.Fatalf("unexpected event %#v", event)
++	}
++	if event.RelatedObjectType != "service" || event.RelatedObjectID != string(fake.deployment.ServiceID) {
++		t.Fatalf("unexpected related object %#v", event)
++	}
++	if event.Details["error_code"] != "invalid_argument" || event.Details["deployment_id"] != string(fake.deployment.ID) {
++		t.Fatalf("unexpected event details %#v", event.Details)
++	}
++}
++
+ func TestControllerRespectsMaxUnavailable(t *testing.T) {
+ 	ctx := context.Background()
+ 	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 0, MaxSurge: 1})
+@@ -132,12 +157,13 @@ func mustRunOnce(t *testing.T, controller *Controller, ctx context.Context) {
+ }
+ 
+ type fakeStore struct {
+-	service    types.Service
+-	deployment types.Deployment
+-	tasks      map[types.TaskID]types.Task
+-	events     []types.Event
+-	nextTask   int
+-	now        time.Time
++	service       types.Service
++	deployment    types.Deployment
++	tasks         map[types.TaskID]types.Task
++	events        []types.Event
++	nextTask      int
++	now           time.Time
++	getServiceErr error
+ }
+ 
+ func newFakeStore(replicas int, deployment types.Deployment) *fakeStore {
+@@ -197,6 +223,9 @@ func task(id string, version int64, desired types.TaskStatus, actual types.TaskS
+ }
+ 
+ func (s *fakeStore) GetService(context.Context, types.ServiceID) (types.Service, error) {
++	if s.getServiceErr != nil {
++		return types.Service{}, s.getServiceErr
++	}
+ 	return s.service, nil
+ }
+ 
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index dbcc617..0326c03 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -822,16 +822,17 @@ func (s *postgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ func (s *postgresStore) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO events (
+-			type, severity, source, message, related_object_type, related_object_id, created_at
++			type, severity, source, message, related_object_type, related_object_id, details, created_at
+ 		)
+-		VALUES ($1, $2, $3, $4, nullif($5, ''), nullif($6, '')::uuid, COALESCE($7, timezone('utc', now())))
+-		RETURNING id, type, severity, source, message, related_object_type, related_object_id, created_at`,
++		VALUES ($1, $2, $3, $4, nullif($5, ''), nullif($6, '')::uuid, $7, COALESCE($8, timezone('utc', now())))
++		RETURNING id, type, severity, source, message, related_object_type, related_object_id, details, created_at`,
+ 		event.Type,
+ 		string(event.Severity),
+ 		event.Source,
+ 		event.Message,
+ 		event.RelatedObjectType,
+ 		event.RelatedObjectID,
++		defaultMap(event.Details),
+ 		nilTime(event.Timestamp),
+ 	)
+ 	created, err := scanEvent(row)
+@@ -848,7 +849,7 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	}
+ 
+ 	sql := `
+-		SELECT id, type, severity, source, message, related_object_type, related_object_id, created_at
++		SELECT id, type, severity, source, message, related_object_type, related_object_id, details, created_at
+ 		FROM events`
+ 	args := make([]any, 0, 8)
+ 	conditions := make([]string, 0, 8)
+@@ -1240,6 +1241,7 @@ func scanEvent(row pgx.Row) (types.Event, error) {
+ 	var event types.Event
+ 	var id string
+ 	var relatedType, relatedID *string
++	var details []byte
+ 	err := row.Scan(
+ 		&id,
+ 		&event.Type,
+@@ -1248,11 +1250,17 @@ func scanEvent(row pgx.Row) (types.Event, error) {
+ 		&event.Message,
+ 		&relatedType,
+ 		&relatedID,
++		&details,
+ 		&event.Timestamp,
+ 	)
+ 	if err != nil {
+ 		return types.Event{}, err
+ 	}
++	if len(details) > 0 {
++		if err := json.Unmarshal(details, &event.Details); err != nil {
++			return types.Event{}, fmt.Errorf("decode event details: %w", err)
++		}
++	}
+ 	event.ID = types.EventID(id)
+ 	if relatedType != nil {
+ 		event.RelatedObjectType = *relatedType
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index c4a2714..44c1ad7 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -187,6 +187,7 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 		Message:           "task started",
+ 		RelatedObjectType: "task",
+ 		RelatedObjectID:   string(task.ID),
++		Details:           map[string]string{"error_code": "unavailable"},
+ 		Timestamp:         time.Now().UTC(),
+ 	}); err != nil {
+ 		t.Fatalf("append event: %v", err)
+@@ -198,6 +199,9 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if len(listedEvents) != 1 {
+ 		t.Fatalf("expected one event, got %d", len(listedEvents))
+ 	}
++	if listedEvents[0].Details["error_code"] != "unavailable" {
++		t.Fatalf("unexpected event details %#v", listedEvents[0].Details)
++	}
+ }
+ 
+ func TestPostgresStoreWithTxRollsBackOnError(t *testing.T) {
+diff --git a/migrations/000007_event_details.down.sql b/migrations/000007_event_details.down.sql
+new file mode 100644
+index 0000000..0f3065f
+--- /dev/null
++++ b/migrations/000007_event_details.down.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE events
++    DROP COLUMN IF EXISTS details;
+diff --git a/migrations/000007_event_details.up.sql b/migrations/000007_event_details.up.sql
+new file mode 100644
+index 0000000..5cd8a10
+--- /dev/null
++++ b/migrations/000007_event_details.up.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE events
++    ADD COLUMN details JSONB NOT NULL DEFAULT '{}'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index eda8956..a074d99 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -622,14 +622,15 @@ const (
+ )
+ 
+ type Event struct {
+-	ID                EventID       `json:"id"`
+-	Type              string        `json:"type"`
+-	Severity          EventSeverity `json:"severity"`
+-	Source            string        `json:"source"`
+-	Message           string        `json:"message"`
+-	RelatedObjectType string        `json:"related_object_type,omitempty"`
+-	RelatedObjectID   string        `json:"related_object_id,omitempty"`
+-	Timestamp         time.Time     `json:"timestamp"`
++	ID                EventID           `json:"id"`
++	Type              string            `json:"type"`
++	Severity          EventSeverity     `json:"severity"`
++	Source            string            `json:"source"`
++	Message           string            `json:"message"`
++	RelatedObjectType string            `json:"related_object_type,omitempty"`
++	RelatedObjectID   string            `json:"related_object_id,omitempty"`
++	Details           map[string]string `json:"details,omitempty"`
++	Timestamp         time.Time         `json:"timestamp"`
+ }
+ 
+ type EventSeverity string
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index a305d77..0b7dfdb 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `44-config-management-hardening.md`
+-- Last matching commit: `same commit: Harden config management`
+-- Completed prompt range: `00` through `44`
+-- Next prompt to execute: `45-structured-error-model.md`
++- Last executed prompt: `45-structured-error-model.md`
++- Last matching commit: `same commit: Add structured error model`
++- Completed prompt range: `00` through `45`
++- Next prompt to execute: `46-audit-logging.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

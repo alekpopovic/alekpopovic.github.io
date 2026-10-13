@@ -1,0 +1,21 @@
+Set quota limits (zero means unlimited)
+
+Usage:
+  orch quota set [flags]
+
+Flags:
+  -h, --help                           help for set
+      --max-cpu-millicores int         maximum requested CPU millicores
+      --max-memory-bytes int           maximum requested memory bytes
+      --max-public-ports int           maximum public ports
+      --max-registry-credentials int   maximum registry credentials
+      --max-replicas int               maximum replicas
+      --max-secrets int                maximum secrets
+      --max-services int               maximum services
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

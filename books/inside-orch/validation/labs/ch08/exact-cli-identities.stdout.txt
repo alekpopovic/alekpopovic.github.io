@@ -1,0 +1,217 @@
+{
+  "scope": "Actual CLI and fresh server process; manually authenticated running reports, no Docker containers or host health observations.",
+  "origin": "http://127.0.0.1:60633",
+  "commands": [
+    {
+      "case": "flag-over-env-over-file",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/config.yaml",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--namespace",
+        "default",
+        "--output",
+        "json",
+        "service",
+        "ls"
+      ],
+      "environment_overrides": [
+        "ORCH_SERVER_URL",
+        "ORCH_NAMESPACE"
+      ],
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "case": "env-over-file",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/config.yaml",
+        "--output",
+        "json",
+        "service",
+        "ls"
+      ],
+      "environment_overrides": [
+        "ORCH_SERVER_URL",
+        "ORCH_NAMESPACE"
+      ],
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "case": "file-only",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/config.yaml",
+        "--output",
+        "json",
+        "service",
+        "ls"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "[]\n",
+      "stderr": ""
+    },
+    {
+      "case": "missing-server",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml",
+        "service",
+        "ls"
+      ],
+      "environment_overrides": [],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: server URL is required; pass --server, set ORCH_SERVER_URL, or set server_url in /tmp/inside-orch-ch08-5opo64zo/empty.yaml\n"
+    },
+    {
+      "case": "local-validation",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-valid.yaml"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "service spec \"atlas-api\" is valid\n",
+      "stderr": ""
+    },
+    {
+      "case": "deploy",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml",
+        "--output",
+        "json",
+        "deploy",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-valid.yaml"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"cd6bdcbc-5d03-42b2-bc8c-937ee489153e\",\n    \"namespace\": \"default\",\n    \"spec\": {\n      \"name\": \"atlas-api\",\n      \"image\": \"nginx:1.27\",\n      \"image_metadata\": {\n        \"requested_image\": \"nginx:1.27\",\n        \"registry\": \"docker.io\",\n        \"name\": \"library/nginx\",\n        \"tag\": \"1.27\"\n      },\n      \"replicas\": 3,\n      \"ports\": [\n        {\n          \"protocol\": \"tcp\",\n          \"container_port\": 80\n        }\n      ],\n      \"resource_requirements\": {\n        \"requests\": {\n          \"cpu\": 250,\n          \"memory\": 134217728\n        },\n        \"limits\": {\n          \"cpu\": 250,\n          \"memory\": 134217728\n        }\n      },\n      \"security_context\": {},\n      \"autoscaling\": {},\n      \"restart_policy\": {\n        \"condition\": \"\"\n      },\n      \"placement_constraints\": [\n        {\n          \"key\": \"role\",\n          \"operator\": \"equals\",\n          \"value\": \"worker\"\n        }\n      ]\n    },\n    \"status\": \"active\",\n    \"deployment_version\": 1,\n    \"created_at\": \"2026-10-13T01:11:13.768910123Z\",\n    \"updated_at\": \"2026-10-13T01:11:13.768910123Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "case": "not-converged-before-node",
+      "command": [
+        "/usr/bin/python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/atlas_status.py",
+        "--cli",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml"
+      ],
+      "environment_overrides": [],
+      "exit_code": 1,
+      "stdout": "{\"current_tasks\": 0, \"desired_replicas\": 3, \"reported_available\": 0, \"scope\": \"server observation only; no fresh host probe\", \"service\": \"atlas-api\", \"version\": 1}\n",
+      "stderr": "Atlas has not converged: inspect service ps and events for assigned, failed or old-version tasks.\n"
+    },
+    {
+      "case": "converged-server-reports",
+      "command": [
+        "/usr/bin/python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/atlas_status.py",
+        "--cli",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "{\"current_tasks\": 3, \"desired_replicas\": 3, \"reported_available\": 3, \"scope\": \"server observation only; no fresh host probe\", \"service\": \"atlas-api\", \"version\": 1}\n",
+      "stderr": ""
+    },
+    {
+      "case": "inspect",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml",
+        "--output",
+        "json",
+        "service",
+        "inspect",
+        "atlas-api"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "{\n  \"id\": \"cd6bdcbc-5d03-42b2-bc8c-937ee489153e\",\n  \"namespace\": \"default\",\n  \"spec\": {\n    \"name\": \"atlas-api\",\n    \"image\": \"nginx:1.27\",\n    \"image_metadata\": {\n      \"requested_image\": \"nginx:1.27\",\n      \"registry\": \"docker.io\",\n      \"name\": \"library/nginx\",\n      \"tag\": \"1.27\"\n    },\n    \"replicas\": 3,\n    \"ports\": [\n      {\n        \"protocol\": \"tcp\",\n        \"container_port\": 80\n      }\n    ],\n    \"resource_requirements\": {\n      \"requests\": {\n        \"cpu\": 250,\n        \"memory\": 134217728\n      },\n      \"limits\": {\n        \"cpu\": 250,\n        \"memory\": 134217728\n      }\n    },\n    \"security_context\": {},\n    \"autoscaling\": {},\n    \"restart_policy\": {\n      \"condition\": \"\"\n    },\n    \"placement_constraints\": [\n      {\n        \"key\": \"role\",\n        \"operator\": \"equals\",\n        \"value\": \"worker\"\n      }\n    ]\n  },\n  \"status\": \"active\",\n  \"deployment_version\": 1,\n  \"created_at\": \"2026-10-13T01:11:13.768910123Z\",\n  \"updated_at\": \"2026-10-13T01:11:13.768910123Z\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "ps",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml",
+        "--output",
+        "json",
+        "service",
+        "ps",
+        "atlas-api"
+      ],
+      "environment_overrides": [],
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"id\": \"ec56e357-b482-4a40-8af7-65d75f1f051d\",\n    \"namespace\": \"default\",\n    \"service_id\": \"cd6bdcbc-5d03-42b2-bc8c-937ee489153e\",\n    \"node_id\": \"acc0faee-ff7e-48db-b0c6-cb91d266790d\",\n    \"desired_status\": \"running\",\n    \"actual_status\": \"running\",\n    \"image\": \"nginx:1.27\",\n    \"requested_image\": \"nginx:1.27\",\n    \"image_registry\": \"docker.io\",\n    \"image_name\": \"library/nginx\",\n    \"image_tag\": \"1.27\",\n    \"version\": 1,\n    \"ports\": [\n      {\n        \"protocol\": \"tcp\",\n        \"container_port\": 80,\n        \"published_port\": 30001\n      }\n    ],\n    \"restart_count\": 0,\n    \"created_at\": \"2026-10-13T01:11:13.821267863Z\",\n    \"updated_at\": \"2026-10-13T01:11:13.822865177Z\",\n    \"started_at\": \"2026-10-13T01:11:13.822865177Z\",\n    \"finished_at\": \"0001-01-01T00:00:00Z\"\n  },\n  {\n    \"id\": \"25b12553-bd57-490d-a8fb-efcbb45d43f9\",\n    \"namespace\": \"default\",\n    \"service_id\": \"cd6bdcbc-5d03-42b2-bc8c-937ee489153e\",\n    \"node_id\": \"acc0faee-ff7e-48db-b0c6-cb91d266790d\",\n    \"desired_status\": \"running\",\n    \"actual_status\": \"running\",\n    \"image\": \"nginx:1.27\",\n    \"requested_image\": \"nginx:1.27\",\n    \"image_registry\": \"docker.io\",\n    \"image_name\": \"library/nginx\",\n    \"image_tag\": \"1.27\",\n    \"version\": 1,\n    \"ports\": [\n      {\n        \"protocol\": \"tcp\",\n        \"container_port\": 80,\n        \"published_port\": 30002\n      }\n    ],\n    \"restart_count\": 0,\n    \"created_at\": \"2026-10-13T01:11:13.821267863Z\",\n    \"updated_at\": \"2026-10-13T01:11:13.823279766Z\",\n    \"started_at\": \"2026-10-13T01:11:13.823279766Z\",\n    \"finished_at\": \"0001-01-01T00:00:00Z\"\n  },\n  {\n    \"id\": \"87d447ad-c351-4032-8d0c-f36f6f57281b\",\n    \"namespace\": \"default\",\n    \"service_id\": \"cd6bdcbc-5d03-42b2-bc8c-937ee489153e\",\n    \"node_id\": \"acc0faee-ff7e-48db-b0c6-cb91d266790d\",\n    \"desired_status\": \"running\",\n    \"actual_status\": \"running\",\n    \"image\": \"nginx:1.27\",\n    \"requested_image\": \"nginx:1.27\",\n    \"image_registry\": \"docker.io\",\n    \"image_name\": \"library/nginx\",\n    \"image_tag\": \"1.27\",\n    \"version\": 1,\n    \"ports\": [\n      {\n        \"protocol\": \"tcp\",\n        \"container_port\": 80,\n        \"published_port\": 30000\n      }\n    ],\n    \"restart_count\": 0,\n    \"created_at\": \"2026-10-13T01:11:13.821267863Z\",\n    \"updated_at\": \"2026-10-13T01:11:13.82243159Z\",\n    \"started_at\": \"2026-10-13T01:11:13.82243159Z\",\n    \"finished_at\": \"0001-01-01T00:00:00Z\"\n  }\n]\n",
+      "stderr": ""
+    },
+    {
+      "case": "bad-service",
+      "command": [
+        "/usr/bin/python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/atlas_status.py",
+        "--cli",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:60633",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml",
+        "--service",
+        "missing-atlas"
+      ],
+      "environment_overrides": [],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Atlas status unavailable: check CLI path, server reachability, namespace and credential configuration.\n"
+    },
+    {
+      "case": "connection-refused",
+      "command": [
+        "/usr/bin/python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/atlas_status.py",
+        "--cli",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--server",
+        "http://127.0.0.1:1",
+        "--config",
+        "/tmp/inside-orch-ch08-5opo64zo/empty.yaml"
+      ],
+      "environment_overrides": [],
+      "exit_code": 2,
+      "stdout": "",
+      "stderr": "Atlas status unavailable: check CLI path, server reachability, namespace and credential configuration.\n"
+    }
+  ],
+  "cleanup": "owned process stopped; temporary configuration directory removed"
+}

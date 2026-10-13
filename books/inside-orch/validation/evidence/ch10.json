@@ -1,0 +1,82 @@
+{
+  "chapter_id": "10",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch10.plan",
+      "statement": "Plan orders pending tasks and nodes deterministically and updates local state after each assignment.",
+      "classification": "partial integration",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 270,
+      "line_end": 310,
+      "associated_commits": [
+        "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+        "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+        "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Pure planner behavior is not universal live placement enforcement or cross-instance reservation."
+      ]
+    },
+    {
+      "claim_id": "ch10.hand-plan",
+      "statement": "Teaching fixture observed atlas-01 placed on c, atlas-02 unassigned due to fixed-port constraints, unchanged under input permutation.",
+      "classification": "teaching extension",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 270,
+      "line_end": 310,
+      "associated_commits": [
+        "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+        "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+        "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch10/hand-plan.json",
+      "limitations": [
+        "Exact supplied fake cluster only; no real container or kernel resource enforcement."
+      ]
+    },
+    {
+      "claim_id": "ch10.claim",
+      "statement": "persistAssignment carries ExpectedUpdatedAt into AssignTask and couples a strict event when Transactor is supported.",
+      "classification": "partial integration",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 170,
+      "line_end": 218,
+      "associated_commits": [
+        "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+        "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+        "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Protects one task claim, not a shared atomic CPU/port reservation across planners."
+      ]
+    },
+    {
+      "claim_id": "ch10.active-path",
+      "statement": "MemoryService ordinary service path directly creates assigned tasks rather than making every service pass through Plan.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2249,
+      "line_end": 2332,
+      "associated_commits": [
+        "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+        "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+        "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Finite-job and other pending-task paths require separate traces; scheduler loop itself is constructed."
+      ]
+    }
+  ]
+}

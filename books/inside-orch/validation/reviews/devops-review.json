@@ -1,0 +1,422 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:35:19.289917+00:00",
+  "reviewed_paths": [
+    "editorial/READER_PATHS.md",
+    "editorial/CAPABILITIES.md",
+    "editorial/QUALITY_GATES.md",
+    "runbooks/index.json",
+    "reference/cli-api-config.json",
+    "reference/measurement-contracts.json",
+    "reference/invariants.json",
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+    "runbooks/playbooks.md"
+  ],
+  "reviewed_hashes": {
+    "editorial/READER_PATHS.md": "b3bc0f3cf00a15497881f6affb79d25400805557c32bc3d254222522f2a90173",
+    "editorial/CAPABILITIES.md": "faeab96e112ee65832953d5e7c13b33bfff730e6f0513869ad7a3063bc9f2616",
+    "editorial/QUALITY_GATES.md": "34fbccd25584f87e3d649eadedcc17e8db6a4b4631185d6c538d06888e7b0b91",
+    "runbooks/index.json": "11eb25726831d566b00ee5f61ec1cf5af073bcadfd2fdd3f4b4b9cf3b95eca6f",
+    "reference/cli-api-config.json": "fa8d6177d7ff23750293a7c7ca3786c3a6387078d1f2d4733beb3557fb4361ee",
+    "reference/measurement-contracts.json": "05fa4ae194305cb7ec99bc026fd18a6070e55108d59744e1f0984b596ca035aa",
+    "reference/invariants.json": "95d2edd0342de403b7623ab364622c670c111c70a88f3495447fc93f5b36742c",
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+    "runbooks/playbooks.md": "be4e994c67def6a15ad59121d13b0d609d97f4557500dc35afd24ccefce9daeb"
+  },
+  "reviewer_scope": "Operational source/caller/command fidelity and retained actual scoped drills; own chapters explicitly selfchecked; no production recovery or full live replay claim.",
+  "findings": [
+    {
+      "id": "OPS-001",
+      "severity": "minor",
+      "target": "validation/reviews/devops-review.json runbook evidence mapping",
+      "relevant_claim_ids": [],
+      "source_evidence": [
+        "validation/reviews/ch17-24-fresh-source-tests.json",
+        "validation/labs/review076/03-observed.json"
+      ],
+      "recommended_action": "Map node-loss/drain to the actual uncached control-plane/agent tests; Lab03 demonstrates reconciliation drift, not node-loss/drain.",
+      "resolution_status": "resolved_review_mapping_corrected"
+    },
+    {
+      "id": "OPS-002",
+      "severity": "minor",
+      "target": "runbooks/playbooks.md quota-denial triage and runbooks/index.json",
+      "relevant_claim_ids": [
+        "ch28.arithmetic"
+      ],
+      "source_evidence": [
+        "internal/controlplane/controlplane.go:2177-2187",
+        "validation/labs/review076/06-command.json"
+      ],
+      "recommended_action": "Distinguish replica-multiplied CPU/memory requests from positive port declarations counted once per service and exclude the replaced service before projected usage.",
+      "resolution_status": "resolved_runbook_wording"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-json",
+        "./pkg/types",
+        "./internal/discovery",
+        "./internal/scheduler",
+        "./internal/reconciler",
+        "./internal/rollout",
+        "./internal/node",
+        "./internal/leadership",
+        "./internal/secrets",
+        "./internal/config",
+        "./internal/cronjobs"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Exact owned resources/toolchain recorded in child evidence; no inherited storage/runtime mode.",
+      "started_at_utc": "2026-10-13T01:41:29.538798+00:00",
+      "finished_at_utc": "2026-10-13T01:41:29.939766+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reviews/developer-operations-focused-tests.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-json",
+        "./internal/rollout",
+        "./internal/controlplane",
+        "./internal/discovery",
+        "./internal/dns",
+        "./internal/traefik",
+        "./internal/autoscaler",
+        "./internal/auth",
+        "./internal/secrets",
+        "./internal/config",
+        "./internal/node",
+        "./internal/agent",
+        "./internal/docker",
+        "./internal/api"
+      ],
+      "working_directory": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "prerequisites": "Exact owned resources/toolchain recorded in child evidence; no inherited storage/runtime mode.",
+      "started_at_utc": "2026-10-13T01:40:34.927575+00:00",
+      "finished_at_utc": "2026-10-13T01:40:39.664911+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+        "--container",
+        "inside-orch-book-pg-cbfc94ade5b5",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "--output",
+        "validation/intake/full-schema-recovery-corrected.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Exact owned resources/toolchain recorded in child evidence; no inherited storage/runtime mode.",
+      "started_at_utc": "2026-10-13T00:42:10.281954+00:00",
+      "finished_at_utc": "2026-10-13T00:42:11.640708+00:00",
+      "exit_code": 0,
+      "log_path": "validation/intake/full-schema-recovery-corrected-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "--output",
+        "validation/labs/review076/01-fresh-process.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Exact owned resources/toolchain recorded in child evidence; no inherited storage/runtime mode.",
+      "started_at_utc": "2026-10-13T01:39:06.250993+00:00",
+      "finished_at_utc": "2026-10-13T01:39:06.393389+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/01-fresh-process-command.json",
+      "status": "passed"
+    }
+  ],
+  "runbook_matrix": [
+    {
+      "id": "pending-tasks",
+      "commands": [
+        "orch service inspect",
+        "orch service ps",
+        "orch node ls",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "Desired replicas exist but one or more tasks remain pending.",
+      "risk_boundary": "Stop before broad node changes or an unreviewed force override; restore the recorded replica setting when the experiment ends.",
+      "recovery_scope": "Default memory mode; store-backed scheduler package tests have separate scope.",
+      "validation_log": "validation/labs/ch08/exact-cli.json",
+      "execution_scope": "Actual CLI against fresh server; no-node nonconvergence then injected authenticated reports, no runtime processes.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "unhealthy-workload",
+      "commands": [
+        "orch service ps",
+        "orch service inspect",
+        "orch logs",
+        "orch endpoints",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "A task becomes unhealthy or client requests fail despite running.",
+      "risk_boundary": "Stop when a probe target is not owned or log output may reveal real secret material; restore the original lab manifest.",
+      "recovery_scope": "Default memory+agent mode; source-derived policy must match the selected service.",
+      "validation_log": "validation/labs/lab05-security-local-probes.json",
+      "execution_scope": "Owned local HTTP/TCP probes and fake/control-plane reports; no real service-level health guarantee.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "agent-enrollment",
+      "commands": [
+        "orch node ls",
+        "orch node inspect",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "Registration, heartbeat or task polling is rejected.",
+      "risk_boundary": "Stop before using another node\u2019s token, automatic unrestricted retries or exposing credentials in support bundles.",
+      "recovery_scope": "Default issued-agent credential flow; optional user JWT is a separate surface.",
+      "validation_log": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "execution_scope": "Actual issuer/API package assertions; token rotation/ownership semantics, no mTLS or external identity provider.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "node-loss",
+      "commands": [
+        "orch node inspect",
+        "orch service ps",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "Heartbeat age exceeds the configured cutoff and a node becomes offline.",
+      "risk_boundary": "Stop on uncertain old-writer activity or missing storage/fencing design; restore connectivity rather than deleting unknown containers.",
+      "recovery_scope": "Default monitor/bookkeeping; no physical fencing or replicated storage.",
+      "validation_log": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "execution_scope": "Uncached control-plane/agent node-offline/replacement/return tests; injected clock/reports, no live remote fencing.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "drain-capacity",
+      "commands": [
+        "orch node drain-status",
+        "orch node inspect",
+        "orch service ps",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "A drain request remains incomplete or shows insufficient replacement capacity.",
+      "risk_boundary": "Stop before unconditional force, stateful movement or a claim that drain complete proves zero containers.",
+      "recovery_scope": "Default node drain path; maintenance constraints still apply.",
+      "validation_log": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "execution_scope": "Uncached named drain tests for replacement, insufficient capacity, uncordon and offline status; desired-stop is separate from physical removal.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "rollout-failure",
+      "commands": [
+        "orch rollout status",
+        "orch service inspect",
+        "orch service ps",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "A deployment stalls, fails or conflicts with another mutation.",
+      "risk_boundary": "Stop on an unrelated active operation or insufficient capacity; preserve terminal history rather than rewriting it.",
+      "recovery_scope": "Default rollout controller; model success is not cleanup completion.",
+      "validation_log": "validation/labs/04-check.json",
+      "execution_scope": "Actual in-process controller cohort counts, failed history, rollback and operation conflicts; traffic not measured.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "gitops-drift",
+      "commands": [
+        "orch gitops ls",
+        "orch gitops status",
+        "orch gitops diff",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "Sync fails or actual service content differs from a source-managed revision.",
+      "risk_boundary": "Stop before embedding credentials in a repository URL, enabling broad prune, or overwriting an unrelated manual service.",
+      "recovery_scope": "Default GitOps controller with local fixture scope; remote access needs explicit authority.",
+      "validation_log": "validation/labs/07-check.json",
+      "execution_scope": "Actual local Git/control-plane, failed fetch and partial apply, unrelated preserved; no remote private repository.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "quota-denial",
+      "commands": [
+        "orch quota get",
+        "orch service ls",
+        "orch service inspect",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "A mutation returns quota_exceeded or the namespace\u2019s remaining reservation is insufficient.",
+      "risk_boundary": "Stop before raising a shared limit or equating quota acceptance with runtime enforcement; restore the recorded lab quota.",
+      "recovery_scope": "MemoryService namespace accounting, protected by local mutation lock.",
+      "validation_log": "validation/labs/06-check.json",
+      "execution_scope": "Real in-process handler/MemoryService concurrent admission; no PostgreSQL quota test.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "memory-restart",
+      "commands": [
+        "orch service ls",
+        "orch node ls",
+        "orch events"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "After process restart, the listener is ready but previous services or credentials are missing.",
+      "risk_boundary": "Stop if there is no authoritative intent snapshot or container ownership is ambiguous; do not bulk-delete runtime objects.",
+      "recovery_scope": "Shipped memory server only; process restart loses active maps.",
+      "validation_log": "validation/labs/review076/01-fresh-process-command.json",
+      "execution_scope": "Actual stopped binary/new process, authenticated records disappear; runtime objects checked separately.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    },
+    {
+      "id": "postgres-restore",
+      "commands": [
+        "orch cluster check-upgrade"
+      ],
+      "command_fidelity": "passed_source_inventory",
+      "unknown_commands": [],
+      "trigger": "An explicitly wired future durable extension rehearses database loss or backup recovery.",
+      "risk_boundary": "Stop on schema/key/canary mismatch; keep the original database untouched and destroy only the captured lab target after evidence review.",
+      "recovery_scope": "Teaching extension/future durable composition; actual package restore evidence is narrower.",
+      "validation_log": "validation/labs/review076/08-recovery-command.json",
+      "execution_scope": "Fresh actual all16 migrations/owned fresh dump-restore/key canary/session locks; does not populate default MemoryService.",
+      "status": "observed_scoped_cases",
+      "full_live_runbook_replay": "not claimed"
+    }
+  ],
+  "pending_paths": [],
+  "overall_status": "passed_scoped_review",
+  "limitations": [
+    "No baseline durable server, HA, autoscaler provider or distributed volume recovery exists.",
+    "Source-derived optional live gateway/partition procedures are not relabelled observed.",
+    "The eight-lab fresh repeat passed; final source/artifact locks and publication format checks remain separate gates."
+  ],
+  "named_node_loss_drain_tests": [
+    "TestDrainCreatesReplacementAndStopsOldTaskAfterReplacementRuns",
+    "TestDrainWaitsWithInsufficientCapacity",
+    "TestUncordonBeforeDrainCompletion",
+    "TestNodeOfflineDuringDrainStatus",
+    "TestMarkStaleNodesOfflineReplacesStatelessTaskOnce",
+    "TestMarkStaleNodesOfflineDoesNotReplaceStatefulTask",
+    "TestHeartbeatReturnsOfflineNodeReady"
+  ],
+  "fresh_laboratory_summary": "validation/labs/summary.json"
+}

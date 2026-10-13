@@ -1,0 +1,962 @@
+commit 3bfcef82a54dec457cf9d4187705fa70cc7215cf
+Date: 2026-07-14T15:14:25+02:00
+Subject: Add host port allocation awareness
+
+
+---
+ docs/NETWORKING.md                    |  31 ++++++++
+ internal/agent/agent.go               |  26 +++++-
+ internal/agent/agent_test.go          |  10 ++-
+ internal/controlplane/controlplane.go |  68 +++++++++++++++-
+ internal/docker/fake.go               |  20 +++++
+ internal/scheduler/scheduler.go       | 144 +++++++++++++++++++++++++++++++---
+ internal/scheduler/scheduler_test.go  | 116 ++++++++++++++++++++++++++-
+ internal/store/postgres.go            |  36 ++++++---
+ internal/store/postgres_test.go       |  25 +++++-
+ internal/store/store.go               |   2 +-
+ migrations/000002_task_ports.down.sql |   2 +
+ migrations/000002_task_ports.up.sql   |   2 +
+ pkg/types/types.go                    |   1 +
+ 13 files changed, 454 insertions(+), 29 deletions(-)
+
+diff --git a/docs/NETWORKING.md b/docs/NETWORKING.md
+new file mode 100644
+index 0000000..5d647ac
+--- /dev/null
++++ b/docs/NETWORKING.md
+@@ -0,0 +1,31 @@
++# Networking
++
++`orch` supports host-port publishing for MVP services. It does not implement overlay networking yet.
++
++## Service Ports
++
++Service specs may declare ports with:
++
++- `container_port`: container listener port;
++- `published_port`: host port exposed on the selected node;
++- `protocol`: `tcp` or `udp`.
++
++If `published_port` is omitted or `0`, the scheduler assigns a dynamic host port from `30000-32767` on the selected node.
++
++## Scheduling Rules
++
++The scheduler rejects a node when an active task on that node already uses the requested `{protocol, published_port}` pair. The same host port may be used on different nodes.
++
++During a single scheduling pass, planned assignments also reserve ports. This prevents two pending tasks from receiving the same dynamic port on the same node.
++
++When Docker reports a port collision, the agent marks the task `failed` with a failure reason beginning with `port allocation failed:`. The scheduler treats that failed task as a temporary node-local port reservation so the reconciler-created replacement can move to another node when one is available.
++
++## Agent Runtime
++
++Assigned task ports are stored on task records and included in the agent task payload. The agent passes those assigned ports to the container runtime when creating containers.
++
++## Limitations
++
++- No overlay network.
++- No service VIP or DNS in this prompt.
++- Dynamic port allocation is deterministic per scheduling pass, not a cluster-wide lease service.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 3ecd4ca..297e631 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -223,9 +223,10 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 		TaskID:    string(task.ID),
+ 		NodeID:    string(nodeID),
+ 		Version:   task.Version,
++		Ports:     dockerPortBindings(assigned.Ports),
+ 	})
+ 	if err != nil {
+-		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
++		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: runtimeFailureReason(err)})
+ 		return err
+ 	}
+ 	if _, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskCreated, ContainerID: string(containerID)}); err != nil {
+@@ -245,6 +246,29 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 	return r.checkTaskHealth(ctx, nodeID, assigned, orchdocker.ContainerStatus{ID: containerID, Running: true})
+ }
+ 
++func dockerPortBindings(ports []types.Port) []orchdocker.PortBinding {
++	bindings := make([]orchdocker.PortBinding, 0, len(ports))
++	for _, port := range ports {
++		bindings = append(bindings, orchdocker.PortBinding{
++			ContainerPort: port.ContainerPort,
++			HostPort:      port.PublishedPort,
++			Protocol:      string(port.Protocol),
++		})
++	}
++	return bindings
++}
++
++func runtimeFailureReason(err error) string {
++	if err == nil {
++		return ""
++	}
++	message := err.Error()
++	if strings.Contains(strings.ToLower(message), "port") && strings.Contains(strings.ToLower(message), "allocated") {
++		return "port allocation failed: " + message
++	}
++	return message
++}
++
+ func (r *Runner) currentTaskContainer(ctx context.Context, nodeID types.NodeID, task types.Task) (orchdocker.ContainerStatus, bool, error) {
+ 	if task.ContainerID != "" {
+ 		status, err := r.runtime.InspectContainer(ctx, orchdocker.ContainerID(task.ContainerID))
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index caa75cd..17083ce 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -33,6 +33,7 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 				Image:         "nginx:1.27",
+ 				Version:       1,
+ 			},
++			Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
+ 		}},
+ 	}
+ 	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("container-1"))
+@@ -50,6 +51,13 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+ 		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
+ 	}
++	created := runtime.CreatedSpecs()
++	if len(created) != 1 {
++		t.Fatalf("expected one created container spec, got %#v", created)
++	}
++	if len(created[0].Ports) != 1 || created[0].Ports[0].ContainerPort != 8080 || created[0].Ports[0].HostPort != 18080 {
++		t.Fatalf("expected assigned port binding, got %#v", created[0].Ports)
++	}
+ }
+ 
+ func TestReconcileAssignedTaskRecreatesManuallyDeletedContainer(t *testing.T) {
+@@ -210,7 +218,7 @@ func TestReconcileAssignedTaskReportsPullAndCreateFailures(t *testing.T) {
+ 			name:         "create failure",
+ 			runtime:      orchdocker.NewFakeRuntime(orchdocker.WithFakeCreateFailure(errors.New("port is already allocated"))),
+ 			wantCalls:    []string{"list", "pull:nginx:1.27", "create:" + string(taskID), "list"},
+-			wantReason:   "port is already allocated",
++			wantReason:   "port allocation failed: port is already allocated",
+ 			wantStatuses: []types.TaskStatus{types.TaskPulling, types.TaskFailed},
+ 		},
+ 	}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index ede3ae7..a7c0c58 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -288,7 +288,7 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		tasks = append(tasks, AgentTask{
+ 			Task:        task,
+ 			Healthcheck: service.Spec.Healthcheck,
+-			Ports:       service.Spec.Ports,
++			Ports:       taskPortsForAgent(task, service),
+ 		})
+ 	}
+ 	slices.SortFunc(tasks, func(a, b AgentTask) int {
+@@ -303,6 +303,13 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 	return tasks, nil
+ }
+ 
++func taskPortsForAgent(task types.Task, service types.Service) []types.Port {
++	if len(task.Ports) > 0 {
++		return append([]types.Port(nil), task.Ports...)
++	}
++	return append([]types.Port(nil), service.Spec.Ports...)
++}
++
+ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Task{}, err
+@@ -1071,6 +1078,7 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 			ActualStatus:  types.TaskAssigned,
+ 			Image:         service.Spec.Image,
+ 			Version:       service.DeploymentVersion,
++			Ports:         s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
+ 			CreatedAt:     timestamp,
+ 			UpdatedAt:     timestamp,
+ 		}
+@@ -1095,6 +1103,64 @@ func countsTowardDesiredReplicas(task types.Task) bool {
+ 	return types.IsActiveTask(task)
+ }
+ 
++const (
++	memoryDynamicPortStart = 30000
++	memoryDynamicPortEnd   = 32767
++)
++
++func (s *MemoryService) assignPortsForNodeLocked(ports []types.Port, nodeID types.NodeID) []types.Port {
++	if len(ports) == 0 {
++		return nil
++	}
++	assigned := make([]types.Port, 0, len(ports))
++	reserved := s.reservedPortsForNodeLocked(nodeID)
++	for _, port := range ports {
++		candidate := port
++		if candidate.Protocol == "" {
++			candidate.Protocol = types.PortTCP
++		}
++		if candidate.PublishedPort <= 0 {
++			candidate.PublishedPort = firstFreeMemoryPort(candidate.Protocol, reserved)
++		}
++		if candidate.PublishedPort > 0 {
++			reserved[memoryPortKey{protocol: candidate.Protocol, port: candidate.PublishedPort}] = struct{}{}
++		}
++		assigned = append(assigned, candidate)
++	}
++	return assigned
++}
++
++func (s *MemoryService) reservedPortsForNodeLocked(nodeID types.NodeID) map[memoryPortKey]struct{} {
++	reserved := make(map[memoryPortKey]struct{})
++	for _, task := range s.tasks {
++		if task.NodeID != nodeID || !types.IsActiveTask(task) {
++			continue
++		}
++		service := s.services[task.ServiceID]
++		for _, port := range taskPortsForAgent(task, service) {
++			if port.PublishedPort <= 0 {
++				continue
++			}
++			reserved[memoryPortKey{protocol: port.Protocol, port: port.PublishedPort}] = struct{}{}
++		}
++	}
++	return reserved
++}
++
++func firstFreeMemoryPort(protocol types.PortProtocol, reserved map[memoryPortKey]struct{}) int {
++	for port := memoryDynamicPortStart; port <= memoryDynamicPortEnd; port++ {
++		if _, ok := reserved[memoryPortKey{protocol: protocol, port: port}]; !ok {
++			return port
++		}
++	}
++	return 0
++}
++
++type memoryPortKey struct {
++	protocol types.PortProtocol
++	port     int
++}
++
+ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) bool {
+ 	for _, deployment := range s.deployments {
+ 		if deployment.ServiceID != serviceID {
+diff --git a/internal/docker/fake.go b/internal/docker/fake.go
+index f690aac..f51c301 100644
+--- a/internal/docker/fake.go
++++ b/internal/docker/fake.go
+@@ -22,6 +22,7 @@ type FakeRuntime struct {
+ 	byTask             map[string]ContainerID
+ 	logs               map[ContainerID][]LogLine
+ 	operations         []FakeOperation
++	createdSpecs       []ContainerSpec
+ 	pullErr            error
+ 	createErr          error
+ 	startErr           error
+@@ -143,6 +144,7 @@ func (r *FakeRuntime) CreateContainer(ctx context.Context, spec ContainerSpec) (
+ 	if id := r.byTask[spec.TaskID]; id != "" {
+ 		return id, nil
+ 	}
++	r.createdSpecs = append(r.createdSpecs, cloneContainerSpec(spec))
+ 	id := r.nextContainerIDLocked()
+ 	now := time.Now().UTC()
+ 	labels := fakeManagedLabels(spec)
+@@ -361,6 +363,16 @@ func (r *FakeRuntime) OperationStrings() []string {
+ 	return values
+ }
+ 
++func (r *FakeRuntime) CreatedSpecs() []ContainerSpec {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	specs := make([]ContainerSpec, len(r.createdSpecs))
++	for i, spec := range r.createdSpecs {
++		specs[i] = cloneContainerSpec(spec)
++	}
++	return specs
++}
++
+ func (op FakeOperation) String() string {
+ 	switch op.Name {
+ 	case "pull":
+@@ -425,4 +437,12 @@ func cloneMap(values map[string]string) map[string]string {
+ 	return cloned
+ }
+ 
++func cloneContainerSpec(spec ContainerSpec) ContainerSpec {
++	spec.Env = cloneMap(spec.Env)
++	spec.Labels = cloneMap(spec.Labels)
++	spec.Ports = append([]PortBinding(nil), spec.Ports...)
++	spec.Command = append([]string(nil), spec.Command...)
++	return spec
++}
++
+ var _ Runtime = (*FakeRuntime)(nil)
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index e162382..c8ef49e 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -5,6 +5,7 @@ import (
+ 	"errors"
+ 	"fmt"
+ 	"sort"
++	"strings"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
+@@ -17,13 +18,14 @@ type Store interface {
+ 	ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error)
+ 	ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+-	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error)
++	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error)
+ 	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
+ }
+ 
+ type Assignment struct {
+ 	TaskID            types.TaskID `json:"task_id"`
+ 	NodeID            types.NodeID `json:"node_id"`
++	Ports             []types.Port `json:"ports,omitempty"`
+ 	AssignedAt        time.Time    `json:"assigned_at,omitempty"`
+ 	ExpectedUpdatedAt time.Time    `json:"expected_updated_at,omitempty"`
+ }
+@@ -53,6 +55,11 @@ type Metrics interface {
+ 
+ type NoopMetrics struct{}
+ 
++const (
++	dynamicPortStart = 30000
++	dynamicPortEnd   = 32767
++)
++
+ func (NoopMetrics) IncSchedulerRuns() {}
+ 
+ func (NoopMetrics) IncSchedulerErrors() {}
+@@ -161,7 +168,7 @@ func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assi
+ 	}
+ 	assigned := false
+ 	err := store.WithTx(ctx, s.store, func(txCtx context.Context, tx Store) error {
+-		assignedTask, err := tx.AssignTask(txCtx, assignment.TaskID, assignment.NodeID, assignment.ExpectedUpdatedAt)
++		assignedTask, err := tx.AssignTask(txCtx, assignment.TaskID, assignment.NodeID, assignment.Ports, assignment.ExpectedUpdatedAt)
+ 		if err != nil {
+ 			return err
+ 		}
+@@ -226,7 +233,7 @@ func consumesResources(task types.Task) bool {
+ 	if task.NodeID == "" {
+ 		return false
+ 	}
+-	return types.IsActiveTask(task)
++	return types.IsActiveTask(task) || isPortAllocationFailure(task)
+ }
+ 
+ func (s *Scheduler) loadServices(ctx context.Context, taskSets ...[]types.Task) (map[types.ServiceID]types.Service, error) {
+@@ -263,16 +270,17 @@ func Plan(input PlanInput) []Assignment {
+ 		if !ok {
+ 			continue
+ 		}
+-		node, ok := bestNode(task, service, nodes, state)
++		node, ports, ok := bestNode(task, service, nodes, state)
+ 		if !ok {
+ 			continue
+ 		}
+ 		assignments = append(assignments, Assignment{
+ 			TaskID:            task.ID,
+ 			NodeID:            node.ID,
++			Ports:             ports,
+ 			ExpectedUpdatedAt: task.UpdatedAt.UTC(),
+ 		})
+-		state.addPlanned(node.ID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
++		state.addPlanned(node.ID, task.ServiceID, service.Spec.ResourceRequirements.Requests, ports)
+ 	}
+ 	return assignments
+ }
+@@ -281,6 +289,7 @@ type clusterState struct {
+ 	usedByNode           map[types.NodeID]types.Resources
+ 	runningByNode        map[types.NodeID]int
+ 	runningByNodeService map[types.NodeID]map[types.ServiceID]int
++	portsByNode          map[types.NodeID]map[portKey]struct{}
+ }
+ 
+ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map[types.ServiceID]types.Service) *clusterState {
+@@ -288,11 +297,13 @@ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map
+ 		usedByNode:           make(map[types.NodeID]types.Resources, len(nodes)),
+ 		runningByNode:        make(map[types.NodeID]int, len(nodes)),
+ 		runningByNodeService: make(map[types.NodeID]map[types.ServiceID]int, len(nodes)),
++		portsByNode:          make(map[types.NodeID]map[portKey]struct{}, len(nodes)),
+ 	}
+ 	knownNodes := make(map[types.NodeID]struct{}, len(nodes))
+ 	for _, node := range nodes {
+ 		knownNodes[node.ID] = struct{}{}
+ 		state.runningByNodeService[node.ID] = make(map[types.ServiceID]int)
++		state.portsByNode[node.ID] = make(map[portKey]struct{})
+ 	}
+ 	for _, task := range sortedTasks(runningTasks) {
+ 		if _, ok := knownNodes[task.NodeID]; !ok {
+@@ -302,12 +313,26 @@ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map
+ 		if !ok {
+ 			continue
+ 		}
+-		state.addPlanned(task.NodeID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
++		state.addExisting(task, service)
+ 	}
+ 	return state
+ }
+ 
+-func (s *clusterState) addPlanned(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources) {
++func (s *clusterState) addExisting(task types.Task, service types.Service) {
++	if types.IsActiveTask(task) {
++		s.addResourceUse(task.NodeID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
++	}
++	if types.IsActiveTask(task) || isPortAllocationFailure(task) {
++		s.reservePorts(task.NodeID, portsForTask(task, service))
++	}
++}
++
++func (s *clusterState) addPlanned(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources, ports []types.Port) {
++	s.addResourceUse(nodeID, serviceID, requests)
++	s.reservePorts(nodeID, ports)
++}
++
++func (s *clusterState) addResourceUse(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources) {
+ 	used := s.usedByNode[nodeID]
+ 	used.CPU += requests.CPU
+ 	used.Memory += requests.Memory
+@@ -319,8 +344,21 @@ func (s *clusterState) addPlanned(nodeID types.NodeID, serviceID types.ServiceID
+ 	s.runningByNodeService[nodeID][serviceID]++
+ }
+ 
+-func bestNode(task types.Task, service types.Service, nodes []types.Node, state *clusterState) (types.Node, bool) {
++func (s *clusterState) reservePorts(nodeID types.NodeID, ports []types.Port) {
++	if s.portsByNode[nodeID] == nil {
++		s.portsByNode[nodeID] = make(map[portKey]struct{})
++	}
++	for _, port := range ports {
++		if port.PublishedPort <= 0 {
++			continue
++		}
++		s.portsByNode[nodeID][newPortKey(port.Protocol, port.PublishedPort)] = struct{}{}
++	}
++}
++
++func bestNode(task types.Task, service types.Service, nodes []types.Node, state *clusterState) (types.Node, []types.Port, bool) {
+ 	var best types.Node
++	var bestPorts []types.Port
+ 	var bestScore nodeScore
+ 	found := false
+ 	requests := service.Spec.ResourceRequirements.Requests
+@@ -328,14 +366,19 @@ func bestNode(task types.Task, service types.Service, nodes []types.Node, state
+ 		if !fits(task, service, node, state, requests) {
+ 			continue
+ 		}
++		ports, ok := allocatePorts(service.Spec.Ports, node.ID, state)
++		if !ok {
++			continue
++		}
+ 		score := scoreNode(node, task.ServiceID, state, requests)
+ 		if !found || score.less(bestScore) {
+ 			best = node
++			bestPorts = ports
+ 			bestScore = score
+ 			found = true
+ 		}
+ 	}
+-	return best, found
++	return best, bestPorts, found
+ }
+ 
+ func fits(_ types.Task, service types.Service, node types.Node, state *clusterState, requests types.Resources) bool {
+@@ -346,7 +389,11 @@ func fits(_ types.Task, service types.Service, node types.Node, state *clusterSt
+ 		return false
+ 	}
+ 	free := freeResources(node, state)
+-	return free.CPU >= requests.CPU && free.Memory >= requests.Memory
++	if free.CPU < requests.CPU || free.Memory < requests.Memory {
++		return false
++	}
++	_, ok := allocatePorts(service.Spec.Ports, node.ID, state)
++	return ok
+ }
+ 
+ type nodeScore struct {
+@@ -406,6 +453,83 @@ func placementMatches(constraints []types.PlacementConstraint, labels map[string
+ 	return true
+ }
+ 
++type portKey struct {
++	protocol types.PortProtocol
++	port     int
++}
++
++func allocatePorts(ports []types.Port, nodeID types.NodeID, state *clusterState) ([]types.Port, bool) {
++	if len(ports) == 0 {
++		return nil, true
++	}
++	allocated := make([]types.Port, 0, len(ports))
++	reserved := make(map[portKey]struct{})
++	for _, port := range ports {
++		candidate := port
++		if candidate.Protocol == "" {
++			candidate.Protocol = types.PortTCP
++		}
++		if candidate.PublishedPort > 0 {
++			key := newPortKey(candidate.Protocol, candidate.PublishedPort)
++			if portReserved(nodeID, key, state, reserved) {
++				return nil, false
++			}
++			reserved[key] = struct{}{}
++			allocated = append(allocated, candidate)
++			continue
++		}
++		dynamic, ok := nextDynamicPort(nodeID, candidate.Protocol, state, reserved)
++		if !ok {
++			return nil, false
++		}
++		candidate.PublishedPort = dynamic
++		reserved[newPortKey(candidate.Protocol, dynamic)] = struct{}{}
++		allocated = append(allocated, candidate)
++	}
++	return allocated, true
++}
++
++func nextDynamicPort(nodeID types.NodeID, protocol types.PortProtocol, state *clusterState, planned map[portKey]struct{}) (int, bool) {
++	for port := dynamicPortStart; port <= dynamicPortEnd; port++ {
++		key := newPortKey(protocol, port)
++		if !portReserved(nodeID, key, state, planned) {
++			return port, true
++		}
++	}
++	return 0, false
++}
++
++func portReserved(nodeID types.NodeID, key portKey, state *clusterState, planned map[portKey]struct{}) bool {
++	if _, ok := planned[key]; ok {
++		return true
++	}
++	if state.portsByNode[nodeID] == nil {
++		return false
++	}
++	_, ok := state.portsByNode[nodeID][key]
++	return ok
++}
++
++func newPortKey(protocol types.PortProtocol, port int) portKey {
++	if protocol == "" {
++		protocol = types.PortTCP
++	}
++	return portKey{protocol: protocol, port: port}
++}
++
++func portsForTask(task types.Task, service types.Service) []types.Port {
++	if len(task.Ports) > 0 {
++		return task.Ports
++	}
++	return service.Spec.Ports
++}
++
++func isPortAllocationFailure(task types.Task) bool {
++	return task.NodeID != "" &&
++		task.ActualStatus == types.TaskFailed &&
++		strings.Contains(strings.ToLower(task.FailureReason), "port allocation failed")
++}
++
+ func sortedTasks(tasks []types.Task) []types.Task {
+ 	ordered := append([]types.Task(nil), tasks...)
+ 	sort.Slice(ordered, func(i, j int) bool {
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 314b8b2..c9303f6 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -158,6 +158,79 @@ func TestPlanAssignments(t *testing.T) {
+ 			},
+ 			want: []Assignment{{TaskID: "task-a", NodeID: "node-b"}},
+ 		},
++		{
++			name:  "reject node with fixed host port collision",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			running: []types.Task{
++				taskWithPorts(runningTask("running-a", "other", "node-a"), []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++			},
++			services: map[types.ServiceID]types.Service{
++				"svc":   serviceWithPorts("svc", []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++				"other": serviceFixture("other", types.Resources{CPU: 100, Memory: 128}, nil),
++			},
++			want: []Assignment{{
++				TaskID: "task-a",
++				NodeID: "node-b",
++				Ports:  []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			}},
++		},
++		{
++			name:  "allow same fixed host port on different nodes",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 4096}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			running: []types.Task{
++				taskWithPorts(runningTask("running-a", "other", "node-b"), []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++			},
++			services: map[types.ServiceID]types.Service{
++				"svc":   serviceWithPorts("svc", []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++				"other": serviceFixture("other", types.Resources{CPU: 100, Memory: 128}, nil),
++			},
++			want: []Assignment{{
++				TaskID: "task-a",
++				NodeID: "node-a",
++				Ports:  []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			}},
++		},
++		{
++			name:  "assign dynamic host ports deterministically",
++			tasks: []types.Task{pendingTask("task-a", "svc"), pendingTask("task-b", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 4000, Memory: 4096}),
++			},
++			services: map[types.ServiceID]types.Service{
++				"svc": serviceWithPorts("svc", []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080}}),
++			},
++			want: []Assignment{
++				{TaskID: "task-a", NodeID: "node-a", Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: dynamicPortStart}}},
++				{TaskID: "task-b", NodeID: "node-a", Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: dynamicPortStart + 1}}},
++			},
++		},
++		{
++			name:  "avoid node with previous port allocation failure",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 4096}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			running: []types.Task{
++				taskWithPorts(failedPortTask("failed-a", "svc", "node-a"), []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++			},
++			services: map[types.ServiceID]types.Service{
++				"svc": serviceWithPorts("svc", []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}),
++			},
++			want: []Assignment{{
++				TaskID: "task-a",
++				NodeID: "node-b",
++				Ports:  []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			}},
++		},
+ 	}
+ 
+ 	for _, tt := range tests {
+@@ -570,7 +643,7 @@ func (s *concurrentAssignmentStore) GetService(context.Context, types.ServiceID)
+ 	return s.service, nil
+ }
+ 
+-func (s *concurrentAssignmentStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++func (s *concurrentAssignmentStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	if s.task.ID != id {
+ 		return types.Task{}, store.ErrNotFound
+ 	}
+@@ -578,6 +651,7 @@ func (s *concurrentAssignmentStore) AssignTask(_ context.Context, id types.TaskI
+ 		return types.Task{}, store.ErrConflict
+ 	}
+ 	s.task.NodeID = nodeID
++	s.task.Ports = ports
+ 	s.task.ActualStatus = types.TaskAssigned
+ 	s.task.UpdatedAt = s.task.UpdatedAt.Add(time.Second)
+ 	return s.task, nil
+@@ -613,16 +687,17 @@ func (s *fakeStore) GetService(_ context.Context, id types.ServiceID) (types.Ser
+ 	return s.services[id], nil
+ }
+ 
+-func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	if s.assignErr != nil {
+ 		return types.Task{}, s.assignErr
+ 	}
+ 	s.assigned = append(s.assigned, Assignment{
+ 		TaskID:            id,
+ 		NodeID:            nodeID,
++		Ports:             ports,
+ 		ExpectedUpdatedAt: expectedUpdatedAt.UTC(),
+ 	})
+-	return types.Task{ID: id, NodeID: nodeID, ActualStatus: types.TaskAssigned}, nil
++	return types.Task{ID: id, NodeID: nodeID, Ports: ports, ActualStatus: types.TaskAssigned}, nil
+ }
+ 
+ func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
+@@ -651,6 +726,19 @@ func runningTask(id types.TaskID, serviceID types.ServiceID, nodeID types.NodeID
+ 	return task
+ }
+ 
++func failedPortTask(id types.TaskID, serviceID types.ServiceID, nodeID types.NodeID) types.Task {
++	task := pendingTask(id, serviceID)
++	task.NodeID = nodeID
++	task.ActualStatus = types.TaskFailed
++	task.FailureReason = "port allocation failed: port is already allocated"
++	return task
++}
++
++func taskWithPorts(task types.Task, ports []types.Port) types.Task {
++	task.Ports = ports
++	return task
++}
++
+ func nodeFixture(id types.NodeID, status types.NodeStatus, labels map[string]string, allocatable types.Resources) types.Node {
+ 	return types.Node{
+ 		ID:          id,
+@@ -675,7 +763,29 @@ func serviceFixture(id types.ServiceID, requests types.Resources, constraints []
+ 	}
+ }
+ 
++func serviceWithPorts(id types.ServiceID, ports []types.Port) types.Service {
++	service := serviceFixture(id, types.Resources{CPU: 100, Memory: 128}, nil)
++	service.Spec.Ports = ports
++	return service
++}
++
+ func assignmentsEqual(left, right []Assignment) bool {
++	if len(left) != len(right) {
++		return false
++	}
++	for i := range left {
++		if left[i].TaskID != right[i].TaskID ||
++			left[i].NodeID != right[i].NodeID ||
++			!left[i].AssignedAt.Equal(right[i].AssignedAt) ||
++			!left[i].ExpectedUpdatedAt.Equal(right[i].ExpectedUpdatedAt) ||
++			!portsEqual(left[i].Ports, right[i].Ports) {
++			return false
++		}
++	}
++	return true
++}
++
++func portsEqual(left, right []types.Port) bool {
+ 	if len(left) != len(right) {
+ 		return false
+ 	}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 8995788..50c4e69 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -349,14 +349,18 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	if !types.ValidTaskStatus(task.DesiredStatus) || !types.ValidTaskStatus(task.ActualStatus) {
+ 		return types.Task{}, fmt.Errorf("%w: task status is invalid", ErrInvalidState)
+ 	}
++	ports, err := jsonBytes(defaultSlice(task.Ports))
++	if err != nil {
++		return types.Task{}, err
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+ 			service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, restart_count, failure_reason, started_at, finished_at
++			image, version, ports, restart_count, failure_reason, started_at, finished_at
+ 		)
+-		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, nullif($9, ''), $10, $11)
++		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, $9, nullif($10, ''), $11, $12)
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(task.ServiceID),
+ 		string(task.NodeID),
+ 		task.ContainerID,
+@@ -364,6 +368,7 @@ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 		string(task.ActualStatus),
+ 		task.Image,
+ 		task.Version,
++		ports,
+ 		task.RestartCount,
+ 		task.FailureReason,
+ 		nilTime(task.StartedAt),
+@@ -393,7 +398,7 @@ func (s *postgresStore) getTask(ctx context.Context, id types.TaskID, forUpdate
+ 	return task, nil
+ }
+ 
+-func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	current, err := s.getTask(ctx, id, s.begin == nil)
+ 	if err != nil {
+ 		if errors.Is(err, ErrNotFound) && s.begin == nil {
+@@ -409,18 +414,24 @@ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 	if err := types.ValidateTaskTransition(current.ActualStatus, types.TaskAssigned); err != nil {
+ 		return types.Task{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
++	portBytes, err := jsonBytes(defaultSlice(ports))
++	if err != nil {
++		return types.Task{}, err
++	}
+ 	row := s.db.QueryRow(ctx, `
+ 		UPDATE tasks
+ 		SET node_id = $2,
+ 			actual_status = $3,
++			ports = $4,
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+-		WHERE id = $1 AND updated_at = $4 AND actual_status = 'pending'
++		WHERE id = $1 AND updated_at = $5 AND actual_status = 'pending'
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(nodeID),
+ 		string(types.TaskAssigned),
++		portBytes,
+ 		expectedUpdatedAt.UTC(),
+ 	)
+ 	task, err := scanTask(row)
+@@ -451,7 +462,7 @@ func (s *postgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3 AND desired_status <> $2
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(types.TaskStopped),
+ 		expectedUpdatedAt.UTC(),
+@@ -494,7 +505,7 @@ func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $6
+ 		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
+-			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++			image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
+ 		string(id),
+ 		string(desired),
+ 		string(actual),
+@@ -816,7 +827,7 @@ func serviceSelectSQL() string {
+ 
+ func taskSelectSQL() string {
+ 	return `SELECT id, service_id, node_id, container_id, desired_status, actual_status,
+-		image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
++		image, version, ports, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
+ }
+ 
+ func deploymentSelectSQL() string {
+@@ -911,6 +922,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	var task types.Task
+ 	var id, serviceID string
+ 	var nodeID, containerID, failureReason *string
++	var ports []byte
+ 	var startedAt, finishedAt *time.Time
+ 	err := row.Scan(
+ 		&id,
+@@ -921,6 +933,7 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 		&task.ActualStatus,
+ 		&task.Image,
+ 		&task.Version,
++		&ports,
+ 		&task.RestartCount,
+ 		&failureReason,
+ 		&task.CreatedAt,
+@@ -942,6 +955,11 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	if failureReason != nil {
+ 		task.FailureReason = *failureReason
+ 	}
++	if len(ports) > 0 {
++		if err := json.Unmarshal(ports, &task.Ports); err != nil {
++			return types.Task{}, err
++		}
++	}
+ 	task.CreatedAt = task.CreatedAt.UTC()
+ 	task.UpdatedAt = task.UpdatedAt.UTC()
+ 	if startedAt != nil {
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 4cfe01f..6a9238b 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -126,15 +126,20 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 		ActualStatus:  types.TaskPending,
+ 		Image:         service.Spec.Image,
+ 		Version:       service.DeploymentVersion,
++		Ports:         []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080}},
+ 	})
+ 	if err != nil {
+ 		t.Fatalf("create task: %v", err)
+ 	}
+-	assigned, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt)
++	assignedPorts := []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}}
++	assigned, err := store.AssignTask(ctx, task.ID, updatedNode.ID, assignedPorts, task.UpdatedAt)
+ 	if err != nil {
+ 		t.Fatalf("assign task: %v", err)
+ 	}
+-	if _, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt); !errors.Is(err, ErrConflict) {
++	if !portsEqual(assigned.Ports, assignedPorts) {
++		t.Fatalf("expected assigned ports %#v, got %#v", assignedPorts, assigned.Ports)
++	}
++	if _, err := store.AssignTask(ctx, task.ID, updatedNode.ID, assignedPorts, task.UpdatedAt); !errors.Is(err, ErrConflict) {
+ 		t.Fatalf("expected stale duplicate assignment to conflict, got %v", err)
+ 	}
+ 	running, err := store.UpdateTaskStatus(ctx, task.ID, types.TaskRunning, types.TaskRunning, "container-1", "", assigned.UpdatedAt)
+@@ -285,7 +290,7 @@ func TestPostgresStoreConcurrentAssignTaskOnce(t *testing.T) {
+ 	for i := 0; i < 2; i++ {
+ 		go func() {
+ 			results <- WithTx(ctx, durable, func(txCtx context.Context, tx Store) error {
+-				assigned, err := tx.AssignTask(txCtx, task.ID, node.ID, task.UpdatedAt)
++				assigned, err := tx.AssignTask(txCtx, task.ID, node.ID, nil, task.UpdatedAt)
+ 				if err != nil {
+ 					return err
+ 				}
+@@ -372,8 +377,10 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
+ 
+ 	for _, file := range []string{
++		"000002_task_ports.down.sql",
+ 		"000001_initial_schema.down.sql",
+ 		"000001_initial_schema.up.sql",
++		"000002_task_ports.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+@@ -385,6 +392,18 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	}
+ }
+ 
++func portsEqual(left, right []types.Port) bool {
++	if len(left) != len(right) {
++		return false
++	}
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
++	}
++	return true
++}
++
+ type execer interface {
+ 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+ }
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 3e6524c..23d2c44 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -27,7 +27,7 @@ type ServiceStore interface {
+ type TaskStore interface {
+ 	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
+ 	GetTask(ctx context.Context, id types.TaskID) (types.Task, error)
+-	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error)
++	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error)
+ 	StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)
+ 	UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error)
+ 	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
+diff --git a/migrations/000002_task_ports.down.sql b/migrations/000002_task_ports.down.sql
+new file mode 100644
+index 0000000..5a13ec1
+--- /dev/null
++++ b/migrations/000002_task_ports.down.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE IF EXISTS tasks
++    DROP COLUMN IF EXISTS ports;
+diff --git a/migrations/000002_task_ports.up.sql b/migrations/000002_task_ports.up.sql
+new file mode 100644
+index 0000000..0c69629
+--- /dev/null
++++ b/migrations/000002_task_ports.up.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE tasks
++    ADD COLUMN ports JSONB NOT NULL DEFAULT '[]'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 837f649..d5346f6 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -419,6 +419,7 @@ type Task struct {
+ 	ActualStatus  TaskStatus `json:"actual_status"`
+ 	Image         string     `json:"image"`
+ 	Version       int64      `json:"version"`
++	Ports         []Port     `json:"ports,omitempty"`
+ 	RestartCount  int        `json:"restart_count"`
+ 	FailureReason string     `json:"failure_reason,omitempty"`
+ 	CreatedAt     time.Time  `json:"created_at"`

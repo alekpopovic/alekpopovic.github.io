@@ -1,0 +1,78 @@
+{
+  "chapter_id": "28",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch28.arithmetic",
+      "statement": "Service requested CPU/memory multiply replicas while positive published-port declarations count once per spec entry.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2177,
+      "line_end": 2187,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Not measured utilization or actual socket count; quota checks lack storage-byte dimension."
+      ]
+    },
+    {
+      "claim_id": "ch28.concurrent-memory",
+      "statement": "Actual concurrent MemoryService scale fixture observed one success and one quota denial under max3 replicas.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/quota_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 39,
+      "line_end": 85,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch28/focused-tests.json",
+      "limitations": [
+        "Local mutex guarantee for selected operations, not distributed independent server processes."
+      ]
+    },
+    {
+      "claim_id": "ch28.concurrent-store",
+      "statement": "PostgreSQL quota helper takes namespace transaction advisory lock before loading/checking usage.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 149,
+      "line_end": 165,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Caller transaction required; specific database quota race not executed here; default executable remains memory-backed."
+      ]
+    },
+    {
+      "claim_id": "ch28.snapshots",
+      "statement": "Actual snapshot fixture checked500millicores and one claim; report code sums sampled quantities and cumulative task lifetimes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 116,
+      "line_end": 195,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch28/focused-tests.json",
+      "limitations": [
+        "Only fixture assertions executed; cumulative runtime aggregation semantics inspected, not incremental billable duration or complete invoicing."
+      ]
+    }
+  ]
+}

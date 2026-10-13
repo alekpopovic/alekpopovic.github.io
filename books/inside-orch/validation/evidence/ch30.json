@@ -1,0 +1,78 @@
+{
+  "chapter_id": "30",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch30.source",
+      "statement": "CommandFetcher makes temporary real Git checkout, resolves HEAD and returns scoped cleanup.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/gitops/gitops.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 63,
+      "line_end": 85,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Branch is mutable; URL validation does not certify all private Git authentication configurations."
+      ]
+    },
+    {
+      "claim_id": "ch30.apply",
+      "statement": "Sync applies sorted manifest files sequentially through parser/ApplyService; later failure does not roll back earlier applies.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/gitops/gitops.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 218,
+      "line_end": 249,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "LastRevision updates only after successful loop/prune; not atomic repository-wide provenance."
+      ]
+    },
+    {
+      "claim_id": "ch30.drift",
+      "statement": "Actual local Atlas fixture kept manual scale under warn and restored desired zero under status-triggered auto_revert.",
+      "classification": "teaching extension",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 64,
+      "line_end": 101,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch30/teaching-fixture.json",
+      "limitations": [
+        "MemoryService state only; restoration does not freshly call Admit/quota; no independently asserted continuous drift loop."
+      ]
+    },
+    {
+      "claim_id": "ch30.prune",
+      "statement": "Actual fixture pruned previously managed Atlas name and preserved unrelated name; baseline prune predicates on previous/wanted names.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/gitops/gitops.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 252,
+      "line_end": 280,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch30/teaching-fixture.json",
+      "limitations": [
+        "No current object-ID/source-ID ownership comparison; replacement/transfer same-name risk remains untested and disclosed."
+      ]
+    }
+  ]
+}

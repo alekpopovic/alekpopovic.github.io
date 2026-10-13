@@ -1,0 +1,480 @@
+commit 316ba80ac1ea7ba465f1b0826b655233a651c043
+Date: 2026-06-11T23:41:39+02:00
+Subject: Harden task state idempotency
+
+
+---
+ docs/RELIABILITY.md                   |   4 +
+ internal/controlplane/agent_test.go   | 166 +++++++++++++++++++++++++++-------
+ internal/controlplane/controlplane.go |  37 ++++++++
+ internal/scheduler/scheduler.go       |  11 ++-
+ internal/scheduler/scheduler_test.go  |  31 +++++++
+ internal/store/postgres.go            |  14 +++
+ internal/store/postgres_test.go       |  25 ++++-
+ 7 files changed, 254 insertions(+), 34 deletions(-)
+
+diff --git a/docs/RELIABILITY.md b/docs/RELIABILITY.md
+index badefee..2c9b316 100644
+--- a/docs/RELIABILITY.md
++++ b/docs/RELIABILITY.md
+@@ -7,6 +7,8 @@ Every controller and agent operation should be safe to retry after a timeout, pr
+ - API create/update handlers validate input before mutating state. Mutating handlers should return the existing in-progress object when the requested operation is already underway.
+ - Reconciler passes must derive work from current service and task state. A second pass must not create extra tasks, repeat stop events, or inflate metrics for tasks that already have a stop/remove desired state.
+ - Scheduler assignment must use optimistic concurrency on the task row. If another scheduler assigned the task first, the retry should reload state rather than assign a different node blindly.
++- A scheduler pass returns and emits events only for assignments it actually persisted. Assignment conflicts and missing tasks are treated as benign races; the next pass recomputes from fresh state.
++- Agent task status reports must not resurrect a task after the control plane has requested stop/remove or after the task is terminal. Exact duplicate terminal reports are idempotent and do not emit another event.
+ - Agent task execution must treat Docker operations as idempotent. Existing task containers are reused, stopped containers are safe to stop again, and missing containers are safe to remove again.
+ - Docker-created containers must carry `orch.managed=true` plus service, task, node, and version labels. Cleanup only targets managed containers for the current node.
+ - Rollout controllers must compute progress from task versions and terminal states. Repeated passes must not create more new-version tasks than `replicas + maxSurge`, stop more old tasks than allowed by `maxUnavailable`, or emit status-change events when the status did not change.
+@@ -15,7 +17,9 @@ Every controller and agent operation should be safe to retry after a timeout, pr
+ ## Current Audit Notes
+ 
+ - The memory control plane ignores terminal tasks when reconciling service replicas, so retries after failed or removed tasks create replacements instead of counting dead tasks as active.
++- The control plane rejects stale active agent reports for tasks whose desired state is stopped or removed.
+ - The reconciler treats already-stopped tasks as no-ops and only records stop metrics/events when it actually changes desired task state.
++- PostgreSQL task assignment and stop operations return the existing task when a retry observes the requested state already applied.
+ - The rollout status helper emits events only on real status transitions.
+ - The Docker runtime wrapper already handles create conflicts by looking up the existing managed task container and treats stop/remove of already stopped or missing containers as success.
+ 
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index 8bd680e..c894dc5 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -94,39 +94,8 @@ func TestAgentReturnsReadyAfterOfflineRegistration(t *testing.T) {
+ }
+ 
+ func TestAgentTaskStatusTransitions(t *testing.T) {
+-	service := NewMemoryService()
+ 	ctx := context.Background()
+ 
+-	registered, err := service.RegisterNode(ctx, NodeRegistration{
+-		Name:             "node-a",
+-		AdvertiseAddress: "10.0.0.10",
+-		Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
+-		Allocatable:      types.Resources{CPU: 3500, Memory: 7 * 1024 * 1024 * 1024},
+-	})
+-	if err != nil {
+-		t.Fatalf("register node: %v", err)
+-	}
+-	created, err := service.CreateService(ctx, types.ServiceSpec{
+-		Name:                 "api",
+-		Image:                "ghcr.io/example/api:1.0.0",
+-		Replicas:             1,
+-		ResourceRequirements: types.ResourceRequirements{},
+-		RestartPolicy:        types.RestartPolicy{Condition: types.RestartNever},
+-	})
+-	if err != nil {
+-		t.Fatalf("create service: %v", err)
+-	}
+-	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
+-	if err != nil {
+-		t.Fatalf("list assigned tasks: %v", err)
+-	}
+-	if len(tasks) != 1 {
+-		t.Fatalf("expected one assigned task, got %d", len(tasks))
+-	}
+-	if tasks[0].Task.ServiceID != created.ID {
+-		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].Task.ServiceID)
+-	}
+-
+ 	tests := []struct {
+ 		name          string
+ 		status        types.TaskStatus
+@@ -146,6 +115,18 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 
+ 	for _, tt := range tests {
+ 		t.Run(tt.name, func(t *testing.T) {
++			service := NewMemoryService()
++			registered, created := createServiceWithAssignedTaskAndPolicy(t, ctx, service, types.RestartPolicy{Condition: types.RestartNever})
++			tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++			if err != nil {
++				t.Fatalf("list assigned tasks: %v", err)
++			}
++			if len(tasks) != 1 {
++				t.Fatalf("expected one assigned task, got %d", len(tasks))
++			}
++			if tasks[0].Task.ServiceID != created.ID {
++				t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].Task.ServiceID)
++			}
+ 			task, err := service.ReportTaskStatus(ctx, TaskStatusReport{
+ 				TaskID:        tasks[0].Task.ID,
+ 				NodeID:        registered.Node.ID,
+@@ -175,6 +156,123 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 	}
+ }
+ 
++func TestAgentTaskStatusCannotResurrectStoppedTask(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, created := createServiceWithAssignedTask(t, ctx, service)
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete service: %v", err)
++	}
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if len(tasks) != 1 || tasks[0].Task.DesiredStatus != types.TaskStopped {
++		t.Fatalf("expected stopped task directive, got %#v", tasks)
++	}
++
++	if _, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:      tasks[0].Task.ID,
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRunning,
++		ContainerID: "container-1",
++	}); err == nil {
++		t.Fatalf("expected stale running report for stopped task to fail")
++	}
++	task, err := service.GetTask(ctx, tasks[0].Task.ID)
++	if err != nil {
++		t.Fatalf("get task: %v", err)
++	}
++	if task.ActualStatus == types.TaskRunning {
++		t.Fatalf("stale status report resurrected stopped task")
++	}
++}
++
++func TestAgentTaskStatusAllowsFailedTaskRemovalDuringDeletion(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, created := createServiceWithAssignedTask(t, ctx, service)
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if _, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:        tasks[0].Task.ID,
++		NodeID:        registered.Node.ID,
++		Status:        types.TaskFailed,
++		ContainerID:   "container-1",
++		FailureReason: "exit 1",
++	}); err != nil {
++		t.Fatalf("report failed task: %v", err)
++	}
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete service: %v", err)
++	}
++	removed, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:      tasks[0].Task.ID,
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRemoved,
++		ContainerID: "container-1",
++	})
++	if err != nil {
++		t.Fatalf("report removed failed task: %v", err)
++	}
++	if removed.ActualStatus != types.TaskRemoved {
++		t.Fatalf("expected removed task, got %q", removed.ActualStatus)
++	}
++	deleted, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if deleted.Status != types.ServiceDeleted {
++		t.Fatalf("expected service deleted after failed task removal, got %q", deleted.Status)
++	}
++}
++
++func TestAgentTaskStatusTerminalDuplicateIsIdempotent(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, _ := createServiceWithAssignedTask(t, ctx, service)
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	failed, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:        tasks[0].Task.ID,
++		NodeID:        registered.Node.ID,
++		Status:        types.TaskFailed,
++		ContainerID:   "container-1",
++		FailureReason: "exit 1",
++	})
++	if err != nil {
++		t.Fatalf("report failed task: %v", err)
++	}
++	eventsBefore, err := service.ListEvents(ctx, events.Filter{TaskID: tasks[0].Task.ID, Type: events.TypeTaskFailed})
++	if err != nil {
++		t.Fatalf("list events before duplicate: %v", err)
++	}
++	again, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:        tasks[0].Task.ID,
++		NodeID:        registered.Node.ID,
++		Status:        types.TaskFailed,
++		ContainerID:   "container-1",
++		FailureReason: "exit 1",
++	})
++	if err != nil {
++		t.Fatalf("duplicate failed report: %v", err)
++	}
++	if again.UpdatedAt != failed.UpdatedAt {
++		t.Fatalf("expected duplicate terminal report not to update timestamp")
++	}
++	eventsAfter, err := service.ListEvents(ctx, events.Filter{TaskID: tasks[0].Task.ID, Type: events.TypeTaskFailed})
++	if err != nil {
++		t.Fatalf("list events after duplicate: %v", err)
++	}
++	if len(eventsAfter) != len(eventsBefore) {
++		t.Fatalf("expected duplicate terminal report not to emit another event, before=%d after=%d", len(eventsBefore), len(eventsAfter))
++	}
++}
++
+ func TestTaskFailedStatusEmitsErrorEvent(t *testing.T) {
+ 	service := NewMemoryService()
+ 	ctx := context.Background()
+@@ -474,6 +572,11 @@ func TestUnhealthyRestartableTaskIsMarkedFailed(t *testing.T) {
+ }
+ 
+ func createServiceWithAssignedTask(t *testing.T, ctx context.Context, service *MemoryService) (NodeCommand, types.Service) {
++	t.Helper()
++	return createServiceWithAssignedTaskAndPolicy(t, ctx, service, types.RestartPolicy{})
++}
++
++func createServiceWithAssignedTaskAndPolicy(t *testing.T, ctx context.Context, service *MemoryService, policy types.RestartPolicy) (NodeCommand, types.Service) {
+ 	t.Helper()
+ 	registered, err := service.RegisterNode(ctx, NodeRegistration{
+ 		Name:             "node-a",
+@@ -489,6 +592,7 @@ func createServiceWithAssignedTask(t *testing.T, ctx context.Context, service *M
+ 		Image:                "ghcr.io/example/api:1.0.0",
+ 		Replicas:             1,
+ 		ResourceRequirements: types.ResourceRequirements{},
++		RestartPolicy:        policy,
+ 	})
+ 	if err != nil {
+ 		t.Fatalf("create service: %v", err)
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 66e4e73..445d51b 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -321,6 +321,12 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 	if task.NodeID != report.NodeID {
+ 		return types.Task{}, fmt.Errorf("%w: task is not assigned to node", store.ErrInvalidState)
+ 	}
++	if !taskCanAcceptAgentStatus(task, report.Status) {
++		return types.Task{}, fmt.Errorf("%w: task %s with desired=%q actual=%q cannot accept agent status %q", store.ErrInvalidState, task.ID, task.DesiredStatus, task.ActualStatus, report.Status)
++	}
++	if isTerminalTaskStatus(task.ActualStatus) && task.ActualStatus == report.Status {
++		return task, nil
++	}
+ 	status := report.Status
+ 	eventType := events.TypeTaskStatus
+ 	severity := types.EventInfo
+@@ -1187,6 +1193,37 @@ func validAgentTaskStatus(status types.TaskStatus) bool {
+ 	}
+ }
+ 
++func taskCanAcceptAgentStatus(task types.Task, status types.TaskStatus) bool {
++	if task.ActualStatus == types.TaskRemoved {
++		return status == types.TaskRemoved
++	}
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return isStoppingOrTerminalAgentStatus(status)
++	}
++	if isTerminalTaskStatus(task.ActualStatus) {
++		return task.ActualStatus == status
++	}
++	return true
++}
++
++func isStoppingOrTerminalAgentStatus(status types.TaskStatus) bool {
++	switch status {
++	case types.TaskStopping, types.TaskStopped, types.TaskRemoved, types.TaskFailed:
++		return true
++	default:
++		return false
++	}
++}
++
++func isTerminalTaskStatus(status types.TaskStatus) bool {
++	switch status {
++	case types.TaskStopped, types.TaskRemoved, types.TaskFailed:
++		return true
++	default:
++		return false
++	}
++}
++
+ func restartAllowed(policy types.RestartPolicy) bool {
+ 	switch policy.Condition {
+ 	case "", types.RestartAlways, types.RestartOnFailure:
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index bdee3fa..1485461 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -2,11 +2,13 @@ package scheduler
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"fmt"
+ 	"sort"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -109,21 +111,26 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 		return nil, err
+ 	}
+ 
+-	assignments := Plan(PlanInput{
++	planned := Plan(PlanInput{
+ 		PendingTasks: pending,
+ 		Nodes:        nodes,
+ 		RunningTasks: running,
+ 		Services:     services,
+ 	})
+-	for _, assignment := range assignments {
++	assignments := make([]Assignment, 0, len(planned))
++	for _, assignment := range planned {
+ 		task, ok := taskByID(pending, assignment.TaskID)
+ 		if !ok {
+ 			continue
+ 		}
+ 		if _, err := s.store.AssignTask(ctx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
++			if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
++				continue
++			}
+ 			s.metrics.IncSchedulerErrors()
+ 			return assignments, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
+ 		}
++		assignments = append(assignments, assignment)
+ 		_ = events.Emit(ctx, s.store, types.Event{
+ 			Type:              events.TypeTaskAssigned,
+ 			Severity:          types.EventInfo,
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 8b89b32..6cb90a5 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -191,6 +192,32 @@ func TestRunOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 	}
+ }
+ 
++func TestRunOnceSkipsAssignmentConflict(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	fake := &fakeStore{
++		pending: []types.Task{task},
++		nodes: []types.Node{
++			nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		},
++		services: map[types.ServiceID]types.Service{
++			"svc": serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
++		},
++		assignErr: store.ErrConflict,
++	}
++
++	assignments, err := New(fake).RunOnce(context.Background())
++	if err != nil {
++		t.Fatalf("run scheduler: %v", err)
++	}
++	if len(assignments) != 0 {
++		t.Fatalf("expected conflicted assignment not to be returned, got %#v", assignments)
++	}
++	if len(fake.events) != 0 {
++		t.Fatalf("expected no assignment event for conflicted task, got %#v", fake.events)
++	}
++}
++
+ func TestRunOnceAccountsForNonTerminalAssignedTasks(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+@@ -233,6 +260,7 @@ type fakeStore struct {
+ 	assigned   []Assignment
+ 	events     []types.Event
+ 	failEvents bool
++	assignErr  error
+ }
+ 
+ func (s *fakeStore) ListTasksByStatus(_ context.Context, status types.TaskStatus) ([]types.Task, error) {
+@@ -261,6 +289,9 @@ func (s *fakeStore) GetService(_ context.Context, id types.ServiceID) (types.Ser
+ }
+ 
+ func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, _ time.Time) (types.Task, error) {
++	if s.assignErr != nil {
++		return types.Task{}, s.assignErr
++	}
+ 	s.assigned = append(s.assigned, Assignment{TaskID: id, NodeID: nodeID})
+ 	return types.Task{ID: id, NodeID: nodeID, ActualStatus: types.TaskAssigned}, nil
+ }
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index ec5b643..a50a87f 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -346,6 +346,13 @@ func (s *PostgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 	task, err := scanTask(row)
+ 	if err != nil {
+ 		if errors.Is(err, pgx.ErrNoRows) {
++			current, getErr := s.GetTask(ctx, id)
++			if getErr != nil {
++				return types.Task{}, getErr
++			}
++			if current.NodeID == nodeID && current.ActualStatus == types.TaskAssigned {
++				return current, nil
++			}
+ 			return types.Task{}, ErrConflict
+ 		}
+ 		return types.Task{}, mapPostgresError(err)
+@@ -369,6 +376,13 @@ func (s *PostgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 	task, err := scanTask(row)
+ 	if err != nil {
+ 		if errors.Is(err, pgx.ErrNoRows) {
++			current, getErr := s.GetTask(ctx, id)
++			if getErr != nil {
++				return types.Task{}, getErr
++			}
++			if current.DesiredStatus == types.TaskStopped || current.DesiredStatus == types.TaskRemoved {
++				return current, nil
++			}
+ 			return types.Task{}, ErrConflict
+ 		}
+ 		return types.Task{}, mapPostgresError(err)
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 83e4cae..c3ce641 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -130,9 +130,32 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatalf("create task: %v", err)
+ 	}
+-	if _, err := store.UpdateTaskStatus(ctx, task.ID, types.TaskRunning, types.TaskRunning, "container-1", "", task.UpdatedAt); err != nil {
++	assigned, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt)
++	if err != nil {
++		t.Fatalf("assign task: %v", err)
++	}
++	assignedAgain, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt)
++	if err != nil {
++		t.Fatalf("idempotent assign task: %v", err)
++	}
++	if assignedAgain.ID != assigned.ID || assignedAgain.NodeID != updatedNode.ID {
++		t.Fatalf("expected idempotent assignment to return existing task, got %#v", assignedAgain)
++	}
++	running, err := store.UpdateTaskStatus(ctx, task.ID, types.TaskRunning, types.TaskRunning, "container-1", "", assigned.UpdatedAt)
++	if err != nil {
+ 		t.Fatalf("update task status: %v", err)
+ 	}
++	stopped, err := store.StopTask(ctx, task.ID, running.UpdatedAt)
++	if err != nil {
++		t.Fatalf("stop task: %v", err)
++	}
++	stoppedAgain, err := store.StopTask(ctx, task.ID, running.UpdatedAt)
++	if err != nil {
++		t.Fatalf("idempotent stop task: %v", err)
++	}
++	if stoppedAgain.DesiredStatus != types.TaskStopped || stoppedAgain.ID != stopped.ID {
++		t.Fatalf("expected idempotent stop to return stopped task, got %#v", stoppedAgain)
++	}
+ 
+ 	deployment, err := store.CreateDeployment(ctx, types.Deployment{
+ 		ServiceID:      service.ID,

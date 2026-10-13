@@ -1,0 +1,120 @@
+{
+  "chapter": "35",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch35.versions",
+      "statement": "Server0.3.0 supports agents0.2.0\u20130.3.0 and schemas15\u201316, expecting16.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/version/version.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 11,
+      "line_end": 18,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch35/operations-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.preflight",
+      "statement": "check-upgrade writes blocked in structured output without returning a command error for that decision.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 176,
+      "line_end": 188,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch35/controlled-preflight-corrected.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.migrations",
+      "statement": "Up uses advisory locking and individual transactions, skipping recorded versions.",
+      "classification": "implemented package",
+      "source_path": "internal/migrations/manager.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 138,
+      "line_end": 180,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/intake/full-schema-recovery-corrected.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.down",
+      "statement": "Down requires explicit allow-down and a matching down file.",
+      "classification": "implemented package",
+      "source_path": "internal/migrations/manager.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 182,
+      "line_end": 205,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/intake/full-schema-recovery-corrected.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.maintenance",
+      "statement": "Relevant enabled windows gate operations; forced contexts audit a bypass.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 616,
+      "line_end": 639,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch35/operations-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.retention",
+      "statement": "Prune preserves active and unresolved failed tasks and counts without deleting during dry-run.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 26,
+      "line_end": 115,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch35/operations-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    },
+    {
+      "claim_id": "ch35.schema-gate",
+      "statement": "Schema validation is opt-in with ORCH_SCHEMA_CHECK=true and does not replace MemoryService.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 103,
+      "line_end": 120,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual deterministic operations and controlled CLI tests passed; existing owned PostgreSQL run supplies status/up/idempotence/restore. No destructive down or live host upgrades."
+      ]
+    }
+  ]
+}

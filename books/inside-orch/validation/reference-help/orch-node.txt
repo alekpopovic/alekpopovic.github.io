@@ -1,0 +1,23 @@
+Manage nodes
+
+Usage:
+  orch node [command]
+
+Available Commands:
+  drain        Drain a node
+  drain-status Show node drain status
+  inspect      Inspect a node
+  ls           List nodes
+  uncordon     Uncordon a node
+
+Flags:
+  -h, --help   help for node
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch node [command] --help" for more information about a command.

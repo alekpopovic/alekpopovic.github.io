@@ -1,0 +1,1546 @@
+commit 042a4a44ecfaa884d6173f9d93afafa81a24ea27
+Date: 2026-06-11T15:32:06+02:00
+Subject: Add Cobra orch CLI
+
+
+---
+ README.md                   |  58 ++++++
+ cmd/orch/main.go            |  34 +---
+ go.mod                      |  10 +-
+ go.sum                      |  18 ++
+ internal/cli/client.go      | 197 ++++++++++++++++++
+ internal/cli/deploy.go      | 227 +++++++++++++++++++++
+ internal/cli/deploy_test.go |  73 +++++++
+ internal/cli/output.go      |  93 +++++++++
+ internal/cli/root.go        | 485 ++++++++++++++++++++++++++++++++++++++++++++
+ internal/cli/root_test.go   | 219 ++++++++++++++++++++
+ 10 files changed, 1382 insertions(+), 32 deletions(-)
+
+diff --git a/README.md b/README.md
+index ca91d6f..6798711 100644
+--- a/README.md
++++ b/README.md
+@@ -48,6 +48,64 @@ docker compose --profile local-orch up --build
+ - `orch-server`: control plane API server
+ - `orch-agent`: worker node agent
+ 
++## CLI Examples
++
++The CLI reads the control-plane URL from `--server`, `ORCH_SERVER_URL`, or `server_url` in the CLI config file. By default the config file is `~/.config/orch/config.yaml`:
++
++```yaml
++server_url: http://localhost:8080
++```
++
++```sh
++export ORCH_SERVER_URL=http://localhost:8080
++
++orch version
++orch node ls
++orch node inspect 00000000-0000-4000-8000-000000000001
++orch node drain 00000000-0000-4000-8000-000000000001
++orch node uncordon 00000000-0000-4000-8000-000000000001
++```
++
++Deploy from YAML:
++
++```yaml
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 3
++ports:
++  - container: 8080
++    public: 80
++env:
++  NODE_ENV: production
++resources:
++  cpu: 500m
++  memory: 512Mi
++healthcheck:
++  type: http
++  path: /health
++  interval: 10s
++  timeout: 2s
++restart:
++  policy: always
++placement:
++  labels:
++    role: app
++```
++
++```sh
++orch deploy service.yaml
++orch service ls --output table
++orch service inspect api --output json
++orch service ps api
++orch scale api --replicas 5
++orch rollout api --image ghcr.io/example/api:1.0.1
++orch rollback api
++orch events
++orch delete api
++```
++
++`orch logs <service-name-or-id>` is present, but the server-side logs endpoint has not been implemented yet.
++
+ ## Development
+ 
+ See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for development commands and local workflow.
+diff --git a/cmd/orch/main.go b/cmd/orch/main.go
+index 54ecedf..ce5c7fd 100644
+--- a/cmd/orch/main.go
++++ b/cmd/orch/main.go
+@@ -3,47 +3,19 @@ package main
+ import (
+ 	"context"
+ 	"fmt"
+-	"log/slog"
+ 	"os"
+ 	"os/signal"
+ 	"syscall"
+ 
+-	"github.com/alekpopovic/orch/internal/logging"
++	"github.com/alekpopovic/orch/internal/cli"
+ )
+ 
+ func main() {
+ 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+ 	defer stop()
+ 
+-	logger := logging.NewLogger(os.Getenv("ORCH_LOG_LEVEL"))
+-	if err := run(ctx, logger, os.Args[1:]); err != nil {
+-		logger.Error("command failed", "error", err)
++	if err := cli.Execute(ctx, os.Args[1:], os.Stdout, os.Stderr); err != nil {
++		fmt.Fprintln(os.Stderr, "Error:", err)
+ 		os.Exit(1)
+ 	}
+ }
+-
+-func run(ctx context.Context, logger *slog.Logger, args []string) error {
+-	if err := ctx.Err(); err != nil {
+-		return err
+-	}
+-
+-	command := "help"
+-	if len(args) > 0 {
+-		command = args[0]
+-	}
+-
+-	switch command {
+-	case "help", "-h", "--help":
+-		fmt.Println("orch is the CLI for the orch container orchestrator.")
+-		fmt.Println()
+-		fmt.Println("Usage:")
+-		fmt.Println("  orch help")
+-		return nil
+-	case "version":
+-		fmt.Println("orch dev")
+-		return nil
+-	default:
+-		logger.Info("unknown command", "command", command)
+-		return fmt.Errorf("unknown command %q", command)
+-	}
+-}
+diff --git a/go.mod b/go.mod
+index 411a315..46e48af 100644
+--- a/go.mod
++++ b/go.mod
+@@ -2,12 +2,20 @@ module github.com/alekpopovic/orch
+ 
+ go 1.25.0
+ 
+-require github.com/jackc/pgx/v5 v5.10.0
++require (
++	github.com/jackc/pgx/v5 v5.10.0
++	github.com/spf13/cobra v1.10.2
++	gopkg.in/yaml.v3 v3.0.1
++)
+ 
+ require (
++	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+ 	github.com/jackc/pgpassfile v1.0.0 // indirect
+ 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+ 	github.com/jackc/puddle/v2 v2.2.2 // indirect
++	github.com/kr/text v0.2.0 // indirect
++	github.com/rogpeppe/go-internal v1.15.0 // indirect
++	github.com/spf13/pflag v1.0.9 // indirect
+ 	golang.org/x/sync v0.17.0 // indirect
+ 	golang.org/x/text v0.29.0 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index c0e505b..43faaf0 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,6 +1,10 @@
++github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
++github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
++github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
++github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
+ github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
+ github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
+ github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
+@@ -9,18 +13,32 @@ github.com/jackc/pgx/v5 v5.10.0 h1:VhSvgU2jSli8o3AqIEOTJr7rZwAEUVo4E4XhR94Zfr0=
+ github.com/jackc/pgx/v5 v5.10.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
+ github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
+ github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
++github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
++github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
++github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
++github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
++github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
++github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
++github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
++github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
++github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
++github.com/spf13/pflag v1.0.9 h1:9exaQaMOCwffKiiiYk6/BndUBv+iRViNW+4lEMi0PvY=
++github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
+ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+ github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
++go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
+ golang.org/x/sync v0.17.0 h1:l60nONMj9l5drqw6jlhIELNv9I0A4OFgRsG9k2oT9Ug=
+ golang.org/x/sync v0.17.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+ golang.org/x/text v0.29.0 h1:1neNs90w9YzJ9BocxfsQNHKuAT4pkghyXc4nhZ6sJvk=
+ golang.org/x/text v0.29.0/go.mod h1:7MhJOA9CD2qZyOKYazxdYMF85OwPdEr9jTtBpO7ydH4=
+ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
++gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
++gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
+ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+ gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+ gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+new file mode 100644
+index 0000000..320e6d4
+--- /dev/null
++++ b/internal/cli/client.go
+@@ -0,0 +1,197 @@
++package cli
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/http"
++	"net/url"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type APIClient struct {
++	baseURL    string
++	httpClient *http.Client
++}
++
++func NewAPIClient(serverURL string) (*APIClient, error) {
++	serverURL = strings.TrimRight(strings.TrimSpace(serverURL), "/")
++	if serverURL == "" {
++		return nil, fmt.Errorf("server URL is required; pass --server, set ORCH_SERVER_URL, or configure the CLI")
++	}
++	if _, err := url.ParseRequestURI(serverURL); err != nil {
++		return nil, fmt.Errorf("invalid server URL %q: %w", serverURL, err)
++	}
++	return &APIClient{
++		baseURL: serverURL,
++		httpClient: &http.Client{
++			Timeout: 30 * time.Second,
++		},
++	}, nil
++}
++
++func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
++	var out api.ListNodesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/nodes", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Nodes, nil
++}
++
++func (c *APIClient) GetNode(ctx context.Context, id string) (types.Node, error) {
++	var out api.NodeResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/nodes/"+id, nil, &out); err != nil {
++		return types.Node{}, err
++	}
++	return out.Node, nil
++}
++
++func (c *APIClient) DrainNode(ctx context.Context, id string) (types.Node, error) {
++	var out api.NodeResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/nodes/"+id+"/drain", nil, &out); err != nil {
++		return types.Node{}, err
++	}
++	return out.Node, nil
++}
++
++func (c *APIClient) UncordonNode(ctx context.Context, id string) (types.Node, error) {
++	var out api.NodeResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/nodes/"+id+"/uncordon", nil, &out); err != nil {
++		return types.Node{}, err
++	}
++	return out.Node, nil
++}
++
++func (c *APIClient) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
++	var out api.ServiceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/services", api.CreateServiceRequest{Spec: spec}, &out); err != nil {
++		return types.Service{}, err
++	}
++	return out.Service, nil
++}
++
++func (c *APIClient) ListServices(ctx context.Context) ([]types.Service, error) {
++	var out api.ListServicesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/services", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Services, nil
++}
++
++func (c *APIClient) GetService(ctx context.Context, id string) (types.Service, error) {
++	var out api.ServiceResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/services/"+id, nil, &out); err != nil {
++		return types.Service{}, err
++	}
++	return out.Service, nil
++}
++
++func (c *APIClient) DeleteService(ctx context.Context, id string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/services/"+id, nil, nil)
++}
++
++func (c *APIClient) ScaleService(ctx context.Context, id string, replicas int) (types.Service, error) {
++	var out api.ServiceResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/scale", api.ScaleServiceRequest{Replicas: replicas}, &out); err != nil {
++		return types.Service{}, err
++	}
++	return out.Service, nil
++}
++
++func (c *APIClient) RolloutService(ctx context.Context, id string, image string) (types.Deployment, error) {
++	var out api.DeploymentResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollout", api.RolloutServiceRequest{Image: image}, &out); err != nil {
++		return types.Deployment{}, err
++	}
++	return out.Deployment, nil
++}
++
++func (c *APIClient) RollbackService(ctx context.Context, id string) (types.Deployment, error) {
++	var out api.DeploymentResponse
++	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollback", nil, &out); err != nil {
++		return types.Deployment{}, err
++	}
++	return out.Deployment, nil
++}
++
++func (c *APIClient) ListTasks(ctx context.Context, query url.Values) ([]types.Task, error) {
++	path := "/v1/tasks"
++	if encoded := query.Encode(); encoded != "" {
++		path += "?" + encoded
++	}
++	var out api.ListTasksResponse
++	if err := c.do(ctx, http.MethodGet, path, nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Tasks, nil
++}
++
++func (c *APIClient) GetTask(ctx context.Context, id string) (types.Task, error) {
++	var out api.TaskResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/tasks/"+id, nil, &out); err != nil {
++		return types.Task{}, err
++	}
++	return out.Task, nil
++}
++
++func (c *APIClient) ListEvents(ctx context.Context) ([]types.Event, error) {
++	var out api.ListEventsResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/events", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Events, nil
++}
++
++func (c *APIClient) do(ctx context.Context, method string, path string, body any, out any) error {
++	var reader io.Reader
++	if body != nil {
++		data, err := json.Marshal(body)
++		if err != nil {
++			return fmt.Errorf("encode request: %w", err)
++		}
++		reader = bytes.NewReader(data)
++	}
++
++	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, reader)
++	if err != nil {
++		return fmt.Errorf("create request: %w", err)
++	}
++	if body != nil {
++		req.Header.Set("Content-Type", "application/json")
++	}
++	req.Header.Set("Accept", "application/json")
++
++	resp, err := c.httpClient.Do(req)
++	if err != nil {
++		return fmt.Errorf("request %s %s failed: %w", method, path, err)
++	}
++	defer resp.Body.Close()
++
++	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
++		return decodeAPIError(resp)
++	}
++	if out == nil || resp.StatusCode == http.StatusNoContent {
++		return nil
++	}
++	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
++		return fmt.Errorf("decode response: %w", err)
++	}
++	return nil
++}
++
++func decodeAPIError(resp *http.Response) error {
++	var body api.ErrorResponse
++	if err := json.NewDecoder(resp.Body).Decode(&body); err == nil && body.Error.Message != "" {
++		if body.Error.RequestID != "" {
++			return fmt.Errorf("%s (request %s)", body.Error.Message, body.Error.RequestID)
++		}
++		return fmt.Errorf("%s", body.Error.Message)
++	}
++	return fmt.Errorf("server returned %s", resp.Status)
++}
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+new file mode 100644
+index 0000000..d6f9ec6
+--- /dev/null
++++ b/internal/cli/deploy.go
+@@ -0,0 +1,227 @@
++package cli
++
++import (
++	"fmt"
++	"os"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"gopkg.in/yaml.v3"
++)
++
++type DeployFile struct {
++	Name        string            `yaml:"name"`
++	Image       string            `yaml:"image"`
++	Replicas    int               `yaml:"replicas"`
++	Ports       []DeployPort      `yaml:"ports"`
++	Env         map[string]string `yaml:"env"`
++	Resources   DeployResources   `yaml:"resources"`
++	Healthcheck DeployHealthcheck `yaml:"healthcheck"`
++	Restart     DeployRestart     `yaml:"restart"`
++	Placement   DeployPlacement   `yaml:"placement"`
++}
++
++type DeployPort struct {
++	Container int `yaml:"container"`
++	Public    int `yaml:"public"`
++}
++
++type DeployResources struct {
++	CPU    string `yaml:"cpu"`
++	Memory string `yaml:"memory"`
++}
++
++type DeployHealthcheck struct {
++	Type     string `yaml:"type"`
++	Path     string `yaml:"path"`
++	Interval string `yaml:"interval"`
++	Timeout  string `yaml:"timeout"`
++}
++
++type DeployRestart struct {
++	Policy string `yaml:"policy"`
++}
++
++type DeployPlacement struct {
++	Labels map[string]string `yaml:"labels"`
++}
++
++func ParseDeployFile(path string) (types.ServiceSpec, error) {
++	data, err := os.ReadFile(path)
++	if err != nil {
++		return types.ServiceSpec{}, fmt.Errorf("read deploy file %q: %w", path, err)
++	}
++	return ParseDeploy(data)
++}
++
++func ParseDeploy(data []byte) (types.ServiceSpec, error) {
++	var deploy DeployFile
++	if err := yaml.Unmarshal(data, &deploy); err != nil {
++		return types.ServiceSpec{}, fmt.Errorf("parse deploy YAML: %w", err)
++	}
++
++	requests, err := deploy.Resources.toRequests()
++	if err != nil {
++		return types.ServiceSpec{}, err
++	}
++
++	spec := types.ServiceSpec{
++		Name:     strings.TrimSpace(deploy.Name),
++		Image:    strings.TrimSpace(deploy.Image),
++		Replicas: deploy.Replicas,
++		Env:      deploy.Env,
++		ResourceRequirements: types.ResourceRequirements{
++			Requests: requests,
++			Limits:   requests,
++		},
++		RestartPolicy:        restartPolicy(deploy.Restart.Policy),
++		PlacementConstraints: placementConstraints(deploy.Placement.Labels),
++	}
++
++	for _, port := range deploy.Ports {
++		spec.Ports = append(spec.Ports, types.Port{
++			Protocol:      types.PortTCP,
++			ContainerPort: port.Container,
++			PublishedPort: port.Public,
++		})
++	}
++
++	if strings.TrimSpace(deploy.Healthcheck.Type) != "" {
++		check, err := deploy.Healthcheck.toDomain()
++		if err != nil {
++			return types.ServiceSpec{}, err
++		}
++		if check.Port == 0 && len(spec.Ports) > 0 {
++			check.Port = spec.Ports[0].ContainerPort
++		}
++		spec.Healthcheck = &check
++	}
++
++	if err := spec.Validate(); err != nil {
++		return types.ServiceSpec{}, fmt.Errorf("invalid deploy file: %w", err)
++	}
++	return spec, nil
++}
++
++func (r DeployResources) toRequests() (types.Resources, error) {
++	cpu, err := parseCPU(r.CPU)
++	if err != nil {
++		return types.Resources{}, err
++	}
++	memory, err := parseMemory(r.Memory)
++	if err != nil {
++		return types.Resources{}, err
++	}
++	return types.Resources{CPU: cpu, Memory: memory}, nil
++}
++
++func (h DeployHealthcheck) toDomain() (types.Healthcheck, error) {
++	interval, err := parseOptionalDuration(h.Interval)
++	if err != nil {
++		return types.Healthcheck{}, fmt.Errorf("invalid healthcheck interval: %w", err)
++	}
++	timeout, err := parseOptionalDuration(h.Timeout)
++	if err != nil {
++		return types.Healthcheck{}, fmt.Errorf("invalid healthcheck timeout: %w", err)
++	}
++
++	check := types.Healthcheck{
++		Type:               types.HealthcheckType(strings.TrimSpace(h.Type)),
++		Path:               strings.TrimSpace(h.Path),
++		Interval:           interval,
++		Timeout:            timeout,
++		HealthyThreshold:   1,
++		UnhealthyThreshold: 3,
++	}
++	return check, nil
++}
++
++func restartPolicy(policy string) types.RestartPolicy {
++	switch strings.TrimSpace(policy) {
++	case "":
++		return types.RestartPolicy{}
++	case "always":
++		return types.RestartPolicy{Condition: types.RestartAlways}
++	case "never":
++		return types.RestartPolicy{Condition: types.RestartNever}
++	case "on_failure", "on-failure":
++		return types.RestartPolicy{Condition: types.RestartOnFailure}
++	default:
++		return types.RestartPolicy{Condition: types.RestartCondition(policy)}
++	}
++}
++
++func placementConstraints(labels map[string]string) []types.PlacementConstraint {
++	constraints := make([]types.PlacementConstraint, 0, len(labels))
++	for key, value := range labels {
++		constraints = append(constraints, types.PlacementConstraint{
++			Key:      key,
++			Operator: types.ConstraintEquals,
++			Value:    value,
++		})
++	}
++	return constraints
++}
++
++func parseOptionalDuration(value string) (time.Duration, error) {
++	if strings.TrimSpace(value) == "" {
++		return 0, nil
++	}
++	return time.ParseDuration(value)
++}
++
++func parseCPU(value string) (int64, error) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return 0, nil
++	}
++	if strings.HasSuffix(value, "m") {
++		raw := strings.TrimSuffix(value, "m")
++		parsed, err := strconv.ParseInt(raw, 10, 64)
++		if err != nil {
++			return 0, fmt.Errorf("invalid CPU value %q", value)
++		}
++		return parsed, nil
++	}
++	parsed, err := strconv.ParseFloat(value, 64)
++	if err != nil {
++		return 0, fmt.Errorf("invalid CPU value %q", value)
++	}
++	return int64(parsed * 1000), nil
++}
++
++func parseMemory(value string) (int64, error) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return 0, nil
++	}
++
++	units := []struct {
++		suffix string
++		scale  int64
++	}{
++		{"Gi", 1024 * 1024 * 1024},
++		{"Mi", 1024 * 1024},
++		{"Ki", 1024},
++		{"G", 1000 * 1000 * 1000},
++		{"M", 1000 * 1000},
++		{"K", 1000},
++	}
++	for _, unit := range units {
++		if strings.HasSuffix(value, unit.suffix) {
++			raw := strings.TrimSuffix(value, unit.suffix)
++			parsed, err := strconv.ParseInt(raw, 10, 64)
++			if err != nil {
++				return 0, fmt.Errorf("invalid memory value %q", value)
++			}
++			return parsed * unit.scale, nil
++		}
++	}
++	parsed, err := strconv.ParseInt(value, 10, 64)
++	if err != nil {
++		return 0, fmt.Errorf("invalid memory value %q", value)
++	}
++	return parsed, nil
++}
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+new file mode 100644
+index 0000000..dcbbfc8
+--- /dev/null
++++ b/internal/cli/deploy_test.go
+@@ -0,0 +1,73 @@
++package cli
++
++import (
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestParseDeploy(t *testing.T) {
++	spec, err := ParseDeploy([]byte(`
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 3
++ports:
++  - container: 8080
++    public: 80
++env:
++  NODE_ENV: production
++resources:
++  cpu: 500m
++  memory: 512Mi
++healthcheck:
++  type: http
++  path: /health
++  interval: 10s
++  timeout: 2s
++restart:
++  policy: always
++placement:
++  labels:
++    role: app
++`))
++	if err != nil {
++		t.Fatalf("parse deploy: %v", err)
++	}
++
++	if spec.Name != "api" {
++		t.Fatalf("expected name api, got %q", spec.Name)
++	}
++	if spec.Image != "ghcr.io/example/api:1.0.0" {
++		t.Fatalf("unexpected image %q", spec.Image)
++	}
++	if spec.Replicas != 3 {
++		t.Fatalf("expected 3 replicas, got %d", spec.Replicas)
++	}
++	if spec.ResourceRequirements.Requests.CPU != 500 {
++		t.Fatalf("expected 500 millicpu, got %d", spec.ResourceRequirements.Requests.CPU)
++	}
++	if spec.ResourceRequirements.Requests.Memory != 512*1024*1024 {
++		t.Fatalf("unexpected memory %d", spec.ResourceRequirements.Requests.Memory)
++	}
++	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" {
++		t.Fatalf("unexpected healthcheck %#v", spec.Healthcheck)
++	}
++	if spec.RestartPolicy.Condition != types.RestartAlways {
++		t.Fatalf("unexpected restart policy %q", spec.RestartPolicy.Condition)
++	}
++	if len(spec.PlacementConstraints) != 1 || spec.PlacementConstraints[0].Key != "role" {
++		t.Fatalf("unexpected constraints %#v", spec.PlacementConstraints)
++	}
++}
++
++func TestParseDeployValidation(t *testing.T) {
++	_, err := ParseDeploy([]byte(`
++name: api
++replicas: -1
++resources:
++  cpu: nope
++`))
++	if err == nil {
++		t.Fatalf("expected validation error")
++	}
++}
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+new file mode 100644
+index 0000000..f4dac01
+--- /dev/null
++++ b/internal/cli/output.go
+@@ -0,0 +1,93 @@
++package cli
++
++import (
++	"encoding/json"
++	"fmt"
++	"io"
++	"strings"
++	"text/tabwriter"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func writeValue(w io.Writer, output string, value any) error {
++	if output == "json" {
++		encoder := json.NewEncoder(w)
++		encoder.SetIndent("", "  ")
++		return encoder.Encode(value)
++	}
++	return fmt.Errorf("table output for %T is not implemented", value)
++}
++
++func writeNodes(w io.Writer, output string, nodes []types.Node) error {
++	if output == "json" {
++		return writeValue(w, output, nodes)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tHOSTNAME\tADDRESS\tSTATUS\tCPU\tMEMORY")
++	for _, node := range nodes {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%d\t%d\n", node.ID, node.Hostname, node.AdvertiseAddress, node.Status, node.Capacity.CPU, node.Capacity.Memory)
++	}
++	return tw.Flush()
++}
++
++func writeNode(w io.Writer, output string, node types.Node) error {
++	if output == "json" {
++		return writeValue(w, output, node)
++	}
++	return writeNodes(w, output, []types.Node{node})
++}
++
++func writeServices(w io.Writer, output string, services []types.Service) error {
++	if output == "json" {
++		return writeValue(w, output, services)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tNAME\tIMAGE\tREPLICAS\tVERSION")
++	for _, service := range services {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%d\n", service.ID, service.Spec.Name, service.Spec.Image, service.Spec.Replicas, service.DeploymentVersion)
++	}
++	return tw.Flush()
++}
++
++func writeService(w io.Writer, output string, service types.Service) error {
++	if output == "json" {
++		return writeValue(w, output, service)
++	}
++	return writeServices(w, output, []types.Service{service})
++}
++
++func writeDeployment(w io.Writer, output string, deployment types.Deployment) error {
++	if output == "json" {
++		return writeValue(w, output, deployment)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tSERVICE\tFROM\tTO\tSTRATEGY\tSTATUS")
++	fmt.Fprintf(tw, "%s\t%s\t%d\t%d\t%s\t%s\n", deployment.ID, deployment.ServiceID, deployment.FromVersion, deployment.ToVersion, deployment.Strategy, deployment.Status)
++	return tw.Flush()
++}
++
++func writeTasks(w io.Writer, output string, tasks []types.Task) error {
++	if output == "json" {
++		return writeValue(w, output, tasks)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tSERVICE\tNODE\tDESIRED\tACTUAL\tIMAGE\tRESTARTS")
++	for _, task := range tasks {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\t%d\n", task.ID, task.ServiceID, task.NodeID, task.DesiredStatus, task.ActualStatus, task.Image, task.RestartCount)
++	}
++	return tw.Flush()
++}
++
++func writeEvents(w io.Writer, output string, events []types.Event) error {
++	if output == "json" {
++		return writeValue(w, output, events)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "TIME\tSEVERITY\tTYPE\tSOURCE\tOBJECT\tMESSAGE")
++	for _, event := range events {
++		object := strings.Trim(event.RelatedObjectType+"/"+event.RelatedObjectID, "/")
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n", event.Timestamp.Format("2006-01-02T15:04:05Z07:00"), event.Severity, event.Type, event.Source, object, event.Message)
++	}
++	return tw.Flush()
++}
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+new file mode 100644
+index 0000000..4595a00
+--- /dev/null
++++ b/internal/cli/root.go
+@@ -0,0 +1,485 @@
++package cli
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"io"
++	"net/url"
++	"os"
++	"path/filepath"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/spf13/cobra"
++	"gopkg.in/yaml.v3"
++)
++
++const version = "dev"
++
++type Client interface {
++	ListNodes(ctx context.Context) ([]types.Node, error)
++	GetNode(ctx context.Context, id string) (types.Node, error)
++	DrainNode(ctx context.Context, id string) (types.Node, error)
++	UncordonNode(ctx context.Context, id string) (types.Node, error)
++	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
++	ListServices(ctx context.Context) ([]types.Service, error)
++	GetService(ctx context.Context, id string) (types.Service, error)
++	DeleteService(ctx context.Context, id string) error
++	ScaleService(ctx context.Context, id string, replicas int) (types.Service, error)
++	RolloutService(ctx context.Context, id string, image string) (types.Deployment, error)
++	RollbackService(ctx context.Context, id string) (types.Deployment, error)
++	ListTasks(ctx context.Context, query url.Values) ([]types.Task, error)
++	GetTask(ctx context.Context, id string) (types.Task, error)
++	ListEvents(ctx context.Context) ([]types.Event, error)
++}
++
++type Config struct {
++	ServerURL string `yaml:"server_url" json:"server_url"`
++}
++
++type Options struct {
++	Out           io.Writer
++	Err           io.Writer
++	NewClient     func(serverURL string) (Client, error)
++	DefaultConfig string
++}
++
++type app struct {
++	out        io.Writer
++	serverFlag string
++	configPath string
++	output     string
++	newClient  func(serverURL string) (Client, error)
++}
++
++func NewRootCommand(opts Options) *cobra.Command {
++	out := opts.Out
++	if out == nil {
++		out = os.Stdout
++	}
++	errOut := opts.Err
++	if errOut == nil {
++		errOut = os.Stderr
++	}
++	newClient := opts.NewClient
++	if newClient == nil {
++		newClient = func(serverURL string) (Client, error) {
++			return NewAPIClient(serverURL)
++		}
++	}
++
++	a := &app{
++		out:        out,
++		output:     "table",
++		configPath: defaultConfigPath(),
++		newClient:  newClient,
++	}
++	if opts.DefaultConfig != "" {
++		a.configPath = opts.DefaultConfig
++	}
++
++	root := &cobra.Command{
++		Use:           "orch",
++		Short:         "CLI for the orch container orchestrator",
++		SilenceUsage:  true,
++		SilenceErrors: true,
++		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
++			if a.output != "table" && a.output != "json" {
++				return fmt.Errorf("--output must be table or json")
++			}
++			return nil
++		},
++	}
++	root.SetOut(out)
++	root.SetErr(errOut)
++	root.PersistentFlags().StringVar(&a.serverFlag, "server", "", "control-plane server URL")
++	root.PersistentFlags().StringVar(&a.output, "output", "table", "output format: table or json")
++	root.PersistentFlags().StringVar(&a.configPath, "config", a.configPath, "CLI config file")
++
++	root.AddCommand(a.versionCommand())
++	root.AddCommand(a.nodeCommand())
++	root.AddCommand(a.deployCommand())
++	root.AddCommand(a.serviceCommand())
++	root.AddCommand(a.scaleCommand())
++	root.AddCommand(a.rolloutCommand())
++	root.AddCommand(a.rollbackCommand())
++	root.AddCommand(a.deleteCommand())
++	root.AddCommand(a.eventsCommand())
++	root.AddCommand(a.logsCommand())
++	return root
++}
++
++func Execute(ctx context.Context, args []string, out io.Writer, errOut io.Writer) error {
++	cmd := NewRootCommand(Options{Out: out, Err: errOut})
++	cmd.SetArgs(args)
++	return cmd.ExecuteContext(ctx)
++}
++
++func (a *app) versionCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "version",
++		Short: "Print the CLI version",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			fmt.Fprintln(a.out, "orch "+version)
++			return nil
++		},
++	}
++}
++
++func (a *app) nodeCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "node", Short: "Manage nodes"}
++	cmd.AddCommand(&cobra.Command{
++		Use:   "ls",
++		Short: "List nodes",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			nodes, err := client.ListNodes(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeNodes(a.out, a.output, nodes)
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use:   "inspect <node-id>",
++		Short: "Inspect a node",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			node, err := client.GetNode(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			return writeNode(a.out, a.output, node)
++		},
++	})
++	cmd.AddCommand(a.nodeActionCommand("drain", "Drain a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
++		return client.DrainNode(ctx, id)
++	}))
++	cmd.AddCommand(a.nodeActionCommand("uncordon", "Uncordon a node", func(ctx context.Context, client Client, id string) (types.Node, error) {
++		return client.UncordonNode(ctx, id)
++	}))
++	return cmd
++}
++
++func (a *app) nodeActionCommand(name string, short string, action func(context.Context, Client, string) (types.Node, error)) *cobra.Command {
++	return &cobra.Command{
++		Use:   name + " <node-id>",
++		Short: short,
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			node, err := action(cmd.Context(), client, args[0])
++			if err != nil {
++				return err
++			}
++			fmt.Fprintf(a.out, "node %s is %s\n", node.ID, node.Status)
++			return nil
++		},
++	}
++}
++
++func (a *app) deployCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "deploy <file.yaml>",
++		Short: "Deploy a service from YAML",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			spec, err := ParseDeployFile(args[0])
++			if err != nil {
++				return err
++			}
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			service, err := client.CreateService(cmd.Context(), spec)
++			if err != nil {
++				return err
++			}
++			return writeServices(a.out, a.output, []types.Service{service})
++		},
++	}
++}
++
++func (a *app) serviceCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "service", Short: "Manage services"}
++	cmd.AddCommand(&cobra.Command{
++		Use:   "ls",
++		Short: "List services",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			services, err := client.ListServices(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeServices(a.out, a.output, services)
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use:   "inspect <service-name-or-id>",
++		Short: "Inspect a service",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			service, err := a.resolveService(cmd.Context(), client, args[0])
++			if err != nil {
++				return err
++			}
++			return writeService(a.out, a.output, service)
++		},
++	})
++	cmd.AddCommand(&cobra.Command{
++		Use:   "ps <service-name-or-id>",
++		Short: "List service tasks",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			service, err := a.resolveService(cmd.Context(), client, args[0])
++			if err != nil {
++				return err
++			}
++			query := url.Values{"service_id": []string{string(service.ID)}}
++			tasks, err := client.ListTasks(cmd.Context(), query)
++			if err != nil {
++				return err
++			}
++			return writeTasks(a.out, a.output, tasks)
++		},
++	})
++	return cmd
++}
++
++func (a *app) scaleCommand() *cobra.Command {
++	var replicas int
++	cmd := &cobra.Command{
++		Use:   "scale <service-name-or-id>",
++		Short: "Scale a service",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			if replicas < 0 {
++				return fmt.Errorf("replicas must be zero or greater")
++			}
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			scaled, err := client.ScaleService(cmd.Context(), string(service.ID), replicas)
++			if err != nil {
++				return err
++			}
++			return writeServices(a.out, a.output, []types.Service{scaled})
++		},
++	}
++	cmd.Flags().IntVar(&replicas, "replicas", -1, "desired replica count")
++	_ = cmd.MarkFlagRequired("replicas")
++	return cmd
++}
++
++func (a *app) rolloutCommand() *cobra.Command {
++	var image string
++	cmd := &cobra.Command{
++		Use:   "rollout <service-name-or-id>",
++		Short: "Roll out a new service image",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			image = strings.TrimSpace(image)
++			if image == "" {
++				return fmt.Errorf("--image is required")
++			}
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			deployment, err := client.RolloutService(cmd.Context(), string(service.ID), image)
++			if err != nil {
++				return err
++			}
++			return writeDeployment(a.out, a.output, deployment)
++		},
++	}
++	cmd.Flags().StringVar(&image, "image", "", "new image")
++	_ = cmd.MarkFlagRequired("image")
++	return cmd
++}
++
++func (a *app) rollbackCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "rollback <service-name-or-id>",
++		Short: "Roll back a service",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			deployment, err := client.RollbackService(cmd.Context(), string(service.ID))
++			if err != nil {
++				return err
++			}
++			return writeDeployment(a.out, a.output, deployment)
++		},
++	}
++}
++
++func (a *app) deleteCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "delete <service-name-or-id>",
++		Short: "Delete a service",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			if err := client.DeleteService(cmd.Context(), string(service.ID)); err != nil {
++				return err
++			}
++			fmt.Fprintf(a.out, "deleted service %s\n", service.Spec.Name)
++			return nil
++		},
++	}
++}
++
++func (a *app) eventsCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "events",
++		Short: "List events",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			events, err := client.ListEvents(cmd.Context())
++			if err != nil {
++				return err
++			}
++			return writeEvents(a.out, a.output, events)
++		},
++	}
++}
++
++func (a *app) logsCommand() *cobra.Command {
++	return &cobra.Command{
++		Use:   "logs <service-name-or-id>",
++		Short: "Fetch service logs",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(_ *cobra.Command, _ []string) error {
++			return fmt.Errorf("logs are not available yet: the control-plane API does not expose a logs endpoint")
++		},
++	}
++}
++
++func (a *app) clientAndService(ctx context.Context, ref string) (Client, types.Service, error) {
++	client, err := a.client()
++	if err != nil {
++		return nil, types.Service{}, err
++	}
++	service, err := a.resolveService(ctx, client, ref)
++	if err != nil {
++		return nil, types.Service{}, err
++	}
++	return client, service, nil
++}
++
++func (a *app) resolveService(ctx context.Context, client Client, ref string) (types.Service, error) {
++	if validUUID(ref) {
++		return client.GetService(ctx, ref)
++	}
++	services, err := client.ListServices(ctx)
++	if err != nil {
++		return types.Service{}, err
++	}
++	for _, service := range services {
++		if service.Spec.Name == ref {
++			return service, nil
++		}
++	}
++	return types.Service{}, fmt.Errorf("service %q not found", ref)
++}
++
++func (a *app) client() (Client, error) {
++	serverURL, err := a.serverURL()
++	if err != nil {
++		return nil, err
++	}
++	return a.newClient(serverURL)
++}
++
++func (a *app) serverURL() (string, error) {
++	if strings.TrimSpace(a.serverFlag) != "" {
++		return strings.TrimSpace(a.serverFlag), nil
++	}
++	if env := strings.TrimSpace(os.Getenv("ORCH_SERVER_URL")); env != "" {
++		return env, nil
++	}
++	cfg, err := readConfig(a.configPath)
++	if err != nil {
++		return "", err
++	}
++	if strings.TrimSpace(cfg.ServerURL) != "" {
++		return strings.TrimSpace(cfg.ServerURL), nil
++	}
++	return "", fmt.Errorf("server URL is required; pass --server, set ORCH_SERVER_URL, or set server_url in %s", a.configPath)
++}
++
++func readConfig(path string) (Config, error) {
++	data, err := os.ReadFile(path)
++	if err != nil {
++		if errors.Is(err, os.ErrNotExist) {
++			return Config{}, nil
++		}
++		return Config{}, fmt.Errorf("read config file %q: %w", path, err)
++	}
++	var cfg Config
++	if err := yaml.Unmarshal(data, &cfg); err != nil {
++		return Config{}, fmt.Errorf("parse config file %q: %w", path, err)
++	}
++	return cfg, nil
++}
++
++func defaultConfigPath() string {
++	dir, err := os.UserConfigDir()
++	if err != nil {
++		return ".orch.yaml"
++	}
++	return filepath.Join(dir, "orch", "config.yaml")
++}
++
++func validUUID(value string) bool {
++	if len(value) != 36 {
++		return false
++	}
++	for i, r := range value {
++		switch i {
++		case 8, 13, 18, 23:
++			if r != '-' {
++				return false
++			}
++		default:
++			if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
++				return false
++			}
++		}
++	}
++	return true
++}
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+new file mode 100644
+index 0000000..da55d5d
+--- /dev/null
++++ b/internal/cli/root_test.go
+@@ -0,0 +1,219 @@
++package cli
++
++import (
++	"bytes"
++	"context"
++	"net/url"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestRootCommandConstruction(t *testing.T) {
++	root := NewRootCommand(Options{})
++
++	for _, path := range []string{
++		"version",
++		"node ls",
++		"node inspect",
++		"node drain",
++		"node uncordon",
++		"deploy",
++		"service ls",
++		"service inspect",
++		"service ps",
++		"scale",
++		"rollout",
++		"rollback",
++		"delete",
++		"events",
++		"logs",
++	} {
++		if _, _, err := root.Find(strings.Fields(path)); err != nil {
++			t.Fatalf("expected command %q: %v", path, err)
++		}
++	}
++}
++
++func TestVersionCommand(t *testing.T) {
++	var out bytes.Buffer
++	cmd := NewRootCommand(Options{Out: &out, Err: &bytes.Buffer{}})
++	cmd.SetArgs([]string{"version"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute version: %v", err)
++	}
++	if strings.TrimSpace(out.String()) != "orch dev" {
++		t.Fatalf("unexpected output %q", out.String())
++	}
++}
++
++func TestServerURLPrecedence(t *testing.T) {
++	t.Setenv("ORCH_SERVER_URL", "http://env.example")
++	configPath := filepath.Join(t.TempDir(), "config.yaml")
++	if err := os.WriteFile(configPath, []byte("server_url: http://config.example\n"), 0o600); err != nil {
++		t.Fatalf("write config: %v", err)
++	}
++
++	var gotServer string
++	cmd := NewRootCommand(Options{
++		Out:           &bytes.Buffer{},
++		Err:           &bytes.Buffer{},
++		DefaultConfig: configPath,
++		NewClient: func(serverURL string) (Client, error) {
++			gotServer = serverURL
++			return &fakeClient{}, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://flag.example", "node", "ls"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute node ls: %v", err)
++	}
++	if gotServer != "http://flag.example" {
++		t.Fatalf("expected flag server, got %q", gotServer)
++	}
++}
++
++func TestDeployCommandSendsParsedSpec(t *testing.T) {
++	deployPath := filepath.Join(t.TempDir(), "deploy.yaml")
++	if err := os.WriteFile(deployPath, []byte(`
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 3
++ports:
++  - container: 8080
++resources:
++  cpu: 500m
++  memory: 512Mi
++`), 0o600); err != nil {
++		t.Fatalf("write deploy file: %v", err)
++	}
++
++	client := &fakeClient{}
++	var out bytes.Buffer
++	cmd := NewRootCommand(Options{
++		Out: &out,
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "deploy", deployPath})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute deploy: %v", err)
++	}
++	if client.created.Spec.Name != "api" || client.created.Spec.Replicas != 3 {
++		t.Fatalf("unexpected created service %#v", client.created)
++	}
++	if !strings.Contains(out.String(), "api") {
++		t.Fatalf("expected table output to contain service name, got %q", out.String())
++	}
++}
++
++func TestScaleCommandResolvesServiceByName(t *testing.T) {
++	client := &fakeClient{
++		services: []types.Service{{
++			ID:                "00000000-0000-4000-8000-000000000010",
++			Spec:              types.ServiceSpec{Name: "api", Image: "nginx", Replicas: 1},
++			DeploymentVersion: 1,
++		}},
++	}
++	cmd := NewRootCommand(Options{
++		Out: &bytes.Buffer{},
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "scale", "api", "--replicas", "5"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute scale: %v", err)
++	}
++	if client.scaledID != "00000000-0000-4000-8000-000000000010" || client.scaledReplicas != 5 {
++		t.Fatalf("unexpected scale call id=%q replicas=%d", client.scaledID, client.scaledReplicas)
++	}
++}
++
++type fakeClient struct {
++	services       []types.Service
++	created        types.Service
++	scaledID       string
++	scaledReplicas int
++}
++
++func (f *fakeClient) ListNodes(context.Context) ([]types.Node, error) {
++	return []types.Node{{ID: "00000000-0000-4000-8000-000000000001", Hostname: "node-1", Status: types.NodeReady}}, nil
++}
++
++func (f *fakeClient) GetNode(_ context.Context, id string) (types.Node, error) {
++	return types.Node{ID: types.NodeID(id), Hostname: "node-1", Status: types.NodeReady}, nil
++}
++
++func (f *fakeClient) DrainNode(_ context.Context, id string) (types.Node, error) {
++	return types.Node{ID: types.NodeID(id), Status: types.NodeDraining}, nil
++}
++
++func (f *fakeClient) UncordonNode(_ context.Context, id string) (types.Node, error) {
++	return types.Node{ID: types.NodeID(id), Status: types.NodeReady}, nil
++}
++
++func (f *fakeClient) CreateService(_ context.Context, spec types.ServiceSpec) (types.Service, error) {
++	f.created = types.Service{
++		ID:                "00000000-0000-4000-8000-000000000020",
++		Spec:              spec,
++		DeploymentVersion: 1,
++		CreatedAt:         time.Now().UTC(),
++		UpdatedAt:         time.Now().UTC(),
++	}
++	return f.created, nil
++}
++
++func (f *fakeClient) ListServices(context.Context) ([]types.Service, error) {
++	return f.services, nil
++}
++
++func (f *fakeClient) GetService(_ context.Context, id string) (types.Service, error) {
++	for _, service := range f.services {
++		if string(service.ID) == id {
++			return service, nil
++		}
++	}
++	return types.Service{ID: types.ServiceID(id), Spec: types.ServiceSpec{Name: "api", Image: "nginx"}}, nil
++}
++
++func (f *fakeClient) DeleteService(context.Context, string) error {
++	return nil
++}
++
++func (f *fakeClient) ScaleService(_ context.Context, id string, replicas int) (types.Service, error) {
++	f.scaledID = id
++	f.scaledReplicas = replicas
++	return types.Service{ID: types.ServiceID(id), Spec: types.ServiceSpec{Name: "api", Image: "nginx", Replicas: replicas}}, nil
++}
++
++func (f *fakeClient) RolloutService(_ context.Context, id string, _ string) (types.Deployment, error) {
++	return types.Deployment{ID: "00000000-0000-4000-8000-000000000030", ServiceID: types.ServiceID(id)}, nil
++}
++
++func (f *fakeClient) RollbackService(_ context.Context, id string) (types.Deployment, error) {
++	return types.Deployment{ID: "00000000-0000-4000-8000-000000000031", ServiceID: types.ServiceID(id)}, nil
++}
++
++func (f *fakeClient) ListTasks(context.Context, url.Values) ([]types.Task, error) {
++	return nil, nil
++}
++
++func (f *fakeClient) GetTask(_ context.Context, id string) (types.Task, error) {
++	return types.Task{ID: types.TaskID(id)}, nil
++}
++
++func (f *fakeClient) ListEvents(context.Context) ([]types.Event, error) {
++	return nil, nil
++}

@@ -1,0 +1,197 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:57:32.811588+00:00",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "origin": "http://127.0.0.1:32883",
+  "mode": "actual fresh orch-server processes plus manually created owned Docker container; manually authenticated task report, no agent Runner adoption",
+  "observations": [
+    {
+      "event": "ready",
+      "process": 1,
+      "pid": 546151,
+      "at_utc": "2026-10-13T00:57:33.045857+00:00"
+    },
+    {
+      "event": "stopped",
+      "process": 1,
+      "exit_code": 0,
+      "at_utc": "2026-10-13T00:57:33.053499+00:00"
+    },
+    {
+      "event": "ready",
+      "process": 2,
+      "pid": 546176,
+      "at_utc": "2026-10-13T00:57:33.105066+00:00"
+    },
+    {
+      "event": "stopped",
+      "process": 2,
+      "exit_code": 0,
+      "at_utc": "2026-10-13T00:57:33.127686+00:00"
+    }
+  ],
+  "docker": {
+    "image_id": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+    "container_id": "81f1e85b0b5df72f0fc33001dbd482f3311fa6ed62469abce5d5c2d6542d1f0d",
+    "relationship": "Manually created, then explicitly reported as this task container by the harness; not created or adopted by an upstream Runner.",
+    "before": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 546107,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-13T00:57:32.943633504Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "after": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 546107,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-13T00:57:32.943633504Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "version": {
+    "api_version": "v1",
+    "server_version": "0.3.0",
+    "minimum_agent_version": "0.2.0",
+    "maximum_tested_agent_version": "0.3.0",
+    "database_schema_version": 16,
+    "minimum_schema_version": 15,
+    "maximum_schema_version": 16
+  },
+  "before": {
+    "services": [
+      {
+        "id": "80071964-85ba-4f61-9ff0-4c51520009d9",
+        "namespace": "default",
+        "spec": {
+          "name": "book-http",
+          "image": "nginx:1.27-alpine",
+          "image_metadata": {
+            "requested_image": "nginx:1.27-alpine",
+            "registry": "docker.io",
+            "name": "library/nginx",
+            "tag": "1.27-alpine"
+          },
+          "replicas": 1,
+          "resource_requirements": {
+            "requests": {
+              "cpu": 100,
+              "memory": 134217728
+            },
+            "limits": {
+              "cpu": 100,
+              "memory": 134217728
+            }
+          },
+          "security_context": {},
+          "autoscaling": {},
+          "restart_policy": {
+            "condition": ""
+          }
+        },
+        "status": "active",
+        "deployment_version": 1,
+        "created_at": "2026-10-13T00:57:33.048269372Z",
+        "updated_at": "2026-10-13T00:57:33.048269372Z"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "ca530767-c78a-4acd-a8be-e8fd56d29e69",
+        "namespace": "default",
+        "service_id": "80071964-85ba-4f61-9ff0-4c51520009d9",
+        "node_id": "84c838f3-5a98-4537-8092-e15a39c55361",
+        "container_id": "81f1e85b0b5df72f0fc33001dbd482f3311fa6ed62469abce5d5c2d6542d1f0d",
+        "desired_status": "running",
+        "actual_status": "running",
+        "image": "nginx:1.27-alpine",
+        "requested_image": "nginx:1.27-alpine",
+        "image_registry": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "1.27-alpine",
+        "version": 1,
+        "restart_count": 0,
+        "created_at": "2026-10-13T00:57:33.048269372Z",
+        "updated_at": "2026-10-13T00:57:33.050459794Z",
+        "started_at": "2026-10-13T00:57:33.050459794Z",
+        "finished_at": "0001-01-01T00:00:00Z"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "84c838f3-5a98-4537-8092-e15a39c55361",
+        "hostname": "book-http-node",
+        "advertise_address": "http://127.0.0.1:1",
+        "capacity": {
+          "cpu": 4000,
+          "memory": 1073741824
+        },
+        "allocatable": {
+          "cpu": 4000,
+          "memory": 1073741824
+        },
+        "status": "ready",
+        "last_heartbeat_at": "2026-10-13T00:57:33.047493693Z",
+        "created_at": "2026-10-13T00:57:33.047493693Z",
+        "updated_at": "2026-10-13T00:57:33.047515205Z",
+        "agent_version": "0.3.0"
+      }
+    ],
+    "namespaces": [
+      {
+        "name": "book-payments",
+        "created_at": "2026-10-13T00:57:33.046912388Z"
+      },
+      {
+        "name": "default",
+        "created_at": "2026-10-13T00:57:33.04167792Z"
+      }
+    ]
+  },
+  "captured_ids": {
+    "node": "84c838f3-5a98-4537-8092-e15a39c55361",
+    "service": "80071964-85ba-4f61-9ff0-4c51520009d9",
+    "tasks": [
+      "ca530767-c78a-4acd-a8be-e8fd56d29e69"
+    ]
+  },
+  "after": {
+    "services": [],
+    "tasks": [],
+    "nodes": [],
+    "namespaces": [
+      {
+        "name": "default",
+        "created_at": "2026-10-13T00:57:33.057578003Z"
+      }
+    ]
+  },
+  "assertions": {
+    "new_process_ready": true,
+    "owned_container_still_running": true,
+    "services_lost": true,
+    "tasks_lost": true,
+    "nodes_lost": true,
+    "custom_namespace_lost": true,
+    "default_namespace_recreated": true
+  },
+  "status": "passed",
+  "cleanup": {
+    "exact_container_id": "81f1e85b0b5df72f0fc33001dbd482f3311fa6ed62469abce5d5c2d6542d1f0d",
+    "removed": true,
+    "inspect_exit_code": 1
+  },
+  "finished_at_utc": "2026-10-13T00:57:33.373873+00:00"
+}

@@ -1,0 +1,142 @@
+{
+  "snapshot_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:42:05.869997+00:00",
+  "go_directive": "1.25.0",
+  "direct_dependencies": [
+    {
+      "module": "github.com/docker/docker",
+      "version": "v28.5.2+incompatible"
+    },
+    {
+      "module": "github.com/docker/go-connections",
+      "version": "v0.8.1"
+    },
+    {
+      "module": "github.com/jackc/pgx/v5",
+      "version": "v5.10.0"
+    },
+    {
+      "module": "github.com/opencontainers/image-spec",
+      "version": "v1.1.1"
+    },
+    {
+      "module": "github.com/prometheus/client_golang",
+      "version": "v1.24.1"
+    },
+    {
+      "module": "github.com/spf13/cobra",
+      "version": "v1.10.2"
+    },
+    {
+      "module": "gopkg.in/yaml.v3",
+      "version": "v3.0.1"
+    }
+  ],
+  "go_mod_sha256": "bbff1ba08394a121db96aa1f90396f464067a6b3b481cde2fc46487684b4dcb6",
+  "go_sum_sha256": "588c44f57a19fafe688efb103baa5df7b06c5a5302077e96c7d95c279be21306",
+  "compatibility": {
+    "Server": "0.3.0",
+    "MinimumAgent": "0.2.0",
+    "MaximumTestedAgent": "0.3.0",
+    "Schema": 16,
+    "MinimumSchema": 15,
+    "MaximumSchema": 16
+  },
+  "api_version": "v1",
+  "ci": {
+    "runner": "ubuntu-latest (floating runner image; source config, not frozen host)",
+    "postgres_image": "postgres:16-alpine (mutable tag, not frozen digest)",
+    "golangci_lint": "v2.13.1",
+    "actions": [
+      "actions/checkout@v4",
+      "actions/setup-go@v5",
+      "actions/cache@v4",
+      "golangci/golangci-lint-action@v9",
+      "actions/upload-artifact@v4"
+    ],
+    "quality_commands": [
+      "go mod download",
+      "gofmt -l tracked-Go-files",
+      "go vet ./...",
+      "go test ./api",
+      "golangci-lint --timeout=5m",
+      "go test -covermode=atomic -coverprofile=coverage.out ./..."
+    ],
+    "race_command": "go test -race ./...",
+    "enabled_external_env": "ORCH_E2E_DATABASE_URL only; ORCH_INTEGRATION_DATABASE_URL and Docker enable flags absent"
+  },
+  "local_toolchain_observation": {
+    "source": "validation/intake/go125-toolchain-network.json",
+    "note": "Root task downloaded exact Go1.25.0 after intake; compilation/test outcomes tracked separately, not asserted by this static audit."
+  },
+  "external_suites": [
+    {
+      "variable": "ORCH_DOCKER_INTEGRATION",
+      "required_value": "1",
+      "test": "internal/docker/docker_integration_test.go",
+      "risk": "real daemon, own labeled containers; do not reuse production Docker host"
+    },
+    {
+      "variable": "ORCH_E2E_DOCKER",
+      "required_value": "1",
+      "test": "internal/e2e/orchestrator_test.go",
+      "risk": "real runtime E2E; own host ports and managed containers"
+    },
+    {
+      "variable": "ORCH_INTEGRATION_DATABASE_URL",
+      "required_value": "disposable PostgreSQL URL",
+      "test": "internal/store/postgres_test.go",
+      "risk": "drops public schema, resets database; separate database from E2E when packages run concurrently"
+    },
+    {
+      "variable": "ORCH_E2E_DATABASE_URL",
+      "required_value": "different disposable PostgreSQL URL",
+      "test": "internal/e2e/orchestrator_test.go",
+      "risk": "schema reset; initial migration test is not all16 coverage"
+    }
+  ],
+  "optional_build_tag": "scale",
+  "installation_documented_platforms": {
+    "Linux": [
+      "amd64",
+      "arm64"
+    ],
+    "macOS": [
+      "amd64",
+      "arm64"
+    ],
+    "Windows": [
+      "amd64",
+      "arm64"
+    ]
+  },
+  "external_primary_references": [
+    {
+      "url": "https://www.postgresql.org/docs/16/explicit-locking.html#ADVISORY-LOCKS",
+      "version": "PostgreSQL16",
+      "checked_at": "2026-10-13",
+      "scope": "session-level locks need explicit unlock or session termination; transaction locks release at transaction end"
+    },
+    {
+      "url": "https://pkg.go.dev/github.com/jackc/pgx/v5@v5.10.0/pgxpool#Conn.Release",
+      "version": "pgxv5.10.0",
+      "checked_at": "2026-10-13",
+      "scope": "Release returns a pooled connection; not synonymous with physical session termination"
+    },
+    {
+      "url": "https://go.dev/doc/toolchain",
+      "version": "Go toolchain model applies to Go1.25 go directive",
+      "checked_at": "2026-10-13",
+      "scope": "minimum Go language/toolchain version and toolchain selection; downloaded exact toolchain is separately recorded"
+    }
+  ],
+  "fresh_execution_findings": [
+    {
+      "path": "validation/intake/postgres-store-owned.json",
+      "status": "failed original fixture",
+      "sqlstate": "42703",
+      "cause": "fixture applies1\u201314; current node queries need agent_version from16 (000016_operations_safety.up.sql:6)",
+      "boundary": "recorded original-suite failure; no immutable source fix"
+    }
+  ]
+}

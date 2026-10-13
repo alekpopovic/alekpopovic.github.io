@@ -1,0 +1,29 @@
+{
+  "id": "lab08-fixed-seed-fake-load",
+  "command": [
+    "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-loadtest",
+    "--nodes",
+    "3",
+    "--services",
+    "30",
+    "--replicas",
+    "2",
+    "--failure-rate",
+    "0.02",
+    "--duration",
+    "2s",
+    "--seed",
+    "20261013"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:53:29.935746+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:53:31.949574+00:00",
+  "duration_seconds": 2.014,
+  "stdout": "validation/labs/lab08-fixed-seed-fake-load.stdout.txt",
+  "stderr": "validation/labs/lab08-fixed-seed-fake-load.stderr.txt"
+}

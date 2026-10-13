@@ -1,0 +1,78 @@
+{
+  "chapter_id": "14",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch14.health-state",
+      "statement": "Agent health checks apply only to running, healthy or unhealthy assigned task states.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 481,
+      "line_end": 494,
+      "associated_commits": [
+        "ee067bd0f02566eb600031a0cb81f25919d52445",
+        "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Observation is not automatic Docker termination, rollout choice or total availability."
+      ]
+    },
+    {
+      "claim_id": "ch14.target",
+      "statement": "Agent builds loopback target from assigned TCP published ports; unassigned port yields no probe.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 561,
+      "line_end": 600,
+      "associated_commits": [
+        "ee067bd0f02566eb600031a0cb81f25919d52445",
+        "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Direct DefaultChecker callers can supply other initial targets; no universal address allowlist claimed."
+      ]
+    },
+    {
+      "claim_id": "ch14.threshold",
+      "statement": "Agent tracks consecutive successes/failures and returns before updating counters when checker returns error.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 510,
+      "line_end": 548,
+      "associated_commits": [
+        "ee067bd0f02566eb600031a0cb81f25919d52445",
+        "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Counters are memory-local; thresholds are not persisted historical totals."
+      ]
+    },
+    {
+      "claim_id": "ch14.redirect",
+      "statement": "Actual owned-loopback health suite passed HTTP/TCP and redirect-boundary tests including cross-origin rejection.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/health/health.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 97,
+      "line_end": 110,
+      "associated_commits": [
+        "ee067bd0f02566eb600031a0cb81f25919d52445",
+        "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch14/focused-tests-loopback.json",
+      "limitations": [
+        "Original restricted-sandbox bind failure preserved; passing retry used only temporary local listeners, not external SSRF probes."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "snapshot_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:42:05.869997+00:00",
+  "command": "python3 books/inside-orch/scripts/audit_source_baseline.py",
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "exit_code": 0,
+  "scope": "source hashes/path/line assertions, migration pairs,105 exported patches,91 original prompt hashes/mapping relationships,manual capability/documentation/compatibility assessments; no Go/Docker/PostgreSQL run by this helper",
+  "checks": {
+    "immutable_source_files": 361,
+    "go_files": 138,
+    "test_files": 71,
+    "interfaces": 71,
+    "http_routes": 81,
+    "migration_pairs": 16,
+    "commits": 105,
+    "milestones": 9,
+    "prompt_ids": 91,
+    "retained_original_requirement_lines": 1788,
+    "capability_controls": 30,
+    "documentation_conflicts": 13
+  },
+  "external_primary_docs_retrieved_at": "2026-10-13",
+  "runtime_gates": "actual root-run records remain separate; original DB fixture failure explicitly retained"
+}

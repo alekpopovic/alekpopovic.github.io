@@ -1,0 +1,31 @@
+{
+  "id": "ch34-leadership-tests",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "./internal/leadership",
+    "-count=1",
+    "-v"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOFLAGS",
+    "ORCH_E2E_DATABASE_URL",
+    "ORCH_E2E_DOCKER",
+    "GOMAXPROCS"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:23:50.800230+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:23:51.084912+00:00",
+  "duration_seconds": 0.285,
+  "stdout": "validation/labs/ch34/leadership-tests.stdout.txt",
+  "stderr": "validation/labs/ch34/leadership-tests.stderr.txt"
+}
