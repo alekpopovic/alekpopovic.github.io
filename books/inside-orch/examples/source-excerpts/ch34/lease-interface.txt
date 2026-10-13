@@ -1,0 +1,9 @@
+type LeaderElector interface {
+	Acquire(ctx context.Context, name string) (Lease, error)
+}
+
+type Lease interface {
+	Name() string
+	Done() <-chan struct{}
+	Release(ctx context.Context) error
+}

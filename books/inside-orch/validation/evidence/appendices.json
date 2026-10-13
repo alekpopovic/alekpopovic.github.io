@@ -1,0 +1,449 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "appendix-a.default-server-url",
+      "statement": "The CLI server URL is empty by default; connected commands require an explicitly configured URL.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 123,
+      "line_end": 194,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-a.migrations-separate",
+      "statement": "orch-server dispatches migrate outside the Cobra orch command tree.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 37,
+      "line_end": 66,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-a.socket-config-gap",
+      "statement": "The agent runtime is constructed from Docker environment settings rather than cfg.DockerSocketPath.",
+      "classification": "partial integration",
+      "source_path": "cmd/orch-agent/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 73,
+      "line_end": 114,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-b.task-cleanup-guard",
+      "statement": "An agent may report removed during stopped/removed intent even when current task status is terminal.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 304,
+      "line_end": 319,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-b.failed-terminal",
+      "statement": "Failed and stopped task statuses are terminal for work; permitted cleanup remains distinct.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 245,
+      "line_end": 254,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-b.job-derived",
+      "statement": "Job outcome is derived from accepted task state and exit-code interpretation.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 184,
+      "line_end": 216,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-d.quota-race",
+      "statement": "Scale checks projected namespace usage and mutates service under one MemoryService lock.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1475,
+      "line_end": 1529,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-d.cron-overlap",
+      "statement": "Forbid examines active jobs before processing the current due-occurrence list.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cronjobs/cronjobs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 55,
+      "line_end": 119,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-e.ready-process",
+      "statement": "The readiness handler returns a fixed process response rather than probing durable active state.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 440,
+      "line_end": 443,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-e.metrics-schema",
+      "statement": "Collector definitions establish exact names, metric types and label keys; existence is separate from active emission.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 41,
+      "line_end": 161,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-e.fake-load",
+      "statement": "The load tool constructs MemoryService and reports synthetic task runtime states rather than launching Docker agents.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-loadtest/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 89,
+      "line_end": 147,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-f.memory-boundary",
+      "statement": "Default server constructs MemoryService even after the optional schema check.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 103,
+      "line_end": 261,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-f.digest-parser",
+      "statement": "ParserResolver calls the local parser rather than retrieving remote registry digests.",
+      "classification": "implemented package",
+      "source_path": "internal/image/reference.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 23,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-f.host-isolation",
+      "statement": "Namespace Matches checks logical context selection rather than creating a kernel or network boundary.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/namespace/context.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 52,
+      "line_end": 55,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source inspected at pinned SHA; executed companion results are scoped separately.",
+        "No stronger durability, physical isolation, runtime enforcement or production-capacity conclusion follows."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-01",
+      "statement": "Checkpoint 1 preserves the exact cmd/orch-server/main.go excerpt from historical commit 72f27ed1d81b75e499ee65e0c9779e44b237f814.",
+      "classification": "implemented package",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "72f27ed1d81b75e499ee65e0c9779e44b237f814",
+      "line_start": 30,
+      "line_end": 35,
+      "associated_commits": [
+        "72f27ed1d81b75e499ee65e0c9779e44b237f814"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-02",
+      "statement": "Checkpoint 2 preserves the exact pkg/types/types.go excerpt from historical commit c756f9d7f3a46e8bfe4d7bca291d67f6a783553d.",
+      "classification": "implemented package",
+      "source_path": "pkg/types/types.go",
+      "source_sha": "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+      "line_start": 80,
+      "line_end": 85,
+      "associated_commits": [
+        "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-03",
+      "statement": "Checkpoint 3 preserves the exact internal/store/postgres.go excerpt from historical commit 7eba6544ffe2eba41b81faa811e899faf28b77a2.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres.go",
+      "source_sha": "7eba6544ffe2eba41b81faa811e899faf28b77a2",
+      "line_start": 20,
+      "line_end": 25,
+      "associated_commits": [
+        "7eba6544ffe2eba41b81faa811e899faf28b77a2"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-04",
+      "statement": "Checkpoint 4 preserves the exact internal/agent/agent.go excerpt from historical commit 5cf9213849164ce1bebc4e042cc37bf5553c2427.",
+      "classification": "implemented package",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+      "line_start": 46,
+      "line_end": 51,
+      "associated_commits": [
+        "5cf9213849164ce1bebc4e042cc37bf5553c2427"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-05",
+      "statement": "Checkpoint 5 preserves the exact internal/scheduler/scheduler.go excerpt from historical commit fce0a657651c00ffb697bf4a4aba12d0b171f463.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_sha": "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+      "line_start": 45,
+      "line_end": 50,
+      "associated_commits": [
+        "fce0a657651c00ffb697bf4a4aba12d0b171f463"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-06",
+      "statement": "Checkpoint 6 preserves the exact internal/reconciler/reconciler.go excerpt from historical commit 208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3.",
+      "classification": "implemented package",
+      "source_path": "internal/reconciler/reconciler.go",
+      "source_sha": "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+      "line_start": 121,
+      "line_end": 126,
+      "associated_commits": [
+        "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-07",
+      "statement": "Checkpoint 7 preserves the exact internal/rollout/rollout.go excerpt from historical commit de5900bced92ad9d5786cd258ff7941d67369d33.",
+      "classification": "implemented package",
+      "source_path": "internal/rollout/rollout.go",
+      "source_sha": "de5900bced92ad9d5786cd258ff7941d67369d33",
+      "line_start": 59,
+      "line_end": 64,
+      "associated_commits": [
+        "de5900bced92ad9d5786cd258ff7941d67369d33"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-08",
+      "statement": "Checkpoint 8 preserves the exact internal/auth/agent.go excerpt from historical commit 4f25e78c229ba040c07a84801490485b5a0cbb2e.",
+      "classification": "implemented package",
+      "source_path": "internal/auth/agent.go",
+      "source_sha": "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+      "line_start": 36,
+      "line_end": 41,
+      "associated_commits": [
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-09",
+      "statement": "Checkpoint 9 preserves the exact internal/gitops/gitops.go excerpt from historical commit f2836eabfff8e442d38984433f3e1f5c642667d1.",
+      "classification": "implemented package",
+      "source_path": "internal/gitops/gitops.go",
+      "source_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "line_start": 182,
+      "line_end": 187,
+      "associated_commits": [
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-10",
+      "statement": "Checkpoint 10 preserves the exact internal/controlplane/workloads.go excerpt from historical commit 4d641bbe8913da568d6d9f4697a0144314e10b87.",
+      "classification": "implemented package",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "line_start": 114,
+      "line_end": 119,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-11",
+      "statement": "Checkpoint 11 preserves the exact internal/maintenance/maintenance.go excerpt from historical commit 7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d.",
+      "classification": "implemented package",
+      "source_path": "internal/maintenance/maintenance.go",
+      "source_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "line_start": 17,
+      "line_end": 22,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-c.checkpoint-12",
+      "statement": "Checkpoint 12 preserves the exact README.md excerpt from historical commit cbfc94ade5b57e449d6b73bf1485b1c5b1647022.",
+      "classification": "implemented package",
+      "source_path": "README.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 19,
+      "line_end": 24,
+      "associated_commits": [
+        "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      ],
+      "validation": "inspected",
+      "evidence_log": "validation/062-history-check.json",
+      "limitations": [
+        "Historical Git blob bytes inspected; no claim that an original prompt was executed or caused that commit."
+      ]
+    },
+    {
+      "claim_id": "appendix-d.no-fencing",
+      "statement": "Conditional task assignment serializes one row against its expected timestamp and pending state; it does not revoke an isolated worker runtime.",
+      "classification": "implemented package",
+      "source_path": "internal/store/postgres.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 892,
+      "line_end": 909,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Default server does not compose this store as live state.",
+        "Physical execution and fencing require separate evidence."
+      ]
+    }
+  ]
+}

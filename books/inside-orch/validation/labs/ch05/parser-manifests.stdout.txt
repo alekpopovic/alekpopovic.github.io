@@ -1,0 +1,60 @@
+{
+  "scope": "Actual upstream CLI parser only; no deployment, placement or Docker claim.",
+  "cases": [
+    {
+      "case": "valid",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-valid.yaml"
+      ],
+      "exit_code": 0,
+      "stdout": "service spec \"atlas-api\" is valid\n",
+      "stderr": ""
+    },
+    {
+      "case": "invalid-cpu",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-invalid-cpu.yaml"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: invalid CPU value \"bananas\"\n"
+    },
+    {
+      "case": "invalid-memory",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-invalid-memory.yaml"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: invalid memory value \"1.5Mi\"\n"
+    },
+    {
+      "case": "invalid-port",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-invalid-port.yaml"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: invalid deploy file: ports[0].container must be between 1 and 65535\n"
+    },
+    {
+      "case": "invalid-field",
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/atlas-invalid-field.yaml"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Error: parse deploy YAML: yaml: unmarshal errors:\n  line 3: field replica not found in type cli.DeployFile\n"
+    }
+  ]
+}

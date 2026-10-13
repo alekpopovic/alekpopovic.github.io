@@ -1,0 +1,11 @@
+kind: CronJob
+name: atlas-report-cron
+schedule: "30 2 * * *"
+timezone: Europe/Belgrade
+concurrencyPolicy: Forbid
+jobTemplate:
+  image: busybox:1.36
+  command: ["sh", "-c", "printf 'scheduled atlas report\n'"]
+  resources:
+    cpu: 100m
+    memory: 1Mi

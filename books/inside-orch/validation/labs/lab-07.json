@@ -1,0 +1,90 @@
+{
+  "lab_id": "07",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/07-gitops-jobs-cron/lab.json",
+  "definition_sha256": "2ed7b162d82c60a28fa93508ea95dfde340b624820e4d50f843b46dff52ba732",
+  "guide": "labs/07-gitops-jobs-cron/README.md",
+  "guide_sha256": "3752eed31b6d1b215f21f7d44fe80fcd8634e29b35b7c55b47f981cbcddedadb",
+  "configuration_hashes": {
+    "examples/teaching-extensions/lab07/main.go": "0bcdbafe50168e0392cc8c7446716171a70be96a9813585db29de66b957c1f85",
+    "labs/07-gitops-jobs-cron/fixtures/10-api.yaml": "cdb7de10c531f5e0c348688d950a73dc9fa4803826ee02ea04cc4351642a90a8",
+    "labs/07-gitops-jobs-cron/fixtures/20-worker.yaml": "afa09d0d8e9e943927b0776aebf74ea0474e352455b944b181f8a0269bff392a",
+    "labs/07-gitops-jobs-cron/fixtures/cron.yaml": "4aa038157507f7fcd1a1f69478cc50d06261addddd973594fd7dfa225271ad42",
+    "labs/07-gitops-jobs-cron/fixtures/job-failure.yaml": "741003294955746c1c0b0c1f72793d39b5b863633056d4d617b455fe2bc57936",
+    "labs/07-gitops-jobs-cron/fixtures/job-success.yaml": "a8228a0365616b9f288b3a0c06dafc5c2071743672543bcee363000caeb6866d"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Real temporary local Git and actual CLI parsing/control-plane calls; twenty-six cases, injected Job reports/log transport and Cron clock/store including Belgrade DST; no containers/remote hosts.",
+  "state_continuity": "Fresh MemoryService plus temporary local repository/checkout; Job and Cron reports/clock explicitly injected.",
+  "started_at_utc": "2026-10-13T01:58:13.499570+00:00",
+  "finished_at_utc": "2026-10-13T01:58:13.639929+00:00",
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/gitops-jobs-cron",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/07-gitops-jobs-cron/fixtures"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:13.499570+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.639929+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/07-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "case_count": 26,
+    "case_ids": [
+      "git-real-revision",
+      "git-managed-names-lexical",
+      "unchanged-sync-no-new-version",
+      "warn-manual-scale",
+      "auto-revert-on-status",
+      "failed-fetch-preserves-services",
+      "failed-fetch-no-prune",
+      "partial-apply-not-atomic",
+      "prune-preserves-unrelated",
+      "url-credentials-rejected-9",
+      "url-credentials-rejected-10",
+      "job-cli-success-manifest",
+      "job-exit-zero",
+      "job-nonzero-retry",
+      "latest-attempt-log-selection",
+      "job-limit-terminal",
+      "cron-cli-manifest",
+      "cron-allow-missed-bound",
+      "cron-forbid-active",
+      "cron-replace-active",
+      "cron-suspend",
+      "cron-resume-catches-backlog",
+      "dst-spring-missing-local-0230",
+      "dst-fall-repeated-local-0230",
+      "cron-exact-five-fields",
+      "job-cleanup-metadata"
+    ],
+    "detailed_results": "validation/labs/review076/07-command.stdout.txt"
+  },
+  "original_records": [
+    "validation/labs/review076/07-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/07-command.stdout.txt",
+      "sha256": "8ad7b753a4e8d200bb575675cdf20e8f137d797f2ba4ea482fbc392d3519291c",
+      "bytes": 6146
+    },
+    {
+      "path": "validation/labs/review076/07-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

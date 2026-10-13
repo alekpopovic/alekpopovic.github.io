@@ -1,0 +1,532 @@
+{
+  "lab_id": "02",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/02-scheduler-placement/lab.json",
+  "definition_sha256": "8ec0ea3d1b68543a4480eb866e1344a5c767d7970b8586f69ccd15b260890e69",
+  "guide": "labs/02-scheduler-placement/README.md",
+  "guide_sha256": "895183e9555917140ec16fcbadaa6fb7895859b710a16048ffac8adf5cb9a99f",
+  "configuration_hashes": {
+    "examples/teaching-extensions/lab02/main.go": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+    "labs/02-scheduler-placement/fixtures/plan.json": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Pure planner permutations and actual scheduler concurrent-claim package tests; memory-placement bypass observed; no database reservation experiment in this lane.",
+  "state_continuity": "Reconstruct planner fixture and fresh test stores; carry Atlas concepts, not Lab01 live object IDs.",
+  "started_at_utc": "2026-10-13T01:47:20.175977+00:00",
+  "finished_at_utc": "2026-10-13T01:47:20.543636+00:00",
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/lab02",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:47:20.175977+00:00",
+      "finished_at_utc": "2026-10-13T01:47:20.242141+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/02-model-and-permutations.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-json",
+        "./internal/scheduler",
+        "-run",
+        "TestConcurrentSchedulerAttemptsAssignTaskOnce|TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers|TestRunOnceAccountsForNonTerminalAssignedTasks"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:47:20.286697+00:00",
+      "finished_at_utc": "2026-10-13T01:47:20.543636+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/02-concurrent-claims.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "accounted_resources": {
+      "b": {
+        "cpu": 500,
+        "memory": 201326592
+      },
+      "c": {
+        "cpu": 800,
+        "memory": 268435456
+      }
+    },
+    "actual_stopping_desired_running_counted": true,
+    "assignments": [
+      {
+        "task_id": "atlas-01",
+        "node_id": "c",
+        "ports": [
+          {
+            "protocol": "tcp",
+            "container_port": 80,
+            "published_port": 31080
+          }
+        ],
+        "assigned_at": "0001-01-01T00:00:00Z",
+        "expected_updated_at": "2026-10-13T00:00:00Z"
+      },
+      {
+        "task_id": "atlas-02",
+        "node_id": "b",
+        "ports": [
+          {
+            "protocol": "tcp",
+            "container_port": 80,
+            "published_port": 30000
+          }
+        ],
+        "assigned_at": "0001-01-01T00:00:00Z",
+        "expected_updated_at": "2026-10-13T00:00:00Z"
+      },
+      {
+        "task_id": "atlas-03",
+        "node_id": "c",
+        "ports": [
+          {
+            "protocol": "tcp",
+            "container_port": 80,
+            "published_port": 30000
+          }
+        ],
+        "assigned_at": "0001-01-01T00:00:00Z",
+        "expected_updated_at": "2026-10-13T00:00:00Z"
+      }
+    ],
+    "desired_stopped_before_actual_ack_excluded": true,
+    "distinct_input_permutations": [
+      {
+        "nodes": [
+          0,
+          1,
+          2
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          1,
+          2
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          1,
+          2
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          1,
+          2
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          2,
+          1
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          2,
+          1
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          2,
+          1
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          0,
+          2,
+          1
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          0,
+          2
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          0,
+          2
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          0,
+          2
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          0,
+          2
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          2,
+          0
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          2,
+          0
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          2,
+          0
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          1,
+          2,
+          0
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          0,
+          1
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          0,
+          1
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          0,
+          1
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          0,
+          1
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          1,
+          0
+        ],
+        "tasks": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          1,
+          0
+        ],
+        "tasks": [
+          0,
+          5,
+          4,
+          2,
+          3,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          1,
+          0
+        ],
+        "tasks": [
+          2,
+          5,
+          4,
+          3,
+          0,
+          1
+        ]
+      },
+      {
+        "nodes": [
+          2,
+          1,
+          0
+        ],
+        "tasks": [
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ]
+      }
+    ],
+    "fixture": "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json",
+    "lexical_tie_node": "b",
+    "memory_path": {
+      "actual_task_status": "assigned",
+      "advertised_allocatable": {
+        "cpu": 100,
+        "memory": 67108864
+      },
+      "declared_requests": {
+        "cpu": 600,
+        "memory": 268435456
+      },
+      "node_labels": {
+        "zone": "red"
+      },
+      "ordinary_task_resource_requirements_absent": true,
+      "required_zone": "blue"
+    },
+    "pending_no_fit": [
+      "atlas-04",
+      "atlas-05",
+      "atlas-06"
+    ],
+    "permutations_checked": 24,
+    "scope": "Deterministic planner and actual in-process MemoryService methods; no Docker, SQL, network listeners or physical resource pressure",
+    "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "status": "passed",
+    "fresh_passed_tests": [
+      "TestConcurrentSchedulerAttemptsAssignTaskOnce",
+      "TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers",
+      "TestRunOnceAccountsForNonTerminalAssignedTasks"
+    ]
+  },
+  "original_records": [
+    "validation/labs/review076/02-model-and-permutations.json",
+    "validation/labs/review076/02-concurrent-claims.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/02-model-and-permutations.stdout.txt",
+      "sha256": "6169fc41b198853728456534ca2ade927c814fa7cf5c883089b600d2f62b02b3",
+      "bytes": 5922
+    },
+    {
+      "path": "validation/labs/review076/02-model-and-permutations.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "validation/labs/review076/02-concurrent-claims.stdout.txt",
+      "sha256": "ea16ff874e7f2aca55dc30b04cc72f7d09033582f07b283c886b0215b7073799",
+      "bytes": 3254
+    },
+    {
+      "path": "validation/labs/review076/02-concurrent-claims.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

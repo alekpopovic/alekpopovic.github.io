@@ -1,0 +1,1091 @@
+commit ee067bd0f02566eb600031a0cb81f25919d52445
+Date: 2026-06-11T16:23:48+02:00
+Subject: Add task health checks
+
+
+---
+ docs/AGENT.md                         |   4 +
+ docs/API.md                           |   4 +-
+ docs/HEALTHCHECKS.md                  |  36 ++++++++
+ internal/agent/agent.go               | 167 ++++++++++++++++++++++++++++++----
+ internal/agent/agent_test.go          |  87 ++++++++++++++++--
+ internal/api/api.go                   |   6 +-
+ internal/api/api_test.go              |   2 +-
+ internal/cli/deploy.go                |  16 +++-
+ internal/cli/deploy_test.go           |   5 +
+ internal/controlplane/agent_test.go   |  66 ++++++++++++--
+ internal/controlplane/controlplane.go |  62 ++++++++++---
+ internal/health/health.go             |  72 +++++++++++++++
+ internal/health/health_test.go        |  96 +++++++++++++++++++
+ internal/reconciler/reconciler.go     |   4 +-
+ internal/scheduler/scheduler.go       |   2 +-
+ pkg/types/types.go                    |   5 +
+ 16 files changed, 576 insertions(+), 58 deletions(-)
+
+diff --git a/docs/AGENT.md b/docs/AGENT.md
+index d59c77d..39a58c6 100644
+--- a/docs/AGENT.md
++++ b/docs/AGENT.md
+@@ -42,6 +42,10 @@ The agent may also report `unhealthy`, `failed`, `stopped`, or `removed` through
+ 
+ On every poll, the agent lists locally managed Docker containers for its node. Containers whose `orch.task_id` is no longer assigned are stopped and removed. This makes process restarts safe without a local durable cache: Docker labels provide local identity, and the server provides desired state.
+ 
++## Health Checks
++
++For running assigned tasks with a service healthcheck, the agent performs HTTP or TCP probes and reports `healthy` or `unhealthy` only after the configured consecutive threshold is met. Probes respect context cancellation, use the service timeout, and add jitter to avoid synchronized checks. See `docs/HEALTHCHECKS.md`.
++
+ ## Shutdown
+ 
+ On graceful shutdown, the agent sends a final heartbeat with `shutdown=true`. If the notification succeeds, the control plane marks the node offline. If it fails, the agent logs a warning and continues shutdown.
+diff --git a/docs/API.md b/docs/API.md
+index f1ba8a8..5ba03fe 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -114,7 +114,9 @@ curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
+   }'
+ ```
+ 
+-Agents may report `pulling`, `created`, `running`, `unhealthy`, `failed`, `stopped`, and `removed`.
++The task poll response includes each task plus service healthcheck metadata and ports so the agent can probe running containers.
++
++Agents may report `pulling`, `created`, `running`, `healthy`, `unhealthy`, `failed`, `stopped`, and `removed`.
+ 
+ ## Events
+ 
+diff --git a/docs/HEALTHCHECKS.md b/docs/HEALTHCHECKS.md
+new file mode 100644
+index 0000000..a38ae01
+--- /dev/null
++++ b/docs/HEALTHCHECKS.md
+@@ -0,0 +1,36 @@
++# Health Checks
++
++Services may define an optional healthcheck. Supported types are:
++
++- `http`: sends `GET` to the configured path.
++- `tcp`: opens a TCP connection to the configured port.
++- `none`: disables active probing.
++
++Example deploy YAML:
++
++```yaml
++healthcheck:
++  type: http
++  path: /health
++  interval: 10s
++  timeout: 2s
++  healthyThreshold: 2
++  unhealthyThreshold: 3
++```
++
++## Agent Behavior
++
++The control plane includes service healthcheck metadata when the agent polls assigned tasks. For each running assigned task, the agent performs the configured check with context cancellation and timeout support.
++
++The agent keeps in-memory consecutive success and failure counters:
++
++- after `healthyThreshold` consecutive successes, it reports `healthy`.
++- after `unhealthyThreshold` consecutive failures, it reports `unhealthy`.
++
++Checks include jitter derived from the service interval to avoid synchronized probing across tasks and nodes. The agent does not restart containers because of healthcheck failures; it only reports status to the control plane.
++
++## Server Behavior
++
++The control plane accepts `healthy` and `unhealthy` task status reports from agents. If a restartable service reports `unhealthy`, the control plane marks the task `failed` and emits a health failure event. The reconciler then creates replacement pending tasks according to service replica and restart policy rules.
++
++For non-restartable services, unhealthy tasks remain `unhealthy` so operators can inspect them without automatic replacement.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index acd76ea..fff2e37 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -18,22 +18,30 @@ import (
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
++	"github.com/alekpopovic/orch/internal/health"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+ type Client interface {
+ 	Register(ctx context.Context, req api.AgentRegisterRequest) (api.AgentResponse, error)
+ 	Heartbeat(ctx context.Context, req api.AgentHeartbeatRequest) (api.AgentResponse, error)
+-	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]api.AgentTask, error)
+ 	ReportTaskStatus(ctx context.Context, taskID types.TaskID, req api.AgentTaskStatusRequest) (types.Task, error)
+ }
+ 
+ type Runner struct {
+-	cfg     config.AgentConfig
+-	client  Client
+-	runtime orchdocker.Runtime
+-	logger  *slog.Logger
+-	rand    *rand.Rand
++	cfg          config.AgentConfig
++	client       Client
++	runtime      orchdocker.Runtime
++	health       health.Checker
++	healthStates map[types.TaskID]healthState
++	logger       *slog.Logger
++	rand         *rand.Rand
++}
++
++type healthState struct {
++	successes int
++	failures  int
+ }
+ 
+ func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runner {
+@@ -41,10 +49,12 @@ func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runn
+ 		logger = slog.Default()
+ 	}
+ 	return &Runner{
+-		cfg:    cfg,
+-		client: client,
+-		logger: logger,
+-		rand:   rand.New(rand.NewSource(time.Now().UnixNano())),
++		cfg:          cfg,
++		client:       client,
++		health:       health.NewChecker(),
++		healthStates: make(map[types.TaskID]healthState),
++		logger:       logger,
++		rand:         rand.New(rand.NewSource(time.Now().UnixNano())),
+ 	}
+ }
+ 
+@@ -53,6 +63,11 @@ func (r *Runner) WithRuntime(runtime orchdocker.Runtime) *Runner {
+ 	return r
+ }
+ 
++func (r *Runner) WithHealthChecker(checker health.Checker) *Runner {
++	r.health = checker
++	return r
++}
++
+ func (r *Runner) Run(ctx context.Context) error {
+ 	if err := r.cfg.Validate(); err != nil {
+ 		return err
+@@ -108,23 +123,25 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID
+ 		return err
+ 	}
+ 	assigned := make(map[types.TaskID]types.Task, len(tasks))
+-	for _, task := range tasks {
++	for _, assignedTask := range tasks {
++		task := assignedTask.Task
+ 		assigned[task.ID] = task
+-		if err := r.ensureTask(ctx, nodeID, task); err != nil {
++		if err := r.ensureTask(ctx, nodeID, assignedTask); err != nil {
+ 			r.logger.Warn("task execution failed", "task_id", task.ID, "error", err)
+ 		}
+ 	}
+ 	return r.cleanupUnassigned(ctx, nodeID, assigned)
+ }
+ 
+-func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, task types.Task) error {
++func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned api.AgentTask) error {
++	task := assigned.Task
+ 	if task.DesiredStatus != types.TaskRunning {
+ 		return nil
+ 	}
+ 	if task.ContainerID != "" {
+ 		status, err := r.runtime.InspectContainer(ctx, orchdocker.ContainerID(task.ContainerID))
+ 		if err == nil && status.Running {
+-			return nil
++			return r.checkTaskHealth(ctx, nodeID, assigned, status)
+ 		}
+ 		if err == nil {
+ 			if err := r.runtime.StartContainer(ctx, status.ID); err != nil {
+@@ -132,7 +149,12 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, task types
+ 				return err
+ 			}
+ 			_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(status.ID)})
+-			return err
++			if err != nil {
++				return err
++			}
++			assigned.Task.ActualStatus = types.TaskRunning
++			assigned.Task.ContainerID = string(status.ID)
++			return r.checkTaskHealth(ctx, nodeID, assigned, status)
+ 		}
+ 	}
+ 	if _, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskPulling}); err != nil {
+@@ -164,7 +186,118 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, task types
+ 		return err
+ 	}
+ 	_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(containerID)})
+-	return err
++	if err != nil {
++		return err
++	}
++	assigned.Task.ContainerID = string(containerID)
++	assigned.Task.ActualStatus = types.TaskRunning
++	return r.checkTaskHealth(ctx, nodeID, assigned, orchdocker.ContainerStatus{ID: containerID, Running: true})
++}
++
++func (r *Runner) checkTaskHealth(ctx context.Context, nodeID types.NodeID, assigned api.AgentTask, container orchdocker.ContainerStatus) error {
++	task := assigned.Task
++	check := assigned.Healthcheck
++	if check == nil || check.Type == "" || check.Type == types.HealthcheckNone {
++		return nil
++	}
++	if task.ActualStatus != types.TaskRunning && task.ActualStatus != types.TaskHealthy && task.ActualStatus != types.TaskUnhealthy {
++		return nil
++	}
++	if r.health == nil {
++		r.health = health.NewChecker()
++	}
++	if delay := r.healthJitter(check.Interval); delay > 0 {
++		timer := time.NewTimer(delay)
++		select {
++		case <-ctx.Done():
++			timer.Stop()
++			return ctx.Err()
++		case <-timer.C:
++		}
++	}
++
++	probe, ok := healthProbe(*check, assigned.Ports)
++	if !ok {
++		return nil
++	}
++	result, err := r.health.Check(ctx, probe)
++	if err != nil {
++		return err
++	}
++	state := r.healthStates[task.ID]
++	if result.Healthy {
++		state.successes++
++		state.failures = 0
++		r.healthStates[task.ID] = state
++		threshold := check.HealthyThreshold
++		if threshold <= 0 {
++			threshold = 1
++		}
++		if state.successes >= threshold && task.ActualStatus != types.TaskHealthy {
++			_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskHealthy, ContainerID: string(container.ID)})
++			return err
++		}
++		return nil
++	}
++
++	state.failures++
++	state.successes = 0
++	r.healthStates[task.ID] = state
++	threshold := check.UnhealthyThreshold
++	if threshold <= 0 {
++		threshold = 3
++	}
++	if state.failures >= threshold {
++		_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
++			NodeID:        nodeID,
++			Status:        types.TaskUnhealthy,
++			ContainerID:   string(container.ID),
++			FailureReason: result.Message,
++		})
++		return err
++	}
++	return nil
++}
++
++func (r *Runner) healthJitter(interval time.Duration) time.Duration {
++	if interval <= 0 {
++		return 0
++	}
++	max := interval / 5
++	if max <= 0 {
++		return 0
++	}
++	return time.Duration(r.rand.Int63n(int64(max)))
++}
++
++func healthProbe(check types.Healthcheck, ports []types.Port) (health.Check, bool) {
++	port := check.Port
++	if port == 0 && len(ports) > 0 {
++		port = ports[0].PublishedPort
++		if port == 0 {
++			port = ports[0].ContainerPort
++		}
++	}
++	if port == 0 {
++		return health.Check{}, false
++	}
++	timeout := check.Timeout
++	if timeout <= 0 {
++		timeout = 2 * time.Second
++	}
++	target := "127.0.0.1:" + strconv.Itoa(port)
++	switch check.Type {
++	case types.HealthcheckHTTP:
++		path := check.Path
++		if !strings.HasPrefix(path, "/") {
++			path = "/" + path
++		}
++		return health.Check{Type: health.HTTPProbe, Target: "http://" + target + path, Timeout: timeout}, true
++	case types.HealthcheckTCP:
++		return health.Check{Type: health.TCPProbe, Target: target, Timeout: timeout}, true
++	default:
++		return health.Check{}, false
++	}
+ }
+ 
+ func (r *Runner) cleanupUnassigned(ctx context.Context, nodeID types.NodeID, assigned map[types.TaskID]types.Task) error {
+@@ -332,7 +465,7 @@ func (c *HTTPClient) Heartbeat(ctx context.Context, req api.AgentHeartbeatReques
+ 	return out, nil
+ }
+ 
+-func (c *HTTPClient) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++func (c *HTTPClient) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]api.AgentTask, error) {
+ 	var out api.AgentTasksResponse
+ 	path := "/v1/agent/tasks?node_id=" + url.QueryEscape(string(nodeID))
+ 	if err := c.doMethod(ctx, http.MethodGet, path, nil, &out); err != nil {
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 28dbed7..d96669b 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
++	"github.com/alekpopovic/orch/internal/health"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -17,14 +18,16 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
+ 	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
+ 	client := &fakeAgentClient{
+-		tasks: []types.Task{{
+-			ID:            taskID,
+-			ServiceID:     types.ServiceID("00000000-0000-4000-8000-000000000003"),
+-			NodeID:        nodeID,
+-			DesiredStatus: types.TaskRunning,
+-			ActualStatus:  types.TaskAssigned,
+-			Image:         "nginx:1.27",
+-			Version:       1,
++		tasks: []api.AgentTask{{
++			Task: types.Task{
++				ID:            taskID,
++				ServiceID:     types.ServiceID("00000000-0000-4000-8000-000000000003"),
++				NodeID:        nodeID,
++				DesiredStatus: types.TaskRunning,
++				ActualStatus:  types.TaskAssigned,
++				Image:         "nginx:1.27",
++				Version:       1,
++			},
+ 		}},
+ 	}
+ 	runtime := &fakeRuntime{createdID: orchdocker.ContainerID("container-1")}
+@@ -73,8 +76,58 @@ func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
+ 	}
+ }
+ 
++func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
++	task := api.AgentTask{
++		Task: types.Task{
++			ID:            taskID,
++			ServiceID:     types.ServiceID("00000000-0000-4000-8000-000000000003"),
++			NodeID:        nodeID,
++			ContainerID:   "container-1",
++			DesiredStatus: types.TaskRunning,
++			ActualStatus:  types.TaskRunning,
++			Image:         "nginx:1.27",
++			Version:       1,
++		},
++		Healthcheck: &types.Healthcheck{
++			Type:               types.HealthcheckHTTP,
++			Path:               "/health",
++			Port:               8080,
++			HealthyThreshold:   2,
++			UnhealthyThreshold: 2,
++		},
++	}
++	client := &fakeAgentClient{tasks: []api.AgentTask{task}}
++	runtime := &fakeRuntime{inspect: map[orchdocker.ContainerID]orchdocker.ContainerStatus{
++		"container-1": {ID: "container-1", Running: true},
++	}}
++	checker := &fakeHealthChecker{results: []bool{true, true, false, false}}
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).
++		WithRuntime(runtime).
++		WithHealthChecker(checker)
++
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("first reconcile: %v", err)
++	}
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("second reconcile: %v", err)
++	}
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("third reconcile: %v", err)
++	}
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("fourth reconcile: %v", err)
++	}
++
++	wantStatuses := []types.TaskStatus{types.TaskHealthy, types.TaskUnhealthy}
++	if !equalStatuses(client.statuses, wantStatuses) {
++		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
++	}
++}
++
+ type fakeAgentClient struct {
+-	tasks    []types.Task
++	tasks    []api.AgentTask
+ 	statuses []types.TaskStatus
+ }
+ 
+@@ -86,7 +139,7 @@ func (c *fakeAgentClient) Heartbeat(context.Context, api.AgentHeartbeatRequest)
+ 	return api.AgentResponse{}, nil
+ }
+ 
+-func (c *fakeAgentClient) ListAssignedTasks(context.Context, types.NodeID) ([]types.Task, error) {
++func (c *fakeAgentClient) ListAssignedTasks(context.Context, types.NodeID) ([]api.AgentTask, error) {
+ 	return c.tasks, nil
+ }
+ 
+@@ -164,6 +217,20 @@ func (errFakeNotFound) Error() string {
+ 	return "not found"
+ }
+ 
++type fakeHealthChecker struct {
++	results []bool
++	calls   int
++}
++
++func (c *fakeHealthChecker) Check(context.Context, health.Check) (health.Result, error) {
++	result := false
++	if c.calls < len(c.results) {
++		result = c.results[c.calls]
++	}
++	c.calls++
++	return health.Result{Healthy: result, CheckedAt: time.Now().UTC(), Message: "fake health result"}, nil
++}
++
+ func equalStrings(left, right []string) bool {
+ 	if len(left) != len(right) {
+ 		return false
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 29d9a68..ed5acf5 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -120,8 +120,10 @@ type AgentResponse struct {
+ 	Directives []controlplane.AgentDirective `json:"directives,omitempty"`
+ }
+ 
++type AgentTask = controlplane.AgentTask
++
+ type AgentTasksResponse struct {
+-	Tasks []types.Task `json:"tasks"`
++	Tasks []AgentTask `json:"tasks"`
+ }
+ 
+ type AgentTaskStatusRequest struct {
+@@ -294,6 +296,7 @@ func validAgentTaskStatus(status types.TaskStatus) bool {
+ 	case types.TaskPulling,
+ 		types.TaskCreated,
+ 		types.TaskRunning,
++		types.TaskHealthy,
+ 		types.TaskUnhealthy,
+ 		types.TaskFailed,
+ 		types.TaskStopped,
+@@ -754,6 +757,7 @@ func validTaskStatus(status types.TaskStatus) bool {
+ 		types.TaskCreated,
+ 		types.TaskStarting,
+ 		types.TaskRunning,
++		types.TaskHealthy,
+ 		types.TaskUnhealthy,
+ 		types.TaskStopping,
+ 		types.TaskStopped,
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index f179afc..857c91f 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -133,7 +133,7 @@ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 		t.Fatalf("expected one assigned task, got %d", len(tasks.Tasks))
+ 	}
+ 
+-	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].ID)+"/status", AgentTaskStatusRequest{
++	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
+ 		NodeID:      registered.Node.ID,
+ 		Status:      types.TaskRunning,
+ 		ContainerID: "container-1",
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index d6f9ec6..baf1535 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -34,10 +34,12 @@ type DeployResources struct {
+ }
+ 
+ type DeployHealthcheck struct {
+-	Type     string `yaml:"type"`
+-	Path     string `yaml:"path"`
+-	Interval string `yaml:"interval"`
+-	Timeout  string `yaml:"timeout"`
++	Type               string `yaml:"type"`
++	Path               string `yaml:"path"`
++	Interval           string `yaml:"interval"`
++	Timeout            string `yaml:"timeout"`
++	HealthyThreshold   int    `yaml:"healthyThreshold"`
++	UnhealthyThreshold int    `yaml:"unhealthyThreshold"`
+ }
+ 
+ type DeployRestart struct {
+@@ -135,6 +137,12 @@ func (h DeployHealthcheck) toDomain() (types.Healthcheck, error) {
+ 		HealthyThreshold:   1,
+ 		UnhealthyThreshold: 3,
+ 	}
++	if h.HealthyThreshold > 0 {
++		check.HealthyThreshold = h.HealthyThreshold
++	}
++	if h.UnhealthyThreshold > 0 {
++		check.UnhealthyThreshold = h.UnhealthyThreshold
++	}
+ 	return check, nil
+ }
+ 
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index dcbbfc8..67ba678 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -24,6 +24,8 @@ healthcheck:
+   path: /health
+   interval: 10s
+   timeout: 2s
++  healthyThreshold: 2
++  unhealthyThreshold: 4
+ restart:
+   policy: always
+ placement:
+@@ -52,6 +54,9 @@ placement:
+ 	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" {
+ 		t.Fatalf("unexpected healthcheck %#v", spec.Healthcheck)
+ 	}
++	if spec.Healthcheck.HealthyThreshold != 2 || spec.Healthcheck.UnhealthyThreshold != 4 {
++		t.Fatalf("unexpected healthcheck thresholds %#v", spec.Healthcheck)
++	}
+ 	if spec.RestartPolicy.Condition != types.RestartAlways {
+ 		t.Fatalf("unexpected restart policy %q", spec.RestartPolicy.Condition)
+ 	}
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index 51ce1ca..7a3a06a 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -78,6 +78,7 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 		Image:                "ghcr.io/example/api:1.0.0",
+ 		Replicas:             1,
+ 		ResourceRequirements: types.ResourceRequirements{},
++		RestartPolicy:        types.RestartPolicy{Condition: types.RestartNever},
+ 	})
+ 	if err != nil {
+ 		t.Fatalf("create service: %v", err)
+@@ -89,8 +90,8 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 	if len(tasks) != 1 {
+ 		t.Fatalf("expected one assigned task, got %d", len(tasks))
+ 	}
+-	if tasks[0].ServiceID != created.ID {
+-		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].ServiceID)
++	if tasks[0].Task.ServiceID != created.ID {
++		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].Task.ServiceID)
+ 	}
+ 
+ 	tests := []struct {
+@@ -103,6 +104,7 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 		{name: "pulling", status: types.TaskPulling},
+ 		{name: "created", status: types.TaskCreated, containerID: "container-1"},
+ 		{name: "running", status: types.TaskRunning, containerID: "container-1"},
++		{name: "healthy", status: types.TaskHealthy, containerID: "container-1"},
+ 		{name: "unhealthy", status: types.TaskUnhealthy, containerID: "container-1"},
+ 		{name: "failed", status: types.TaskFailed, containerID: "container-1", failureReason: "exit 1", wantFinished: true},
+ 		{name: "stopped", status: types.TaskStopped, containerID: "container-1", wantFinished: true},
+@@ -112,7 +114,7 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 	for _, tt := range tests {
+ 		t.Run(tt.name, func(t *testing.T) {
+ 			task, err := service.ReportTaskStatus(ctx, TaskStatusReport{
+-				TaskID:        tasks[0].ID,
++				TaskID:        tasks[0].Task.ID,
+ 				NodeID:        registered.Node.ID,
+ 				Status:        tt.status,
+ 				ContainerID:   tt.containerID,
+@@ -133,7 +135,7 @@ func TestAgentTaskStatusTransitions(t *testing.T) {
+ 			if tt.wantFinished && task.FinishedAt.IsZero() {
+ 				t.Fatalf("expected finished timestamp")
+ 			}
+-			if tt.status == types.TaskRunning && task.StartedAt.IsZero() {
++			if (tt.status == types.TaskRunning || tt.status == types.TaskHealthy) && task.StartedAt.IsZero() {
+ 				t.Fatalf("expected started timestamp")
+ 			}
+ 		})
+@@ -170,8 +172,8 @@ func TestTaskAssignmentReconcilesWhenNodeRegistersAfterService(t *testing.T) {
+ 	if len(tasks) != 1 {
+ 		t.Fatalf("expected one assigned task, got %d", len(tasks))
+ 	}
+-	if tasks[0].ServiceID != created.ID {
+-		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].ServiceID)
++	if tasks[0].Task.ServiceID != created.ID {
++		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].Task.ServiceID)
+ 	}
+ }
+ 
+@@ -215,11 +217,11 @@ func TestRolloutCreatesReplacementTasks(t *testing.T) {
+ 	if len(after) != 1 {
+ 		t.Fatalf("expected one active task after rollout, got %d", len(after))
+ 	}
+-	if after[0].ID == before[0].ID {
+-		t.Fatalf("expected replacement task id, got same task %q", after[0].ID)
++	if after[0].Task.ID == before[0].Task.ID {
++		t.Fatalf("expected replacement task id, got same task %q", after[0].Task.ID)
+ 	}
+-	if after[0].Image != "ghcr.io/example/api:2.0.0" {
+-		t.Fatalf("expected rollout image, got %q", after[0].Image)
++	if after[0].Task.Image != "ghcr.io/example/api:2.0.0" {
++		t.Fatalf("expected rollout image, got %q", after[0].Task.Image)
+ 	}
+ 
+ 	allTasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: created.ID})
+@@ -230,3 +232,47 @@ func TestRolloutCreatesReplacementTasks(t *testing.T) {
+ 		t.Fatalf("expected old and replacement tasks, got %d", len(allTasks))
+ 	}
+ }
++
++func TestUnhealthyRestartableTaskIsMarkedFailed(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	if _, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++		RestartPolicy:        types.RestartPolicy{Condition: types.RestartOnFailure},
++	}); err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++
++	task, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:        tasks[0].Task.ID,
++		NodeID:        registered.Node.ID,
++		Status:        types.TaskUnhealthy,
++		FailureReason: "healthcheck failed",
++	})
++	if err != nil {
++		t.Fatalf("report unhealthy task: %v", err)
++	}
++	if task.ActualStatus != types.TaskFailed {
++		t.Fatalf("expected unhealthy restartable task to become failed, got %q", task.ActualStatus)
++	}
++	if task.FinishedAt.IsZero() {
++		t.Fatalf("expected failed task to have finished timestamp")
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index dbda559..5cb4a9a 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -16,7 +16,7 @@ import (
+ type Service interface {
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+-	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]AgentTask, error)
+ 	ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error)
+ 	ListNodes(ctx context.Context) ([]types.Node, error)
+ 	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
+@@ -60,6 +60,12 @@ type AgentDirective struct {
+ 	Message string `json:"message,omitempty"`
+ }
+ 
++type AgentTask struct {
++	Task        types.Task         `json:"task"`
++	Healthcheck *types.Healthcheck `json:"healthcheck,omitempty"`
++	Ports       []types.Port       `json:"ports,omitempty"`
++}
++
+ type TaskStatusReport struct {
+ 	TaskID        types.TaskID
+ 	NodeID        types.NodeID
+@@ -199,7 +205,7 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ }
+ 
+-func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]AgentTask, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+ 	}
+@@ -210,7 +216,7 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 	s.mu.RLock()
+ 	defer s.mu.RUnlock()
+ 
+-	tasks := make([]types.Task, 0)
++	tasks := make([]AgentTask, 0)
+ 	for _, task := range s.tasks {
+ 		if task.NodeID != nodeID {
+ 			continue
+@@ -218,13 +224,18 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
+ 			continue
+ 		}
+-		tasks = append(tasks, task)
+-	}
+-	slices.SortFunc(tasks, func(a, b types.Task) int {
+-		if a.ID < b.ID {
++		service := s.services[task.ServiceID]
++		tasks = append(tasks, AgentTask{
++			Task:        task,
++			Healthcheck: service.Spec.Healthcheck,
++			Ports:       service.Spec.Ports,
++		})
++	}
++	slices.SortFunc(tasks, func(a, b AgentTask) int {
++		if a.Task.ID < b.Task.ID {
+ 			return -1
+ 		}
+-		if a.ID > b.ID {
++		if a.Task.ID > b.Task.ID {
+ 			return 1
+ 		}
+ 		return 0
+@@ -256,18 +267,35 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 	if task.NodeID != report.NodeID {
+ 		return types.Task{}, fmt.Errorf("%w: task is not assigned to node", store.ErrInvalidState)
+ 	}
+-	task.ActualStatus = report.Status
++	status := report.Status
++	eventType := "task.status"
++	message := "task status reported"
++	if report.Status == types.TaskUnhealthy {
++		service := s.services[task.ServiceID]
++		if restartAllowed(service.Spec.RestartPolicy) {
++			status = types.TaskFailed
++			eventType = "task.health.failed"
++			message = "task failed healthcheck and needs replacement"
++			if report.FailureReason == "" {
++				report.FailureReason = "healthcheck unhealthy threshold exceeded"
++			}
++		} else {
++			eventType = "task.health.unhealthy"
++			message = "task failed healthcheck"
++		}
++	}
++	task.ActualStatus = status
+ 	task.ContainerID = report.ContainerID
+ 	task.FailureReason = report.FailureReason
+ 	task.UpdatedAt = s.now()
+-	if report.Status == types.TaskRunning && task.StartedAt.IsZero() {
++	if (status == types.TaskRunning || status == types.TaskHealthy) && task.StartedAt.IsZero() {
+ 		task.StartedAt = task.UpdatedAt
+ 	}
+-	if report.Status == types.TaskStopped || report.Status == types.TaskFailed || report.Status == types.TaskRemoved {
++	if status == types.TaskStopped || status == types.TaskFailed || status == types.TaskRemoved {
+ 		task.FinishedAt = task.UpdatedAt
+ 	}
+ 	s.tasks[task.ID] = task
+-	s.appendEventLocked("task.status", types.EventInfo, "agent", "task status reported", "task", string(task.ID), task.UpdatedAt)
++	s.appendEventLocked(eventType, types.EventInfo, "agent", message, "task", string(task.ID), task.UpdatedAt)
+ 	return task, nil
+ }
+ 
+@@ -720,6 +748,7 @@ func validAgentTaskStatus(status types.TaskStatus) bool {
+ 	case types.TaskPulling,
+ 		types.TaskCreated,
+ 		types.TaskRunning,
++		types.TaskHealthy,
+ 		types.TaskUnhealthy,
+ 		types.TaskFailed,
+ 		types.TaskStopped,
+@@ -730,6 +759,15 @@ func validAgentTaskStatus(status types.TaskStatus) bool {
+ 	}
+ }
+ 
++func restartAllowed(policy types.RestartPolicy) bool {
++	switch policy.Condition {
++	case "", types.RestartAlways, types.RestartOnFailure:
++		return true
++	default:
++		return false
++	}
++}
++
+ func newUUID() string {
+ 	var b [16]byte
+ 	if _, err := rand.Read(b[:]); err != nil {
+diff --git a/internal/health/health.go b/internal/health/health.go
+index f300616..ca2e920 100644
+--- a/internal/health/health.go
++++ b/internal/health/health.go
+@@ -2,12 +2,17 @@ package health
+ 
+ import (
+ 	"context"
++	"fmt"
++	"net"
++	"net/http"
++	"strings"
+ 	"time"
+ )
+ 
+ type ProbeType string
+ 
+ const (
++	NoneProbe ProbeType = "none"
+ 	HTTPProbe ProbeType = "http"
+ 	TCPProbe  ProbeType = "tcp"
+ )
+@@ -27,3 +32,70 @@ type Result struct {
+ type Checker interface {
+ 	Check(ctx context.Context, check Check) (Result, error)
+ }
++
++type DefaultChecker struct {
++	now func() time.Time
++}
++
++func NewChecker() *DefaultChecker {
++	return &DefaultChecker{now: func() time.Time { return time.Now().UTC() }}
++}
++
++func (c *DefaultChecker) Check(ctx context.Context, check Check) (Result, error) {
++	if err := ctx.Err(); err != nil {
++		return Result{}, err
++	}
++	timeout := check.Timeout
++	if timeout <= 0 {
++		timeout = 2 * time.Second
++	}
++	switch check.Type {
++	case "", NoneProbe:
++		return Result{Healthy: true, CheckedAt: c.now(), Message: "healthcheck disabled"}, nil
++	case HTTPProbe:
++		return c.checkHTTP(ctx, check.Target, timeout)
++	case TCPProbe:
++		return c.checkTCP(ctx, check.Target, timeout)
++	default:
++		return Result{}, fmt.Errorf("unsupported healthcheck type %q", check.Type)
++	}
++}
++
++func (c *DefaultChecker) checkHTTP(ctx context.Context, target string, timeout time.Duration) (Result, error) {
++	if strings.TrimSpace(target) == "" {
++		return Result{}, fmt.Errorf("http healthcheck target is required")
++	}
++	ctx, cancel := context.WithTimeout(ctx, timeout)
++	defer cancel()
++
++	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
++	if err != nil {
++		return Result{}, fmt.Errorf("create healthcheck request: %w", err)
++	}
++	client := &http.Client{Timeout: timeout}
++	resp, err := client.Do(req)
++	if err != nil {
++		return Result{Healthy: false, CheckedAt: c.now(), Message: err.Error()}, nil
++	}
++	defer resp.Body.Close()
++	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
++		return Result{Healthy: false, CheckedAt: c.now(), Message: resp.Status}, nil
++	}
++	return Result{Healthy: true, CheckedAt: c.now(), Message: resp.Status}, nil
++}
++
++func (c *DefaultChecker) checkTCP(ctx context.Context, target string, timeout time.Duration) (Result, error) {
++	if strings.TrimSpace(target) == "" {
++		return Result{}, fmt.Errorf("tcp healthcheck target is required")
++	}
++	var dialer net.Dialer
++	ctx, cancel := context.WithTimeout(ctx, timeout)
++	defer cancel()
++
++	conn, err := dialer.DialContext(ctx, "tcp", target)
++	if err != nil {
++		return Result{Healthy: false, CheckedAt: c.now(), Message: err.Error()}, nil
++	}
++	_ = conn.Close()
++	return Result{Healthy: true, CheckedAt: c.now(), Message: "tcp connection succeeded"}, nil
++}
+diff --git a/internal/health/health_test.go b/internal/health/health_test.go
+new file mode 100644
+index 0000000..a1bbb5d
+--- /dev/null
++++ b/internal/health/health_test.go
+@@ -0,0 +1,96 @@
++package health
++
++import (
++	"context"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++	"time"
++)
++
++func TestHTTPHealthCheck(t *testing.T) {
++	tests := []struct {
++		name        string
++		status      int
++		wantHealthy bool
++	}{
++		{name: "healthy", status: http.StatusOK, wantHealthy: true},
++		{name: "unhealthy", status: http.StatusInternalServerError, wantHealthy: false},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++				w.WriteHeader(tt.status)
++			}))
++			defer server.Close()
++
++			checker := NewChecker()
++			result, err := checker.Check(context.Background(), Check{
++				Type:    HTTPProbe,
++				Target:  server.URL,
++				Timeout: time.Second,
++			})
++			if err != nil {
++				t.Fatalf("check http: %v", err)
++			}
++			if result.Healthy != tt.wantHealthy {
++				t.Fatalf("expected healthy=%v, got %v", tt.wantHealthy, result.Healthy)
++			}
++		})
++	}
++}
++
++func TestTCPHealthCheck(t *testing.T) {
++	listener, err := net.Listen("tcp", "127.0.0.1:0")
++	if err != nil {
++		t.Fatalf("listen tcp: %v", err)
++	}
++	defer listener.Close()
++	go func() {
++		for {
++			conn, err := listener.Accept()
++			if err != nil {
++				return
++			}
++			_ = conn.Close()
++		}
++	}()
++
++	checker := NewChecker()
++	healthy, err := checker.Check(context.Background(), Check{
++		Type:    TCPProbe,
++		Target:  listener.Addr().String(),
++		Timeout: time.Second,
++	})
++	if err != nil {
++		t.Fatalf("check healthy tcp: %v", err)
++	}
++	if !healthy.Healthy {
++		t.Fatalf("expected TCP listener to be healthy: %#v", healthy)
++	}
++
++	_ = listener.Close()
++	unhealthy, err := checker.Check(context.Background(), Check{
++		Type:    TCPProbe,
++		Target:  listener.Addr().String(),
++		Timeout: 50 * time.Millisecond,
++	})
++	if err != nil {
++		t.Fatalf("check unhealthy tcp: %v", err)
++	}
++	if unhealthy.Healthy {
++		t.Fatalf("expected closed TCP listener to be unhealthy")
++	}
++}
++
++func TestNoneHealthCheck(t *testing.T) {
++	result, err := NewChecker().Check(context.Background(), Check{Type: NoneProbe})
++	if err != nil {
++		t.Fatalf("check none: %v", err)
++	}
++	if !result.Healthy {
++		t.Fatalf("expected none probe to be healthy")
++	}
++}
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 94963da..5fc11fd 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -344,6 +344,7 @@ func isNonTerminal(task types.Task) bool {
+ 		types.TaskCreated,
+ 		types.TaskStarting,
+ 		types.TaskRunning,
++		types.TaskHealthy,
+ 		types.TaskUnhealthy,
+ 		types.TaskStopping:
+ 		return true
+@@ -360,6 +361,7 @@ func nonTerminalStatuses() []types.TaskStatus {
+ 		types.TaskCreated,
+ 		types.TaskStarting,
+ 		types.TaskRunning,
++		types.TaskHealthy,
+ 		types.TaskUnhealthy,
+ 		types.TaskStopping,
+ 	}
+@@ -397,7 +399,7 @@ func stopPriority(task types.Task) int {
+ 		return 2
+ 	case types.TaskUnhealthy:
+ 		return 3
+-	case types.TaskRunning:
++	case types.TaskRunning, types.TaskHealthy:
+ 		return 4
+ 	case types.TaskStopping:
+ 		return 5
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index 7ff70fd..a2ede55 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -104,7 +104,7 @@ func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([
+ 			return nil, fmt.Errorf("list tasks for node %s: %w", node.ID, err)
+ 		}
+ 		for _, task := range tasks {
+-			if task.ActualStatus == types.TaskRunning {
++			if task.ActualStatus == types.TaskRunning || task.ActualStatus == types.TaskHealthy {
+ 				running = append(running, task)
+ 			}
+ 		}
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index e5ed561..d2ef4ba 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -193,6 +193,9 @@ type Healthcheck struct {
+ }
+ 
+ func (check Healthcheck) Validate() error {
++	if check.Type == HealthcheckNone {
++		return nil
++	}
+ 	if check.Type != HealthcheckHTTP && check.Type != HealthcheckTCP {
+ 		return fmt.Errorf("healthcheck type %q is invalid", check.Type)
+ 	}
+@@ -220,6 +223,7 @@ func (check Healthcheck) Validate() error {
+ type HealthcheckType string
+ 
+ const (
++	HealthcheckNone HealthcheckType = "none"
+ 	HealthcheckHTTP HealthcheckType = "http"
+ 	HealthcheckTCP  HealthcheckType = "tcp"
+ )
+@@ -286,6 +290,7 @@ const (
+ 	TaskCreated   TaskStatus = "created"
+ 	TaskStarting  TaskStatus = "starting"
+ 	TaskRunning   TaskStatus = "running"
++	TaskHealthy   TaskStatus = "healthy"
+ 	TaskUnhealthy TaskStatus = "unhealthy"
+ 	TaskStopping  TaskStatus = "stopping"
+ 	TaskStopped   TaskStatus = "stopped"

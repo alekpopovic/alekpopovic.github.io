@@ -31,7 +31,7 @@ const allClasses = words(sources);
 // Book overview classes are emitted by the Jekyll generator, rather than
 // present literally in a source template. Keep every catalogued variant.
 for (const book of JSON.parse(fs.readFileSync('_data/books.json', 'utf8'))) allClasses.add(`book-feature-${book.id}`);
-for (const name of ['site', 'ai', 'reader']) {
+for (const name of ['site', 'ai', 'reader', 'code']) {
   const from = `src/${name === 'site' ? 'input' : name}.css`, to = `assets/css/${name}.css`;
   const output = await postcss([tailwind({ optimize: { minify: true } })]).process(fs.readFileSync(from, 'utf8'), { from, to, map: false });
   fs.writeFileSync(to, (name === 'site' ? prune(output.css, allClasses) : output.css).trim() + '\n');

@@ -1,0 +1,40 @@
+[
+  {
+    "file": "scripts/check_manuscript.py",
+    "check": "Python syntax",
+    "status": "passed"
+  },
+  {
+    "file": "scripts/extract_snippets.py",
+    "check": "Python syntax",
+    "status": "passed"
+  },
+  {
+    "file": "scripts/next_prompt.py",
+    "check": "Python syntax",
+    "status": "passed"
+  },
+  {
+    "file": "scripts/update_tracker.py",
+    "check": "Python syntax",
+    "status": "passed"
+  },
+  {
+    "file": "scripts/verify_pack.py",
+    "check": "Python syntax",
+    "status": "passed"
+  },
+  {
+    "file": "samples/runtime-boundary-lab.sh",
+    "check": "bash -n",
+    "status": "passed",
+    "exit_code": 0
+  },
+  {
+    "check": "Future manuscript readiness gate",
+    "status": "expected incomplete",
+    "exit_code": 1,
+    "missing_artifacts": 55,
+    "scope": "47section manuscript/eightlabs are future tasks; this is not a book validation pass."
+  }
+]

@@ -1,0 +1,12 @@
+panic: scoped-operator-create HTTP mismatch: 400
+
+goroutine 1 [running]:
+main.require(...)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:29
+main.main.func1({0x8c88be, 0x16}, {0x8bf299, 0x8}, {0x8bd04b, 0x6}, 0xc9, 0x190, {0x8d2971, 0x25})
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:43 +0x429
+main.main.func2({0x8c88be, 0x16}, {0x8bf299, 0x8}, {0x8bd04b, 0x6}, {0x8bbcea, 0x4}, {0x8c1c1b, 0xc}, ...)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:46 +0x787
+main.main()
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:54 +0xa7e
+exit status 2

@@ -1,0 +1,25 @@
+=== RUN   TestAtlasPublicContract
+--- FAIL: TestAtlasPublicContract (0.00s)
+panic: httptest: failed to listen on a port: listen tcp6 [::1]:0: socket: operation not permitted [recovered, repanicked]
+
+goroutine 8 [running]:
+testing.tRunner.func1.2({0x8399e0, 0xc000049440})
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/testing/testing.go:1872 +0x237
+testing.tRunner.func1()
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/testing/testing.go:1875 +0x35b
+panic({0x8399e0?, 0xc000049440?})
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/runtime/panic.go:783 +0x132
+net/http/httptest.newLocalListener()
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:71 +0xda
+net/http/httptest.NewUnstartedServer(...)
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:119
+net/http/httptest.NewServer({0x987620, 0xc000010c30})
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:106 +0x25
+github.com/alekpopovic/orch/.book-labs/ch07_test.TestAtlasPublicContract(0xc0000c8540)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/ch07/contract_test.go:23 +0x1ed
+testing.tRunner(0xc0000c8540, 0x905ee0)
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/testing/testing.go:1934 +0xea
+created by testing.(*T).Run in goroutine 1
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/testing/testing.go:1997 +0x465
+FAIL	github.com/alekpopovic/orch/.book-labs/ch07	0.006s
+FAIL

@@ -1,0 +1,95 @@
+cbfc94ade5b57e449d6b73bf1485b1c5b1647022
+	envelope, err := secrets.NewLocalEnvelope(cfg.SecretKey)
+	if err != nil {
+		return err
+	}
+	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy), controlplane.WithRetentionConfig(cfg.Retention))
+	controlPlane.SetNotificationDispatcher(notifications.NewDispatcher(controlPlane, nil))
+	serverMetrics := metrics.NewServer()
+	if dnsAddress := os.Getenv("ORCH_DNS_ADDR"); dnsAddress != "" {
+		dnsTTL := 30 * time.Second
+		if raw := os.Getenv("ORCH_DNS_TTL"); raw != "" {
+			parsed, parseErr := time.ParseDuration(raw)
+			if parseErr != nil || parsed <= 0 {
+				return fmt.Errorf("ORCH_DNS_TTL must be a positive duration")
+			}
+			dnsTTL = parsed
+		}
+		dnsServer := orchdns.New(controlPlane, dnsTTL, "default", serverMetrics)
+		go func() {
+			if err := dnsServer.ServeUDP(ctx, dnsAddress); err != nil && !errors.Is(err, context.Canceled) {
+				logger.Warn("internal DNS stopped", "error", err)
+			}
+		}()
+	}
+	gitopsController := gitops.NewController(controlPlane, nil, cli.ParseDeploy, logger)
+	go func() {
+		if err := gitopsController.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			logger.Warn("GitOps controller stopped", "error", err)
+		}
+	}()
+	cronController := cronjobs.New(controlPlane, nil)
+	go func() {
+		if err := cronController.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			logger.Warn("cronjob controller stopped", "error", err)
+		}
+	}()
+	schedulerController := scheduler.New(controlPlane, scheduler.WithMetrics(serverMetrics))
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if _, err := schedulerController.RunOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
+					logger.Warn("scheduler iteration failed", "error", err)
+				}
+			}
+		}
+	}()
+	go func() {
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+		_, _ = controlPlane.CaptureUsageSnapshots(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				_, _ = controlPlane.CaptureUsageSnapshots(ctx)
+			}
+		}
+	}()
+	go func() {
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if _, err := controlPlane.PruneRetention(ctx, false); err != nil && !errors.Is(err, context.Canceled) {
+					logger.Warn("retention pruning failed", "error", err)
+				}
+			}
+		}
+	}()
+	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+	go func() {
+		if err := rolloutController.Run(ctx, 5*time.Second); err != nil && !errors.Is(err, context.Canceled) {
+			logger.Warn("rollout controller stopped", "error", err)
+		}
+	}()
+	nodeMonitor := node.NewMonitor(controlPlane, logger, cfg.HeartbeatTimeout, cfg.NodeMonitorInterval)
+	go func() {
+		if err := nodeMonitor.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			logger.Warn("node monitor stopped", "error", err)
+		}
+	}()
+
+	server := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken), api.WithUserJWT(cfg.JWTSecret), api.WithStaticUsers(users), api.WithRequestMetrics(serverMetrics), api.WithControlMetrics(serverMetrics), api.WithMetricsHandler(serverMetrics.Handler()), api.WithGitOpsSyncer(gitopsController)),
+

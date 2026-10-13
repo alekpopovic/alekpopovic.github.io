@@ -1,0 +1,13 @@
+{
+  "claim_id": "chNN.claim-name",
+  "statement": "A precisely scoped engineering claim",
+  "classification": "partial integration",
+  "source_path": "cmd/orch-server/main.go",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "line_start": null,
+  "line_end": null,
+  "associated_commits": [],
+  "validation": "inspected",
+  "evidence_log": null,
+  "limitations": ["A source inspection does not establish executed behavior."]
+}

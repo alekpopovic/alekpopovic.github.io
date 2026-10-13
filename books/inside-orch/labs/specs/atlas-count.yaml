@@ -1,0 +1,8 @@
+kind: Job
+name: atlas-count
+image: alpine:3.20
+command: ["sh", "-c", "printf 'atlas-count complete\\n'; exit 0"]
+backoffLimit: 1
+resources:
+  cpu: 100m
+  memory: 32Mi

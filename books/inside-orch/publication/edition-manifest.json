@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "edition": "1.0",
+  "edition_date": "2026-10-13",
+  "author": "Aleksandar Popovic",
+  "title": "Inside orch: Building and Operating a Docker Orchestrator in Go",
+  "status": "complete_local_reviewed_edition",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "website_baseline_sha": "80801c8d3d97a4d8ff78e0fe69f3f902beda00c0",
+  "frozen_at_utc": "2026-10-13T04:47:28.690179+00:00",
+  "manuscript_sha256": "4fc404c8e137dcf3f431744328e82e2b6f7b5956de48773a28326c3db898ffbc",
+  "meaningful_words": 101211,
+  "word_measurement": "Markdown inline text and technical identifiers; no fenced code/output, URL destinations, build metadata or duplicated unified export. Separate lab guides reported but excluded from the editorial target.",
+  "word_count_breakdown": {
+    "reading_sections": 86644,
+    "worked_answers": 14567,
+    "separate_lab_guides": 9705
+  },
+  "pdf_pages": 546,
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "executed_labs": 8,
+  "rights": "All rights reserved; exact source and bundled third-party assets retain their original rights/notices.",
+  "tool_versions": {
+    "python": "3.14.4",
+    "weasyprint": "68.0",
+    "pypdf": "6.20.0",
+    "markdown-it-py": "4.2.0",
+    "Pillow": "12.3.0"
+  },
+  "release_gate_sha256": "d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278",
+  "independent_review_sha256": "25112b16878e0ff2eb94815b3b486eaad70d41c358d243199fe9ee7e385e121a",
+  "source_package_snapshot": "Prompt 095 editable inputs and validation metadata frozen before later 096\u2013099 steps. Later gate/review/handoff and freeze tool are separate edition members.",
+  "tracker_snapshot": "Actual tracker at archive assembly: completed preceding tasks; 098/099 may still be in progress/pending. Final author-facing tracker remains canonical outside this frozen archive.",
+  "nondeterminism": "Same archive input bytes use fixed ordered ZIP metadata; rebuilding PDF can change its bytes even with 546 identical raster pages. Preserve the reviewed exports.",
+  "deployment": "None; local branch and patch only.",
+  "files": {
+    "edition/book.json": {
+      "sha256": "29138080e5528d3843bd0090faa6f230075871437921793172b15725706a2204",
+      "bytes": 3065
+    },
+    "edition/publication/HANDOFF.md": {
+      "sha256": "882c630a4496af998857ad4576197210c6a571773b7ad5971ee940d4b5b236ac",
+      "bytes": 6103
+    },
+    "edition/publication/NOTICE.md": {
+      "sha256": "305c8fbbe0e0c628798fb7ffe44c5aaae326d30cd6c903eb905e3a2a5cd2c0e2",
+      "bytes": 6526
+    },
+    "edition/publication/RELEASE_NOTES.md": {
+      "sha256": "8f764860ffb32fa33b558443f6f29cd561fd89619ea89a02cc32b1554c7a5533",
+      "bytes": 7353
+    },
+    "edition/publication/REPRODUCE.md": {
+      "sha256": "8389095b12020604b202a3c24ceabbcdbf6956df0f7b5a0e86fb0a540d9957ed",
+      "bytes": 8632
+    },
+    "edition/publication/RIGHTS.md": {
+      "sha256": "9b23469d1bded8d33b59fc53304505a0978c33094ff0a08c099a27703848be0f",
+      "bytes": 3027
+    },
+    "edition/publication/cover.png": {
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+      "bytes": 309024
+    },
+    "edition/publication/site-adapter/changes.patch": {
+      "sha256": "0798fd5c4090b0ef80e69301ed3ba0b1b17e968417f62c5c4be352b42aec0d84",
+      "bytes": 76738
+    },
+    "edition/publication/site-adapter/source-generated-manifest.json": {
+      "sha256": "cd2bc1709e05ad8c6f3274dc775645fe907baf5ee891c324eb53c4bc38462930",
+      "bytes": 198053
+    },
+    "edition/scripts/freeze_release.py": {
+      "sha256": "0d53628f53d4696886431127bc72356f35f69d939e1517bef2eaa9c89cc4eabe",
+      "bytes": 7048
+    },
+    "edition/state/execution-tracker.csv": {
+      "sha256": "a5c30747200c01e090f16d2a24cde87669778ed505ee11d1b8694898f0126bdc",
+      "bytes": 52484
+    },
+    "edition/validation/RELEASE_GATE.md": {
+      "sha256": "0968a32056684dd5a9838c37fa708cdbd62f1416fd638b1ab3c69f909e433f95",
+      "bytes": 2891
+    },
+    "edition/validation/publication/epub-validation.json": {
+      "sha256": "aa450a7776f23bd09530bbac2d44d9cdb1816088881d1ebdb41c5e9683ac8e36",
+      "bytes": 1228
+    },
+    "edition/validation/publication/epub-validation.md": {
+      "sha256": "1768b4e5d49c96054ad8d9125d610451f889c3bfaba54c2af6e4e170fa747936",
+      "bytes": 748
+    },
+    "edition/validation/publication/manuscript-measurement.json": {
+      "sha256": "1490ec15b1431473f38b13be2de98746108bf9efd8c85b93397019e5b4124858",
+      "bytes": 18200
+    },
+    "edition/validation/publication/pdf-range-report-history.json": {
+      "sha256": "828ad297493301b054a2dc13fd79e011d390f1a07c90e4a95124d04fa0237b89",
+      "bytes": 1008
+    },
+    "edition/validation/publication/pdf-rebuild-equivalence.json": {
+      "sha256": "78a2ba8b1729fba3499f14fa9fe2282072e9b5f03a678563b207dc41bc4e1169",
+      "bytes": 63527
+    },
+    "edition/validation/publication/pdf-visual-lab-review.json": {
+      "sha256": "c5ff37bcc31f663d5ad5f3ed727cd970cac72162d131005da4bd5571f98dc190",
+      "bytes": 9697
+    },
+    "edition/validation/publication/pdf-visual-review.json": {
+      "sha256": "a0be01d94a83883ffe83e5549229d96f6127b11d187a9b1114065048b8cc48da",
+      "bytes": 2487
+    },
+    "edition/validation/publication/pdf-visual-source-review.json": {
+      "sha256": "c20540bdd92db31fa190895bcdac06aefe1f0a6ecd35eea5135f2c6cd2ee967c",
+      "bytes": 29947
+    },
+    "edition/validation/publication/release-package-verification.json": {
+      "sha256": "0ff859f094d3a4c50a894cdd3e365fe77a6d31980b7a61031f1465f0080cc1f1",
+      "bytes": 1156
+    },
+    "edition/validation/publication/site-quality.json": {
+      "sha256": "924ac84ff4a4dfb38bbc86673e6b64bee46b3a6127f72bb387a0621d782b48c2",
+      "bytes": 8951
+    },
+    "edition/validation/release-gate.json": {
+      "sha256": "d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278",
+      "bytes": 28962
+    },
+    "edition/validation/reviews/final-findings.json": {
+      "sha256": "25112b16878e0ff2eb94815b3b486eaad70d41c358d243199fe9ee7e385e121a",
+      "bytes": 41370
+    },
+    "edition/validation/reviews/final-independent-review.md": {
+      "sha256": "1a47d7eb38222bd90dcb4f38d26889724978d2a2d9cf0b667b06105ff44142ed",
+      "bytes": 4496
+    },
+    "edition/validation/reviews/final-reader-architect.json": {
+      "sha256": "310550ea8db67c8563f42ed4e49cdfaa29b4569e6c96fcfecc8f6d0f362d625b",
+      "bytes": 34570
+    },
+    "edition/validation/reviews/final-reader-architect.md": {
+      "sha256": "e69c6a7fc6b704d4c20b55ec2233bc2699eeb6f6ea3ec6eaffcbef4488d56c44",
+      "bytes": 6535
+    },
+    "edition/validation/reviews/final-reader-developer.json": {
+      "sha256": "720df192be9ef01a69b6a20876f31d3fd2041b1c1e72cb0666c774d73a1d6e82",
+      "bytes": 67171
+    },
+    "edition/validation/reviews/final-reader-developer.md": {
+      "sha256": "152151a4268cf39fd7ae18a7582a2ca3ccb3d9e2209e27a676c44f4cece36457",
+      "bytes": 9175
+    },
+    "edition/validation/reviews/final-reader-devops.json": {
+      "sha256": "300118e1d32612e6ab76e0f46f5595729717ef6364e441e20dfe9be748a1fbf1",
+      "bytes": 36204
+    },
+    "edition/validation/reviews/final-reader-devops.md": {
+      "sha256": "b5b175e135dc05e171619f2cb19e75f217dfd1aa20eb295c30fe6bb1a0462820",
+      "bytes": 6095
+    },
+    "inside-orch-offline.zip": {
+      "sha256": "040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a",
+      "bytes": 15448587
+    },
+    "inside-orch-sources.zip": {
+      "sha256": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06",
+      "bytes": 14511156
+    },
+    "inside-orch.epub": {
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+      "bytes": 991265
+    },
+    "inside-orch.md": {
+      "sha256": "4fc404c8e137dcf3f431744328e82e2b6f7b5956de48773a28326c3db898ffbc",
+      "bytes": 719560
+    },
+    "inside-orch.pdf": {
+      "sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+      "bytes": 1924410
+    }
+  }
+}

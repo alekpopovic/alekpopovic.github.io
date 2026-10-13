@@ -1,0 +1,7 @@
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return Ciphertext{}, fmt.Errorf("generate secret nonce: %w", err)
+	}
+	data := append([]byte(nil), nonce...)
+	data = gcm.Seal(data, nonce, plaintext, []byte(e.keyID))
+	return Ciphertext{KeyID: e.keyID, Data: data}, nil

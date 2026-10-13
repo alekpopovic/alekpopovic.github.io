@@ -1,0 +1,108 @@
+{
+  "chapter": "38",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch38.wrapper",
+      "statement": "Runtime wrapper counts attempts before calls and errors only on non-nil returned errors.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/metrics.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 96,
+      "line_end": 103,
+      "associated_commits": [
+        "b3e29e593f46b4e90899a56bd9391c03d7c42f1a"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch38/failed-pull-emission.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    },
+    {
+      "claim_id": "ch38.failure-reports",
+      "statement": "tasks_failed_total increments for each accepted request whose requested status is failed, not only distinct transitions.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 689,
+      "line_end": 704,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    },
+    {
+      "claim_id": "ch38.scrape",
+      "statement": "Bundled Prometheus scrape and evaluation intervals are15seconds with server/agent/postgres jobs.",
+      "classification": "implemented package",
+      "source_path": "deploy/monitoring/prometheus.yml",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 22,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    },
+    {
+      "claim_id": "ch38.alert",
+      "statement": "DockerOperationErrorsHigh aggregates five-minute error rates above0.1for ten minutes.",
+      "classification": "implemented package",
+      "source_path": "deploy/monitoring/prometheus-rules.yaml",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 107,
+      "line_end": 116,
+      "associated_commits": [
+        "357903ef7cb95a7d6d8fad5f426a48ed48bc0b76"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    },
+    {
+      "claim_id": "ch38.cardinality",
+      "statement": "Autoscaler recommendations use service_id labels despite general low-cardinality documentation.",
+      "classification": "implemented package",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 119,
+      "line_end": 126,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    },
+    {
+      "claim_id": "ch38.proxies",
+      "statement": "Starter task/node panels consume cumulative state-change counters and scrape up proxies.",
+      "classification": "implemented package",
+      "source_path": "deploy/monitoring/grafana/orchestrator-dashboard.json",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 83,
+      "line_end": 99,
+      "associated_commits": [
+        "aa44e586fd79147173588f0bf86763814bd23ec4"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual instrumented fake pull and registry exposition passed. Prometheus rule evaluation, live scrape configuration and Grafana import were inspected only."
+      ]
+    }
+  ]
+}

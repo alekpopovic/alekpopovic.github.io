@@ -1,0 +1,95 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewer_scope": "Independent prose/continuity review of chapters25\u201340, authored by other agents. Existing source excerpts preserved; no application behavior changed.",
+  "reviewed_paths": [
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md"
+  ],
+  "checked_at_utc": "2026-10-13T01:50:33.904416+00:00",
+  "findings": [
+    {
+      "id": "COPY-25-40-01",
+      "target": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "before": "without writing a working repository into the website or immutable evidence tree",
+      "after": "without mutating the pinned source or keeping an unmanaged checkout",
+      "reason": "Remove website-production detail while retaining checkout ownership.",
+      "before_sha256": "8701625187ca2c56cee26d16aa640aa55719bfeb42bbd19f35821ce01795b30a",
+      "after_sha256": "8158ac293eb9354c736a4c1a648f83b69962fdf821bce5ef3679f2c7f78efc89",
+      "existing_source_fences_unchanged": true
+    },
+    {
+      "id": "COPY-25-40-02",
+      "target": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "before": "No website branch was committed or pushed.",
+      "after": "The manifest commits belong only to the disposable fixture.",
+      "reason": "Keep relevant source provenance without internal publishing workflow.",
+      "before_sha256": "8158ac293eb9354c736a4c1a648f83b69962fdf821bce5ef3679f2c7f78efc89",
+      "after_sha256": "ff0b154bdf0877230c7eb755448a66d5f6da7146546970c26f732615f7c366a5",
+      "existing_source_fences_unchanged": true
+    },
+    {
+      "id": "COPY-25-40-03",
+      "target": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "before": "No website/default-branch publication occurs.",
+      "after": "No external repository is modified.",
+      "reason": "Replace internal publication detail with the reader-relevant side-effect boundary.",
+      "before_sha256": "ff0b154bdf0877230c7eb755448a66d5f6da7146546970c26f732615f7c366a5",
+      "after_sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+      "existing_source_fences_unchanged": true
+    },
+    {
+      "id": "COPY-25-40-04",
+      "target": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "before": "For the lab, begin with a disposable locked copy, clear live integration variables, run the seeded command recorded above, then run the bounded fuzz target.",
+      "after": "For the lab, begin with a disposable locked copy and clear live integration variables. Run `go test ./internal/scheduler -run '^TestSchedulerRandomizedInvariants$' -count=1 -v` for all five seeded cases, then run the bounded fuzz target.",
+      "reason": "Supply the exact seeded command instead of referring to an absent earlier command.",
+      "before_sha256": "dd1dd3efa899e51533788cc23f69c709acabcc3918ecb2b3f540b612b8f534f3",
+      "after_sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+      "existing_source_fences_unchanged": true
+    },
+    {
+      "id": "COPY-25-40-05",
+      "target": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "before": "The [actual fault-test record](../../validation/labs/ch37/fault-tests.json) passed all eight chaos subcases",
+      "after": "From the disposable pinned module, run `go test ./internal/e2e ./internal/agent ./internal/docker -run 'Test(ChaosScenarios|ReconcileAssignedTaskDoesNotRecreateWhenDockerUnavailable|ReturnedNodeRemovesNodeLostUnassignedContainer|FakeRuntimeFailureInjection)$' -count=1 -v` with live integration variables cleared. The [actual fault-test record](../../validation/labs/ch37/fault-tests.json) passed all eight chaos subcases",
+      "reason": "Expose the actual reproducible safe command in reader prose; retain the original record.",
+      "before_sha256": "855850d157140be7083f89d547ecfbb20bc797b98452e49788fa58960be81d52",
+      "after_sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+      "existing_source_fences_unchanged": true
+    },
+    {
+      "id": "COPY-25-40-06",
+      "target": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "before": "this exact workflow completed in the current book workspace",
+      "after": "this exact workflow completed in the edition\u2019s captured verification",
+      "reason": "Remove a workspace-production reference while preserving the unexecuted CI boundary.",
+      "before_sha256": "964bceb4cc14a71ceb77dadeceb62cb09a2b1f9c2cf55fae602b6f553464b6aa",
+      "after_sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+      "existing_source_fences_unchanged": true
+    }
+  ],
+  "checks": [
+    "Read all16 chapters against their practical Atlas progression and claim boundaries.",
+    "Checked digest/signature/scanner vocabulary, admission/quota/runtime distinctions, memory/store/leadership separation, physical/logical cleanup and fake/real performance scope.",
+    "Confirmed each existing fenced source listing remains byte-identical through these prose edits."
+  ],
+  "overall_status": "passed",
+  "limitations": [
+    "Final PDF/EPUB/web typography and publication links are root-owned gates.",
+    "This copyedit does not certify application production readiness."
+  ]
+}

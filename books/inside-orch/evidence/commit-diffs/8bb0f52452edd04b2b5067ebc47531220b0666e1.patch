@@ -1,0 +1,552 @@
+commit 8bb0f52452edd04b2b5067ebc47531220b0666e1
+Date: 2026-07-14T19:30:46+02:00
+Subject: Modernize docs navigation and Pages links
+
+
+---
+ README.md                     | 26 ++++++-------
+ docs/API.md                   | 12 +++---
+ docs/GITHUB_PAGES.md          |  8 ++++
+ docs/OPERATIONS.md            |  6 +--
+ docs/PRODUCTION_DEPLOYMENT.md |  2 +-
+ docs/SCHEDULER.md             |  2 +-
+ docs/assets/docs.css          | 75 +++++++++++++++++++++++++++++++++++++-
+ docs/assets/docs.js           | 85 +++++++++++++++++++++++++++++++++++++++++--
+ docs/index.html               | 45 ++++++++++++++---------
+ 9 files changed, 214 insertions(+), 47 deletions(-)
+
+diff --git a/README.md b/README.md
+index f32dcd9..955a9fb 100644
+--- a/README.md
++++ b/README.md
+@@ -15,11 +15,11 @@
+ </p>
+ 
+ <p align="center">
+-  <a href="docs/GITHUB_PAGES.md">📚 Docs site</a> ·
+-  <a href="docs/API.md">🔌 API</a> ·
+-  <a href="docs/PRODUCTION_DEPLOYMENT.md">🚢 Deploy</a> ·
+-  <a href="docs/SECURITY.md">🛡️ Security</a> ·
+-  <a href="api/openapi.yaml">🧾 OpenAPI</a>
++  <a href="https://alekpopovic.github.io/orch/#GITHUB_PAGES.md">📚 Docs site</a> ·
++  <a href="https://alekpopovic.github.io/orch/#API.md">🔌 API</a> ·
++  <a href="https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md">🚢 Deploy</a> ·
++  <a href="https://alekpopovic.github.io/orch/#SECURITY.md">🛡️ Security</a> ·
++  <a href="https://alekpopovic.github.io/orch/#openapi.yaml">🧾 OpenAPI</a>
+ </p>
+ 
+ <p align="center">
+@@ -225,11 +225,11 @@ placement:
+ 
+ | Area | Docs |
+ | --- | --- |
+-| 🌈 Brand + site | [GitHub Pages documentation site](docs/GITHUB_PAGES.md), [Brand kit](docs/BRAND.md), [Charts](docs/CHARTS.md) |
+-| 🏗️ Architecture | [Architecture](docs/ARCHITECTURE.md), [State machines](docs/STATE_MACHINES.md) |
+-| 🔌 API | [API](docs/API.md), [OpenAPI](api/openapi.yaml) |
+-| 🐳 Runtime | [Agent](docs/AGENT.md), [Service spec](docs/SERVICE_SPEC.md), [Resources](docs/RESOURCES.md) |
+-| 🧭 Control loops | [Scheduler](docs/SCHEDULER.md), [Reconciler](docs/RECONCILER.md), [Rollouts](docs/ROLLOUTS.md) |
+-| 🛡️ Security | [Security](docs/SECURITY.md), [Security review](docs/SECURITY_REVIEW.md), [Secrets](docs/SECRETS.md), [Registries](docs/REGISTRIES.md) |
+-| 📈 Operations | [Observability](docs/OBSERVABILITY.md), [Reliability](docs/RELIABILITY.md), [Operations](docs/OPERATIONS.md), [Production deployment](docs/PRODUCTION_DEPLOYMENT.md) |
+-| 🧪 Testing | [Load testing](docs/LOAD_TESTING.md), [Chaos testing](docs/CHAOS_TESTING.md), [Development](docs/DEVELOPMENT.md) |
++| 🌈 Brand + site | [GitHub Pages documentation site](https://alekpopovic.github.io/orch/#GITHUB_PAGES.md), [Brand kit](https://alekpopovic.github.io/orch/#BRAND.md), [Charts](https://alekpopovic.github.io/orch/#CHARTS.md) |
++| 🏗️ Architecture | [Architecture](https://alekpopovic.github.io/orch/#ARCHITECTURE.md), [State machines](https://alekpopovic.github.io/orch/#STATE_MACHINES.md) |
++| 🔌 API | [API](https://alekpopovic.github.io/orch/#API.md), [OpenAPI](https://alekpopovic.github.io/orch/#openapi.yaml) |
++| 🐳 Runtime | [Agent](https://alekpopovic.github.io/orch/#AGENT.md), [Service spec](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), [Resources](https://alekpopovic.github.io/orch/#RESOURCES.md) |
++| 🧭 Control loops | [Scheduler](https://alekpopovic.github.io/orch/#SCHEDULER.md), [Reconciler](https://alekpopovic.github.io/orch/#RECONCILER.md), [Rollouts](https://alekpopovic.github.io/orch/#ROLLOUTS.md) |
++| 🛡️ Security | [Security](https://alekpopovic.github.io/orch/#SECURITY.md), [Security review](https://alekpopovic.github.io/orch/#SECURITY_REVIEW.md), [Secrets](https://alekpopovic.github.io/orch/#SECRETS.md), [Registries](https://alekpopovic.github.io/orch/#REGISTRIES.md) |
++| 📈 Operations | [Observability](https://alekpopovic.github.io/orch/#OBSERVABILITY.md), [Reliability](https://alekpopovic.github.io/orch/#RELIABILITY.md), [Operations](https://alekpopovic.github.io/orch/#OPERATIONS.md), [Production deployment](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md) |
++| 🧪 Testing | [Load testing](https://alekpopovic.github.io/orch/#LOAD_TESTING.md), [Chaos testing](https://alekpopovic.github.io/orch/#CHAOS_TESTING.md), [Development](https://alekpopovic.github.io/orch/#DEVELOPMENT.md) |
+diff --git a/docs/API.md b/docs/API.md
+index d8a35be..69d83dc 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -58,7 +58,7 @@ Agent API:
+ - Registration returns a short-lived agent credential.
+ - Heartbeat, task polling, and task status updates use the issued credential.
+ 
+-See [SECURITY.md](SECURITY.md).
++See [SECURITY.md](https://alekpopovic.github.io/orch/#SECURITY.md).
+ 
+ ## Health And Metrics
+ 
+@@ -161,7 +161,7 @@ Concurrent service operations are guarded per service. Active rollout/rollback b
+ 
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
+-The canonical YAML deployment format is documented in [SERVICE_SPEC.md](SERVICE_SPEC.md), with JSON Schema at `schemas/service.schema.json`.
++The canonical YAML deployment format is documented in [SERVICE_SPEC.md](https://alekpopovic.github.io/orch/#SERVICE_SPEC.md), with JSON Schema at `schemas/service.schema.json`.
+ 
+ ## Secrets
+ 
+@@ -175,7 +175,7 @@ curl http://localhost:8080/v1/secrets/prod%2Fdatabase-url
+ curl -X DELETE http://localhost:8080/v1/secrets/prod%2Fdatabase-url
+ ```
+ 
+-Secret GET responses include metadata only and never return plaintext. Services can reference secrets with `secret_refs`, and agents receive decrypted values only in assigned task payloads. See [SECRETS.md](SECRETS.md).
++Secret GET responses include metadata only and never return plaintext. Services can reference secrets with `secret_refs`, and agents receive decrypted values only in assigned task payloads. See [SECRETS.md](https://alekpopovic.github.io/orch/#SECRETS.md).
+ 
+ ## Registry Credentials
+ 
+@@ -188,7 +188,7 @@ curl http://localhost:8080/v1/registry-credentials
+ curl -X DELETE http://localhost:8080/v1/registry-credentials/ghcr-prod
+ ```
+ 
+-Registry credential responses include metadata only. Services can reference credentials with `image_pull_secret`; agents receive decrypted pull auth only for assigned tasks. See [REGISTRIES.md](REGISTRIES.md).
++Registry credential responses include metadata only. Services can reference credentials with `image_pull_secret`; agents receive decrypted pull auth only for assigned tasks. See [REGISTRIES.md](https://alekpopovic.github.io/orch/#REGISTRIES.md).
+ 
+ ## Service Discovery
+ 
+@@ -207,7 +207,7 @@ Discovery endpoints include active services and assigned task ports. By default,
+ curl http://localhost:8080/v1/integrations/traefik/config
+ ```
+ 
+-The Traefik endpoint returns optional HTTP-provider dynamic config for services with `routes`. It omits unhealthy, stopped, unassigned, non-TCP, and non-matching-port task endpoints. See [TRAEFIK.md](TRAEFIK.md).
++The Traefik endpoint returns optional HTTP-provider dynamic config for services with `routes`. It omits unhealthy, stopped, unassigned, non-TCP, and non-matching-port task endpoints. See [TRAEFIK.md](https://alekpopovic.github.io/orch/#TRAEFIK.md).
+ 
+ ## Tasks
+ 
+@@ -234,7 +234,7 @@ Valid task statuses include:
+ - `removed`
+ - `failed`
+ 
+-Lifecycle transition rules are documented in [STATE_MACHINES.md](STATE_MACHINES.md).
++Lifecycle transition rules are documented in [STATE_MACHINES.md](https://alekpopovic.github.io/orch/#STATE_MACHINES.md).
+ 
+ Tasks can include `conditions`; `node_lost` means the server detected a stale node heartbeat. Stateless lost tasks are failed/removed so replacements can be created on ready nodes. Stateful lost tasks keep the condition for operator-directed recovery.
+ 
+diff --git a/docs/GITHUB_PAGES.md b/docs/GITHUB_PAGES.md
+index 3b6f475..ee30da2 100644
+--- a/docs/GITHUB_PAGES.md
++++ b/docs/GITHUB_PAGES.md
+@@ -2,6 +2,14 @@
+ 
+ The documentation portal is a static GitHub Pages site built from Markdown files in `docs/` plus release artifacts from the repository root.
+ 
++Canonical URL:
++
++```text
++https://alekpopovic.github.io/orch/
++```
++
++Repository README and cross-document documentation links point at this GitHub Pages portal so readers land on the styled documentation experience instead of raw Markdown.
++
+ ## What Gets Published
+ 
+ The Pages workflow publishes:
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index ab178ef..3789d0a 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -25,7 +25,7 @@ Stop:
+ 
+ The codebase is not production-ready as a durable orchestrator until `orch-server` is wired to PostgreSQL. The current server process stores control-plane state in memory.
+ 
+-Production deployment examples are documented in [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md).
++Production deployment examples are documented in [PRODUCTION_DEPLOYMENT.md](https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md).
+ 
+ Before production use:
+ 
+@@ -39,7 +39,7 @@ Before production use:
+ 
+ ## Configuration
+ 
+-Full precedence, YAML file examples, and redacted config output are documented in [CONFIGURATION.md](CONFIGURATION.md).
++Full precedence, YAML file examples, and redacted config output are documented in [CONFIGURATION.md](https://alekpopovic.github.io/orch/#CONFIGURATION.md).
+ 
+ Server:
+ 
+@@ -235,7 +235,7 @@ Logs are proxied from the owning agent. Check:
+ 
+ ## Backups
+ 
+-Detailed backup and restore procedures are documented in [BACKUP_RESTORE.md](BACKUP_RESTORE.md).
++Detailed backup and restore procedures are documented in [BACKUP_RESTORE.md](https://alekpopovic.github.io/orch/#BACKUP_RESTORE.md).
+ 
+ For future PostgreSQL-backed production, back up:
+ 
+diff --git a/docs/PRODUCTION_DEPLOYMENT.md b/docs/PRODUCTION_DEPLOYMENT.md
+index 53aa56d..c15dd76 100644
+--- a/docs/PRODUCTION_DEPLOYMENT.md
++++ b/docs/PRODUCTION_DEPLOYMENT.md
+@@ -156,7 +156,7 @@ Production PostgreSQL should provide:
+ - migration execution before deploying binaries that require new schema;
+ - monitoring through `postgres-exporter` or equivalent.
+ 
+-See [BACKUP_RESTORE.md](BACKUP_RESTORE.md).
++See [BACKUP_RESTORE.md](https://alekpopovic.github.io/orch/#BACKUP_RESTORE.md).
+ 
+ ## Prometheus Scraping
+ 
+diff --git a/docs/SCHEDULER.md b/docs/SCHEDULER.md
+index 993f269..d37a88b 100644
+--- a/docs/SCHEDULER.md
++++ b/docs/SCHEDULER.md
+@@ -38,7 +38,7 @@ Free resources are calculated as:
+ node.allocatable - requests(non-terminal tasks already on node) - requests(tasks planned earlier in this pass)
+ ```
+ 
+-See [RESOURCES.md](RESOURCES.md) for CPU and memory normalization.
++See [RESOURCES.md](https://alekpopovic.github.io/orch/#RESOURCES.md) for CPU and memory normalization.
+ 
+ ## Scoring
+ 
+diff --git a/docs/assets/docs.css b/docs/assets/docs.css
+index e190437..f6ea373 100644
+--- a/docs/assets/docs.css
++++ b/docs/assets/docs.css
+@@ -82,6 +82,64 @@
+   text-transform: uppercase;
+ }
+ 
++.doc-action {
++  align-items: center;
++  background: linear-gradient(135deg, rgb(255 255 255 / 0.94), rgb(239 246 255 / 0.8));
++  border: 1px solid rgb(191 219 254 / 0.72);
++  border-radius: 999px;
++  color: rgb(29 78 216);
++  display: inline-flex;
++  font-weight: 800;
++  gap: 0.4rem;
++  padding: 0.45rem 0.75rem;
++  transition: all 150ms ease;
++}
++
++.doc-action:hover {
++  border-color: rgb(35 116 225 / 0.62);
++  box-shadow: 0 14px 32px -24px rgb(35 116 225 / 0.7);
++  transform: translateY(-1px);
++}
++
++.dark .doc-action {
++  background: linear-gradient(135deg, rgb(15 23 42 / 0.9), rgb(30 41 59 / 0.78));
++  border-color: rgb(51 65 85);
++  color: rgb(147 197 253);
++}
++
++.toc-panel {
++  max-height: calc(100vh - 5rem);
++  overflow: auto;
++}
++
++.toc-link {
++  border-left: 2px solid transparent;
++  color: rgb(100 116 139);
++  display: block;
++  font-size: 0.86rem;
++  line-height: 1.35;
++  padding: 0.45rem 0.5rem 0.45rem 0.75rem;
++  transition: all 150ms ease;
++}
++
++.toc-link:hover {
++  border-color: rgb(35 116 225 / 0.55);
++  color: rgb(29 78 216);
++}
++
++.toc-link.depth-3 {
++  font-size: 0.78rem;
++  padding-left: 1.35rem;
++}
++
++.dark .toc-link {
++  color: rgb(148 163 184);
++}
++
++.dark .toc-link:hover {
++  color: rgb(147 197 253);
++}
++
+ .quick-link {
+   border-radius: 0.875rem;
+   border: 1px solid rgb(226 232 240);
+@@ -147,6 +205,16 @@
+   overflow-wrap: anywhere;
+ }
+ 
++.doc-content::before {
++  background: linear-gradient(90deg, #22d3ee, #2374e1, #8b5cf6);
++  border-radius: 999px;
++  content: "";
++  display: block;
++  height: 0.28rem;
++  margin-bottom: 2rem;
++  width: 7rem;
++}
++
+ .doc-content > *:first-child {
+   margin-top: 0;
+ }
+@@ -273,12 +341,17 @@
+ }
+ 
+ .doc-content blockquote {
++  background: linear-gradient(135deg, rgb(239 246 255 / 0.9), rgb(236 254 255 / 0.72));
++  border: 1px solid rgb(191 219 254 / 0.7);
+   border-left: 4px solid rgb(35 116 225);
++  border-radius: 1rem;
+   color: rgb(71 85 105);
+-  padding-left: 1rem;
++  padding: 0.9rem 1rem;
+ }
+ 
+ .dark .doc-content blockquote {
++  background: linear-gradient(135deg, rgb(15 23 42 / 0.88), rgb(30 41 59 / 0.68));
++  border-color: rgb(51 65 85);
+   color: rgb(203 213 225);
+ }
+ 
+diff --git a/docs/assets/docs.js b/docs/assets/docs.js
+index d59a777..dafdf9d 100644
+--- a/docs/assets/docs.js
++++ b/docs/assets/docs.js
+@@ -70,9 +70,13 @@ const docsNav = [
+ ]
+ 
+ const allDocs = docsNav.flatMap((section) => section.items.map((item) => ({ ...item, group: section.group })))
++const pagesBaseURL = 'https://alekpopovic.github.io/orch/'
+ const nav = document.querySelector('#nav')
+ const content = document.querySelector('#doc-content')
+ const meta = document.querySelector('#doc-meta')
++const toc = document.querySelector('#toc')
++const tocPanel = document.querySelector('#toc-panel')
++const readingProgress = document.querySelector('#reading-progress')
+ const search = document.querySelector('#doc-search')
+ const sidebar = document.querySelector('#sidebar')
+ const backdrop = document.querySelector('#sidebar-backdrop')
+@@ -99,8 +103,18 @@ function setTheme(mode) {
+ }
+ 
+ function normalizeRoute(route) {
++  return routeParts(route).path
++}
++
++function routeParts(route) {
+   const raw = decodeURIComponent((route || '').replace(/^#/, '')).trim()
+-  return raw || 'README.md'
++  if (!raw) return { path: 'README.md', anchor: '' }
++  const [path, ...anchorParts] = raw.split('#')
++  return { path: path || 'README.md', anchor: anchorParts.join('#') }
++}
++
++function pageURL(path) {
++  return `${pagesBaseURL}#${encodeURIComponent(path)}`
+ }
+ 
+ function activeDoc() {
+@@ -123,7 +137,7 @@ function renderNav(filter = '') {
+           <h2 class="px-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">${escapeHTML(section.group)}</h2>
+           <div class="mt-2 space-y-1">
+             ${items.map((item) => `
+-              <a class="nav-link ${item.path === current ? 'active' : ''}" href="#${encodeURIComponent(item.path)}">
++              <a class="nav-link ${item.path === current ? 'active' : ''}" href="${pageURL(item.path)}">
+                 <span class="grid h-6 w-6 place-items-center rounded-lg bg-slate-100 text-sm dark:bg-slate-900">${escapeHTML(item.icon || '•')}</span>
+                 <span>${escapeHTML(item.title)}</span>
+               </a>
+@@ -154,10 +168,13 @@ async function fetchFirst(paths) {
+ 
+ async function loadDoc() {
+   const doc = activeDoc()
++  const route = routeParts(window.location.hash)
+   renderNav(search.value)
+   meta.innerHTML = `
+     <span class="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-900">${escapeHTML(doc.group)}</span>
+     <span>${escapeHTML(doc.path)}</span>
++    <a class="doc-action" href="${pageURL(doc.path)}">↗ GitHub Pages</a>
++    <button class="doc-action" type="button" data-copy-page-link="${pageURL(doc.path)}">⛓ Copy link</button>
+   `
+   content.innerHTML = `<div class="animate-pulse space-y-4"><div class="h-8 w-2/3 rounded bg-slate-200 dark:bg-slate-800"></div><div class="h-4 w-full rounded bg-slate-200 dark:bg-slate-800"></div><div class="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800"></div></div>`
+   try {
+@@ -173,9 +190,16 @@ async function loadDoc() {
+       content.innerHTML = `<pre><code>${escapeHTML(loaded.text)}</code></pre>`
+     }
+     wireContentLinks()
++    wireCopyLink()
++    renderTOC()
+     await renderMermaidDiagrams()
++    updateReadingProgress()
+     closeSidebar()
+-    window.scrollTo({ top: 0, behavior: 'smooth' })
++    if (route.anchor) {
++      document.getElementById(route.anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
++    } else {
++      window.scrollTo({ top: 0, behavior: 'smooth' })
++    }
+   } catch (error) {
+     content.innerHTML = `
+       <h1>Document unavailable</h1>
+@@ -185,6 +209,41 @@ async function loadDoc() {
+   }
+ }
+ 
++function wireCopyLink() {
++  meta.querySelector('[data-copy-page-link]')?.addEventListener('click', async (event) => {
++    const button = event.currentTarget
++    const link = button.getAttribute('data-copy-page-link')
++    try {
++      await navigator.clipboard.writeText(link)
++      button.textContent = '✅ Copied'
++      setTimeout(() => {
++        button.textContent = '⛓ Copy link'
++      }, 1600)
++    } catch {
++      window.prompt('Copy GitHub Pages link', link)
++    }
++  })
++}
++
++function renderTOC() {
++  const headings = Array.from(content.querySelectorAll('h2, h3'))
++  if (!headings.length) {
++    tocPanel.classList.add('xl:hidden')
++    toc.innerHTML = ''
++    return
++  }
++  tocPanel.classList.remove('xl:hidden')
++  toc.innerHTML = headings
++    .map((heading) => {
++      if (!heading.id) {
++        heading.id = slugify(heading.textContent)
++      }
++      const depth = heading.tagName === 'H3' ? 'depth-3' : 'depth-2'
++      return `<a class="toc-link ${depth}" href="${pageURL(activeDoc().path)}#${encodeURIComponent(heading.id)}">${escapeHTML(heading.textContent)}</a>`
++    })
++    .join('')
++}
++
+ async function renderMermaidDiagrams() {
+   if (!window.mermaid) return
+   const blocks = Array.from(content.querySelectorAll('pre code.language-mermaid'))
+@@ -218,11 +277,27 @@ function wireContentLinks() {
+     const cleaned = href.replace(/^\.\//, '').replace(/^docs\//, '').replace(/^api\//, '')
+     const target = allDocs.find((item) => item.path === cleaned || item.path === cleaned.split('#')[0])
+     if (target) {
+-      link.setAttribute('href', `#${encodeURIComponent(target.path)}`)
++      const anchor = cleaned.includes('#') ? `#${cleaned.split('#').slice(1).join('#')}` : ''
++      link.setAttribute('href', `${pageURL(target.path)}${anchor}`)
+     }
+   })
+ }
+ 
++function slugify(value) {
++  return String(value)
++    .toLowerCase()
++    .trim()
++    .replace(/[`'"().,:/]/g, '')
++    .replace(/\s+/g, '-')
++    .replace(/-+/g, '-')
++}
++
++function updateReadingProgress() {
++  const max = document.documentElement.scrollHeight - window.innerHeight
++  const percent = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 0
++  readingProgress.style.width = `${percent}%`
++}
++
+ function escapeHTML(value) {
+   return String(value)
+     .replaceAll('&', '&amp;')
+@@ -247,6 +322,8 @@ themeSelectMobile.addEventListener('change', (event) => setTheme(event.target.va
+ themeMedia.addEventListener('change', () => applyTheme())
+ search.addEventListener('input', (event) => renderNav(event.target.value))
+ window.addEventListener('hashchange', loadDoc)
++window.addEventListener('scroll', updateReadingProgress, { passive: true })
++window.addEventListener('resize', updateReadingProgress)
+ openButton.addEventListener('click', openSidebar)
+ closeButton.addEventListener('click', closeSidebar)
+ backdrop.addEventListener('click', closeSidebar)
+diff --git a/docs/index.html b/docs/index.html
+index 5ab3118..0876de8 100644
+--- a/docs/index.html
++++ b/docs/index.html
+@@ -35,6 +35,9 @@
+     <link rel="stylesheet" href="assets/docs.css" />
+   </head>
+   <body class="bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
++    <div class="fixed inset-x-0 top-0 z-[60] h-1 bg-slate-200/60 dark:bg-slate-800/60">
++      <div id="reading-progress" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-orch-500 to-violet-500 transition-[width] duration-150"></div>
++    </div>
+     <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+       <div class="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-orch-500/20 blur-3xl dark:bg-orch-500/10"></div>
+       <div class="absolute right-0 top-1/3 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-300/10"></div>
+@@ -45,7 +48,7 @@
+         <button id="sidebar-open" class="rounded-xl border border-slate-200 p-2 text-slate-700 shadow-sm dark:border-slate-800 dark:text-slate-200" aria-label="Open navigation">
+           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+         </button>
+-        <a href="#README.md" class="flex items-center gap-2 font-semibold tracking-tight">
++        <a href="https://alekpopovic.github.io/orch/#README.md" class="flex items-center gap-2 font-semibold tracking-tight">
+           <img class="h-9 w-9 rounded-xl shadow-glow" src="assets/orch-mark.svg" alt="" />
+           <span>orch docs</span>
+         </a>
+@@ -61,7 +64,7 @@
+ 
+     <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-80 -translate-x-full flex-col border-r border-slate-200 bg-white/95 shadow-2xl backdrop-blur-xl transition-transform dark:border-slate-800 dark:bg-slate-950/95 lg:translate-x-0 lg:shadow-none">
+       <div class="flex h-20 items-center justify-between border-b border-slate-200 px-5 dark:border-slate-800">
+-        <a href="#README.md" class="flex items-center gap-3">
++        <a href="https://alekpopovic.github.io/orch/#README.md" class="flex items-center gap-3">
+           <img class="h-11 w-11 rounded-2xl shadow-glow" src="assets/orch-mark.svg" alt="" />
+           <span>
+             <span class="block text-base font-bold tracking-tight">orch docs</span>
+@@ -94,7 +97,7 @@
+           <p class="mt-1">Orbit logo, neon accents, Mermaid charts, and readable ops docs.</p>
+         </div>
+         <p>Built from Markdown in <code class="rounded bg-slate-100 px-1 dark:bg-slate-900">docs/</code>.</p>
+-        <a class="mt-2 inline-flex font-medium text-orch-600 hover:text-orch-700 dark:text-orch-400" href="https://github.com/alekpopovic/orch">View on GitHub →</a>
++        <a class="mt-2 inline-flex font-medium text-orch-600 hover:text-orch-700 dark:text-orch-400" href="https://alekpopovic.github.io/orch/#README.md">Open GitHub Pages home →</a>
+       </div>
+     </aside>
+ 
+@@ -112,18 +115,18 @@
+               <h1 class="text-4xl font-black tracking-tight text-slate-950 dark:text-white sm:text-5xl">a colorful control-plane handbook</h1>
+               <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-600 dark:text-slate-300">Release notes, API contracts, operations, security, scheduler internals, rollouts, Mermaid charts, and production workflows in one bright GitHub Pages portal.</p>
+               <div class="mt-7 grid gap-3 sm:grid-cols-3">
+-                <a class="metric-card" href="#API.md"><span>🔌</span><strong>OpenAPI</strong><small>public API contract</small></a>
+-                <a class="metric-card" href="#PRODUCTION_DEPLOYMENT.md"><span>🚢</span><strong>Deploy</strong><small>production runbooks</small></a>
+-                <a class="metric-card" href="#OBSERVABILITY.md"><span>📈</span><strong>Signals</strong><small>metrics + dashboards</small></a>
++                <a class="metric-card" href="https://alekpopovic.github.io/orch/#API.md"><span>🔌</span><strong>OpenAPI</strong><small>public API contract</small></a>
++                <a class="metric-card" href="https://alekpopovic.github.io/orch/#PRODUCTION_DEPLOYMENT.md"><span>🚢</span><strong>Deploy</strong><small>production runbooks</small></a>
++                <a class="metric-card" href="https://alekpopovic.github.io/orch/#OBSERVABILITY.md"><span>📈</span><strong>Signals</strong><small>metrics + dashboards</small></a>
+               </div>
+             </div>
+             <div class="brand-panel rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
+               <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Quick links</p>
+               <div class="mt-4 grid gap-2 text-sm">
+-                <a class="quick-link" href="#RELEASE_NOTES.md">🎉 Release notes</a>
+-                <a class="quick-link" href="#BRAND.md">🎨 Brand kit</a>
+-                <a class="quick-link" href="#CHARTS.md">📊 Charts</a>
+-                <a class="quick-link" href="#API.md">🔌 API guide</a>
++                <a class="quick-link" href="https://alekpopovic.github.io/orch/#RELEASE_NOTES.md">🎉 Release notes</a>
++                <a class="quick-link" href="https://alekpopovic.github.io/orch/#BRAND.md">🎨 Brand kit</a>
++                <a class="quick-link" href="https://alekpopovic.github.io/orch/#CHARTS.md">📊 Charts</a>
++                <a class="quick-link" href="https://alekpopovic.github.io/orch/#API.md">🔌 API guide</a>
+               </div>
+               <div class="mt-5 grid grid-cols-2 gap-3">
+                 <div class="mini-stat bg-cyan-500/10 text-cyan-700 dark:text-cyan-200"><strong>36</strong><span>doc pages</span></div>
+@@ -137,14 +140,20 @@
+       <section class="px-6 py-8 sm:px-10 lg:px-12">
+         <div class="mx-auto max-w-5xl">
+           <div id="doc-meta" class="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400"></div>
+-          <article id="doc-content" class="doc-content rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 sm:p-8 lg:p-10">
+-            <div class="animate-pulse space-y-4">
+-              <div class="h-8 w-2/3 rounded bg-slate-200 dark:bg-slate-800"></div>
+-              <div class="h-4 w-full rounded bg-slate-200 dark:bg-slate-800"></div>
+-              <div class="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800"></div>
+-              <div class="h-4 w-4/6 rounded bg-slate-200 dark:bg-slate-800"></div>
+-            </div>
+-          </article>
++          <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_16rem] xl:items-start">
++            <article id="doc-content" class="doc-content rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 sm:p-8 lg:p-10">
++              <div class="animate-pulse space-y-4">
++                <div class="h-8 w-2/3 rounded bg-slate-200 dark:bg-slate-800"></div>
++                <div class="h-4 w-full rounded bg-slate-200 dark:bg-slate-800"></div>
++                <div class="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-800"></div>
++                <div class="h-4 w-4/6 rounded bg-slate-200 dark:bg-slate-800"></div>
++              </div>
++            </article>
++            <aside id="toc-panel" class="toc-panel hidden rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 xl:sticky xl:top-8 xl:block">
++              <p class="text-xs font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">On This Page</p>
++              <nav id="toc" class="mt-4 space-y-1"></nav>
++            </aside>
++          </div>
+         </div>
+       </section>
+     </main>

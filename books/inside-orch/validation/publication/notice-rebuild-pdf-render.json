@@ -1,0 +1,20 @@
+{
+  "id": "notice-rebuild-pdf-render",
+  "command": [
+    ".venv/bin/python",
+    "books/inside-orch/scripts/render_pdf_pages.py",
+    "--output",
+    "/tmp/inside-orch-notice-rebuild-pdf-pages"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T03:53:48.075558+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T03:55:06.964622+00:00",
+  "duration_seconds": 78.889,
+  "stdout": "validation/publication/notice-rebuild-pdf-render.stdout.txt",
+  "stderr": "validation/publication/notice-rebuild-pdf-render.stderr.txt"
+}

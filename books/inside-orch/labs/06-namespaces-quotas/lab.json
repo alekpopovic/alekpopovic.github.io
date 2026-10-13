@@ -1,0 +1,57 @@
+{
+  "id": "06",
+  "title": "namespaces-quotas",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "author": "Aleksandar Popovic",
+  "prepared_at_utc": "2026-10-13T01:35:05.972252+00:00",
+  "classification": "teaching extension",
+  "inputs": {
+    "examples/teaching-extensions/lab06/main.go": "3ae90e46300f117f707155b7aac5afd673e743238714df442a8b93332bc434c6",
+    "labs/06-namespaces-quotas/fixtures/api-base.json": "0089a907baa81e95573cb87715258109745498870afb7232bde17d5b8f78d5d5",
+    "labs/06-namespaces-quotas/fixtures/quota.json": "00df8f930819f5d547be748fd6656ff1483b0d1fe3488fd1f972f0af2496ecc5",
+    "labs/06-namespaces-quotas/fixtures/tenants.json": "bd80b01d53687f2bd14bb03c9bf3af50e8f797128f89580e9766e9852c9fe6f2"
+  },
+  "records": [
+    "validation/labs/06-check.json",
+    "validation/labs/lab06-canonical-fixtures.json"
+  ],
+  "machine_assertions": [
+    "namespace-create-book-payments",
+    "namespace-create-book-observability",
+    "duplicate-local-name",
+    "cross-id-hidden",
+    "header-precedes-query",
+    "query-fallback",
+    "default-compatible",
+    "viewer-own-scope",
+    "viewer-other-scope",
+    "namespace-admin-not-cluster",
+    "cluster-admin-list",
+    "secret-local-book-payments",
+    "secret-local-book-observability",
+    "secret-reference-isolation",
+    "quota-config-book-payments",
+    "quota-config-book-observability",
+    "arithmetic-one",
+    "denied-scale-atomic",
+    "concurrent-final-slot",
+    "secret-quota",
+    "registry-quota-robot-one",
+    "registry-quota-robot-two",
+    "zero-is-unlimited",
+    "deleted-release",
+    "default-undeletable",
+    "history-blocks-namespace-delete",
+    "usage-query-conflict",
+    "independent-servers-no-shared-state"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_namespace_workload_labs.py",
+    "--lab",
+    "06"
+  ],
+  "release_status": "Actual scoped results prepared; book-wide review pending",
+  "cleanup": "process-local state discarded; namespace deletion blocked by retained service/history, no unsafe map/database deletion",
+  "scope": "real in-process HTTP handlers and MemoryService; no connected network host, daemon or database"
+}

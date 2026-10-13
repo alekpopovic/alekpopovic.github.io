@@ -1,0 +1,30 @@
+{
+  "id": "03",
+  "title": "Reconciliation and ownership under drift",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "classification": "teaching extension",
+  "runtime_mode": "FakeRuntime and in-process MemoryService lifecycle; separate store-backed reconciler test double; no Docker, HTTP or PostgreSQL",
+  "inputs": {
+    "examples/teaching-extensions/lab03/agent_contract_test.go": "cc3108e2229218d8ffcd91d41be62b4aa1ea1e0671a903e7abdf798a9a9bdf32",
+    "examples/teaching-extensions/lab03/reconciler_contract_test.go": "3df35a9d352261daf74e451e2a5c8e3db5cce1d17ee3b50bd62bafc97df2b69d",
+    "scripts/run_drift_lab.py": "8a14a1adf51e6eb3e4d3c0726ec1072a771f4cee889cfe923b9fb83aef51850c",
+    "labs/03-reconciler-drift/fixtures/cases.json": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517"
+  },
+  "records": [
+    "validation/labs/lab03-drift-frozen-command.json",
+    "validation/labs/lab03-frozen-observed.json",
+    "validation/labs/03-check.json"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/run_drift_lab.py",
+    "--source-copy",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "--go-root",
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64",
+    "--output-prefix",
+    "validation/labs/lab03-reader-observed"
+  ],
+  "cleanup": "No runtime services created. Process exit; optional removal only of .book-labs/lab03agent and .book-labs/lab03reconciler owned overlays.",
+  "cases": 15
+}

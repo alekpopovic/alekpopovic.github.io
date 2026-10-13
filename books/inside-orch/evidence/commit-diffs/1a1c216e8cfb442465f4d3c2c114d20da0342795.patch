@@ -1,0 +1,746 @@
+commit 1a1c216e8cfb442465f4d3c2c114d20da0342795
+Date: 2026-07-14T14:58:50+02:00
+Subject: Add scheduler concurrency-safe assignment
+
+
+---
+ docs/OBSERVABILITY.md                |   4 +
+ docs/SCHEDULER.md                    |  18 +++-
+ internal/metrics/prometheus.go       |  64 ++++++++---
+ internal/metrics/prometheus_test.go  |   8 ++
+ internal/scheduler/scheduler.go      |  74 +++++++++----
+ internal/scheduler/scheduler_test.go | 202 ++++++++++++++++++++++++++++++++---
+ internal/store/postgres.go           |  17 +--
+ internal/store/postgres_test.go      |   8 +-
+ 8 files changed, 335 insertions(+), 60 deletions(-)
+
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+index 2438a78..8e83cad 100644
+--- a/docs/OBSERVABILITY.md
++++ b/docs/OBSERVABILITY.md
+@@ -58,6 +58,10 @@ In local Compose:
+ - `api_request_duration_seconds{method,route,status}`
+ - `scheduler_runs_total`
+ - `scheduler_errors_total`
++- `scheduler_scheduling_attempts_total`
++- `scheduler_scheduling_failures_total`
++- `scheduler_tasks_claimed_total`
++- `scheduler_assignment_conflicts_total`
+ - `scheduler_duration_seconds`
+ - `reconciler_runs_total`
+ - `reconciler_errors_total`
+diff --git a/docs/SCHEDULER.md b/docs/SCHEDULER.md
+index 4a25ecd..993f269 100644
+--- a/docs/SCHEDULER.md
++++ b/docs/SCHEDULER.md
+@@ -53,10 +53,26 @@ Pending tasks are processed in stable task ID order. Nodes are processed in stab
+ 
+ ## Persistence And Races
+ 
+-Assignments are persisted through `AssignTask(ctx, taskID, nodeID, expectedUpdatedAt)`.
++Assignments are persisted through `AssignTask(ctx, taskID, nodeID, expectedUpdatedAt)`. Returned scheduler assignments include:
++
++- task ID;
++- selected node ID;
++- assigned timestamp;
++- expected task `updated_at` guard used for the claim.
+ 
+ If the store returns `ErrConflict` or `ErrNotFound`, the scheduler treats that as a benign race and skips that planned assignment. It returns and emits events only for assignments that were actually persisted. The next pass recomputes from fresh state.
+ 
++PostgreSQL assignment uses row-level locking with `FOR UPDATE SKIP LOCKED` inside the transaction and then updates only rows that still match `actual_status='pending'` and the expected `updated_at` value. This makes a pending task claim atomic when two scheduler loops accidentally run at the same time. One loop can claim the task; later or concurrent loops observe a conflict or skipped locked row and do not emit duplicate assignment events.
++
++There is no HA leader election yet. Correctness depends on task-level atomic claims, deterministic planning, and benign conflict handling rather than a single active scheduler process.
++
++## Scheduler Metrics
++
++- `scheduler_scheduling_attempts_total`: scheduler passes started.
++- `scheduler_scheduling_failures_total`: passes that failed before completion.
++- `scheduler_tasks_claimed_total`: pending tasks successfully claimed.
++- `scheduler_assignment_conflicts_total`: stale, locked, or already-claimed assignment attempts.
++
+ ## Current Limitations
+ 
+ - No preemption.
+diff --git a/internal/metrics/prometheus.go b/internal/metrics/prometheus.go
+index d045779..364189d 100644
+--- a/internal/metrics/prometheus.go
++++ b/internal/metrics/prometheus.go
+@@ -13,18 +13,22 @@ import (
+ type Server struct {
+ 	registry *prometheus.Registry
+ 
+-	apiRequests        *prometheus.CounterVec
+-	apiRequestDuration *prometheus.HistogramVec
+-	schedulerRuns      prometheus.Counter
+-	schedulerErrors    prometheus.Counter
+-	schedulerDuration  prometheus.Histogram
+-	reconcilerRuns     prometheus.Counter
+-	reconcilerErrors   prometheus.Counter
+-	reconcilerDuration prometheus.Histogram
+-	tasksCreated       prometheus.Counter
+-	tasksFailed        prometheus.Counter
+-	rollouts           prometheus.Counter
+-	rolloutFailures    prometheus.Counter
++	apiRequests         *prometheus.CounterVec
++	apiRequestDuration  *prometheus.HistogramVec
++	schedulerRuns       prometheus.Counter
++	schedulerErrors     prometheus.Counter
++	schedulerAttempts   prometheus.Counter
++	schedulerFailures   prometheus.Counter
++	tasksClaimed        prometheus.Counter
++	assignmentConflicts prometheus.Counter
++	schedulerDuration   prometheus.Histogram
++	reconcilerRuns      prometheus.Counter
++	reconcilerErrors    prometheus.Counter
++	reconcilerDuration  prometheus.Histogram
++	tasksCreated        prometheus.Counter
++	tasksFailed         prometheus.Counter
++	rollouts            prometheus.Counter
++	rolloutFailures     prometheus.Counter
+ }
+ 
+ func NewServer() *Server {
+@@ -47,6 +51,22 @@ func NewServer() *Server {
+ 			Name: "scheduler_errors_total",
+ 			Help: "Total scheduler run errors.",
+ 		}),
++		schedulerAttempts: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_scheduling_attempts_total",
++			Help: "Total scheduler attempts to compute and persist assignments.",
++		}),
++		schedulerFailures: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_scheduling_failures_total",
++			Help: "Total scheduler attempts that failed before completion.",
++		}),
++		tasksClaimed: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_tasks_claimed_total",
++			Help: "Total pending tasks atomically claimed by the scheduler.",
++		}),
++		assignmentConflicts: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "scheduler_assignment_conflicts_total",
++			Help: "Total scheduler assignment claim conflicts.",
++		}),
+ 		schedulerDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
+ 			Name:    "scheduler_duration_seconds",
+ 			Help:    "Scheduler run duration in seconds.",
+@@ -87,6 +107,10 @@ func NewServer() *Server {
+ 		m.apiRequestDuration,
+ 		m.schedulerRuns,
+ 		m.schedulerErrors,
++		m.schedulerAttempts,
++		m.schedulerFailures,
++		m.tasksClaimed,
++		m.assignmentConflicts,
+ 		m.schedulerDuration,
+ 		m.reconcilerRuns,
+ 		m.reconcilerErrors,
+@@ -121,6 +145,22 @@ func (m *Server) ObserveSchedulerDuration(duration time.Duration) {
+ 	m.schedulerDuration.Observe(duration.Seconds())
+ }
+ 
++func (m *Server) IncSchedulingAttempts() {
++	m.schedulerAttempts.Inc()
++}
++
++func (m *Server) IncSchedulingFailures() {
++	m.schedulerFailures.Inc()
++}
++
++func (m *Server) IncTasksClaimed() {
++	m.tasksClaimed.Inc()
++}
++
++func (m *Server) IncAssignmentConflicts() {
++	m.assignmentConflicts.Inc()
++}
++
+ func (m *Server) IncReconciliationRuns() {
+ 	m.reconcilerRuns.Inc()
+ }
+diff --git a/internal/metrics/prometheus_test.go b/internal/metrics/prometheus_test.go
+index 7383c10..4af91d3 100644
+--- a/internal/metrics/prometheus_test.go
++++ b/internal/metrics/prometheus_test.go
+@@ -16,6 +16,10 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 	metrics.ObserveAPIRequest(http.MethodGet, "/healthz", http.StatusOK, 10*time.Millisecond)
+ 	metrics.IncSchedulerRuns()
+ 	metrics.IncSchedulerErrors()
++	metrics.IncSchedulingAttempts()
++	metrics.IncSchedulingFailures()
++	metrics.IncTasksClaimed()
++	metrics.IncAssignmentConflicts()
+ 	metrics.ObserveSchedulerDuration(20 * time.Millisecond)
+ 	metrics.IncReconciliationRuns()
+ 	metrics.IncReconciliationErrors()
+@@ -31,6 +35,10 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 		"api_request_duration_seconds",
+ 		"scheduler_runs_total",
+ 		"scheduler_errors_total",
++		"scheduler_scheduling_attempts_total 1",
++		"scheduler_scheduling_failures_total 1",
++		"scheduler_tasks_claimed_total 1",
++		"scheduler_assignment_conflicts_total 1",
+ 		"scheduler_duration_seconds",
+ 		"reconciler_runs_total",
+ 		"reconciler_errors_total",
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index 749f684..e162382 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -22,8 +22,10 @@ type Store interface {
+ }
+ 
+ type Assignment struct {
+-	TaskID types.TaskID `json:"task_id"`
+-	NodeID types.NodeID `json:"node_id"`
++	TaskID            types.TaskID `json:"task_id"`
++	NodeID            types.NodeID `json:"node_id"`
++	AssignedAt        time.Time    `json:"assigned_at,omitempty"`
++	ExpectedUpdatedAt time.Time    `json:"expected_updated_at,omitempty"`
+ }
+ 
+ type PlanInput struct {
+@@ -43,6 +45,10 @@ type Metrics interface {
+ 	IncSchedulerRuns()
+ 	IncSchedulerErrors()
+ 	ObserveSchedulerDuration(duration time.Duration)
++	IncSchedulingAttempts()
++	IncSchedulingFailures()
++	IncTasksClaimed()
++	IncAssignmentConflicts()
+ }
+ 
+ type NoopMetrics struct{}
+@@ -53,6 +59,14 @@ func (NoopMetrics) IncSchedulerErrors() {}
+ 
+ func (NoopMetrics) ObserveSchedulerDuration(time.Duration) {}
+ 
++func (NoopMetrics) IncSchedulingAttempts() {}
++
++func (NoopMetrics) IncSchedulingFailures() {}
++
++func (NoopMetrics) IncTasksClaimed() {}
++
++func (NoopMetrics) IncAssignmentConflicts() {}
++
+ type Option func(*Scheduler)
+ 
+ func WithMetrics(metrics Metrics) Option {
+@@ -78,36 +92,37 @@ func New(store Store, opts ...Option) *Scheduler {
+ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 	started := s.now()
+ 	s.metrics.IncSchedulerRuns()
++	s.metrics.IncSchedulingAttempts()
+ 	defer func() {
+ 		s.metrics.ObserveSchedulerDuration(s.now().Sub(started))
+ 	}()
+ 	if s.store == nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, fmt.Errorf("scheduler store is required")
+ 	}
+ 	if err := ctx.Err(); err != nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, err
+ 	}
+ 
+ 	pending, err := s.store.ListTasksByStatus(ctx, types.TaskPending)
+ 	if err != nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, fmt.Errorf("list pending tasks: %w", err)
+ 	}
+ 	nodes, err := s.store.ListNodesByStatus(ctx, types.NodeReady)
+ 	if err != nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, fmt.Errorf("list ready nodes: %w", err)
+ 	}
+ 	running, err := s.loadRunningTasks(ctx, nodes)
+ 	if err != nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, err
+ 	}
+ 	services, err := s.loadServices(ctx, pending, running)
+ 	if err != nil {
+-		s.metrics.IncSchedulerErrors()
++		s.recordSchedulingFailure()
+ 		return nil, err
+ 	}
+ 
+@@ -123,28 +138,38 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 		if !ok {
+ 			continue
+ 		}
+-		assigned, err := s.persistAssignment(ctx, task, assignment)
++		claimed, assigned, err := s.persistAssignment(ctx, task, assignment)
+ 		if err != nil {
+-			s.metrics.IncSchedulerErrors()
++			s.recordSchedulingFailure()
+ 			return assignments, err
+ 		}
+ 		if assigned {
+-			assignments = append(assignments, assignment)
++			assignments = append(assignments, claimed)
+ 		}
+ 	}
+ 	return assignments, nil
+ }
+ 
+-func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assignment Assignment) (bool, error) {
++func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assignment Assignment) (Assignment, bool, error) {
++	assignment.ExpectedUpdatedAt = assignment.ExpectedUpdatedAt.UTC()
++	if assignment.ExpectedUpdatedAt.IsZero() {
++		assignment.ExpectedUpdatedAt = task.UpdatedAt.UTC()
++	}
+ 	transactional := false
+ 	if _, ok := any(s.store).(store.Transactor); ok {
+ 		transactional = true
+ 	}
+ 	assigned := false
+ 	err := store.WithTx(ctx, s.store, func(txCtx context.Context, tx Store) error {
+-		if _, err := tx.AssignTask(txCtx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
++		assignedTask, err := tx.AssignTask(txCtx, assignment.TaskID, assignment.NodeID, assignment.ExpectedUpdatedAt)
++		if err != nil {
+ 			return err
+ 		}
++		assignedAt := assignedTask.UpdatedAt.UTC()
++		if assignedAt.IsZero() {
++			assignedAt = s.now().UTC()
++		}
++		assignment.AssignedAt = assignedAt
+ 		options := []events.EmitOption(nil)
+ 		if transactional {
+ 			options = append(options, events.Strict())
+@@ -156,7 +181,7 @@ func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assi
+ 			Message:           "task assigned to node",
+ 			RelatedObjectType: "task",
+ 			RelatedObjectID:   string(assignment.TaskID),
+-			Timestamp:         s.now(),
++			Timestamp:         assignment.AssignedAt,
+ 		}, options...); err != nil {
+ 			return fmt.Errorf("emit task assignment event: %w", err)
+ 		}
+@@ -164,12 +189,21 @@ func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assi
+ 		return nil
+ 	})
+ 	if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
+-		return false, nil
++		s.metrics.IncAssignmentConflicts()
++		return Assignment{}, false, nil
+ 	}
+ 	if err != nil {
+-		return false, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
++		return Assignment{}, false, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
++	}
++	if assigned {
++		s.metrics.IncTasksClaimed()
+ 	}
+-	return assigned, nil
++	return assignment, assigned, nil
++}
++
++func (s *Scheduler) recordSchedulingFailure() {
++	s.metrics.IncSchedulerErrors()
++	s.metrics.IncSchedulingFailures()
+ }
+ 
+ func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([]types.Task, error) {
+@@ -233,7 +267,11 @@ func Plan(input PlanInput) []Assignment {
+ 		if !ok {
+ 			continue
+ 		}
+-		assignments = append(assignments, Assignment{TaskID: task.ID, NodeID: node.ID})
++		assignments = append(assignments, Assignment{
++			TaskID:            task.ID,
++			NodeID:            node.ID,
++			ExpectedUpdatedAt: task.UpdatedAt.UTC(),
++		})
+ 		state.addPlanned(node.ID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
+ 	}
+ 	return assignments
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 1a8eb9f..314b8b2 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -13,6 +13,44 @@ import (
+ 
+ var errFakeEvent = errors.New("event failed")
+ 
++type schedulerMetricsRecorder struct {
++	runs      int
++	errors    int
++	attempts  int
++	failures  int
++	claimed   int
++	conflicts int
++	durations int
++}
++
++func (m *schedulerMetricsRecorder) IncSchedulerRuns() {
++	m.runs++
++}
++
++func (m *schedulerMetricsRecorder) IncSchedulerErrors() {
++	m.errors++
++}
++
++func (m *schedulerMetricsRecorder) ObserveSchedulerDuration(time.Duration) {
++	m.durations++
++}
++
++func (m *schedulerMetricsRecorder) IncSchedulingAttempts() {
++	m.attempts++
++}
++
++func (m *schedulerMetricsRecorder) IncSchedulingFailures() {
++	m.failures++
++}
++
++func (m *schedulerMetricsRecorder) IncTasksClaimed() {
++	m.claimed++
++}
++
++func (m *schedulerMetricsRecorder) IncAssignmentConflicts() {
++	m.conflicts++
++}
++
+ func TestPlanAssignments(t *testing.T) {
+ 	service := serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil)
+ 	labeledService := serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, []types.PlacementConstraint{
+@@ -140,6 +178,7 @@ func TestPlanAssignments(t *testing.T) {
+ func TestRunOnceAssignsTasksAndEmitsEvents(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	assignedAt := time.Date(2026, 6, 11, 11, 0, 0, 0, time.UTC)
+ 	store := &fakeStore{
+ 		pending: []types.Task{task},
+ 		nodes: []types.Node{
+@@ -149,17 +188,26 @@ func TestRunOnceAssignsTasksAndEmitsEvents(t *testing.T) {
+ 			"svc": serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
+ 		},
+ 	}
+-	scheduler := New(store)
+-	scheduler.now = func() time.Time { return time.Date(2026, 6, 11, 11, 0, 0, 0, time.UTC) }
++	metrics := &schedulerMetricsRecorder{}
++	scheduler := New(store, WithMetrics(metrics))
++	scheduler.now = func() time.Time { return assignedAt }
+ 
+ 	assignments, err := scheduler.RunOnce(context.Background())
+ 	if err != nil {
+ 		t.Fatalf("run scheduler: %v", err)
+ 	}
+-	if !assignmentsEqual(assignments, []Assignment{{TaskID: "task-a", NodeID: "node-a"}}) {
++	want := []Assignment{{
++		TaskID:            "task-a",
++		NodeID:            "node-a",
++		AssignedAt:        assignedAt,
++		ExpectedUpdatedAt: task.UpdatedAt,
++	}}
++	if !assignmentsEqual(assignments, want) {
+ 		t.Fatalf("unexpected assignments %#v", assignments)
+ 	}
+-	if len(store.assigned) != 1 || store.assigned[0] != assignments[0] {
++	if len(store.assigned) != 1 || store.assigned[0].TaskID != assignments[0].TaskID ||
++		store.assigned[0].NodeID != assignments[0].NodeID ||
++		!store.assigned[0].ExpectedUpdatedAt.Equal(task.UpdatedAt) {
+ 		t.Fatalf("expected assignment persisted, got %#v", store.assigned)
+ 	}
+ 	if len(store.events) != 1 {
+@@ -168,11 +216,18 @@ func TestRunOnceAssignsTasksAndEmitsEvents(t *testing.T) {
+ 	if store.events[0].Type != "task.assigned" || store.events[0].RelatedObjectID != "task-a" {
+ 		t.Fatalf("unexpected event %#v", store.events[0])
+ 	}
++	if !store.events[0].Timestamp.Equal(assignedAt) {
++		t.Fatalf("expected event assigned timestamp %s, got %s", assignedAt, store.events[0].Timestamp)
++	}
++	if metrics.runs != 1 || metrics.attempts != 1 || metrics.claimed != 1 || metrics.conflicts != 0 || metrics.failures != 0 {
++		t.Fatalf("unexpected scheduler metrics %#v", metrics)
++	}
+ }
+ 
+ func TestRunOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	assignedAt := time.Date(2026, 6, 11, 11, 0, 0, 0, time.UTC)
+ 	store := &fakeStore{
+ 		pending: []types.Task{task},
+ 		nodes: []types.Node{
+@@ -183,12 +238,20 @@ func TestRunOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 		},
+ 		failEvents: true,
+ 	}
++	scheduler := New(store)
++	scheduler.now = func() time.Time { return assignedAt }
+ 
+-	assignments, err := New(store).RunOnce(context.Background())
++	assignments, err := scheduler.RunOnce(context.Background())
+ 	if err != nil {
+ 		t.Fatalf("run scheduler: %v", err)
+ 	}
+-	if !assignmentsEqual(assignments, []Assignment{{TaskID: "task-a", NodeID: "node-a"}}) {
++	want := []Assignment{{
++		TaskID:            "task-a",
++		NodeID:            "node-a",
++		AssignedAt:        assignedAt,
++		ExpectedUpdatedAt: task.UpdatedAt,
++	}}
++	if !assignmentsEqual(assignments, want) {
+ 		t.Fatalf("unexpected assignments %#v", assignments)
+ 	}
+ }
+@@ -236,7 +299,8 @@ func TestRunOnceSkipsAssignmentConflict(t *testing.T) {
+ 		assignErr: store.ErrConflict,
+ 	}
+ 
+-	assignments, err := New(fake).RunOnce(context.Background())
++	metrics := &schedulerMetricsRecorder{}
++	assignments, err := New(fake, WithMetrics(metrics)).RunOnce(context.Background())
+ 	if err != nil {
+ 		t.Fatalf("run scheduler: %v", err)
+ 	}
+@@ -246,6 +310,20 @@ func TestRunOnceSkipsAssignmentConflict(t *testing.T) {
+ 	if len(fake.events) != 0 {
+ 		t.Fatalf("expected no assignment event for conflicted task, got %#v", fake.events)
+ 	}
++	if metrics.attempts != 1 || metrics.conflicts != 1 || metrics.claimed != 0 || metrics.failures != 0 {
++		t.Fatalf("unexpected scheduler metrics %#v", metrics)
++	}
++}
++
++func TestRunOnceRecordsSchedulingFailure(t *testing.T) {
++	metrics := &schedulerMetricsRecorder{}
++	_, err := New(nil, WithMetrics(metrics)).RunOnce(context.Background())
++	if err == nil {
++		t.Fatal("expected scheduler error")
++	}
++	if metrics.attempts != 1 || metrics.errors != 1 || metrics.failures != 1 || metrics.claimed != 0 || metrics.conflicts != 0 {
++		t.Fatalf("unexpected scheduler metrics %#v", metrics)
++	}
+ }
+ 
+ func TestConcurrentSchedulerAttemptsAssignTaskOnce(t *testing.T) {
+@@ -253,7 +331,7 @@ func TestConcurrentSchedulerAttemptsAssignTaskOnce(t *testing.T) {
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+ 	store := &concurrentAssignmentStore{
+ 		task:    task,
+-		node:    nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		nodes:   []types.Node{nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048})},
+ 		service: serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
+ 	}
+ 	scheduler := New(store)
+@@ -266,7 +344,7 @@ func TestConcurrentSchedulerAttemptsAssignTaskOnce(t *testing.T) {
+ 		wg.Add(1)
+ 		go func() {
+ 			defer wg.Done()
+-			assigned, err := scheduler.persistAssignment(context.Background(), task, assignment)
++			_, assigned, err := scheduler.persistAssignment(context.Background(), task, assignment)
+ 			results <- assigned
+ 			errs <- err
+ 		}()
+@@ -297,6 +375,72 @@ func TestConcurrentSchedulerAttemptsAssignTaskOnce(t *testing.T) {
+ 	}
+ }
+ 
++func TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	base := &concurrentAssignmentStore{
++		task: task,
++		nodes: []types.Node{
++			nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		},
++		service: serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
++	}
++	store := &concurrentRunOnceStore{
++		concurrentAssignmentStore: base,
++		pendingListed:             make(chan struct{}, 2),
++		releasePending:            make(chan struct{}),
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
++	defer cancel()
++
++	var wg sync.WaitGroup
++	results := make(chan []Assignment, 2)
++	errs := make(chan error, 2)
++	for i := 0; i < 2; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			assignments, err := New(store).RunOnce(ctx)
++			results <- assignments
++			errs <- err
++		}()
++	}
++	for i := 0; i < 2; i++ {
++		select {
++		case <-store.pendingListed:
++		case <-ctx.Done():
++			t.Fatalf("waiting for concurrent scheduler list: %v", ctx.Err())
++		}
++	}
++	close(store.releasePending)
++	wg.Wait()
++	close(results)
++	close(errs)
++
++	successes := 0
++	for assignments := range results {
++		if len(assignments) > 1 {
++			t.Fatalf("expected each scheduler to return at most one assignment, got %#v", assignments)
++		}
++		successes += len(assignments)
++	}
++	for err := range errs {
++		if err != nil {
++			t.Fatalf("expected concurrent conflicts to be benign, got %v", err)
++		}
++	}
++	if successes != 1 {
++		t.Fatalf("expected exactly one scheduler to claim the task, got %d", successes)
++	}
++	if base.task.ActualStatus != types.TaskAssigned || base.task.NodeID == "" {
++		t.Fatalf("expected task assigned once, got %#v", base.task)
++	}
++	if len(base.events) != 1 {
++		t.Fatalf("expected one assignment event, got %#v", base.events)
++	}
++}
++
+ func TestRunOnceAccountsForNonTerminalAssignedTasks(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+@@ -360,11 +504,17 @@ func (s *transactionalFakeStore) WithTx(ctx context.Context, fn store.TxFunc) er
+ type concurrentAssignmentStore struct {
+ 	mu      sync.Mutex
+ 	task    types.Task
+-	node    types.Node
++	nodes   []types.Node
+ 	service types.Service
+ 	events  []types.Event
+ }
+ 
++type concurrentRunOnceStore struct {
++	*concurrentAssignmentStore
++	pendingListed  chan struct{}
++	releasePending chan struct{}
++}
++
+ func (s *concurrentAssignmentStore) WithTx(ctx context.Context, fn store.TxFunc) error {
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+@@ -387,11 +537,29 @@ func (s *concurrentAssignmentStore) ListTasksByStatus(_ context.Context, status
+ 	return nil, nil
+ }
+ 
++func (s *concurrentRunOnceStore) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
++	tasks, err := s.concurrentAssignmentStore.ListTasksByStatus(ctx, status)
++	if status == types.TaskPending {
++		s.pendingListed <- struct{}{}
++		select {
++		case <-s.releasePending:
++		case <-ctx.Done():
++			return nil, ctx.Err()
++		}
++	}
++	return tasks, err
++}
++
+ func (s *concurrentAssignmentStore) ListNodesByStatus(_ context.Context, status types.NodeStatus) ([]types.Node, error) {
+-	if s.node.Status == status {
+-		return []types.Node{s.node}, nil
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	var nodes []types.Node
++	for _, node := range s.nodes {
++		if node.Status == status {
++			nodes = append(nodes, node)
++		}
+ 	}
+-	return nil, nil
++	return nodes, nil
+ }
+ 
+ func (s *concurrentAssignmentStore) ListTasksByNode(context.Context, types.NodeID) ([]types.Task, error) {
+@@ -445,11 +613,15 @@ func (s *fakeStore) GetService(_ context.Context, id types.ServiceID) (types.Ser
+ 	return s.services[id], nil
+ }
+ 
+-func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, _ time.Time) (types.Task, error) {
++func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	if s.assignErr != nil {
+ 		return types.Task{}, s.assignErr
+ 	}
+-	s.assigned = append(s.assigned, Assignment{TaskID: id, NodeID: nodeID})
++	s.assigned = append(s.assigned, Assignment{
++		TaskID:            id,
++		NodeID:            nodeID,
++		ExpectedUpdatedAt: expectedUpdatedAt.UTC(),
++	})
+ 	return types.Task{ID: id, NodeID: nodeID, ActualStatus: types.TaskAssigned}, nil
+ }
+ 
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index ca0e173..8995788 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -383,7 +383,7 @@ func (s *postgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ func (s *postgresStore) getTask(ctx context.Context, id types.TaskID, forUpdate bool) (types.Task, error) {
+ 	sql := taskSelectSQL() + ` WHERE id = $1`
+ 	if forUpdate {
+-		sql += ` FOR UPDATE`
++		sql += ` FOR UPDATE SKIP LOCKED`
+ 	}
+ 	row := s.db.QueryRow(ctx, sql, string(id))
+ 	task, err := scanTask(row)
+@@ -396,6 +396,14 @@ func (s *postgresStore) getTask(ctx context.Context, id types.TaskID, forUpdate
+ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	current, err := s.getTask(ctx, id, s.begin == nil)
+ 	if err != nil {
++		if errors.Is(err, ErrNotFound) && s.begin == nil {
++			if _, getErr := s.getTask(ctx, id, false); errors.Is(getErr, ErrNotFound) {
++				return types.Task{}, ErrNotFound
++			} else if getErr != nil {
++				return types.Task{}, getErr
++			}
++			return types.Task{}, ErrConflict
++		}
+ 		return types.Task{}, err
+ 	}
+ 	if err := types.ValidateTaskTransition(current.ActualStatus, types.TaskAssigned); err != nil {
+@@ -418,13 +426,6 @@ func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 	task, err := scanTask(row)
+ 	if err != nil {
+ 		if errors.Is(err, pgx.ErrNoRows) {
+-			current, getErr := s.GetTask(ctx, id)
+-			if getErr != nil {
+-				return types.Task{}, getErr
+-			}
+-			if current.NodeID == nodeID && current.ActualStatus == types.TaskAssigned {
+-				return current, nil
+-			}
+ 			return types.Task{}, ErrConflict
+ 		}
+ 		return types.Task{}, mapPostgresError(err)
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 424e77f..4cfe01f 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -134,12 +134,8 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatalf("assign task: %v", err)
+ 	}
+-	assignedAgain, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt)
+-	if err != nil {
+-		t.Fatalf("idempotent assign task: %v", err)
+-	}
+-	if assignedAgain.ID != assigned.ID || assignedAgain.NodeID != updatedNode.ID {
+-		t.Fatalf("expected idempotent assignment to return existing task, got %#v", assignedAgain)
++	if _, err := store.AssignTask(ctx, task.ID, updatedNode.ID, task.UpdatedAt); !errors.Is(err, ErrConflict) {
++		t.Fatalf("expected stale duplicate assignment to conflict, got %v", err)
+ 	}
+ 	running, err := store.UpdateTaskStatus(ctx, task.ID, types.TaskRunning, types.TaskRunning, "container-1", "", assigned.UpdatedAt)
+ 	if err != nil {

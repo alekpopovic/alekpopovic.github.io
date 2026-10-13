@@ -1,0 +1,800 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T04:25:17.220189+00:00",
+  "lens": "Skeptical architect",
+  "reviewer_scope": "AI-assisted complete-edition architect review. Chapters 01\u201316 and 25\u201340 independently reviewed by this agent. Chapters 17\u201324 and appendices were authored by this agent; independent source_foundation and root reviews cover those author-scope exceptions. No external human endorsement claimed.",
+  "reviewed_manuscript_files": [
+    {
+      "path": "manuscript/00-preface.md",
+      "sha256": "7b4ffbaeac31756c2f2cbd27762e344c5fc05ce443cb8ee16cec040c8ea1bf35"
+    },
+    {
+      "path": "manuscript/README.md",
+      "sha256": "869eb7dd147c955d1665647ee550dd945088bfa411b2b9b4bbb343f1415f2ef7"
+    },
+    {
+      "path": "manuscript/appendices/a-cli-api-config.md",
+      "sha256": "36077d9631361ab46b881011e6d4622374ee526fc2ea775155987705723de36c"
+    },
+    {
+      "path": "manuscript/appendices/b-lifecycle-invariants.md",
+      "sha256": "c9a04d773f4ac4e8ff76d1b828daa460829a6dcdfa611ff97b557d7b128cbced"
+    },
+    {
+      "path": "manuscript/appendices/c-annotated-history.md",
+      "sha256": "3fc5d10c55bd7a4b622098ada7a9efc00d4516485d678e35d7316a99e1ede227"
+    },
+    {
+      "path": "manuscript/appendices/d-exercises-solutions.md",
+      "sha256": "bf903c344ad490fd329cc794019151ba03c542223de5c1f64e1db2e58627b493"
+    },
+    {
+      "path": "manuscript/appendices/e-ops-measurement.md",
+      "sha256": "a2b1cdae1d551ba44d58d49c041cf0d8116093fef69856137c16d30faf65ce16"
+    },
+    {
+      "path": "manuscript/appendices/f-glossary-bibliography.md",
+      "sha256": "cdecf81711ad0914d052b1de460d4c373a7e81eb744134eeda5be77b81a377c6"
+    },
+    {
+      "path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "sha256": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a"
+    },
+    {
+      "path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "sha256": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754"
+    },
+    {
+      "path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "sha256": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499"
+    },
+    {
+      "path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "sha256": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37"
+    },
+    {
+      "path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "sha256": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72"
+    },
+    {
+      "path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "sha256": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e"
+    },
+    {
+      "path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "sha256": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479"
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "sha256": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76"
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "sha256": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338"
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "sha256": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f"
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "sha256": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545"
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "sha256": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468"
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43"
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "sha256": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4"
+    },
+    {
+      "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a"
+    },
+    {
+      "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "sha256": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11"
+    },
+    {
+      "path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8"
+    },
+    {
+      "path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "sha256": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e"
+    },
+    {
+      "path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "sha256": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948"
+    },
+    {
+      "path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "sha256": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005"
+    },
+    {
+      "path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "sha256": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6"
+    },
+    {
+      "path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "sha256": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9"
+    },
+    {
+      "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "sha256": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098"
+    },
+    {
+      "path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "sha256": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78"
+    },
+    {
+      "path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "sha256": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78"
+    },
+    {
+      "path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "sha256": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9"
+    },
+    {
+      "path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "sha256": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab"
+    },
+    {
+      "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "sha256": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7"
+    },
+    {
+      "path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "sha256": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b"
+    },
+    {
+      "path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d"
+    },
+    {
+      "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "sha256": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6"
+    },
+    {
+      "path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "sha256": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c"
+    },
+    {
+      "path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "sha256": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a"
+    },
+    {
+      "path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "sha256": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8"
+    },
+    {
+      "path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "sha256": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36"
+    },
+    {
+      "path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6"
+    },
+    {
+      "path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944"
+    },
+    {
+      "path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "sha256": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462"
+    },
+    {
+      "path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "sha256": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143"
+    },
+    {
+      "path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5"
+    },
+    {
+      "path": "manuscript/solutions/appendix-d.md",
+      "sha256": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5"
+    },
+    {
+      "path": "manuscript/solutions/ch01.md",
+      "sha256": "7bbb0e70a9f0aa84d4fcf29552ce511550476ee34e1fcd3974c04455f8019167"
+    },
+    {
+      "path": "manuscript/solutions/ch02.md",
+      "sha256": "d9cabcf2182c9ab1be9e59c16ba124b15da28b2751b410b4d5117cc5f5443502"
+    },
+    {
+      "path": "manuscript/solutions/ch03.md",
+      "sha256": "c6748fcef3e669801cdeca9c2cefcc30d86ca99e83f6bbe2aadf114533d35d9c"
+    },
+    {
+      "path": "manuscript/solutions/ch04.md",
+      "sha256": "b246b143e40dd47369a70a913fe2e7c98763677bbd39d5bc0d51e39fb1568c38"
+    },
+    {
+      "path": "manuscript/solutions/ch05.md",
+      "sha256": "863720e99500bdc250ce2a1b26befe4668a46b70aeb0eebdccdfe7826a023c9a"
+    },
+    {
+      "path": "manuscript/solutions/ch06.md",
+      "sha256": "5fee2393dcb98714b004ac6341b66838bb87d77e8ee6aa1d88a422d78936d8f1"
+    },
+    {
+      "path": "manuscript/solutions/ch07.md",
+      "sha256": "3b6922262ec8d4d139e7816742d3ec61f2ac0a405b10e9a0848f8c10be9a65ac"
+    },
+    {
+      "path": "manuscript/solutions/ch08.md",
+      "sha256": "9b5e2b6cfed139ea1ed9b8e5c52775f1f46ea3e43199de603492cad2a77f28a8"
+    },
+    {
+      "path": "manuscript/solutions/ch09.md",
+      "sha256": "e4c3401a4c6c27c2515df8ee41576cb37653ff14008e7f2e70fd9178434f8e6c"
+    },
+    {
+      "path": "manuscript/solutions/ch10.md",
+      "sha256": "95122f8bc6cb1c203d08b2121d58367b7a9635b3e587ae225cdea6878075100c"
+    },
+    {
+      "path": "manuscript/solutions/ch11.md",
+      "sha256": "76c0913a0e084af393848e310b3ee59fdc38d1e676f7e28b2706fb5c16af38d3"
+    },
+    {
+      "path": "manuscript/solutions/ch12.md",
+      "sha256": "56b2fabdd3c804da4d3f1a8b955dd9299408732c5984cc9250067b2c11d3e0c2"
+    },
+    {
+      "path": "manuscript/solutions/ch13.md",
+      "sha256": "b520d820f0fe33c01b03a8a088ee5adf3b402115b501906d50996a420c742a5d"
+    },
+    {
+      "path": "manuscript/solutions/ch14.md",
+      "sha256": "2f696b944bd77a416e109522d77b4e8d307c3fd092909c95599a1be49dd055f2"
+    },
+    {
+      "path": "manuscript/solutions/ch15.md",
+      "sha256": "e050b4657456bf2f607365b9c3506af8fe2363395543532e2976ba42c9457685"
+    },
+    {
+      "path": "manuscript/solutions/ch16.md",
+      "sha256": "2d6b88593d07354a6a6f249b0aaf33d1b10582666d1c552cd06c05ddcd9bdcae"
+    },
+    {
+      "path": "manuscript/solutions/ch17.md",
+      "sha256": "b4add5a7bc435be8e889a14c87a0577b25e949712cdeb260c1de0f83e4443845"
+    },
+    {
+      "path": "manuscript/solutions/ch18.md",
+      "sha256": "86290e17a033fcc709b05fe305b5e6dd255ee2b65518acd4c6089909665526a4"
+    },
+    {
+      "path": "manuscript/solutions/ch19.md",
+      "sha256": "78acaf96bd9daeed912509af7675dbad0c4db7de8dfff96589e81c2843aa4a7f"
+    },
+    {
+      "path": "manuscript/solutions/ch20.md",
+      "sha256": "7ecc54fe7518741f203420ab6a322e10d9cd7b21cd83449f06c637851a11082b"
+    },
+    {
+      "path": "manuscript/solutions/ch21.md",
+      "sha256": "7d5d2ff6433872ff3865904162a209dc21b79d62fada7229471fccbc6c34fe36"
+    },
+    {
+      "path": "manuscript/solutions/ch22.md",
+      "sha256": "310da6dd6bc659629b421fdee3565e644800d6ddadcbc54774b7b00917a38674"
+    },
+    {
+      "path": "manuscript/solutions/ch23.md",
+      "sha256": "9d89f4362ec38b7c9aa5de96ddeb42f745591fa9f9fcb4fd94ffdd91df28a03e"
+    },
+    {
+      "path": "manuscript/solutions/ch24.md",
+      "sha256": "27347a0d00a077438d6c19928f7ef84fcca4ec1c6059d427df2a596c97cab2ea"
+    },
+    {
+      "path": "manuscript/solutions/ch25.md",
+      "sha256": "a88d6b16dd377c88afdcdffd760d3d224b199ede0d151fb5811da9ee680462b9"
+    },
+    {
+      "path": "manuscript/solutions/ch26.md",
+      "sha256": "92d16378694540f21d3a70618b2af9f9ef6cc197b95a28c57a9e7438ef750266"
+    },
+    {
+      "path": "manuscript/solutions/ch27.md",
+      "sha256": "c4f83b83f719872d02942eab9bae809e603200c719cb58eaaab2491b4e3bc029"
+    },
+    {
+      "path": "manuscript/solutions/ch28.md",
+      "sha256": "9f5ef7a15232de197399d574a3d887d103799b70ea65100470e690cff299328b"
+    },
+    {
+      "path": "manuscript/solutions/ch29.md",
+      "sha256": "23a5e437c855674bbb89bd3c2a6410f1c8a245845cf47cba786c388e931339cd"
+    },
+    {
+      "path": "manuscript/solutions/ch30.md",
+      "sha256": "ede55d529ecf7f6f9b82e42e66f6480c9388d889a767c5767db0013bab323fd2"
+    },
+    {
+      "path": "manuscript/solutions/ch31.md",
+      "sha256": "4bf4f11f562895a716f7f5163470b32a8bb39965cf5de45793643c575441f962"
+    },
+    {
+      "path": "manuscript/solutions/ch32.md",
+      "sha256": "db9cac75a455e185666074cc29d5c9f5cd9219b3c96e087b803ab13f0038b658"
+    },
+    {
+      "path": "manuscript/solutions/ch33.md",
+      "sha256": "54a262e2de95c59930a23f18b7061ed20cf6a921db05cb9d2dd2b6a5e50384c2"
+    },
+    {
+      "path": "manuscript/solutions/ch34.md",
+      "sha256": "979bf1195f2fdd41ff245c42bec9cfc134447d74fb2ccebce6d04050a432d520"
+    },
+    {
+      "path": "manuscript/solutions/ch35.md",
+      "sha256": "14df32640f1b1884858d5205f0f13736db6ce083dd3eda1b757bc9d88e973079"
+    },
+    {
+      "path": "manuscript/solutions/ch36.md",
+      "sha256": "db65f04914e1fb9160702d880809427fe08fb45e367235bb2c41b3c367b2e5e3"
+    },
+    {
+      "path": "manuscript/solutions/ch37.md",
+      "sha256": "939612628fd5afb1ee78ac5e2ac3ff60e5b75424eb2573a32885143e18d32ecc"
+    },
+    {
+      "path": "manuscript/solutions/ch38.md",
+      "sha256": "367bf0a4af850366457b0159bc03720e4e9ad9a7dc53558a0fa5df94cc5ece9d"
+    },
+    {
+      "path": "manuscript/solutions/ch39.md",
+      "sha256": "de438215e3bd562d2c3e751452f906c9dd0fb2797eb996eb042d469a04278a88"
+    },
+    {
+      "path": "manuscript/solutions/ch40.md",
+      "sha256": "407ab7a7dc62845867f88b2314979a8b340df533ae85aa39ff11174efb8f8e31"
+    }
+  ],
+  "adversarial_scenarios": [
+    {
+      "id": "ARCH-FINAL-01",
+      "scenario": "Two default servers have independent memory",
+      "chapter_ids": [
+        3,
+        9,
+        34
+      ],
+      "relevant_claim_ids": [
+        "ch03.memory",
+        "ch09.composition",
+        "ch34.default"
+      ],
+      "guarantee_rows": [
+        "G-01"
+      ],
+      "source_evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 142,
+          "line_end": 148,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L142-L148"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/intake/fresh-server-restart-authenticated.json",
+          "sha256": "ad35f2d4b1d3ec597539d8144f0be70d26f5edaf0e9d2995a736320003d2d45c"
+        }
+      ],
+      "reader_conclusion": "Two API processes do not share live intent merely because DATABASE_URL matches. Restarted credentials and services are absent; package SQL recovery is a separate composition.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-02",
+      "scenario": "Conflicting claims and aggregate capacity",
+      "chapter_ids": [
+        9,
+        10,
+        28
+      ],
+      "relevant_claim_ids": [
+        "ch09.assignment",
+        "ch10.claim",
+        "ch28.concurrent-memory"
+      ],
+      "guarantee_rows": [
+        "G-03",
+        "G-04"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/store/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 892,
+          "line_end": 909,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L909"
+        },
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 270,
+          "line_end": 347,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270-L347"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/intake/full-schema-recovery-corrected.json",
+          "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e"
+        },
+        {
+          "path": "validation/labs/02-check.json",
+          "sha256": "1c1c8739ba5d79f6834beaa79b5c15672eb7ba77646a50af292189e30a9ba873"
+        },
+        {
+          "path": "validation/labs/06-check.json",
+          "sha256": "844390f81faeee25ffc5be97c3969f11540aa6a0adfa8d2972d35aa3fba5c01a"
+        }
+      ],
+      "reader_conclusion": "One pending-task winner does not provide shared capacity reservation for different tasks. Plan reservations are invocation-local; quota atomicity belongs to the concrete mutation/store boundary.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-03",
+      "scenario": "Partitioned worker and replacement writer",
+      "chapter_ids": [
+        19,
+        32
+      ],
+      "relevant_claim_ids": [
+        "ch19.stateful",
+        "ch32.physical-name",
+        "ch32.attachments"
+      ],
+      "guarantee_rows": [
+        "G-08",
+        "G-12"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 669,
+          "line_end": 752,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L669-L752"
+        },
+        {
+          "path": "internal/controlplane/workloads.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 484,
+          "line_end": 533,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L484-L533"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/labs/06-check.json",
+          "sha256": "844390f81faeee25ffc5be97c3969f11540aa6a0adfa8d2972d35aa3fba5c01a"
+        }
+      ],
+      "reader_conclusion": "Heartbeat loss is observation, not proof of old-process death. Stateless replacement can coexist with an unreachable old process. Local-volume metadata does not fence a physical writer or prevent cross-namespace physical-name collision.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-04",
+      "scenario": "Requested limits reach no engine enforcement",
+      "chapter_ids": [
+        5,
+        24,
+        26,
+        28
+      ],
+      "relevant_claim_ids": [
+        "ch05.resource-gap",
+        "ch28.arithmetic"
+      ],
+      "guarantee_rows": [
+        "G-09"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/agent/agent.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 253,
+          "line_end": 267,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253-L267"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/intake/docker-resource-boundary-corrected.json",
+          "sha256": "7348193d6cb6ba8170ada97f12fad3d02f23d6650f7db08db65321430ba42f20"
+        }
+      ],
+      "reader_conclusion": "Requests, reservations and ResourceLimits remain distinct. Ordinary agent assignments omit resource propagation while direct adapter construction applies limits; quota success is not Docker enforcement.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-05",
+      "scenario": "Restart during rollout and pending physical stop",
+      "chapter_ids": [
+        17,
+        18,
+        19
+      ],
+      "relevant_claim_ids": [
+        "ch17.stop-limits",
+        "ch17.rollback",
+        "ch19.drain-complete"
+      ],
+      "guarantee_rows": [
+        "G-06",
+        "G-07"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/rollout/rollout.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 145,
+          "line_end": 180,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L145-L180"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 418,
+          "line_end": 465,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L418-L465"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/labs/04-check.json",
+          "sha256": "134e282b71c9c7aaa9053057c375ad6bcd8bc79381c271a2ed5c04861f697950"
+        },
+        {
+          "path": "validation/reviews/ch17-independent-stop-accounting.json",
+          "sha256": "e415a6e791f04b541ecaf09929cf4f8eb899362b41183b920d1ad478bcfbc01e"
+        }
+      ],
+      "reader_conclusion": "Controller accounting can release logical capacity before stop acknowledgement. Captured succeeded plus pendingStops1 is retained. A fresh memory process cannot reconstruct rollout history from a configured database.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-06",
+      "scenario": "Second GitOps manifest fails after first applies",
+      "chapter_ids": [
+        30
+      ],
+      "relevant_claim_ids": [
+        "ch30.apply",
+        "ch30.prune"
+      ],
+      "guarantee_rows": [
+        "G-16"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/gitops/gitops.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 218,
+          "line_end": 281,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L218-L281"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/labs/07-check.json",
+          "sha256": "16c88557f4faf77040fdce68a23a37f58c5a0dd81c30fecdb72b11e9f9f2c620"
+        }
+      ],
+      "reader_conclusion": "Sorted deterministic processing is not repository-wide atomicity. LastError can accompany an already-mutated first service while LastRevision retains the previous successful revision. Prune and auto-revert remain separately scoped.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-07",
+      "scenario": "Lease cancellation returns a still-locked connection",
+      "chapter_ids": [
+        34
+      ],
+      "relevant_claim_ids": [
+        "ch34.session",
+        "ch34.default"
+      ],
+      "guarantee_rows": [
+        "G-13"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/leadership/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 28,
+          "line_end": 110,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L28-L110"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/intake/full-schema-recovery-corrected.json",
+          "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e"
+        }
+      ],
+      "reader_conclusion": "Done closes and Release returns nil without releasing the session advisory lock after cancellation. A competing pool remains blocked until the original pool closes. This observed package defect neither activates HA nor adds a fencing token.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    },
+    {
+      "id": "ARCH-FINAL-08",
+      "scenario": "Green baseline silently skips database or Docker",
+      "chapter_ids": [
+        9,
+        36,
+        37,
+        40
+      ],
+      "relevant_claim_ids": [
+        "ch09.fixture-schema",
+        "ch36.fake-e2e"
+      ],
+      "guarantee_rows": [
+        "G-18"
+      ],
+      "source_evidence": [
+        {
+          "path": "scripts/backup-db.sh",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 1,
+          "line_end": 69,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/scripts/backup-db.sh#L1-L69"
+        }
+      ],
+      "actual_records_inspected": [
+        {
+          "path": "validation/intake/orch-baseline-tests.json",
+          "sha256": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b"
+        },
+        {
+          "path": "validation/intake/postgres-store-owned.json",
+          "sha256": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7"
+        },
+        {
+          "path": "validation/intake/full-schema-recovery-corrected.json",
+          "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e"
+        }
+      ],
+      "reader_conclusion": "Ungated pass counts exclude optional daemon/database paths. The original 1\u201314 migration fixture actually fails agent_version; the complete sixteen-migration teaching extension is separately executed and identified.",
+      "finding_severity": "none after disclosed boundary verification",
+      "resolution_status": "accepted with explicit application limitation"
+    }
+  ],
+  "findings": [
+    {
+      "id": "ARCH-BOOK-001",
+      "severity": "major",
+      "target": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "relevant_claim_ids": [
+        "ch17.stop-limits"
+      ],
+      "source_evidence": [
+        {
+          "path": "internal/rollout/rollout.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 145,
+          "line_end": 180,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L145-L180"
+        }
+      ],
+      "recommended_action": "Keep logical stop accounting separate from physical stop acknowledgement.",
+      "resolution_status": "resolved",
+      "resolution_evidence": "validation/reviews/ch17-independent-stop-accounting.json"
+    }
+  ],
+  "supporting_reviews": [
+    "validation/reviews/architect-review.json",
+    "validation/reviews/ch17-24-appendix-d-independent.json",
+    "validation/reviews/copyedit.json",
+    "validation/claims/index.json"
+  ],
+  "fresh_execution_claim": "No fresh Go/Docker/PostgreSQL execution claimed by this final reader lens; the exact existing command records were inspected. Final Chromium EPUB preview is a separate record.",
+  "recommendation": "Proceed with the local reviewable publishing handoff. The complete edition teaches concrete ownership, failure windows and safe bounded experiments with inspectable source and actual records. No unresolved major editorial finding remains in this architect lens. Owner publication review remains separate; the book does not certify the application for production.",
+  "remaining_release_checks": [],
+  "overall_status": "passed",
+  "limitations": [
+    "AI-assisted reader and engineering review; no external human endorsement or production certification.",
+    "Static source reasoning and bounded observed tests are not a formal distributed proof.",
+    "Unwired persistence/autoscaling/leadership, partition fencing, resource propagation and partial GitOps remain explicit application limitations.",
+    "Original PostgreSQL fixture failures, baseline external skips and split UI-test history remain visible in the actual release gate.",
+    "Current source/reader archives are timestamped snapshots; final gate/reader records remain separate in the handoff.",
+    "No live publication or proprietary e-reader/hardware compatibility claim."
+  ],
+  "final_prose_delta_review": {
+    "reviewed_at_utc": "2026-10-13T03:40:24.249098+00:00",
+    "files": [
+      {
+        "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+        "previous_sha256": "fde6ef7a6e713cda32b83450da91cbc35d7cc8e2616dfd72cd24a24e3a42a076",
+        "final_sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+        "review": "Final prose re-read; authorized word/unit spacing only, no source fences or architectural assertions changed."
+      },
+      {
+        "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+        "previous_sha256": "fd91e35f33169262a9416b3db58463088b3e477ca1fef7da023e2b4caa6643f5",
+        "final_sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+        "review": "Final prose re-read; authorized word/unit spacing only, no source fences or architectural assertions changed."
+      },
+      {
+        "path": "manuscript/solutions/appendix-d.md",
+        "previous_sha256": "88ace1a293d3fb35be40ca67c6c68e348fe2dd4608de84899db1dac3ab2b849f",
+        "final_sha256": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5",
+        "review": "Final prose re-read; authorized word/unit spacing only, no source fences or architectural assertions changed."
+      }
+    ],
+    "overall_status": "passed"
+  },
+  "final_format_bindings": [
+    {
+      "path": "dist/inside-orch.pdf",
+      "sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+      "review_record": "validation/publication/pdf-visual-review.json"
+    },
+    {
+      "path": "dist/inside-orch.epub",
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+      "review_record": "validation/publication/epub-reading-preview.json"
+    },
+    {
+      "path": "dist/inside-orch-sources.zip",
+      "sha256": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06",
+      "scope": "Current source archive; packaging checks are gate-owned and timestamped, later reader review is separate."
+    }
+  ],
+  "release_gate_revisit": {
+    "reviewed_at_utc": "2026-10-13T04:25:17.220189+00:00",
+    "gate_path": "validation/RELEASE_GATE.md",
+    "gate_sha256": "0968a32056684dd5a9838c37fa708cdbd62f1416fd638b1ab3c69f909e433f95",
+    "machine_gate_path": "validation/release-gate.json",
+    "machine_gate_sha256": "d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278",
+    "exact_execution_path": "validation/publication/exact-final-edition-gate.json",
+    "exact_execution_sha256": "481240e0418be840ed7404b8d7d94397be2d9fd3fa6515140a090c23e952913c",
+    "decision_read": "Ready for independent skeptical-reader review097 and a local release handoff; no deployment authorization.",
+    "blocking_findings": [],
+    "source_files_independently_rehashed": 361,
+    "joined_gate_evidence_independently_rehashed": 35,
+    "canonical_manuscript_files_independently_rehashed": 89,
+    "adversarial_record_hashes_unchanged": true,
+    "critical_boundaries_reviewed": [
+      "Default MemoryService is process-local; PostgreSQL schema/store is not the active server state owner.",
+      "Ordinary assignment is distinct from optional scheduler.Plan/store reconciler; task CAS is not a global resource fence.",
+      "Ordinary resource values do not reach AgentTask/ContainerSpec/HostConfig; direct adapter limits and volume eligibility are distinct.",
+      "Desired stop accounting, rollout success and drain completion can precede physical stop; partitions have no network fencing.",
+      "HA advisory-lock cancellation can retain a pooled-session lock; HA/autoscaler packages are not wired default leadership.",
+      "GitOps applies are partial; logical namespaces/local volumes are not hostile kernel isolation/distributed storage.",
+      "Image digest parsing is not enforced supply-chain verification; plugins/billing/overlay designs remain proposals.",
+      "The original PostgreSQL fixture still has two failures from its fourteen-migration setup; the separately labelled full-sixteen-schema extension passed.",
+      "Baseline six external skips, fake-load measurements and optional unrun procedures remain explicitly scoped."
+    ],
+    "scope": "Fresh file/hash/source and retained-log review after actual096 gate. No new Go/Docker/PostgreSQL execution, no deployment and no external human endorsement."
+  },
+  "pdf_visual_rebind_review": {
+    "path": "validation/publication/pdf-rebuild-equivalence.json",
+    "sha256": "78a2ba8b1729fba3499f14fa9fe2282072e9b5f03a678563b207dc41bc4e1169",
+    "reviewed_pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+    "final_pdf_sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "actual_old_and_final_raster_pairs_rehashed": 546,
+    "all_equal": true,
+    "scope": "Fresh byte comparison of all existing old/final546 page-image pairs and record hashes; no new PDF render or claim of bit-identical PDF rebuild."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "02",
+  "title": "Deterministic placement and competing claims",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "prepared_at_utc": "2026-10-13T01:46:37.670740+00:00",
+  "classification": "teaching extension",
+  "inputs": {
+    "examples/teaching-extensions/lab02/main.go": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+    "labs/02-scheduler-placement/fixtures/plan.json": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740"
+  },
+  "records": [
+    "validation/labs/lab02-model-and-permutations.json",
+    "validation/labs/lab02-concurrent-claims.json",
+    "validation/labs/02-check.json"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_scheduler_lab.py"
+  ],
+  "cleanup": "Model process exits; copied extension only. Database track ownership remains Lab08; real Docker ownership remains Lab01."
+}

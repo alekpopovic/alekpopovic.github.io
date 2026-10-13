@@ -1,0 +1,32 @@
+{
+  "id": "ch14-focused-tests",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "./internal/health",
+    "./internal/agent",
+    "-run",
+    "TestHTTPHealthCheck|TestTCPHealthCheck|TestHealthProbeRequiresAssignedPort|TestReconcileAssignedTaskReportsHealth",
+    "-count=1",
+    "-v"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOFLAGS",
+    "GOENV",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:44:48.207306+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T00:44:49.322846+00:00",
+  "duration_seconds": 1.116,
+  "stdout": "validation/labs/ch14/focused-tests.stdout.txt",
+  "stderr": "validation/labs/ch14/focused-tests.stderr.txt"
+}

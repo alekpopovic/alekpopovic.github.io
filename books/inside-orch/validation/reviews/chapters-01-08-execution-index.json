@@ -1,0 +1,114 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T01:14:38.312307+00:00",
+  "scope": "Index of actual retained runs and current author artifacts. Not an independent semantic review or live publication gate.",
+  "executions": [
+    {
+      "path": "validation/labs/ch01/source-map.json",
+      "sha256": "18c6d69bb2096c0987bec87925075cb1be1d21cca3fc523ae2cd8381798114ee",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch02/focused-tests.json",
+      "sha256": "51ad5fabda055b81fdae722fb3aa1ee2f25133b8197b760890fac804459faa0c",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/intake/docker-complete-flow-log-guard.json",
+      "sha256": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch04/lifecycle-tests.json",
+      "sha256": "fc30978dd3ebbd8d2e441df5022bea1e1bec4426df179698fbac4106180ebbbc",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch05/parser-manifests.json",
+      "sha256": "842d3a1fa037727043cfc4273b57d3227495d0735e00715c96fec7fd2fb72051",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/intake/docker-resource-boundary-corrected.json",
+      "sha256": "7348193d6cb6ba8170ada97f12fad3d02f23d6650f7db08db65321430ba42f20",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch06/combined-restart-command.json",
+      "sha256": "00cbfdd1ea96bff486800b1c435672485977397e484864f1456cc0972be9ecab",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch07/public-contract-final.json",
+      "sha256": "b7bbcbfca50d3cc46157855f89be7dbc456dfc25d30b03a1ac8d3b85b9e61474",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch07/openapi-routes.json",
+      "sha256": "8d221f2a3ad792ba1b8042e0c15df3842881dbecd5f1bff38953d428f615dda5",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch08/exact-cli-identities.json",
+      "sha256": "f1153fd37258ca6e03944bc847e124cbeb252cc856a5d1ff17d4d5f722ce218c",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "path": "validation/labs/ch08/status-semantics.json",
+      "sha256": "66090d8b296982bedaaa1576be3eab893dc61d6c5f04127b979d6a2b21162032",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "extension_files": [
+    {
+      "path": "examples/teaching-extensions/ch05/check_manifests.py",
+      "sha256": "4feea0c4ed7832bc8310730e9e9acf8a4d52f476b1adf92340dce172e36cb0ad"
+    },
+    {
+      "path": "examples/teaching-extensions/ch05/atlas-invalid-port.yaml",
+      "sha256": "72ac46e480d0e3ab46910dfe81970eeadd163bcef36da73e1dabaeb4779d4885"
+    },
+    {
+      "path": "examples/teaching-extensions/ch05/atlas-invalid-field.yaml",
+      "sha256": "a258f8913086c3103cd989ee4e199812625b8284c8f86ec348f3b79dad8a1660"
+    },
+    {
+      "path": "examples/teaching-extensions/ch05/atlas-valid.yaml",
+      "sha256": "9ebaaf0b79e2fb3fbd366c4f0d0bff52779d9bc6da7a49c04421fc61d583a0c0"
+    },
+    {
+      "path": "examples/teaching-extensions/ch05/atlas-invalid-cpu.yaml",
+      "sha256": "6c3d3eaff0c12cc77ff6425d6f7af089e9126f8ef0c1d8b832a05e72ec8e32ee"
+    },
+    {
+      "path": "examples/teaching-extensions/ch05/atlas-invalid-memory.yaml",
+      "sha256": "4c9efe112ff7ddde62f629c2fa91e27ec1ef12ac0a24e4a71324c4b3b07b1013"
+    },
+    {
+      "path": "examples/teaching-extensions/ch06/observe_container_restart.py",
+      "sha256": "d52930e125d3dfad6f22a42dd22f2c329596185bf9f899310915a4912c9824ca"
+    },
+    {
+      "path": "examples/teaching-extensions/ch07/compare_routes.py",
+      "sha256": "edfea0872c2a3e96669f3d9087a9282a344c13c09b8a045058e908b67dbc66fe"
+    },
+    {
+      "path": "examples/teaching-extensions/ch07/contract_test.go",
+      "sha256": "aa3c5713523f5389a8ad009e64921af4dd4c63d30f1b9408673e6eabff1799da"
+    },
+    {
+      "path": "examples/teaching-extensions/ch08/atlas_status.py",
+      "sha256": "01400eb20a5d0e5b14850e62aed225e0cc245c3e889a95d4c6d0c1c5c4919d66"
+    },
+    {
+      "path": "examples/teaching-extensions/ch08/test_status.py",
+      "sha256": "a42dca36953f9778917a46e1750f9ae263ee905f2d758f2d0f932c10e1856cc2"
+    },
+    {
+      "path": "examples/teaching-extensions/ch08/exercise_cli.py",
+      "sha256": "aa5df52af4cd005924ec27211f55d3d04d1ec2a1a487f08d319803dc7fb35bf5"
+    }
+  ],
+  "copy_match": true,
+  "source_immutable_files": 361
+}

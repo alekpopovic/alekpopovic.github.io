@@ -1,0 +1,30 @@
+
+> build
+> npm run build:books && npm run build:labs && npm run build:assets && npm run build:css
+
+
+> build:books
+> python3 scripts/build-books.py
+
+Building complete book editions and reading pages…
+Secret Contract Operator: English PDF, EPUB, Markdown, cover, and diagrams built
+Modern CI: 30 complete sections, PDF and EPUB
+Nginx Log Security: 24 complete sections, PDF and EPUB
+AgentPlane: 34 complete sections, PDF and EPUB
+Secret Contract Operator: 27 complete sections, PDF and EPUB
+Engineering a Universal Real-Time Tracking Platform: 42 complete sections, PDF and EPUB
+
+> build:labs
+> python3 scripts/build-labs.py
+
+Built local workshop archive (11597 bytes).
+
+> build:assets
+> python3 scripts/build-assets.py
+
+Built social cards, icons, and responsive WebP covers.
+
+> build:css
+> node scripts/build-css.mjs
+
+Built local Tailwind 4 styles and the shared reader shell.

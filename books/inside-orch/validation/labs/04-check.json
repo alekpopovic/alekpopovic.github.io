@@ -1,0 +1,147 @@
+{
+  "status": "passed",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T01:12:39.360927+00:00",
+  "scope": "Verification of persisted author-run records and their byte integrity; no new application execution.",
+  "command_record": "validation/labs/lab04-rollout-observed.json",
+  "observation_record": "validation/labs/lab04-rollout-observed.stdout.txt",
+  "observation_sha256": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+  "checks": [
+    {
+      "name": "actual command exit zero",
+      "passed": true
+    },
+    {
+      "name": "at least six observed checkpoints",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "old stops have healthy replacement coverage",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "old stops have healthy replacement coverage",
+      "passed": true
+    },
+    {
+      "name": "CSV stage and captured deployment match",
+      "passed": true
+    },
+    {
+      "name": "modeled surge <= replicas + one",
+      "passed": true
+    },
+    {
+      "name": "modeled availability >= three",
+      "passed": true
+    },
+    {
+      "name": "old stops have healthy replacement coverage",
+      "passed": true
+    },
+    {
+      "name": "exhausted placement remains pending",
+      "passed": true
+    },
+    {
+      "name": "running target cannot stop old replica",
+      "passed": true
+    },
+    {
+      "name": "at least three negative operations",
+      "passed": true
+    },
+    {
+      "name": "no duplicate work on repeated passes",
+      "passed": true
+    },
+    {
+      "name": "failed history survives separate rollback",
+      "passed": true
+    },
+    {
+      "name": "terminal revival and stale update refused",
+      "passed": true
+    },
+    {
+      "name": "delete canceled active work",
+      "passed": true
+    },
+    {
+      "name": "model completion does not imply acknowledged final stop",
+      "passed": true
+    }
+  ]
+}

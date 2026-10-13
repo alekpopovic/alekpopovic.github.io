@@ -1,0 +1,101 @@
+{
+  "chapter_id": "15",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch15.record-types",
+      "statement": "Domain events, audit fields and diagnostic logs have distinct meanings and storage/delivery paths.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/audit/audit.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 25,
+      "line_end": 40,
+      "associated_commits": [
+        "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+        "7935c334dcd264e70abb9e795889010b9ecdb03b",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Source actor or forwarded metadata is not automatically authenticated human attribution."
+      ]
+    },
+    {
+      "claim_id": "ch15.timeline",
+      "statement": "Corrected real MemoryService fixture emitted seven events after registration, service creation, injected reports and scale.",
+      "classification": "teaching extension",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2109,
+      "line_end": 2127,
+      "associated_commits": [
+        "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+        "7935c334dcd264e70abb9e795889010b9ecdb03b",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch15/atlas-events-corrected.json",
+      "limitations": [
+        "Reports are injected and container ID explicit no-Docker; generic event messages do not encode every submitted status."
+      ]
+    },
+    {
+      "claim_id": "ch15.redaction",
+      "statement": "Audit metadata redaction uses sensitive key markers and recognized URL-user information.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/audit/audit.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 80,
+      "line_end": 132,
+      "associated_commits": [
+        "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+        "7935c334dcd264e70abb9e795889010b9ecdb03b",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Heuristic does not detect every possible secret in arbitrary messages or harmless-looking keys."
+      ]
+    },
+    {
+      "claim_id": "ch15.delivery",
+      "statement": "Fake transport fixtures passed bounded retries, selected redaction/signature assertions and event filtering.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/notifications/notifications.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 77,
+      "line_end": 118,
+      "associated_commits": [
+        "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+        "7935c334dcd264e70abb9e795889010b9ecdb03b",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch15/focused-tests.json",
+      "limitations": [
+        "No real webhook; HMAC is not encryption or receiver-side exactly-once processing."
+      ]
+    },
+    {
+      "claim_id": "ch15.durability",
+      "statement": "MemoryService appends in memory and launches background notification goroutine while ignoring its returned error.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2109,
+      "line_end": 2127,
+      "associated_commits": [
+        "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+        "7935c334dcd264e70abb9e795889010b9ecdb03b",
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No durable delivery outbox, default process-restart history persistence or guaranteed shutdown drain."
+      ]
+    }
+  ]
+}

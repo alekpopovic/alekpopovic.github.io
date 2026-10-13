@@ -1,0 +1,24 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:38:35.591732+00:00",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "origin": "http://127.0.0.1:49271",
+  "mode": "actual fresh orch-server processes, manual node registration, no Docker execution",
+  "observations": [
+    {
+      "event": "ready",
+      "process": 1,
+      "pid": 520548,
+      "at_utc": "2026-10-13T00:38:35.600380+00:00"
+    },
+    {
+      "event": "stopped",
+      "process": 1,
+      "exit_code": 0,
+      "at_utc": "2026-10-13T00:38:35.603070+00:00"
+    }
+  ],
+  "status": "failed",
+  "error": "HTTPError: HTTP Error 401: Unauthorized",
+  "finished_at_utc": "2026-10-13T00:38:35.603108+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "book_id": "inside-orch",
+  "terms": [
+    {
+      "term": "Task claim",
+      "definition": "One scheduler/store write selects NodeID; it does not fence an isolated old process.",
+      "chapter_slug": "10-a-deterministic-scheduler"
+    },
+    {
+      "term": "Secret envelope",
+      "definition": "LocalEnvelope uses AES-GCM; KeyID does not replace the required decrypting key.",
+      "chapter_slug": "24-encrypted-secrets-and-configuration-redaction"
+    },
+    {
+      "term": "Rollout surge",
+      "definition": "MaxSurge bounds active task accounting above desired replicas, not physical cleanup completion.",
+      "chapter_slug": "17-rolling-updates-and-rollback-invariants"
+    },
+    {
+      "term": "Memory server",
+      "definition": "The default server constructs MemoryService and loses intent/credentials on restart.",
+      "chapter_slug": "01-why-build-a-container-orchestrator"
+    }
+  ]
+}

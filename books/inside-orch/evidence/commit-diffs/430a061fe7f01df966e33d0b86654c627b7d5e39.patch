@@ -1,0 +1,431 @@
+commit 430a061fe7f01df966e33d0b86654c627b7d5e39
+Date: 2026-06-11T20:00:05+02:00
+Subject: Implement service rollback support
+
+
+---
+ docs/ROLLOUTS.md                       |  21 ++++++-
+ internal/controlplane/controlplane.go  |  69 +++++++++++++++++++--
+ internal/controlplane/rollback_test.go | 107 +++++++++++++++++++++++++++++++++
+ internal/rollout/rollout.go            |  20 +++++-
+ internal/rollout/rollout_test.go       |  34 ++++++++++-
+ internal/store/postgres.go             |   2 +-
+ 6 files changed, 241 insertions(+), 12 deletions(-)
+
+diff --git a/docs/ROLLOUTS.md b/docs/ROLLOUTS.md
+index a666a94..0f7c5e4 100644
+--- a/docs/ROLLOUTS.md
++++ b/docs/ROLLOUTS.md
+@@ -9,7 +9,8 @@ Rollouts are asynchronous. `POST /v1/services/{id}/rollout` records a new servic
+ - `succeeded`: all active tasks for the service are on the target version and enough target-version tasks are healthy.
+ - `failed`: at least one target-version task failed health checks or runtime startup.
+ - `paused`: reserved for operator-controlled pause behavior.
+-- `rolling_back` and `rolled_back`: reserved for rollback controller behavior.
++- `rolling_back`: rollback has selected a previous successful service version and is reconciling tasks back to that version.
++- `rolled_back`: rollback completed; active tasks are back on the selected previous version.
+ 
+ ## Rolling Update Rules
+ 
+@@ -28,6 +29,22 @@ Task execution remains the agent's responsibility. The rollout controller only c
+ 
+ The controller derives every decision from persisted service, deployment, and task state. If it restarts, it resumes from the current tasks without creating duplicate target-version tasks beyond the allowed surge window.
+ 
++Rollback requests are also idempotent while a rollback is in flight. Repeating `POST /v1/services/{id}/rollback` returns the active rollback deployment instead of creating a duplicate deployment.
++
++## Rollback
++
++Rollback preserves audit history. Failed rollout deployments remain in the deployment table and event stream.
++
++When a rollback starts, the control plane:
++
++1. Finds the latest successful service version before the current version. The initial service version is considered a successful baseline.
++2. Restores the service spec to that version.
++3. Creates a rollback deployment from the current version to the selected previous version.
++4. Emits rollback events.
++5. Lets the rollout controller stop failed/current-version tasks only after previous-version tasks satisfy health and availability rules.
++
++If no previous successful version exists, the API returns an invalid-state error.
++
+ ## API
+ 
+ ```sh
+@@ -35,6 +52,7 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
+   -H 'Content-Type: application/json' \
+   -d '{"image": "ghcr.io/example/api:1.0.1", "maxUnavailable": 1, "maxSurge": 1}'
+ 
++curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ curl http://localhost:8080/v1/services/{service_id}/rollout
+ curl http://localhost:8080/v1/rollouts/{rollout_id}
+ ```
+@@ -45,4 +63,5 @@ curl http://localhost:8080/v1/rollouts/{rollout_id}
+ orch rollout api --image ghcr.io/example/api:1.0.1
+ orch rollout api --image ghcr.io/example/api:1.0.1 --max-unavailable 0 --max-surge 2
+ orch rollout status api
++orch rollback api
+ ```
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 664f6b8..8a1e2ef 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -94,6 +94,7 @@ type MemoryService struct {
+ 	mu          sync.RWMutex
+ 	nodes       map[types.NodeID]types.Node
+ 	services    map[types.ServiceID]types.Service
++	versions    map[types.ServiceID]map[int64]types.ServiceSpec
+ 	tasks       map[types.TaskID]types.Task
+ 	deployments map[types.DeploymentID]types.Deployment
+ 	events      []types.Event
+@@ -105,6 +106,7 @@ func NewMemoryService() *MemoryService {
+ 	return &MemoryService{
+ 		nodes:       make(map[types.NodeID]types.Node),
+ 		services:    make(map[types.ServiceID]types.Service),
++		versions:    make(map[types.ServiceID]map[int64]types.ServiceSpec),
+ 		tasks:       make(map[types.TaskID]types.Task),
+ 		deployments: make(map[types.DeploymentID]types.Deployment),
+ 		now:         now,
+@@ -376,6 +378,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 		UpdatedAt:         now,
+ 	}
+ 	s.services[service.ID] = service
++	s.storeServiceVersionLocked(service.ID, service.DeploymentVersion, spec)
+ 	s.reconcileServiceTasksLocked(service, now)
+ 	s.appendEventLocked(events.TypeServiceCreated, types.EventInfo, "controlplane", "service created", "service", string(service.ID), now)
+ 	return service, nil
+@@ -492,6 +495,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	service.DeploymentVersion++
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
++	s.storeServiceVersionLocked(id, service.DeploymentVersion, service.Spec)
+ 
+ 	deployment := types.Deployment{
+ 		ID:             types.DeploymentID(newUUID()),
+@@ -561,13 +565,18 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 	if !ok {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
+-	if service.DeploymentVersion <= 1 {
+-		return types.Deployment{}, fmt.Errorf("%w: no previous deployment version", store.ErrInvalidState)
++	if active := s.activeRollbackLocked(id); active.ID != "" {
++		return active, nil
++	}
++	targetVersion, targetSpec, ok := s.previousSuccessfulVersionLocked(service)
++	if !ok {
++		return types.Deployment{}, fmt.Errorf("%w: no previous successful deployment version", store.ErrInvalidState)
+ 	}
+ 
+ 	now := s.now()
+ 	fromVersion := service.DeploymentVersion
+-	service.DeploymentVersion--
++	service.Spec = targetSpec
++	service.DeploymentVersion = targetVersion
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
+ 
+@@ -575,13 +584,14 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 		ID:             types.DeploymentID(newUUID()),
+ 		ServiceID:      id,
+ 		FromVersion:    fromVersion,
+-		ToVersion:      service.DeploymentVersion,
++		ToVersion:      targetVersion,
+ 		Strategy:       types.RolloutRollingUpdate,
+ 		Status:         types.DeploymentRollingBack,
+ 		MaxUnavailable: 1,
+ 		MaxSurge:       0,
+ 		CreatedAt:      now,
+ 		UpdatedAt:      now,
++		StartedAt:      now,
+ 	}
+ 	s.deployments[deployment.ID] = deployment
+ 	s.appendEventLocked(events.TypeRollbackStarted, types.EventInfo, "controlplane", "service rollback started", "service", string(id), now)
+@@ -732,7 +742,7 @@ func (s *MemoryService) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 	now := s.now()
+ 	deployment.Status = status
+ 	deployment.UpdatedAt = now
+-	if status == types.DeploymentRunning && deployment.StartedAt.IsZero() {
++	if (status == types.DeploymentRunning || status == types.DeploymentRollingBack) && deployment.StartedAt.IsZero() {
+ 		deployment.StartedAt = now
+ 	}
+ 	if status == types.DeploymentSucceeded || status == types.DeploymentFailed || status == types.DeploymentPaused || status == types.DeploymentRolledBack {
+@@ -945,6 +955,55 @@ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) boo
+ 	return false
+ }
+ 
++func (s *MemoryService) activeRollbackLocked(serviceID types.ServiceID) types.Deployment {
++	var latest types.Deployment
++	for _, deployment := range s.deployments {
++		if deployment.ServiceID != serviceID || deployment.ToVersion >= deployment.FromVersion {
++			continue
++		}
++		if deployment.Status != types.DeploymentRollingBack && deployment.Status != types.DeploymentPending && deployment.Status != types.DeploymentRunning {
++			continue
++		}
++		if latest.ID == "" || deployment.CreatedAt.After(latest.CreatedAt) || (deployment.CreatedAt.Equal(latest.CreatedAt) && deployment.ID > latest.ID) {
++			latest = deployment
++		}
++	}
++	return latest
++}
++
++func (s *MemoryService) previousSuccessfulVersionLocked(service types.Service) (int64, types.ServiceSpec, bool) {
++	version := int64(0)
++	if _, ok := s.versions[service.ID][1]; ok && service.DeploymentVersion > 1 {
++		version = 1
++	}
++	for _, deployment := range s.deployments {
++		if deployment.ServiceID != service.ID {
++			continue
++		}
++		if deployment.ToVersion >= service.DeploymentVersion {
++			continue
++		}
++		if deployment.Status != types.DeploymentSucceeded && deployment.Status != types.DeploymentRolledBack {
++			continue
++		}
++		if deployment.ToVersion > version {
++			version = deployment.ToVersion
++		}
++	}
++	if version == 0 {
++		return 0, types.ServiceSpec{}, false
++	}
++	spec, ok := s.versions[service.ID][version]
++	return version, spec, ok
++}
++
++func (s *MemoryService) storeServiceVersionLocked(serviceID types.ServiceID, version int64, spec types.ServiceSpec) {
++	if s.versions[serviceID] == nil {
++		s.versions[serviceID] = make(map[int64]types.ServiceSpec)
++	}
++	s.versions[serviceID][version] = spec
++}
++
+ func (s *MemoryService) readyNodesLocked() []types.Node {
+ 	nodes := make([]types.Node, 0, len(s.nodes))
+ 	for _, node := range s.nodes {
+diff --git a/internal/controlplane/rollback_test.go b/internal/controlplane/rollback_test.go
+new file mode 100644
+index 0000000..05d18a9
+--- /dev/null
++++ b/internal/controlplane/rollback_test.go
+@@ -0,0 +1,107 @@
++package controlplane
++
++import (
++	"context"
++	"errors"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestRollbackAfterFailedRollout(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createRollbackTestService(t, ctx, service)
++
++	failed, err := service.RolloutService(ctx, created.ID, RolloutSpec{
++		Image:          "ghcr.io/example/api:2.0.0",
++		MaxUnavailable: 1,
++		MaxSurge:       1,
++	})
++	if err != nil {
++		t.Fatalf("start rollout: %v", err)
++	}
++	if _, err := service.UpdateDeploymentStatus(ctx, failed.ID, types.DeploymentFailed, failed.UpdatedAt); err != nil {
++		t.Fatalf("mark rollout failed: %v", err)
++	}
++
++	rollback, err := service.RollbackService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("rollback service: %v", err)
++	}
++	if rollback.Status != types.DeploymentRollingBack {
++		t.Fatalf("expected rolling_back deployment, got %q", rollback.Status)
++	}
++	if rollback.FromVersion != 2 || rollback.ToVersion != 1 {
++		t.Fatalf("expected rollback from v2 to v1, got from=%d to=%d", rollback.FromVersion, rollback.ToVersion)
++	}
++	updated, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if updated.DeploymentVersion != 1 || updated.Spec.Image != "ghcr.io/example/api:1.0.0" {
++		t.Fatalf("expected service restored to v1 image, got version=%d image=%q", updated.DeploymentVersion, updated.Spec.Image)
++	}
++	history, err := service.GetDeployment(ctx, failed.ID)
++	if err != nil {
++		t.Fatalf("get failed rollout history: %v", err)
++	}
++	if history.Status != types.DeploymentFailed {
++		t.Fatalf("expected failed rollout history to be preserved, got %q", history.Status)
++	}
++}
++
++func TestRollbackWhenNoPreviousVersionExists(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createRollbackTestService(t, ctx, service)
++
++	if _, err := service.RollbackService(ctx, created.ID); !errors.Is(err, store.ErrInvalidState) {
++		t.Fatalf("expected invalid state, got %v", err)
++	}
++}
++
++func TestRollbackIsIdempotentWhileInFlight(t *testing.T) {
++	ctx := context.Background()
++	service := NewMemoryService()
++	created := createRollbackTestService(t, ctx, service)
++
++	failed, err := service.RolloutService(ctx, created.ID, RolloutSpec{
++		Image:          "ghcr.io/example/api:2.0.0",
++		MaxUnavailable: 1,
++		MaxSurge:       1,
++	})
++	if err != nil {
++		t.Fatalf("start rollout: %v", err)
++	}
++	if _, err := service.UpdateDeploymentStatus(ctx, failed.ID, types.DeploymentFailed, failed.UpdatedAt); err != nil {
++		t.Fatalf("mark rollout failed: %v", err)
++	}
++
++	first, err := service.RollbackService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("first rollback: %v", err)
++	}
++	second, err := service.RollbackService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("second rollback: %v", err)
++	}
++	if first.ID != second.ID {
++		t.Fatalf("expected idempotent rollback to return %q, got %q", first.ID, second.ID)
++	}
++}
++
++func createRollbackTestService(t *testing.T, ctx context.Context, service *MemoryService) types.Service {
++	t.Helper()
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             2,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return created
++}
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index 29487fb..fc70a5b 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -77,7 +77,7 @@ func (c *Controller) RunOnce(ctx context.Context) error {
+ 
+ func (c *Controller) activeDeployments(ctx context.Context) ([]types.Deployment, error) {
+ 	var deployments []types.Deployment
+-	for _, status := range []types.DeploymentStatus{types.DeploymentPending, types.DeploymentRunning} {
++	for _, status := range []types.DeploymentStatus{types.DeploymentPending, types.DeploymentRunning, types.DeploymentRollingBack} {
+ 		items, err := c.store.ListDeploymentsByStatus(ctx, status)
+ 		if err != nil {
+ 			return nil, fmt.Errorf("list %s deployments: %w", status, err)
+@@ -109,7 +109,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D
+ 		return err
+ 	}
+ 	if state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {
+-		_, err := c.setStatus(ctx, deployment, types.DeploymentSucceeded, "rollout completed", types.EventInfo)
++		_, err := c.setStatus(ctx, deployment, terminalStatusFor(deployment), terminalMessageFor(deployment), types.EventInfo)
+ 		return err
+ 	}
+ 	if deployment.Status == types.DeploymentPending {
+@@ -145,7 +145,7 @@ func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.D
+ 		}, events.WithLogger(c.logger))
+ 	}
+ 	if state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {
+-		_, err := c.setStatus(ctx, deployment, types.DeploymentSucceeded, "rollout completed", types.EventInfo)
++		_, err := c.setStatus(ctx, deployment, terminalStatusFor(deployment), terminalMessageFor(deployment), types.EventInfo)
+ 		return err
+ 	}
+ 	return nil
+@@ -303,3 +303,17 @@ func isActive(task types.Task) bool {
+ func isAvailable(task types.Task) bool {
+ 	return task.ActualStatus == types.TaskRunning || task.ActualStatus == types.TaskHealthy
+ }
++
++func terminalStatusFor(deployment types.Deployment) types.DeploymentStatus {
++	if deployment.ToVersion < deployment.FromVersion {
++		return types.DeploymentRolledBack
++	}
++	return types.DeploymentSucceeded
++}
++
++func terminalMessageFor(deployment types.Deployment) string {
++	if deployment.ToVersion < deployment.FromVersion {
++		return "rollback completed"
++	}
++	return "rollout completed"
++}
+diff --git a/internal/rollout/rollout_test.go b/internal/rollout/rollout_test.go
+index 5427972..ea8cfb6 100644
+--- a/internal/rollout/rollout_test.go
++++ b/internal/rollout/rollout_test.go
+@@ -81,6 +81,32 @@ func TestControllerIdempotentResume(t *testing.T) {
+ 	assertTaskVersions(t, fake.tasks, map[int64]int{1: 2, 2: 1})
+ }
+ 
++func TestControllerCompletesRollback(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(2, types.Deployment{
++		FromVersion:    2,
++		ToVersion:      1,
++		Status:         types.DeploymentRollingBack,
++		MaxUnavailable: 1,
++		MaxSurge:       0,
++	})
++	fake.service.DeploymentVersion = 1
++	fake.service.Spec.Image = "ghcr.io/example/api:1.0.0"
++	fake.tasks = map[types.TaskID]types.Task{
++		"old-a": task("old-a", 2, types.TaskRunning, types.TaskHealthy),
++		"old-b": task("old-b", 2, types.TaskRunning, types.TaskHealthy),
++		"new-a": task("new-a", 1, types.TaskRunning, types.TaskHealthy),
++		"new-b": task("new-b", 1, types.TaskRunning, types.TaskHealthy),
++	}
++
++	if err := NewController(fake, slog.Default()).RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++	if fake.deployment.Status != types.DeploymentRolledBack {
++		t.Fatalf("expected rolled_back deployment, got %q", fake.deployment.Status)
++	}
++}
++
+ func mustRunOnce(t *testing.T, controller *Controller, ctx context.Context) {
+ 	t.Helper()
+ 	if err := controller.RunOnce(ctx); err != nil {
+@@ -103,8 +129,12 @@ func newFakeStore(replicas int, deployment types.Deployment) *fakeStore {
+ 		deployment.ID = "00000000-0000-4000-8000-000000000100"
+ 	}
+ 	deployment.ServiceID = "00000000-0000-4000-8000-000000000001"
+-	deployment.FromVersion = 1
+-	deployment.ToVersion = 2
++	if deployment.FromVersion == 0 {
++		deployment.FromVersion = 1
++	}
++	if deployment.ToVersion == 0 {
++		deployment.ToVersion = 2
++	}
+ 	deployment.Strategy = types.RolloutRollingUpdate
+ 	if deployment.Status == "" {
+ 		deployment.Status = types.DeploymentPending
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 8132700..f1ed6d9 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -457,7 +457,7 @@ func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 	row := s.pool.QueryRow(ctx, `
+ 		UPDATE deployments
+ 		SET status = $2,
+-			started_at = CASE WHEN $2 = 'running' AND started_at IS NULL THEN timezone('utc', now()) ELSE started_at END,
++			started_at = CASE WHEN $2 IN ('running', 'rolling_back') AND started_at IS NULL THEN timezone('utc', now()) ELSE started_at END,
+ 			completed_at = CASE WHEN $2 IN ('succeeded', 'failed', 'paused', 'rolled_back') AND completed_at IS NULL THEN timezone('utc', now()) ELSE completed_at END,
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1

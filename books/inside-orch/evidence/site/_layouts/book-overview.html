@@ -1,0 +1,36 @@
+---
+layout: default
+---
+{% assign book = site.data.books | where: 'id', page.book_id | first %}
+<main id="main-content">
+  <section class="page-hero book-overview-hero">
+    <div class="section-shell book-feature book-feature-{{ book.id }}">
+      <div class="book-feature-copy">
+        <a class="book-back" href="{{ '/books/' | relative_url }}">← All books</a>
+        <p class="eyebrow tag">{% if book.brand %}{{ book.brand }} · {% endif %}{{ book.edition_label }} {{ book.edition }}</p>
+        <h1 class="display">{{ book.title }}</h1>
+        <h2 lang="{{ book.language | escape }}">{{ book.subtitle }}</h2>
+        <p class="book-description">{{ book.description }}</p>
+        <p class="book-stats">{{ book.author }} · {{ book.chapter_count }} {{ book.chapter_unit }} · {{ book.appendix_count }} appendices · {{ book.language_label }}</p>
+        {% include book-actions.html book=book %}
+        <a class="book-contents-link" href="{{ '/posts/' | relative_url }}?book={{ book.id }}">Explore notes from this book <span aria-hidden="true">↗</span></a>
+        <a class="book-contents-link" href="{{ '/learn/' | relative_url }}">Find a guided learning path →</a>
+        {% include share-links.html label='Share this book' %}
+      </div>
+      <div class="overview-cover">{% include book-cover.html book=book priority=true %}</div>
+    </div>
+  </section>
+  <section class="section-shell book-contents-section" id="contents">
+    <div class="section-top"><div><p class="eyebrow tag">The complete book</p><h2 class="display">Contents.</h2></div><p class="contents-note">Read at your own pace.<br>Every chapter is available in full.</p></div>
+    {% assign groups = book.chapters | group_by: 'group' %}
+    {% for group in groups %}
+      <div class="contents-group"><h3>{{ group.name }}</h3><ol class="book-contents-list">
+      {% for chapter in group.items %}
+        <li><a href="{{ chapter.url | relative_url }}"><span class="contents-chapter-title">{{ chapter.title }}</span><span class="contents-chapter-time">{{ chapter.reading_minutes }} min <span class="arrow" aria-hidden="true">↗</span></span></a></li>
+      {% endfor %}
+      </ol></div>
+    {% endfor %}
+    <p class="book-license-note">{{ book.author }} · {{ book.license_note }}. <a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing and attribution</a></p>
+    {% include content-feedback.html %}
+  </section>
+</main>

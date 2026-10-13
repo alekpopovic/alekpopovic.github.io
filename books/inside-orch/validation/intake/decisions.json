@@ -1,0 +1,326 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:35:58.221958+00:00",
+  "decisions": [
+    {
+      "id": "docker-runtime",
+      "title": "Docker-first runtime",
+      "context": "A small cluster needs a concrete execution API.",
+      "observed_implementation": "Docker Runtime interface and Engine adapter provide pull/create/start/inspect/stop/remove operations; FakeRuntime serves deterministic tests.",
+      "alternatives": "containerd/CRI adapter or external scheduler",
+      "inferred_benefits": "A narrow inspectable runtime seam.",
+      "inferred_costs": "Agent socket access is highly privileged; Docker behavior still needs real integration tests.",
+      "failure_scenario": "Create succeeds but the status response is lost; inspect labels before creating another container.",
+      "boundary": "Adapter coverage does not establish isolation or resource fields from every caller.",
+      "teaching_design_validation_plan": "Build a separately tested constrained adapter; compare actual DTO fields and real HostConfig.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/docker/docker.go",
+        "line_start": 47,
+        "line_end": 67,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L47-L67"
+      }
+    },
+    {
+      "id": "polling-agents",
+      "title": "Polling and reporting agents",
+      "context": "Workers need assignments and control plane needs observations.",
+      "observed_implementation": "Agent loop fetches assignments, executes runtime actions and reports task/heartbeat state.",
+      "alternatives": "push streams or broker-backed delivery",
+      "inferred_benefits": "Small HTTP protocol and retryable observation loop.",
+      "inferred_costs": "A lost report acknowledgement can be retried; stale reports require lifecycle checks.",
+      "failure_scenario": "Partitioned worker can keep serving while a new task is assigned elsewhere.",
+      "boundary": "No worker fencing protocol follows merely from polling.",
+      "teaching_design_validation_plan": "Use explicit generations and test stale-report rejection independently.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/agent/agent.go",
+        "line_start": 128,
+        "line_end": 148,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L128-L148"
+      }
+    },
+    {
+      "id": "go-packages",
+      "title": "Go packages and injected dependencies",
+      "context": "Algorithms should be testable without an Engine or database.",
+      "observed_implementation": "Schedulers/controllers accept interfaces; package tests use explicit stores, fake runtime and injected clocks.",
+      "alternatives": "single monolithic loop or remote service per subsystem",
+      "inferred_benefits": "Deterministic code navigation and narrow test fixtures.",
+      "inferred_costs": "An implemented package may have no caller in main; test success does not activate it.",
+      "failure_scenario": "A package test passes while a live binary uses a different path.",
+      "boundary": "Callers define actual integration.",
+      "teaching_design_validation_plan": "Maintain a constructor/caller ledger alongside package coverage.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/scheduler/scheduler.go",
+        "line_start": 33,
+        "line_end": 53,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L33-L53"
+      }
+    },
+    {
+      "id": "memory-composition",
+      "title": "Memory-backed executable composition",
+      "context": "Executable construction decides where authoritative state lives.",
+      "observed_implementation": "Default server constructs MemoryService with secret-envelope option and passes it to API/controllers.",
+      "alternatives": "PostgresStore-backed application composition",
+      "inferred_benefits": "Simple local process setup.",
+      "inferred_costs": "State maps disappear on new process startup; nearby PostgreSQL does not alter this.",
+      "failure_scenario": "Fresh server loses services/node identity while old Docker containers may survive.",
+      "boundary": "No default binary durability or HA claim.",
+      "teaching_design_validation_plan": "Design a separate shared-store composition and prove restart behavior with new processes.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "cmd/orch-server/main.go",
+        "line_start": 146,
+        "line_end": 166,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146-L166"
+      }
+    },
+    {
+      "id": "postgres-store",
+      "title": "PostgreSQL transactional store",
+      "context": "Shared state changes need atomic checks and versions.",
+      "observed_implementation": "Store contains transactional operations and AssignTask with state/version predicates.",
+      "alternatives": "in-memory locks or event-sourced durable journal",
+      "inferred_benefits": "Database atomic update/rejection can be tested independently.",
+      "inferred_costs": "Store library remains separate from MemoryService-backed binary; schema fixtures cover differing subsets.",
+      "failure_scenario": "Two operators claim or update the same stale object.",
+      "boundary": "Atomic package behavior is not executable durable state ownership.",
+      "teaching_design_validation_plan": "Run guarded throwaway integration tests and wire no application changes in this edition.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/store/postgres.go",
+        "line_start": 892,
+        "line_end": 912,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L912"
+      }
+    },
+    {
+      "id": "desired-actual",
+      "title": "Desired versus actual lifecycle",
+      "context": "Intent and observed execution arrive asynchronously.",
+      "observed_implementation": "Task model and transition guards distinguish desired state from allowed agent reports.",
+      "alternatives": "single status field or synchronous deployment RPC",
+      "inferred_benefits": "State writers and illegal resurrection are explicit.",
+      "inferred_costs": "Several legal shortcut transitions exist; a simplified diagram is only a subset.",
+      "failure_scenario": "A late running report arrives after desired stopped.",
+      "boundary": "Accepted state reports do not prove physical remote action.",
+      "teaching_design_validation_plan": "Record generation/time ownership and test late responses at real HTTP boundaries.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "pkg/types/lifecycle.go",
+        "line_start": 304,
+        "line_end": 322,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L304-L322"
+      }
+    },
+    {
+      "id": "pure-planner",
+      "title": "Deterministic planning versus active placement",
+      "context": "Repeatable resource/label/port decisions are useful only on the path used.",
+      "observed_implementation": "Scheduler.Plan computes assignments; MemoryService normal replica reconciliation directly creates assigned tasks.",
+      "alternatives": "call pure planner in all paths or keep independent paths",
+      "inferred_benefits": "Pure planner can be property-tested without side effects.",
+      "inferred_costs": "Its resource guarantees cannot be transferred to MemoryService service placement.",
+      "failure_scenario": "A node advertised below requests still receives tasks on the active service path.",
+      "boundary": "Planner correctness is a package guarantee.",
+      "teaching_design_validation_plan": "Constrained comparative fixture uses identical service/node intent on both paths.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/scheduler/scheduler.go",
+        "line_start": 270,
+        "line_end": 290,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270-L290"
+      }
+    },
+    {
+      "id": "optimistic-version",
+      "title": "Optimistic concurrency",
+      "context": "Controllers and operators race on stale snapshots.",
+      "observed_implementation": "Store operations carry expected UpdatedAt/version predicates and distinguish assignment conflicts.",
+      "alternatives": "coarse global locking or serial command log",
+      "inferred_benefits": "Rejects stale write attempts where guarded.",
+      "inferred_costs": "Every relevant write must participate; timestamps and versions are not a fencing token.",
+      "failure_scenario": "Concurrent rollout and scale read the same old service.",
+      "boundary": "Memory locking and PostgreSQL transactions have different scopes.",
+      "teaching_design_validation_plan": "Add two-writer stale-update experiment, record returned errors and surviving state.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/store/postgres.go",
+        "line_start": 1376,
+        "line_end": 1396,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L1376-L1396"
+      }
+    },
+    {
+      "id": "namespaces",
+      "title": "Request-scoped namespaces",
+      "context": "Same-name workloads and credentials need scoped lookup.",
+      "observed_implementation": "Namespace selection travels in context/header and scoped collection filters.",
+      "alternatives": "one cluster per tenant or separate databases",
+      "inferred_benefits": "Simple repeated namespace keying.",
+      "inferred_costs": "Isolation must be traced route by route; authentication alone is insufficient.",
+      "failure_scenario": "Operator selects one namespace but follows an unscoped lookup.",
+      "boundary": "This is application scoping, not network or kernel tenant isolation.",
+      "teaching_design_validation_plan": "Create same-name services in distinct test contexts and inspect each exposed API path.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/namespace/context.go",
+        "line_start": 32,
+        "line_end": 52,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/namespace/context.go#L32-L52"
+      }
+    },
+    {
+      "id": "local-volumes",
+      "title": "Local storage and topology",
+      "context": "Local data belongs to a particular node.",
+      "observed_implementation": "Volume/claim and attachment models exist; workload placement and agent propagation require separate inspection.",
+      "alternatives": "shared network storage or stateless service",
+      "inferred_benefits": "Explicit topology and straightforward local fixtures.",
+      "inferred_costs": "A claim object does not make disks replicated or automatically attachable elsewhere.",
+      "failure_scenario": "Node loss leaves local data unavailable on replacement node.",
+      "boundary": "No default distributed storage guarantee.",
+      "teaching_design_validation_plan": "Separate local directory fixture; test unsupported propagation without user host mounts.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "pkg/types/workloads.go",
+        "line_start": 119,
+        "line_end": 139,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/workloads.go#L119-L139"
+      }
+    },
+    {
+      "id": "host-ports",
+      "title": "Node-scoped published host ports",
+      "context": "Replicas consume limited transport endpoints.",
+      "observed_implementation": "Service ports and scheduler allocation model node-level published ports; Docker adapter creates port bindings.",
+      "alternatives": "service mesh/virtual IP or externally assigned load balancer",
+      "inferred_benefits": "Direct inspectable connectivity.",
+      "inferred_costs": "Fixed ports collide on one node; dynamic port identity changes and bindings may expose all interfaces.",
+      "failure_scenario": "Scale two replicas onto the same fixed published port.",
+      "boundary": "Package reservation is not cluster-wide data-plane routing.",
+      "teaching_design_validation_plan": "Test collision with a fake first; use isolated daemon for actual wildcard bindings.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/scheduler/scheduler.go",
+        "line_start": 59,
+        "line_end": 79,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L59-L79"
+      }
+    },
+    {
+      "id": "ingress",
+      "title": "Optional ingress configuration",
+      "context": "External routes need discovered backend endpoints.",
+      "observed_implementation": "Traefik config package builds provider configuration and default server exposes the integration endpoint.",
+      "alternatives": "manual reverse proxy or no ingress",
+      "inferred_benefits": "Keep proxy data plane separate.",
+      "inferred_costs": "Upstream demo insecure dashboard is disposable; overlay design is not implemented networking.",
+      "failure_scenario": "API endpoint is healthy while proxy backend list is stale.",
+      "boundary": "No overlay or tenant network isolation follows.",
+      "teaching_design_validation_plan": "Validate generated config and compare endpoint selection; bind demo admin listener to loopback.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/traefik/config.go",
+        "line_start": 46,
+        "line_end": 66,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go#L46-L66"
+      }
+    },
+    {
+      "id": "extension-seams",
+      "title": "Interfaces versus plugin roadmap",
+      "context": "Engine, secret and controller seams allow controlled experiments.",
+      "observed_implementation": "Go interfaces permit compiled adapters; plugin design documentation proposes broader extension behavior.",
+      "alternatives": "dynamic runtime loading or external webhooks",
+      "inferred_benefits": "Small teaching extension can be isolated and tested.",
+      "inferred_costs": "A design document or interface is not a functioning plugin distribution system.",
+      "failure_scenario": "An operator expects a configured external plugin to load in main.",
+      "boundary": "Plugin system is design-only where no runtime loader exists.",
+      "teaching_design_validation_plan": "Implement teaching adapter under examples, never in immutable source.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "docs/PLUGIN_SYSTEM_DESIGN.md",
+        "line_start": 1,
+        "line_end": 11,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/PLUGIN_SYSTEM_DESIGN.md#L1-L11"
+      }
+    },
+    {
+      "id": "gitops-partial",
+      "title": "GitOps apply and bookkeeping",
+      "context": "Several manifests form one desired change but current operations are sequential.",
+      "observed_implementation": "GitOps controller applies parsed manifests through a control-plane interface and records synchronization/ownership state.",
+      "alternatives": "preflight complete batch then transactional commit or best-effort explicit per-file results",
+      "inferred_benefits": "A simple inspectable apply loop.",
+      "inferred_costs": "The valid first manifest may remain changed when a later one fails; metadata can lag side effects.",
+      "failure_scenario": "Failed second GitOps manifest after first successfully changes atlas-api.",
+      "boundary": "No atomic multi-manifest guarantee.",
+      "teaching_design_validation_plan": "Use dedicated local repo with two files; assert first side effect and recorded LastError.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/gitops/gitops.go",
+        "line_start": 198,
+        "line_end": 218,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L198-L218"
+      }
+    },
+    {
+      "id": "leadership",
+      "title": "Leases, cancellation and fencing",
+      "context": "Only one active controller should own shared mutations.",
+      "observed_implementation": "PostgresElector holds a session advisory lock and monitors cancellation; default server does not instantiate it.",
+      "alternatives": "transaction locks, expiring durable leases with fencing epochs",
+      "inferred_benefits": "An independently testable leader-election package.",
+      "inferred_costs": "Cancellation and connection release need real-session review; pool reuse may preserve session lock ownership.",
+      "failure_scenario": "Old controller continues actions while another believes it acquired leadership.",
+      "boundary": "Lease package and default binary HA are separate; mutex tests do not prove DB behavior.",
+      "teaching_design_validation_plan": "Two-session test checks cancellation, unlock/reacquire, connection identity and callback shutdown.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/leadership/postgres.go",
+        "line_start": 21,
+        "line_end": 41,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L21-L41"
+      }
+    },
+    {
+      "id": "quota-admission",
+      "title": "Admission, quota and enforcement",
+      "context": "Intent should be rejected before exceeding policy or budget.",
+      "observed_implementation": "Admission validates service requests; quota aggregates desired declared resources. AgentTask lacks resource requirements; adapter limit support is not enough.",
+      "alternatives": "measure actual utilization only or enforce on every mutation with durable reservation",
+      "inferred_benefits": "Early stable errors and bounded declared intent.",
+      "inferred_costs": "Declared accounting can diverge from placement and physical Docker enforcement.",
+      "failure_scenario": "Saturated node accepts intent that declared quota permits, but runtime receives zero limits.",
+      "boundary": "No CPU/memory enforcement without complete field propagation.",
+      "teaching_design_validation_plan": "Trace API\u2192service\u2192taskDTO\u2192ContainerSpec\u2192HostConfig, then compare active and direct adapter tests.",
+      "rationale_classification": "editorial inference; no author motivation attributed",
+      "validation": "inspected",
+      "source": {
+        "path": "internal/admission/admission.go",
+        "line_start": 48,
+        "line_end": 68,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/admission/admission.go#L48-L68"
+      }
+    }
+  ]
+}

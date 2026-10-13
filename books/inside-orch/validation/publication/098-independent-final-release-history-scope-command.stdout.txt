@@ -1,0 +1,51 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-10-13T04:50:22.884242+00:00",
+  "finished_at_utc": "2026-10-13T04:50:23.691457+00:00",
+  "command": [
+    "/tmp/inside-orch-verify-final-release.py",
+    "2790a4d4d0cf0d71431ee2ca4f4532f4edfc6f69f9d15216389a473e15032e4b"
+  ],
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "release_zip_sha256": "2790a4d4d0cf0d71431ee2ca4f4532f4edfc6f69f9d15216389a473e15032e4b",
+  "release_zip_bytes": 33217750,
+  "members": 37,
+  "edition_manifest_sha256": "02e3e7941b3989a6869aa7a9186142497dfecea2e77a40dff0985399f280cec5",
+  "all_outer_manifest_hashes_and_sizes_verified": 36,
+  "outer_crc_passed": true,
+  "ordered_fixed_metadata": true,
+  "safe_paths_no_private_artifact_paths": true,
+  "nested_packages": {
+    "inside-orch-offline.zip": {
+      "members": 610,
+      "crc_passed": true,
+      "all_member_hashes_passed": true,
+      "safe_paths_no_private_artifact_paths": true,
+      "sha256": "040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a"
+    },
+    "inside-orch-sources.zip": {
+      "members": 1064,
+      "crc_passed": true,
+      "all_member_hashes_passed": true,
+      "safe_paths_no_private_artifact_paths": true,
+      "sha256": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06"
+    }
+  },
+  "pdf_pages_actual": 546,
+  "unified_markdown_exact_47_section_assembly": true,
+  "measured_metadata_matches_gate_and_measurement": true,
+  "tracker_snapshot": {
+    "rows": 100,
+    "000_through_097": "done",
+    "098": "in_progress",
+    "099": "pending",
+    "sha256": "a5c30747200c01e090f16d2a24cde87669778ed505ee11d1b8694898f0126bdc",
+    "snapshot_note": "Actual tracker at archive assembly: completed preceding tasks; 098/099 may still be in progress/pending. Final author-facing tracker remains canonical outside this frozen archive."
+  },
+  "truthful_snapshot_boundaries": true,
+  "historical_range_report_limitation_preserved": true,
+  "unmodified_archive_after_read": true,
+  "scope": "Independent standard-library ZIP parsing/member hashes/CRC/path inspection, exact five frozen exports, parsed PDF page count, complete canonical Markdown equality, three review report bindings and actual archived tracker status. No build, lab execution, gate change, extraction, archive mutation or deployment. Private-artifact check is a structural allowlist/path check, not mathematically exhaustive secret detection.",
+  "probe_script_sha256": "1c81fe9cb37735c604852f80a57ee7021d7d3aecfaaedaa1b078748f0a0a2b30"
+}

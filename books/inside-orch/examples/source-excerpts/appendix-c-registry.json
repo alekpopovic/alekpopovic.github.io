@@ -1,0 +1,148 @@
+{
+  "excerpts": [
+    {
+      "id": "appendix-c.checkpoint-01",
+      "source_sha": "72f27ed1d81b75e499ee65e0c9779e44b237f814",
+      "source_path": "cmd/orch-server/main.go",
+      "line_start": 30,
+      "line_end": 35,
+      "excerpt_sha256": "8cba99ad644ef9d95d2ff883697b71548451d2f34447f942dfbe8f86b0bd56be",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-01.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/72f27ed1d81b75e499ee65e0c9779e44b237f814/cmd/orch-server/main.go#L30-L35",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-02",
+      "source_sha": "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+      "source_path": "pkg/types/types.go",
+      "line_start": 80,
+      "line_end": 85,
+      "excerpt_sha256": "93945f353691a7c32faf9f59646b42806c8dbe4fccd964b8935ba13c0e09631e",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-02.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/c756f9d7f3a46e8bfe4d7bca291d67f6a783553d/pkg/types/types.go#L80-L85",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-03",
+      "source_sha": "7eba6544ffe2eba41b81faa811e899faf28b77a2",
+      "source_path": "internal/store/postgres.go",
+      "line_start": 20,
+      "line_end": 25,
+      "excerpt_sha256": "a7aa2e01b21c0ff0b4337426e878b0ea29e9e873f1db26ec368177a0061469b9",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-03.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/7eba6544ffe2eba41b81faa811e899faf28b77a2/internal/store/postgres.go#L20-L25",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-04",
+      "source_sha": "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+      "source_path": "internal/agent/agent.go",
+      "line_start": 46,
+      "line_end": 51,
+      "excerpt_sha256": "b9c837b35f57140c1e535dcaaebf611b86dcff6ff70835b59d91a0afbcb61f8f",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-04.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/5cf9213849164ce1bebc4e042cc37bf5553c2427/internal/agent/agent.go#L46-L51",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-05",
+      "source_sha": "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+      "source_path": "internal/scheduler/scheduler.go",
+      "line_start": 45,
+      "line_end": 50,
+      "excerpt_sha256": "6ebfc2ce92b856388b93fcd6b9f308afa29a9b28eaf4971708f868845062a0fb",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-05.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/fce0a657651c00ffb697bf4a4aba12d0b171f463/internal/scheduler/scheduler.go#L45-L50",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-06",
+      "source_sha": "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+      "source_path": "internal/reconciler/reconciler.go",
+      "line_start": 121,
+      "line_end": 126,
+      "excerpt_sha256": "4c462bb8df78650dfc5c974361a8ccc5137291f3f650510f1d066ec7a3f051f4",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-06.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3/internal/reconciler/reconciler.go#L121-L126",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-07",
+      "source_sha": "de5900bced92ad9d5786cd258ff7941d67369d33",
+      "source_path": "internal/rollout/rollout.go",
+      "line_start": 59,
+      "line_end": 64,
+      "excerpt_sha256": "1b321a4f2a833015e81ec0ed3d7fe79f3ca5cb50eee805286c25d0eb71cba706",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-07.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/de5900bced92ad9d5786cd258ff7941d67369d33/internal/rollout/rollout.go#L59-L64",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-08",
+      "source_sha": "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+      "source_path": "internal/auth/agent.go",
+      "line_start": 36,
+      "line_end": 41,
+      "excerpt_sha256": "fcbaf8598f9b7bf56fc85ff06b6654037b9e3bd4159013c42421908f2f171143",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-08.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/4f25e78c229ba040c07a84801490485b5a0cbb2e/internal/auth/agent.go#L36-L41",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-09",
+      "source_sha": "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "source_path": "internal/gitops/gitops.go",
+      "line_start": 182,
+      "line_end": 187,
+      "excerpt_sha256": "032279a9cf99d6cef67d09c2cb1c2341ac1a5298c195c09d1f729f6e1236a297",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-09.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/f2836eabfff8e442d38984433f3e1f5c642667d1/internal/gitops/gitops.go#L182-L187",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-10",
+      "source_sha": "4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "source_path": "internal/controlplane/workloads.go",
+      "line_start": 114,
+      "line_end": 119,
+      "excerpt_sha256": "6a7908449528e9ec3fa99f75e018331f408da2ddcc79dc62801ba9b6db8243a6",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-10.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/4d641bbe8913da568d6d9f4697a0144314e10b87/internal/controlplane/workloads.go#L114-L119",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-11",
+      "source_sha": "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "source_path": "internal/maintenance/maintenance.go",
+      "line_start": 17,
+      "line_end": 22,
+      "excerpt_sha256": "68da0e516d1eab7ad640580f0c9aeb19f1fcd1414a6ee8786065b947356c5202",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-11.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d/internal/maintenance/maintenance.go#L17-L22",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    },
+    {
+      "id": "appendix-c.checkpoint-12",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "source_path": "README.md",
+      "line_start": 19,
+      "line_end": 24,
+      "excerpt_sha256": "778252750904d6633b11fb887c3b49c022831d094c90e99ef9b565504556ebc4",
+      "path": "examples/source-excerpts/appendix-c/checkpoint-12.txt",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/README.md#L19-L24",
+      "classification": "historical implementation evidence",
+      "validation": "inspected actual Git object"
+    }
+  ]
+}

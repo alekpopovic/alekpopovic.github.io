@@ -1,0 +1,108 @@
+{
+  "chapter": "40",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch40.ci",
+      "statement": "CI configures PostgreSQL and separates quality from race testing; configured procedure is not current-run proof.",
+      "classification": "implemented package",
+      "source_path": ".github/workflows/ci.yml",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 12,
+      "line_end": 76,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    },
+    {
+      "claim_id": "ch40.fallback",
+      "statement": "Make lint falls back to formatting and vet if golangci-lint is missing.",
+      "classification": "implemented package",
+      "source_path": "Makefile",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 9,
+      "line_end": 17,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    },
+    {
+      "claim_id": "ch40.docker-authority",
+      "statement": "Agent systemd grants Docker group/socket access despite process hardening.",
+      "classification": "implemented package",
+      "source_path": "deployments/production/systemd/orch-agent.service",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 9,
+      "line_end": 25,
+      "associated_commits": [
+        "18fcf32524007ba7d8a71acd70e5acc48f758e49"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    },
+    {
+      "claim_id": "ch40.restore-guard",
+      "statement": "Restore requires explicit acknowledgement and warns clean is destructive.",
+      "classification": "implemented package",
+      "source_path": "scripts/restore-db.sh",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 73,
+      "line_end": 89,
+      "associated_commits": [
+        "64abe001e83932cba294831424557dfd16f77c8c"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    },
+    {
+      "claim_id": "ch40.backup-boundary",
+      "statement": "Database backup excludes runtime memory, containers and separate encryption/configuration keys.",
+      "classification": "partial integration",
+      "source_path": "docs/BACKUP_RESTORE.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 3,
+      "line_end": 36,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    },
+    {
+      "claim_id": "ch40.release-boundary",
+      "statement": "Release notes explicitly retain MemoryService and unsupported production boundaries.",
+      "classification": "runtime-integrated",
+      "source_path": "RELEASE_NOTES.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 33,
+      "line_end": 35,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual dossier inventory passed after correctly selecting successful build evidence. Existing actual owned restore and guarded engine flow retain scope; no deployment or production approval."
+      ]
+    }
+  ]
+}

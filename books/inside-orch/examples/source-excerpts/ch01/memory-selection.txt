@@ -1,0 +1,3 @@
+	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy), controlplane.WithRetentionConfig(cfg.Retention))
+	controlPlane.SetNotificationDispatcher(notifications.NewDispatcher(controlPlane, nil))
+	serverMetrics := metrics.NewServer()

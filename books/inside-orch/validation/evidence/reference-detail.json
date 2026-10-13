@@ -1,0 +1,3862 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "reference.cli.orch",
+      "statement": "Cobra constructs orch with Use 'orch'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 150,
+      "line_end": 150,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-audit",
+      "statement": "Cobra constructs orch audit with Use 'audit'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 855,
+      "line_end": 855,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cluster",
+      "statement": "Cobra constructs orch cluster with Use 'cluster'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 158,
+      "line_end": 158,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cluster-check-upgrade",
+      "statement": "Cobra constructs orch cluster check-upgrade with Use 'check-upgrade'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 159,
+      "line_end": 159,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cronjob",
+      "statement": "Cobra constructs orch cronjob with Use 'cronjob'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 94,
+      "line_end": 94,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cronjob-apply",
+      "statement": "Cobra constructs orch cronjob apply with Use 'apply <file.yaml>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 95,
+      "line_end": 95,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cronjob-ls",
+      "statement": "Cobra constructs orch cronjob ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cronjob-resume",
+      "statement": "Cobra constructs orch cronjob resume with Use 'resume <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 158,
+      "line_end": 158,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-cronjob-suspend",
+      "statement": "Cobra constructs orch cronjob suspend with Use 'suspend <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 160,
+      "line_end": 160,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-delete",
+      "statement": "Cobra constructs orch delete with Use 'delete <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 745,
+      "line_end": 745,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-deploy",
+      "statement": "Cobra constructs orch deploy with Use 'deploy <file.yaml>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 542,
+      "line_end": 542,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-endpoints",
+      "statement": "Cobra constructs orch endpoints with Use 'endpoints <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 765,
+      "line_end": 765,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-events",
+      "statement": "Cobra constructs orch events with Use 'events'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 790,
+      "line_end": 790,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops",
+      "statement": "Cobra constructs orch gitops with Use 'gitops'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 305,
+      "line_end": 305,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-add",
+      "statement": "Cobra constructs orch gitops add with Use 'add'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 311,
+      "line_end": 311,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-delete",
+      "statement": "Cobra constructs orch gitops delete with Use 'delete <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 64,
+      "line_end": 64,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-diff",
+      "statement": "Cobra constructs orch gitops diff with Use 'diff <service>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 405,
+      "line_end": 405,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-ls",
+      "statement": "Cobra constructs orch gitops ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-status",
+      "statement": "Cobra constructs orch gitops status with Use 'status'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 83,
+      "line_end": 83,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-gitops-sync",
+      "statement": "Cobra constructs orch gitops sync with Use 'sync <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 355,
+      "line_end": 355,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-job",
+      "statement": "Cobra constructs orch job with Use 'job'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 14,
+      "line_end": 14,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-job-logs",
+      "statement": "Cobra constructs orch job logs with Use 'logs <job>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 72,
+      "line_end": 72,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-job-ls",
+      "statement": "Cobra constructs orch job ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-job-run",
+      "statement": "Cobra constructs orch job run with Use 'run <file.yaml>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 15,
+      "line_end": 15,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-logs",
+      "statement": "Cobra constructs orch logs with Use 'logs <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 905,
+      "line_end": 905,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-maintenance",
+      "statement": "Cobra constructs orch maintenance with Use 'maintenance'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 16,
+      "line_end": 16,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-maintenance-create",
+      "statement": "Cobra constructs orch maintenance create with Use 'create <name>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 20,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-maintenance-delete",
+      "statement": "Cobra constructs orch maintenance delete with Use 'delete <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 64,
+      "line_end": 64,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-maintenance-ls",
+      "statement": "Cobra constructs orch maintenance ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-namespace",
+      "statement": "Cobra constructs orch namespace with Use 'namespace'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 196,
+      "line_end": 196,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-namespace-create",
+      "statement": "Cobra constructs orch namespace create with Use 'create <name>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 20,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-namespace-delete",
+      "statement": "Cobra constructs orch namespace delete with Use 'delete <name>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 234,
+      "line_end": 234,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-namespace-ls",
+      "statement": "Cobra constructs orch namespace ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node",
+      "statement": "Cobra constructs orch node with Use 'node'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 457,
+      "line_end": 457,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node-drain",
+      "statement": "Cobra constructs orch node drain with Use 'drain <node-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 490,
+      "line_end": 490,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node-drain-status",
+      "statement": "Cobra constructs orch node drain-status with Use 'drain-status <node-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 502,
+      "line_end": 502,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node-inspect",
+      "statement": "Cobra constructs orch node inspect with Use 'inspect <node-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 474,
+      "line_end": 474,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node-ls",
+      "statement": "Cobra constructs orch node ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-node-uncordon",
+      "statement": "Cobra constructs orch node uncordon with Use 'uncordon <node-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 498,
+      "line_end": 498,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-quota",
+      "statement": "Cobra constructs orch quota with Use 'quota'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 255,
+      "line_end": 255,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-quota-get",
+      "statement": "Cobra constructs orch quota get with Use 'get'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 257,
+      "line_end": 257,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-quota-set",
+      "statement": "Cobra constructs orch quota set with Use 'set'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 276,
+      "line_end": 276,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-retention",
+      "statement": "Cobra constructs orch retention with Use 'retention'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 82,
+      "line_end": 82,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-retention-prune",
+      "statement": "Cobra constructs orch retention prune with Use 'prune'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 95,
+      "line_end": 95,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-retention-status",
+      "statement": "Cobra constructs orch retention status with Use 'status'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 83,
+      "line_end": 83,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-rollback",
+      "statement": "Cobra constructs orch rollback with Use 'rollback <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 719,
+      "line_end": 719,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-rollout",
+      "statement": "Cobra constructs orch rollout with Use 'rollout <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 659,
+      "line_end": 659,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-rollout-status",
+      "statement": "Cobra constructs orch rollout status with Use 'status <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 698,
+      "line_end": 698,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-scale",
+      "statement": "Cobra constructs orch scale with Use 'scale <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 624,
+      "line_end": 624,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-service",
+      "statement": "Cobra constructs orch service with Use 'service'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 564,
+      "line_end": 564,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-service-inspect",
+      "statement": "Cobra constructs orch service inspect with Use 'inspect <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 581,
+      "line_end": 581,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-service-ls",
+      "statement": "Cobra constructs orch service ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-service-ps",
+      "statement": "Cobra constructs orch service ps with Use 'ps <service-name-or-id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 597,
+      "line_end": 597,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-usage",
+      "statement": "Cobra constructs orch usage with Use 'usage'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 127,
+      "line_end": 127,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-usage-export",
+      "statement": "Cobra constructs orch usage export with Use 'export'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 137,
+      "line_end": 137,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-validate",
+      "statement": "Cobra constructs orch validate with Use 'validate <file.yaml>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 442,
+      "line_end": 442,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-version",
+      "statement": "Cobra constructs orch version with Use 'version'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/root.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 431,
+      "line_end": 431,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-volume",
+      "statement": "Cobra constructs orch volume with Use 'volume'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 182,
+      "line_end": 182,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-volume-create",
+      "statement": "Cobra constructs orch volume create with Use 'create <name>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 20,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-volume-inspect",
+      "statement": "Cobra constructs orch volume inspect with Use 'inspect <id>'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 216,
+      "line_end": 216,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.cli.orch-volume-ls",
+      "statement": "Cobra constructs orch volume ls with Use 'ls'; the offline constructor inventory records its exact flags and arity probes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/cli/operations.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 49,
+      "line_end": 49,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Constructor execution and local help only; no connected operation or application side effect inferred.",
+        "The inventory uses an explicit privacy override for the machine-specific default config path."
+      ]
+    },
+    {
+      "claim_id": "reference.api.e64b00a2e682",
+      "statement": "GET /metrics is registered to metricsHandler.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 161,
+      "line_end": 161,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.e5c6f2f2c093",
+      "statement": "GET /healthz is registered to healthz.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 162,
+      "line_end": 162,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.60687eeef768",
+      "statement": "GET /readyz is registered to readyz.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 163,
+      "line_end": 163,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.9591a2b1b8ef",
+      "statement": "GET /v1/version is registered to apiVersion.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 170,
+      "line_end": 170,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.95edaa379176",
+      "statement": "POST /v1/agent/register is registered to agentRegister.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 171,
+      "line_end": 171,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.1b0c066a9dab",
+      "statement": "POST /v1/agent/heartbeat is registered to agentHeartbeat.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 172,
+      "line_end": 172,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.c7fbc83d08a8",
+      "statement": "GET /v1/agent/tasks is registered to agentListTasks.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 173,
+      "line_end": 173,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.ee0960556471",
+      "statement": "POST /v1/agent/tasks/{task_id}/status is registered to agentTaskStatus.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 174,
+      "line_end": 174,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.e75f9950b34c",
+      "statement": "GET /v1/nodes is registered to listNodes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 175,
+      "line_end": 175,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.ecd7083f282e",
+      "statement": "GET /v1/nodes/{id} is registered to getNode.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 176,
+      "line_end": 176,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.7aa3779a11e4",
+      "statement": "POST /v1/nodes/{id}/drain is registered to drainNode.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 177,
+      "line_end": 177,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.7b499d8f325e",
+      "statement": "POST /v1/nodes/{id}/uncordon is registered to uncordonNode.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 178,
+      "line_end": 178,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.38e31f39f4db",
+      "statement": "GET /v1/nodes/{id}/drain-status is registered to getNodeDrainStatus.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 179,
+      "line_end": 179,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.feea840b391e",
+      "statement": "POST /v1/secrets is registered to createSecret.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 180,
+      "line_end": 180,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.3034e3498299",
+      "statement": "GET /v1/secrets is registered to listSecrets.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 181,
+      "line_end": 181,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.731e6cc103c2",
+      "statement": "GET /v1/secrets/{name...} is registered to getSecret.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 182,
+      "line_end": 182,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.f9a1819949d8",
+      "statement": "DELETE /v1/secrets/{name...} is registered to deleteSecret.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 183,
+      "line_end": 183,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.ed375120e729",
+      "statement": "POST /v1/registry-credentials is registered to createRegistryCredential.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 184,
+      "line_end": 184,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.d44dabb36d58",
+      "statement": "GET /v1/registry-credentials is registered to listRegistryCredentials.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 185,
+      "line_end": 185,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.c5e9612f434a",
+      "statement": "DELETE /v1/registry-credentials/{id} is registered to deleteRegistryCredential.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 186,
+      "line_end": 186,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.79a10929ef6c",
+      "statement": "POST /v1/services is registered to createService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 187,
+      "line_end": 187,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.90293654eddb",
+      "statement": "GET /v1/services is registered to listServices.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 188,
+      "line_end": 188,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.1130afb54aee",
+      "statement": "GET /v1/services/{id} is registered to getService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 189,
+      "line_end": 189,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.c05c1d9a3f7f",
+      "statement": "GET /v1/services/{id}/endpoints is registered to getServiceEndpoints.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 190,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.f9557e6dda4f",
+      "statement": "DELETE /v1/services/{id} is registered to deleteService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 191,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.755c57111259",
+      "statement": "POST /v1/services/{id}/scale is registered to scaleService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 192,
+      "line_end": 192,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.fb4f7ae0b93c",
+      "statement": "POST /v1/services/{id}/rollout is registered to rolloutService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 193,
+      "line_end": 193,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.b08965706eae",
+      "statement": "GET /v1/services/{id}/rollout is registered to getServiceRollout.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 194,
+      "line_end": 194,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.22031f4854e4",
+      "statement": "GET /v1/rollouts/{id} is registered to getRollout.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 195,
+      "line_end": 195,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.8d486e0c0a1c",
+      "statement": "POST /v1/services/{id}/rollback is registered to rollbackService.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 196,
+      "line_end": 196,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.409788c49910",
+      "statement": "GET /v1/tasks is registered to listTasks.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 197,
+      "line_end": 197,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.262cb37d4cb7",
+      "statement": "GET /v1/tasks/{id} is registered to getTask.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 198,
+      "line_end": 198,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.2337a74535d0",
+      "statement": "GET /v1/discovery/services is registered to discoveryServices.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 199,
+      "line_end": 199,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.e776cbada9aa",
+      "statement": "GET /v1/discovery/services/{name} is registered to discoveryServiceByName.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 200,
+      "line_end": 200,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.b8d4cb019472",
+      "statement": "GET /v1/integrations/traefik/config is registered to traefikConfig.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 201,
+      "line_end": 201,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.0e0d11add643",
+      "statement": "GET /v1/events is registered to listEvents.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 202,
+      "line_end": 202,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.540549b3695a",
+      "statement": "GET /v1/audit is registered to listAuditLogs.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 203,
+      "line_end": 203,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.ce9099021fe9",
+      "statement": "GET /v1/logs is registered to streamLogs.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 204,
+      "line_end": 204,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.867fe5710d7f",
+      "statement": "POST /v1/namespaces is registered to createNamespace.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 205,
+      "line_end": 205,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.0248e0be4117",
+      "statement": "GET /v1/namespaces is registered to listNamespaces.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 206,
+      "line_end": 206,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.0478243f1a09",
+      "statement": "DELETE /v1/namespaces/{name} is registered to deleteNamespace.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 207,
+      "line_end": 207,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.7ae5df01289c",
+      "statement": "GET /v1/quota is registered to getResourceQuota.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 208,
+      "line_end": 208,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.c8c41991de58",
+      "statement": "PUT /v1/quota is registered to setResourceQuota.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 209,
+      "line_end": 209,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.a2504445d1e9",
+      "statement": "POST /v1/gitops/sources is registered to createGitOpsSource.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 210,
+      "line_end": 210,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.f356de7d0b86",
+      "statement": "GET /v1/gitops/sources is registered to listGitOpsSources.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 211,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.64ce270f4b63",
+      "statement": "DELETE /v1/gitops/sources/{id} is registered to deleteGitOpsSource.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 212,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.45c71f6c7e7e",
+      "statement": "POST /v1/gitops/sources/{id}/sync is registered to syncGitOpsSource.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 213,
+      "line_end": 213,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.d02d23a8c894",
+      "statement": "GET /v1/gitops/status is registered to gitopsStatus.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 214,
+      "line_end": 214,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.192021fc0d4f",
+      "statement": "GET /v1/gitops/diff/{service} is registered to gitopsDiff.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 215,
+      "line_end": 215,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.1f2e6ab13f80",
+      "statement": "POST /v1/jobs is registered to createJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 216,
+      "line_end": 216,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.88df9d6a3128",
+      "statement": "GET /v1/jobs is registered to listJobs.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 217,
+      "line_end": 217,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.6835db6c9169",
+      "statement": "GET /v1/jobs/{id} is registered to getJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 218,
+      "line_end": 218,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.23da905e25f5",
+      "statement": "DELETE /v1/jobs/{id} is registered to deleteJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 219,
+      "line_end": 219,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.99d0f3f9c1e5",
+      "statement": "POST /v1/cronjobs is registered to createCronJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 220,
+      "line_end": 220,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.f7a865acbd31",
+      "statement": "GET /v1/cronjobs is registered to listCronJobs.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 221,
+      "line_end": 221,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.bddda7f5f6e5",
+      "statement": "GET /v1/cronjobs/{id} is registered to getCronJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 222,
+      "line_end": 222,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.41f932622bfe",
+      "statement": "DELETE /v1/cronjobs/{id} is registered to deleteCronJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 223,
+      "line_end": 223,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.6701ef7edddf",
+      "statement": "POST /v1/cronjobs/{id}/suspend is registered to suspendCronJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 224,
+      "line_end": 224,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.4abf5f29bbc9",
+      "statement": "POST /v1/cronjobs/{id}/resume is registered to resumeCronJob.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 225,
+      "line_end": 225,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.613dfaf65978",
+      "statement": "POST /v1/volumes is registered to createVolume.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 226,
+      "line_end": 226,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.137c39d48c3d",
+      "statement": "GET /v1/volumes is registered to listVolumes.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 227,
+      "line_end": 227,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.a9f04f071352",
+      "statement": "GET /v1/volumes/{id} is registered to getVolume.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 228,
+      "line_end": 228,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.bf577ca2bf7d",
+      "statement": "DELETE /v1/volumes/{id} is registered to deleteVolume.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 229,
+      "line_end": 229,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.56117ae3046f",
+      "statement": "POST /v1/volume-claims is registered to createVolumeClaim.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 230,
+      "line_end": 230,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.bba9e9c0b239",
+      "statement": "GET /v1/volume-claims is registered to listVolumeClaims.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 231,
+      "line_end": 231,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.8b50e0f4fcac",
+      "statement": "POST /v1/notification-sinks is registered to createNotificationSink.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 232,
+      "line_end": 232,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.1cd6e298b471",
+      "statement": "GET /v1/notification-sinks is registered to listNotificationSinks.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 233,
+      "line_end": 233,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.0737925362e8",
+      "statement": "DELETE /v1/notification-sinks/{id} is registered to deleteNotificationSink.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 234,
+      "line_end": 234,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.640b3a5dc2eb",
+      "statement": "POST /v1/notification-sinks/{id}/test is registered to testNotificationSink.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 235,
+      "line_end": 235,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.36840d205409",
+      "statement": "POST /v1/maintenance-windows is registered to createMaintenanceWindow.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 236,
+      "line_end": 236,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.bc9824936e49",
+      "statement": "GET /v1/maintenance-windows is registered to listMaintenanceWindows.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 237,
+      "line_end": 237,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.8c61d1d47bc9",
+      "statement": "DELETE /v1/maintenance-windows/{id} is registered to deleteMaintenanceWindow.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 238,
+      "line_end": 238,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.8850044feccf",
+      "statement": "GET /v1/retention is registered to retentionStatus.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 239,
+      "line_end": 239,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.43c843ac2b02",
+      "statement": "POST /v1/retention/prune is registered to pruneRetention.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 240,
+      "line_end": 240,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.api.c3fbf3fe8a8a",
+      "statement": "GET /v1/usage is registered to getUsage.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 241,
+      "line_end": 241,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Registration does not establish every DTO/status schema; companion inventory separately traces handlers, role middleware and OpenAPI coverage."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.addr",
+      "statement": "ServerConfig.Addr declares YAML field 'addr' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 16,
+      "line_end": 16,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.database_url",
+      "statement": "ServerConfig.DatabaseURL declares YAML field 'database_url' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 17,
+      "line_end": 17,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.log_level",
+      "statement": "ServerConfig.LogLevel declares YAML field 'log_level' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 18,
+      "line_end": 18,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.bootstrap_token",
+      "statement": "ServerConfig.BootstrapToken declares YAML field 'bootstrap_token' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 19,
+      "line_end": 19,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.jwt_secret",
+      "statement": "ServerConfig.JWTSecret declares YAML field 'jwt_secret' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 20,
+      "line_end": 20,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.users",
+      "statement": "ServerConfig.Users declares YAML field 'users' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 21,
+      "line_end": 21,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.secret_key",
+      "statement": "ServerConfig.SecretKey declares YAML field 'secret_key' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 22,
+      "line_end": 22,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.graceful_shutdown_ttl",
+      "statement": "ServerConfig.GracefulShutdownTTL declares YAML field 'graceful_shutdown_ttl' with Go type time.Duration.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 23,
+      "line_end": 23,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.heartbeat_timeout",
+      "statement": "ServerConfig.HeartbeatTimeout declares YAML field 'heartbeat_timeout' with Go type time.Duration.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 24,
+      "line_end": 24,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.node_monitor_interval",
+      "statement": "ServerConfig.NodeMonitorInterval declares YAML field 'node_monitor_interval' with Go type time.Duration.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 25,
+      "line_end": 25,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.debug_addr",
+      "statement": "ServerConfig.DebugAddr declares YAML field 'debug_addr' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 26,
+      "line_end": 26,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.enable_pprof",
+      "statement": "ServerConfig.EnablePprof declares YAML field 'enable_pprof' with Go type bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 27,
+      "line_end": 27,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.retention",
+      "statement": "ServerConfig.Retention declares YAML field 'retention' with Go type types.RetentionConfig.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 28,
+      "line_end": 28,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.server.cluster_policy",
+      "statement": "ServerConfig.ClusterPolicy declares YAML field 'cluster_policy' with Go type policy.ClusterPolicy.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 29,
+      "line_end": 29,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.node_name",
+      "statement": "AgentConfig.NodeName declares YAML field 'node_name' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 33,
+      "line_end": 33,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.advertise_address",
+      "statement": "AgentConfig.AdvertiseAddress declares YAML field 'advertise_address' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 34,
+      "line_end": 34,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.agent_addr",
+      "statement": "AgentConfig.AgentAddr declares YAML field 'agent_addr' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 35,
+      "line_end": 35,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.labels",
+      "statement": "AgentConfig.Labels declares YAML field 'labels' with Go type map[string]string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 36,
+      "line_end": 36,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.server_url",
+      "statement": "AgentConfig.ServerURL declares YAML field 'server_url' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 37,
+      "line_end": 37,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.bootstrap_token",
+      "statement": "AgentConfig.BootstrapToken declares YAML field 'bootstrap_token' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 38,
+      "line_end": 38,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.docker_socket_path",
+      "statement": "AgentConfig.DockerSocketPath declares YAML field 'docker_socket_path' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 39,
+      "line_end": 39,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.log_level",
+      "statement": "AgentConfig.LogLevel declares YAML field 'log_level' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 40,
+      "line_end": 40,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.heartbeat_interval",
+      "statement": "AgentConfig.HeartbeatInterval declares YAML field 'heartbeat_interval' with Go type time.Duration.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 41,
+      "line_end": 41,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.agent.graceful_shutdown_ttl",
+      "statement": "AgentConfig.GracefulShutdownTTL declares YAML field 'graceful_shutdown_ttl' with Go type time.Duration.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 42,
+      "line_end": 42,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cli.server_url",
+      "statement": "CLIConfig.ServerURL declares YAML field 'server_url' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 46,
+      "line_end": 46,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cli.token",
+      "statement": "CLIConfig.Token declares YAML field 'token' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 47,
+      "line_end": 47,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cli.namespace",
+      "statement": "CLIConfig.Namespace declares YAML field 'namespace' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 48,
+      "line_end": 48,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.events",
+      "statement": "retentionFileConfig.Events declares YAML field 'events' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 210,
+      "line_end": 210,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.audit_logs",
+      "statement": "retentionFileConfig.AuditLogs declares YAML field 'audit_logs' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 211,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.completed_tasks",
+      "statement": "retentionFileConfig.CompletedTasks declares YAML field 'completed_tasks' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 212,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.failed_tasks",
+      "statement": "retentionFileConfig.FailedTasks declares YAML field 'failed_tasks' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 213,
+      "line_end": 213,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.rollouts",
+      "statement": "retentionFileConfig.Rollouts declares YAML field 'rollouts' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 214,
+      "line_end": 214,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.completed_jobs",
+      "statement": "retentionFileConfig.CompletedJobs declares YAML field 'completed_jobs' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 215,
+      "line_end": 215,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.retention.gitops_records",
+      "statement": "retentionFileConfig.GitOpsRecords declares YAML field 'gitops_records' with Go type string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 216,
+      "line_end": 216,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.require_resource_requests",
+      "statement": "clusterPolicyFile.RequireResourceRequests declares YAML field 'require_resource_requests' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 220,
+      "line_end": 220,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.require_resource_limits",
+      "statement": "clusterPolicyFile.RequireResourceLimits declares YAML field 'require_resource_limits' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 221,
+      "line_end": 221,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allow_privileged",
+      "statement": "clusterPolicyFile.AllowPrivileged declares YAML field 'allow_privileged' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 222,
+      "line_end": 222,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allow_host_network",
+      "statement": "clusterPolicyFile.AllowHostNetwork declares YAML field 'allow_host_network' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 223,
+      "line_end": 223,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allow_host_pid",
+      "statement": "clusterPolicyFile.AllowHostPID declares YAML field 'allow_host_pid' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 224,
+      "line_end": 224,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allowed_image_registries",
+      "statement": "clusterPolicyFile.AllowedImageRegistries declares YAML field 'allowed_image_registries' with Go type []string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 225,
+      "line_end": 225,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.block_latest_tag",
+      "statement": "clusterPolicyFile.BlockLatestTag declares YAML field 'block_latest_tag' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 226,
+      "line_end": 226,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.require_digest",
+      "statement": "clusterPolicyFile.RequireDigest declares YAML field 'require_digest' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 227,
+      "line_end": 227,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allow_mutable_tags",
+      "statement": "clusterPolicyFile.AllowMutableTags declares YAML field 'allow_mutable_tags' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 228,
+      "line_end": 228,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.deny_latest_tag",
+      "statement": "clusterPolicyFile.DenyLatestTag declares YAML field 'deny_latest_tag' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 229,
+      "line_end": 229,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.require_healthcheck",
+      "statement": "clusterPolicyFile.RequireHealthcheck declares YAML field 'require_healthcheck' with Go type *bool.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 230,
+      "line_end": 230,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allowed_host_path_prefixes",
+      "statement": "clusterPolicyFile.AllowedHostPathPrefixes declares YAML field 'allowed_host_path_prefixes' with Go type []string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 231,
+      "line_end": 231,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.allowed_capabilities",
+      "statement": "clusterPolicyFile.AllowedCapabilities declares YAML field 'allowed_capabilities' with Go type []string.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 232,
+      "line_end": 232,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.max_replicas_per_service",
+      "statement": "clusterPolicyFile.MaxReplicasPerService declares YAML field 'max_replicas_per_service' with Go type *int.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 233,
+      "line_end": 233,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.config.cluster_policy.max_public_ports_per_service",
+      "statement": "clusterPolicyFile.MaxPublicPortsPerService declares YAML field 'max_public_ports_per_service' with Go type *int.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 234,
+      "line_end": 234,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Declaration does not prove validation, consumption or runtime enforcement; companion explicitly records ignored DockerSocketPath and inactive live DatabaseURL semantics."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.api_requests_total",
+      "statement": "api_requests_total is registered as CounterVec with labels ['method', 'route', 'status'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 44,
+      "line_end": 50,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.api_request_duration_seconds",
+      "statement": "api_request_duration_seconds is registered as HistogramVec with labels ['method', 'route', 'status'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 48,
+      "line_end": 54,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_runs_total",
+      "statement": "scheduler_runs_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 53,
+      "line_end": 59,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_errors_total",
+      "statement": "scheduler_errors_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 57,
+      "line_end": 63,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_scheduling_attempts_total",
+      "statement": "scheduler_scheduling_attempts_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 61,
+      "line_end": 67,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_scheduling_failures_total",
+      "statement": "scheduler_scheduling_failures_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 65,
+      "line_end": 71,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_tasks_claimed_total",
+      "statement": "scheduler_tasks_claimed_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 69,
+      "line_end": 75,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_assignment_conflicts_total",
+      "statement": "scheduler_assignment_conflicts_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 73,
+      "line_end": 79,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.scheduler_duration_seconds",
+      "statement": "scheduler_duration_seconds is registered as Histogram with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 77,
+      "line_end": 83,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.reconciler_runs_total",
+      "statement": "reconciler_runs_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 82,
+      "line_end": 88,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.reconciler_errors_total",
+      "statement": "reconciler_errors_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 86,
+      "line_end": 92,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.reconciler_duration_seconds",
+      "statement": "reconciler_duration_seconds is registered as Histogram with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 90,
+      "line_end": 96,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.tasks_created_total",
+      "statement": "tasks_created_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 95,
+      "line_end": 101,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.tasks_failed_total",
+      "statement": "tasks_failed_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 99,
+      "line_end": 105,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.rollouts_total",
+      "statement": "rollouts_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 103,
+      "line_end": 109,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.rollout_failures_total",
+      "statement": "rollout_failures_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 107,
+      "line_end": 113,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.autoscaler_decisions_total",
+      "statement": "autoscaler_decisions_total is registered as CounterVec with labels ['decision'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 111,
+      "line_end": 117,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.autoscaler_errors_total",
+      "statement": "autoscaler_errors_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 115,
+      "line_end": 121,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.autoscaler_recommendation_replicas",
+      "statement": "autoscaler_recommendation_replicas is registered as GaugeVec with labels ['service_id'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 119,
+      "line_end": 125,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.controller_leader_status",
+      "statement": "controller_leader_status is registered as GaugeVec with labels ['controller'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 123,
+      "line_end": 129,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.controller_leader_acquisition_failures_total",
+      "statement": "controller_leader_acquisition_failures_total is registered as CounterVec with labels ['controller'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 127,
+      "line_end": 133,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.dns_queries_total",
+      "statement": "dns_queries_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 130,
+      "line_end": 136,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.dns_errors_total",
+      "statement": "dns_errors_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 131,
+      "line_end": 137,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.heartbeat_success_total",
+      "statement": "heartbeat_success_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 279,
+      "line_end": 285,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.heartbeat_failure_total",
+      "statement": "heartbeat_failure_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 283,
+      "line_end": 289,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.docker_operations_total",
+      "statement": "docker_operations_total is registered as CounterVec with labels ['operation'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 287,
+      "line_end": 293,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.docker_operation_errors_total",
+      "statement": "docker_operation_errors_total is registered as CounterVec with labels ['operation'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 291,
+      "line_end": 297,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.task_state_changes_total",
+      "statement": "task_state_changes_total is registered as CounterVec with labels ['status'].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 295,
+      "line_end": 301,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.healthcheck_success_total",
+      "statement": "healthcheck_success_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 299,
+      "line_end": 305,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.metric.healthcheck_failure_total",
+      "statement": "healthcheck_failure_total is registered as Counter with labels [].",
+      "classification": "runtime-integrated",
+      "source_path": "internal/metrics/prometheus.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 303,
+      "line_end": 309,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Collector declaration is not proof an unwired controller emits samples, that a scrape ran, or that an alert fired."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.failed",
+      "statement": "Generic deployment validator accepts failed \u2192 failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.paused",
+      "statement": "Generic deployment validator accepts paused \u2192 running, paused, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.pending",
+      "statement": "Generic deployment validator accepts pending \u2192 pending, running, succeeded, failed, rolling_back, rolled_back.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.rolled_back",
+      "statement": "Generic deployment validator accepts rolled_back \u2192 rolled_back.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.rolling_back",
+      "statement": "Generic deployment validator accepts rolling_back \u2192 paused, failed, rolling_back, rolled_back.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.running",
+      "statement": "Generic deployment validator accepts running \u2192 running, paused, succeeded, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.deployment.succeeded",
+      "statement": "Generic deployment validator accepts succeeded \u2192 succeeded.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 244,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.node.draining",
+      "statement": "Generic node validator accepts draining \u2192 ready, draining, offline.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 86,
+      "line_end": 114,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.node.offline",
+      "statement": "Generic node validator accepts offline \u2192 ready, offline.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 86,
+      "line_end": 114,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.node.ready",
+      "statement": "Generic node validator accepts ready \u2192 ready, draining, offline.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 86,
+      "line_end": 114,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.node.unknown",
+      "statement": "Generic node validator accepts unknown \u2192 ready, offline, unknown.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 86,
+      "line_end": 114,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.service.active",
+      "statement": "Generic service validator accepts active \u2192 active, deleting.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 115,
+      "line_end": 135,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.service.deleted",
+      "statement": "Generic service validator accepts deleted \u2192 deleted.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 115,
+      "line_end": 135,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.service.deleting",
+      "statement": "Generic service validator accepts deleting \u2192 deleting, deleted.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 115,
+      "line_end": 135,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.assigned",
+      "statement": "Generic task_actual validator accepts assigned \u2192 assigned, pulling, created, running, healthy, unhealthy, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.created",
+      "statement": "Generic task_actual validator accepts created \u2192 created, starting, running, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.failed",
+      "statement": "Generic task_actual validator accepts failed \u2192 removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.healthy",
+      "statement": "Generic task_actual validator accepts healthy \u2192 running, healthy, unhealthy, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.pending",
+      "statement": "Generic task_actual validator accepts pending \u2192 pending, assigned, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.pulling",
+      "statement": "Generic task_actual validator accepts pulling \u2192 pulling, created, running, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.removed",
+      "statement": "Generic task_actual validator accepts removed \u2192 removed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.running",
+      "statement": "Generic task_actual validator accepts running \u2192 running, healthy, unhealthy, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.starting",
+      "statement": "Generic task_actual validator accepts starting \u2192 starting, running, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.stopped",
+      "statement": "Generic task_actual validator accepts stopped \u2192 stopped, removed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.stopping",
+      "statement": "Generic task_actual validator accepts stopping \u2192 stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_actual.unhealthy",
+      "statement": "Generic task_actual validator accepts unhealthy \u2192 running, healthy, unhealthy, stopping, stopped, removed, failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 190,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.assigned",
+      "statement": "Generic task_desired validator accepts assigned \u2192 assigned.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.created",
+      "statement": "Generic task_desired validator accepts created \u2192 created.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.failed",
+      "statement": "Generic task_desired validator accepts failed \u2192 failed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.healthy",
+      "statement": "Generic task_desired validator accepts healthy \u2192 healthy.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.pending",
+      "statement": "Generic task_desired validator accepts pending \u2192 pending.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.pulling",
+      "statement": "Generic task_desired validator accepts pulling \u2192 pulling.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.removed",
+      "statement": "Generic task_desired validator accepts removed \u2192 removed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.running",
+      "statement": "Generic task_desired validator accepts running \u2192 running, stopped, removed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.starting",
+      "statement": "Generic task_desired validator accepts starting \u2192 starting.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.stopped",
+      "statement": "Generic task_desired validator accepts stopped \u2192 stopped, removed.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.stopping",
+      "statement": "Generic task_desired validator accepts stopping \u2192 stopping.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    },
+    {
+      "claim_id": "reference.lifecycle.task_desired.unhealthy",
+      "statement": "Generic task_desired validator accepts unhealthy \u2192 unhealthy.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 191,
+      "line_end": 211,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/reference-offline-inventory.json",
+      "limitations": [
+        "Generic state edge only; authenticated agent report guard, current desired intent, service policy and physical side effects remain separate."
+      ]
+    }
+  ],
+  "scope": "Granular appendix reference assertions; stable IDs derived from interface identity, not mutable line numbers."
+}

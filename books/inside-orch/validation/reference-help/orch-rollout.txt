@@ -1,0 +1,24 @@
+Roll out a new service image
+
+Usage:
+  orch rollout <service-name-or-id> [flags]
+  orch rollout [command]
+
+Available Commands:
+  status      Show latest rollout status
+
+Flags:
+      --force                 bypass maintenance-window restrictions and audit the override
+  -h, --help                  help for rollout
+      --image string          new image
+      --max-surge int         maximum extra replicas during rollout (default 1)
+      --max-unavailable int   maximum unavailable replicas during rollout (default 1)
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch rollout [command] --help" for more information about a command.

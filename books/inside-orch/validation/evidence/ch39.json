@@ -1,0 +1,90 @@
+{
+  "chapter": "39",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch39.simulation",
+      "statement": "Load tool constructs MemoryService and synthetic running reports rather than actual agents or containers.",
+      "classification": "implemented package",
+      "source_path": "cmd/orch-loadtest/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 89,
+      "line_end": 145,
+      "associated_commits": [
+        "7fcdaf5877145b77bb484b2bc7cabae8eb75acab"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch39/bounded-fake-load.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual bounded benchmarks, fake load and tagged scale passed. Profiles captured; prebuilt pprof unavailable, source-built fallback separately recorded. No production capacity inferred."
+      ]
+    },
+    {
+      "claim_id": "ch39.benchmark",
+      "statement": "Scheduler benchmark times Plan over100ready nodes and1000pending tasks after setup.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/benchmark_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 9,
+      "line_end": 26,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch39/bounded-benchmarks.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual bounded benchmarks, fake load and tagged scale passed. Profiles captured; prebuilt pprof unavailable, source-built fallback separately recorded. No production capacity inferred."
+      ]
+    },
+    {
+      "claim_id": "ch39.scale",
+      "statement": "Tagged scale test checks task-record count and initial iteration count, not final healthy replicas or durable throughput.",
+      "classification": "implemented package",
+      "source_path": "cmd/orch-loadtest/scale_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1,
+      "line_end": 19,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch39/thousand-service-scale.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual bounded benchmarks, fake load and tagged scale passed. Profiles captured; prebuilt pprof unavailable, source-built fallback separately recorded. No production capacity inferred."
+      ]
+    },
+    {
+      "claim_id": "ch39.debug",
+      "statement": "Optional pprof handler has separate routes and no own authentication middleware.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/debug.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 8,
+      "line_end": 20,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual bounded benchmarks, fake load and tagged scale passed. Profiles captured; prebuilt pprof unavailable, source-built fallback separately recorded. No production capacity inferred."
+      ]
+    },
+    {
+      "claim_id": "ch39.debug-default",
+      "statement": "Debug listener defaults to loopback and pprof enablement is optional.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 155,
+      "line_end": 170,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual bounded benchmarks, fake load and tagged scale passed. Profiles captured; prebuilt pprof unavailable, source-built fallback separately recorded. No production capacity inferred."
+      ]
+    }
+  ]
+}

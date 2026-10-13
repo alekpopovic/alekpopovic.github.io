@@ -1,0 +1,289 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "created_at_utc": "2026-10-13T00:38:27.009086+00:00",
+  "service_identity": "atlas-api",
+  "job_identity": "atlas-count",
+  "specs": [
+    "labs/specs/atlas-api.yaml",
+    "labs/specs/atlas-api-constrained.yaml",
+    "labs/specs/atlas-api-unhealthy.yaml",
+    "labs/specs/atlas-count.yaml"
+  ],
+  "invalid_fixture": "labs/specs/atlas-invalid-unknown-field.yaml",
+  "stages": [
+    {
+      "id": "01",
+      "title": "Initialize and observe process restart",
+      "prompt_id": "066",
+      "chapters": [
+        "03",
+        "06",
+        "13"
+      ],
+      "contexts": [
+        "default server process",
+        "disposable Docker agent"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Deploy atlas-api, scale1\u21922\u21921; save service/task/node/container IDs, restart a new server process.",
+      "operator_commands": [
+        "validate labs/specs/atlas-api.yaml",
+        "deploy labs/specs/atlas-api.yaml",
+        "scale atlas-api --replicas 2",
+        "service ls"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Services/node registration maps disappear after a fresh process; surviving Docker identity is separate.",
+      "failure_injection": "Terminate only recorded server PID; leave recorded service container for comparison, then stop agent and remove exact IDs.",
+      "telemetry": [
+        "API JSON before/after restart",
+        "Docker inspect for recorded container IDs",
+        "process PID/start timestamps"
+      ],
+      "cleanup": "Restore fresh disposable server/agent; do not reuse pre-restart API IDs as live truth.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "02",
+      "title": "Deterministic placement and concurrent claims",
+      "prompt_id": "067",
+      "chapters": [
+        "05",
+        "09",
+        "10",
+        "26"
+      ],
+      "contexts": [
+        "standalone scheduler package",
+        "default MemoryService comparative fixture",
+        "throwaway PostgreSQL store"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Present500m CPU/128Mi node and service600m/256Mi requests; then attempt two assignments of one pending task.",
+      "operator_commands": [
+        "go test ./internal/scheduler -run Test -count=1",
+        "guarded store Integration suite"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Pure planner rejects capacity; normal MemoryService placement can differ. Only one guarded assignment succeeds at a version.",
+      "failure_injection": "Inject identical resource intent into both paths, not a large physical machine; race stale writers in a package fixture.",
+      "telemetry": [
+        "planner assignment/unplaced reason",
+        "active service/task trace",
+        "both assignment errors and final owner"
+      ],
+      "cleanup": "Discard fake objects and throwaway schema; stop/delete only owned database container after later tests.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "03",
+      "title": "Reconciliation and Docker drift ownership",
+      "prompt_id": "068",
+      "chapters": [
+        "11",
+        "12",
+        "18",
+        "19"
+      ],
+      "contexts": [
+        "default agent/Docker in isolated daemon",
+        "FakeRuntime controller fixtures"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Keep atlas-api identity; remove one exact recorded container to simulate drift; restart agent, then stop heartbeat.",
+      "operator_commands": [
+        "service ls",
+        "node ls",
+        "events --help"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Reconciliation observes missing runtime identity; adoption should not duplicate the same task. Offline replacement is not physical fencing.",
+      "failure_injection": "Remove only the selected owned container; suspend only recorded agent PID, not host networking.",
+      "telemetry": [
+        "old/new task/container IDs",
+        "heartbeat/offline events",
+        "direct old endpoint where safe"
+      ],
+      "cleanup": "Resume/stop exact recorded agent; remove all and only run-owned containers. No broad orch.managed cleanup.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "04",
+      "title": "Rollout, rollback and availability",
+      "prompt_id": "069",
+      "chapters": [
+        "14",
+        "17",
+        "18"
+      ],
+      "contexts": [
+        "default rollout path",
+        "standalone rollout arithmetic fixtures"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Roll atlas-api to nginx1.28-alpine, then rollback while tracking immutable deployment versions.",
+      "operator_commands": [
+        "rollout atlas-api --image nginx:1.28-alpine --max-unavailable 1 --max-surge 1",
+        "rollout status atlas-api",
+        "rollback atlas-api"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Old/new available counts control actions. A failed pull or unhealthy new task must be distinguished from rollback completion.",
+      "failure_injection": "Use a deliberately nonexistent image in a separate failing rollout; never replace a real user service.",
+      "telemetry": [
+        "deployment JSON",
+        "version/task counts each iteration",
+        "failure event and final version"
+      ],
+      "cleanup": "Restore known image or delete atlas-api; remove exact residual task containers.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "05",
+      "title": "Secrets, authorization and health trust",
+      "prompt_id": "070",
+      "chapters": [
+        "14",
+        "23",
+        "24",
+        "25",
+        "26"
+      ],
+      "contexts": [
+        "default API/auth/agent where integrated",
+        "health package redirect fixture"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Apply atlas-api-unhealthy manifest in its lab namespace and attempt untrusted reports; trace encrypted secret storage separately.",
+      "operator_commands": [
+        "validate labs/specs/atlas-api-unhealthy.yaml",
+        "deploy labs/specs/atlas-api-unhealthy.yaml"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Missing path produces unhealthy observations; cross-origin redirect fixture must fail; plaintext delivery differs from stored ciphertext.",
+      "failure_injection": "Use localhost test HTTP handlers and disposable credentials; no external metadata endpoint probing.",
+      "telemetry": [
+        "redacted authorization error",
+        "healthy/unhealthy conditions",
+        "redirect fixture assertion"
+      ],
+      "cleanup": "Restore healthy Atlas manifest; stop owned local handler, delete disposable secret references and namespace when empty.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "06",
+      "title": "Namespaces and atomic quota admission",
+      "prompt_id": "071",
+      "chapters": [
+        "27",
+        "28"
+      ],
+      "contexts": [
+        "default MemoryService/API namespace scoping",
+        "PostgreSQL atomic quota package fixture"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Create same service name in isolated second namespace; bound intended replicas/resources and attempt exceeding mutation.",
+      "operator_commands": [
+        "namespace create atlas-second",
+        "quota set --max-replicas 2 --max-cpu-millicores 200",
+        "quota get"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Names are scoped; accepted desired intent affects accounting. This does not establish Docker CPU/memory enforcement.",
+      "failure_injection": "Race scale/create under a quota in fixture; keep primary and second service IDs distinct.",
+      "telemetry": [
+        "namespace-specific service JSON",
+        "quota usage before/after rejected change",
+        "both concurrent mutation results"
+      ],
+      "cleanup": "Delete namespace-specific service IDs first; delete only empty namespaces and restore lab quotas.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "07",
+      "title": "GitOps drift, finite jobs and cron",
+      "prompt_id": "072",
+      "chapters": [
+        "30",
+        "31"
+      ],
+      "contexts": [
+        "default GitOps controller",
+        "default job command propagation plus package/FakeRuntime cron assertions; actual finite execution measured separately"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": "atlas-count",
+      "desired_change": "Commit atlas-api manifest to dedicated local repo; modify first valid file and second invalid file; create atlas-count finite JobSpec.",
+      "operator_commands": [
+        "gitops add --repo <owned-local-repo> --branch main --path manifests --drift-policy warn",
+        "gitops sync <recorded-source-id>",
+        "job run labs/specs/atlas-count.yaml",
+        "job ls"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "First file may change service before second fails. Agent copies the command into ContainerSpec; job exit reporting and identity/adoption still need an executed check.",
+      "failure_injection": "No remote Git push. Inject clock for cron rather than change system time; invalid second manifest exercises partial application.",
+      "telemetry": [
+        "Git source commit IDs",
+        "source LastError/LastRevision and actual service spec",
+        "job attempts/task IDs/exit report",
+        "cron injected timestamps"
+      ],
+      "cleanup": "Delete exact GitOps source before service; stop package fixture; remove owned temp repository after evidence copy.",
+      "result_status": "expected_only",
+      "execution_log": null
+    },
+    {
+      "id": "08",
+      "title": "Backup, migration, load and recovery boundaries",
+      "prompt_id": "073",
+      "chapters": [
+        "32",
+        "34",
+        "35",
+        "36",
+        "37",
+        "38",
+        "39",
+        "40"
+      ],
+      "contexts": [
+        "throwaway PostgreSQL sessions/store",
+        "bounded source-only benchmark",
+        "default process restart observation"
+      ],
+      "service_identity": "atlas-api",
+      "job_identity": null,
+      "desired_change": "Test DB migration subset/all migrations explicitly, two-session cancellation, bounded load; compare SQL backup with current memory state.",
+      "operator_commands": [
+        "go test ./internal/scheduler -run ^$ -bench Benchmark -benchtime 100x"
+      ],
+      "command_source": "internal/cli/root.go; internal/cli/workloads.go; selected package tests",
+      "expected_observation": "Database restore recovers only persisted database content. Fresh default process remains new MemoryService; benchmark scope is not Docker cluster capacity.",
+      "failure_injection": "Cancel leadership owner session; bound workload/time; never stress user daemon or restore into real database.",
+      "telemetry": [
+        "migration list and actual up/down results",
+        "two session lock ownership",
+        "benchmark config/result",
+        "restart before/after state"
+      ],
+      "cleanup": "Stop exact PIDs; remove exact owned DB/volume/containers; report leftovers explicitly and keep canonical logs.",
+      "result_status": "expected_only",
+      "execution_log": null
+    }
+  ],
+  "results": "expected_only; real labs recorded separately"
+}

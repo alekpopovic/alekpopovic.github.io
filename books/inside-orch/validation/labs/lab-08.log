@@ -1,0 +1,18 @@
+Actual stdout: validation/labs/review076/08-recovery-command.stdout.txt
+{"status": "passed", "record": "validation/labs/review076/08-recovery.json"}
+
+Actual stderr: validation/labs/review076/08-recovery-command.stderr.txt
+
+Actual stdout: validation/labs/review076/08-fake-load-command.stdout.txt
+tasks_created=60
+tasks_running=39
+tasks_failed=21
+average_convergence_time=34.097µs
+scheduler_errors=0
+reconciler_errors=0
+convergence_duration=1.11756ms
+scheduler_iterations=20
+reconciliation_iterations=30
+
+Actual stderr: validation/labs/review076/08-fake-load-command.stderr.txt
+

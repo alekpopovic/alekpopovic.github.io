@@ -1,0 +1,10 @@
+=== RUN   TestControllerSyncsLocalFixtureRepositoryAndPrunes
+--- PASS: TestControllerSyncsLocalFixtureRepositoryAndPrunes (0.22s)
+=== RUN   TestSourceRejectsPlaintextCredentials
+--- PASS: TestSourceRejectsPlaintextCredentials (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/gitops	0.235s
+=== RUN   TestGitOpsManualChangesCreateDriftAndAutoRevert
+--- PASS: TestGitOpsManualChangesCreateDriftAndAutoRevert (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/controlplane	0.009s

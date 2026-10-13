@@ -1,0 +1,23 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "scope": "Registered method/path coverage only; agent paths intentionally internal; no schema or live response validation.",
+  "public_methods": 70,
+  "internal_agent_methods": 4,
+  "missing_public_methods": [
+    {
+      "method": "GET",
+      "path": "/v1/discovery/services",
+      "line": 199
+    },
+    {
+      "method": "GET",
+      "path": "/v1/discovery/services/{name}",
+      "line": 200
+    },
+    {
+      "method": "GET",
+      "path": "/v1/integrations/traefik/config",
+      "line": 201
+    }
+  ]
+}

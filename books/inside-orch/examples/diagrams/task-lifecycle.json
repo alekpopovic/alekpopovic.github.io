@@ -1,0 +1,70 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "generated_at_utc": "2026-10-13T01:18:08.759221+00:00",
+  "scope": "Selected legal task actual-state edges, checked against generic validator and annotated desired-state restrictions. Not a complete graph or evidence every edge occurs in current agent.",
+  "source_path": "pkg/types/lifecycle.go",
+  "line_start": 136,
+  "line_end": 187,
+  "agent_gate_lines": [
+    302,
+    318
+  ],
+  "edges": [
+    [
+      "pending",
+      "assigned"
+    ],
+    [
+      "assigned",
+      "pulling"
+    ],
+    [
+      "pulling",
+      "created"
+    ],
+    [
+      "created",
+      "running"
+    ],
+    [
+      "running",
+      "healthy"
+    ],
+    [
+      "healthy",
+      "unhealthy"
+    ],
+    [
+      "unhealthy",
+      "healthy"
+    ],
+    [
+      "healthy",
+      "stopped"
+    ],
+    [
+      "stopped",
+      "removed"
+    ],
+    [
+      "running",
+      "failed"
+    ],
+    [
+      "failed",
+      "removed"
+    ],
+    [
+      "removed",
+      "removed"
+    ]
+  ],
+  "terminal_states": [
+    "stopped",
+    "failed",
+    "removed"
+  ],
+  "svg_sha256": "33f47b6d90553779b1b6c3f22fed1b37d44c038a1b1efe25b0436d243c63134c",
+  "png_sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+  "visual_review": "PNG viewed after rendering; branch routes and labels checked for overlap; static alt/description included."
+}

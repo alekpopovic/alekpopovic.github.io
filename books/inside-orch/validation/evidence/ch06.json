@@ -1,0 +1,106 @@
+{
+  "chapter": "06",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch06.active-memory",
+      "statement": "Default server constructs MemoryService rather than PostgreSQL-backed Service.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 142,
+      "line_end": 148,
+      "associated_commits": [
+        "64a0725387b8130be988948b81774aea7051c718"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual combined binary/container observation passed validation/labs/ch06/combined-restart-command.json and combined-restart.json; manually created/reported container, no agent adoption claim."
+      ]
+    },
+    {
+      "claim_id": "ch06.loops",
+      "statement": "Startup runs GitOps, cron, scheduler, rollout and node-monitor around MemoryService.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 168,
+      "line_end": 234,
+      "associated_commits": [
+        "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual combined binary/container observation passed validation/labs/ch06/combined-restart-command.json and combined-restart.json; manually created/reported container, no agent adoption claim."
+      ]
+    },
+    {
+      "claim_id": "ch06.mutation",
+      "statement": "Service creation validates/admission-normalizes before locking then checks references/quota and mutates maps.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1253,
+      "line_end": 1323,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual combined binary/container observation passed validation/labs/ch06/combined-restart-command.json and combined-restart.json; manually created/reported container, no agent adoption claim."
+      ]
+    },
+    {
+      "claim_id": "ch06.immediate",
+      "statement": "Ordinary service creation immediately assigns ready-node round-robin tasks.",
+      "classification": "partial integration",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2249,
+      "line_end": 2316,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual combined binary/container observation passed validation/labs/ch06/combined-restart-command.json and combined-restart.json; manually created/reported container, no agent adoption claim."
+      ]
+    },
+    {
+      "claim_id": "ch06.envelope",
+      "statement": "Assigned task envelopes include security/environment/credentials but omit resources.",
+      "classification": "partial integration",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 758,
+      "line_end": 814,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual combined binary/container observation passed validation/labs/ch06/combined-restart-command.json and combined-restart.json; manually created/reported container, no agent adoption claim."
+      ]
+    },
+    {
+      "claim_id": "ch06.restart",
+      "statement": "Fresh default server loses service/task/node knowledge while a manually associated owned container survives.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 146,
+      "line_end": 148,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch06/combined-restart-command.json",
+      "limitations": [
+        "Actual fresh binary processes and same owned container survival; container manually created and authentically reported, not Runner-created/adopted.",
+        "Exact retained execution establishes only the named assertions; all other claims require source/caller review."
+      ]
+    }
+  ]
+}

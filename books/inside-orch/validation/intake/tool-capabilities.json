@@ -1,0 +1,210 @@
+{
+  "recorded_at_utc": "2026-10-13T00:15:06.052029+00:00",
+  "tools": [
+    {
+      "tool": "python",
+      "executable": "python3",
+      "path": "/usr/bin/python3",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-python.stdout.txt",
+      "stderr": "validation/intake/tool-python.stderr.txt",
+      "evidence_text": "Python 3.14.4",
+      "stderr_text": ""
+    },
+    {
+      "tool": "git",
+      "executable": "git",
+      "path": "/usr/bin/git",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-git.stdout.txt",
+      "stderr": "validation/intake/tool-git.stderr.txt",
+      "evidence_text": "git version 2.53.0",
+      "stderr_text": ""
+    },
+    {
+      "tool": "go",
+      "executable": "go",
+      "path": "/home/popac/.local/bin/go",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-go.stdout.txt",
+      "stderr": "validation/intake/tool-go.stderr.txt",
+      "evidence_text": "go version go1.22.5 linux/amd64",
+      "stderr_text": "",
+      "required_by_snapshot": ">=1.25.0",
+      "compatible_with_snapshot": false,
+      "dependent_execution": "blocked until a compatible toolchain is explicitly provisioned"
+    },
+    {
+      "tool": "docker",
+      "executable": "docker",
+      "path": "/usr/bin/docker",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-docker.stdout.txt",
+      "stderr": "validation/intake/tool-docker.stderr.txt",
+      "evidence_text": "Docker version 29.8.2, build 7fc2dff",
+      "stderr_text": ""
+    },
+    {
+      "tool": "postgres-client",
+      "executable": "psql",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "postgres-server",
+      "executable": "postgres",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "postgres-readiness",
+      "executable": "pg_isready",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "pandoc",
+      "executable": "pandoc",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "weasyprint",
+      "executable": "weasyprint",
+      "path": "/home/popac/alekpopovic.github.io/.venv/bin/weasyprint",
+      "status": "version_checked",
+      "evidence": "validation/intake/site-weasyprint-version.stdout.txt",
+      "stderr": "validation/intake/site-weasyprint-version.stderr.txt",
+      "evidence_text": "WeasyPrint version 68.0",
+      "stderr_text": ""
+    },
+    {
+      "tool": "pdflatex",
+      "executable": "pdflatex",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "xelatex",
+      "executable": "xelatex",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "lualatex",
+      "executable": "lualatex",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "pdfinfo",
+      "executable": "pdfinfo",
+      "path": "/usr/bin/pdfinfo",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-pdfinfo.stdout.txt",
+      "stderr": "validation/intake/tool-pdfinfo.stderr.txt",
+      "evidence_text": "",
+      "stderr_text": "pdfinfo version 26.01.0\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+    },
+    {
+      "tool": "pdftoppm",
+      "executable": "pdftoppm",
+      "path": "/usr/bin/pdftoppm",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-pdftoppm.stdout.txt",
+      "stderr": "validation/intake/tool-pdftoppm.stderr.txt",
+      "evidence_text": "",
+      "stderr_text": "pdftoppm version 26.01.0\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC"
+    },
+    {
+      "tool": "epubcheck",
+      "executable": "epubcheck",
+      "path": null,
+      "status": "missing",
+      "reason": "Executable not found on PATH; command not run."
+    },
+    {
+      "tool": "java",
+      "executable": "java",
+      "path": "/usr/bin/java",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-java.stdout.txt",
+      "stderr": "validation/intake/tool-java.stderr.txt",
+      "evidence_text": "",
+      "stderr_text": "openjdk version \"25.0.4.1\" 2026-08-18\nOpenJDK Runtime Environment (build 25.0.4.1+1-1-26.04.4-Ubuntu)\nOpenJDK 64-Bit Server VM (build 25.0.4.1+1-1-26.04.4-Ubuntu, mixed mode, sharing)"
+    },
+    {
+      "tool": "ruby",
+      "executable": "ruby",
+      "path": "/home/popac/.local/bin/ruby",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-ruby.stdout.txt",
+      "stderr": "validation/intake/tool-ruby.stderr.txt",
+      "evidence_text": "ruby 4.0.5 (2026-05-20 revision 64336ffd0e) +PRISM [x86_64-linux]",
+      "stderr_text": ""
+    },
+    {
+      "tool": "bundler",
+      "executable": "bundle",
+      "path": "/home/popac/.local/bin/bundle",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-bundler.stdout.txt",
+      "stderr": "validation/intake/tool-bundler.stderr.txt",
+      "evidence_text": "4.0.6",
+      "stderr_text": ""
+    },
+    {
+      "tool": "node",
+      "executable": "node",
+      "path": "/home/popac/.local/share/mise/installs/node/latest/bin/node",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-node.stdout.txt",
+      "stderr": "validation/intake/tool-node.stderr.txt",
+      "evidence_text": "v26.4.0",
+      "stderr_text": ""
+    },
+    {
+      "tool": "npm",
+      "executable": "npm",
+      "path": "/home/popac/.local/share/mise/installs/node/latest/bin/npm",
+      "status": "version_checked",
+      "evidence": "validation/intake/tool-npm.stdout.txt",
+      "stderr": "validation/intake/tool-npm.stderr.txt",
+      "evidence_text": "11.17.0",
+      "stderr_text": ""
+    }
+  ],
+  "updated_at_utc": "2026-10-13T00:18:23.373520+00:00",
+  "runtime_checks": [
+    {
+      "name": "Docker daemon",
+      "status": "reachable_with_authorized_socket_access",
+      "version": "29.8.2",
+      "evidence": "validation/intake/docker-daemon-authorized.stdout.txt",
+      "note": "Initial sandbox access failed; authorized read-only check passed. No containers started."
+    },
+    {
+      "name": "PostgreSQL",
+      "status": "not_provisioned_or_checked",
+      "note": "psql, postgres and pg_isready are absent from PATH. No database lab or connection attempted."
+    },
+    {
+      "name": "Jekyll",
+      "status": "version_checked",
+      "evidence": "validation/intake/site-jekyll-version.stdout.txt"
+    },
+    {
+      "name": "PDF renderer",
+      "status": "version_checked_and_existing_site_build_passed",
+      "evidence": "validation/intake/site-npm-build.stdout.txt",
+      "note": "Existing site editions only; no Inside orch PDF was generated."
+    }
+  ]
+}

@@ -1,0 +1,1546 @@
+commit de5900bced92ad9d5786cd258ff7941d67369d33
+Date: 2026-06-11T16:56:48+02:00
+Subject: Implement rolling service rollouts
+
+
+---
+ README.md                             |   1 +
+ cmd/orch-server/main.go               |  11 +-
+ docs/API.md                           |   5 +-
+ docs/ARCHITECTURE.md                  |   2 +
+ docs/ROLLOUTS.md                      |  48 ++++++
+ internal/api/api.go                   |  51 +++++-
+ internal/api/api_test.go              |  46 ++++++
+ internal/cli/client.go                |  16 +-
+ internal/cli/root.go                  |  34 +++-
+ internal/cli/root_test.go             |  88 ++++++++--
+ internal/controlplane/agent_test.go   |  33 +++-
+ internal/controlplane/controlplane.go | 226 ++++++++++++++++++++++++-
+ internal/events/events.go             |   4 +
+ internal/rollout/rollout.go           | 302 +++++++++++++++++++++++++++++++---
+ internal/rollout/rollout_test.go      | 267 ++++++++++++++++++++++++++++++
+ internal/store/postgres.go            |  23 +++
+ internal/store/store.go               |   1 +
+ 17 files changed, 1102 insertions(+), 56 deletions(-)
+
+diff --git a/README.md b/README.md
+index de4b7fb..6b386c6 100644
+--- a/README.md
++++ b/README.md
+@@ -99,6 +99,7 @@ orch service inspect api --output json
+ orch service ps api
+ orch scale api --replicas 5
+ orch rollout api --image ghcr.io/example/api:1.0.1
++orch rollout status api
+ orch rollback api
+ orch events
+ orch logs api --tail 100
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 3e73a5d..b3eb06e 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -14,6 +14,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/logging"
++	"github.com/alekpopovic/orch/internal/rollout"
+ )
+ 
+ func main() {
+@@ -33,9 +34,17 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 		return err
+ 	}
+ 
++	controlPlane := controlplane.NewMemoryService()
++	rolloutController := rollout.NewController(controlPlane, logger)
++	go func() {
++		if err := rolloutController.Run(ctx, 5*time.Second); err != nil && !errors.Is(err, context.Canceled) {
++			logger.Warn("rollout controller stopped", "error", err)
++		}
++	}()
++
+ 	server := &http.Server{
+ 		Addr:              cfg.Addr,
+-		Handler:           api.NewHandler(logger, controlplane.NewMemoryService(), api.WithBootstrapToken(cfg.BootstrapToken)),
++		Handler:           api.NewHandler(logger, controlPlane, api.WithBootstrapToken(cfg.BootstrapToken)),
+ 		ReadHeaderTimeout: 5 * time.Second,
+ 	}
+ 
+diff --git a/docs/API.md b/docs/API.md
+index 43d8e01..890d2c2 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -81,7 +81,10 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/scale \
+ 
+ curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
+   -H 'Content-Type: application/json' \
+-  -d '{"image": "nginx:1.28"}'
++  -d '{"image": "nginx:1.28", "maxUnavailable": 1, "maxSurge": 1}'
++
++curl http://localhost:8080/v1/services/{service_id}/rollout
++curl http://localhost:8080/v1/rollouts/{rollout_id}
+ 
+ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ ```
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 896beae..c765290 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -34,6 +34,8 @@ PostgreSQL stores durable desired state, observed state, deployment history, eve
+ 7. Health checks, events, logs, and metrics update observed state and deployment progress.
+ 8. The rollout manager advances, pauses, or rolls back deployments based on health and policy.
+ 
++See [ROLLOUTS.md](ROLLOUTS.md) for the rolling update state machine.
++
+ ## Service, Task, And Container Lifecycle
+ 
+ A service is the durable desired-state object submitted by an operator. Its spec defines the image, replica count, environment, secret references, ports, resource requests and limits, restart policy, health check, placement constraints, and deployment version.
+diff --git a/docs/ROLLOUTS.md b/docs/ROLLOUTS.md
+new file mode 100644
+index 0000000..a666a94
+--- /dev/null
++++ b/docs/ROLLOUTS.md
+@@ -0,0 +1,48 @@
++# Rollouts
++
++Rollouts are asynchronous. `POST /v1/services/{id}/rollout` records a new service version and creates a deployment row, then returns the rollout ID immediately. The rollout controller loop advances the deployment in later passes.
++
++## State Machine
++
++- `pending`: rollout has been accepted but not yet processed by the controller.
++- `running`: controller is creating new-version tasks and stopping old-version tasks.
++- `succeeded`: all active tasks for the service are on the target version and enough target-version tasks are healthy.
++- `failed`: at least one target-version task failed health checks or runtime startup.
++- `paused`: reserved for operator-controlled pause behavior.
++- `rolling_back` and `rolled_back`: reserved for rollback controller behavior.
++
++## Rolling Update Rules
++
++For each running deployment, the controller:
++
++1. Loads the service, deployment, and all service tasks.
++2. Fails the rollout if any target-version task is failed.
++3. Creates target-version tasks while respecting `replicas + maxSurge`.
++4. Waits for target-version tasks to report `healthy`.
++5. Stops old-version tasks only when `maxUnavailable` remains respected.
++6. Marks the rollout `succeeded` when no old-version tasks remain active and target-version healthy tasks meet the replica count.
++
++Task execution remains the agent's responsibility. The rollout controller only creates desired tasks and marks old tasks desired-stopped; the scheduler places pending tasks, and agents reconcile Docker state.
++
++## Idempotency
++
++The controller derives every decision from persisted service, deployment, and task state. If it restarts, it resumes from the current tasks without creating duplicate target-version tasks beyond the allowed surge window.
++
++## API
++
++```sh
++curl -X POST http://localhost:8080/v1/services/{service_id}/rollout \
++  -H 'Content-Type: application/json' \
++  -d '{"image": "ghcr.io/example/api:1.0.1", "maxUnavailable": 1, "maxSurge": 1}'
++
++curl http://localhost:8080/v1/services/{service_id}/rollout
++curl http://localhost:8080/v1/rollouts/{rollout_id}
++```
++
++## CLI
++
++```sh
++orch rollout api --image ghcr.io/example/api:1.0.1
++orch rollout api --image ghcr.io/example/api:1.0.1 --max-unavailable 0 --max-surge 2
++orch rollout status api
++```
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 0d0a011..c8c9283 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -81,6 +81,8 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("DELETE /v1/services/{id}", server.deleteService)
+ 	mux.HandleFunc("POST /v1/services/{id}/scale", server.scaleService)
+ 	mux.HandleFunc("POST /v1/services/{id}/rollout", server.rolloutService)
++	mux.HandleFunc("GET /v1/services/{id}/rollout", server.getServiceRollout)
++	mux.HandleFunc("GET /v1/rollouts/{id}", server.getRollout)
+ 	mux.HandleFunc("POST /v1/services/{id}/rollback", server.rollbackService)
+ 	mux.HandleFunc("GET /v1/tasks", server.listTasks)
+ 	mux.HandleFunc("GET /v1/tasks/{id}", server.getTask)
+@@ -166,7 +168,9 @@ type ScaleServiceRequest struct {
+ }
+ 
+ type RolloutServiceRequest struct {
+-	Image string `json:"image"`
++	Image          string `json:"image"`
++	MaxUnavailable int    `json:"maxUnavailable"`
++	MaxSurge       int    `json:"maxSurge"`
+ }
+ 
+ type DeploymentResponse struct {
+@@ -453,7 +457,23 @@ func (s *Server) rolloutService(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, fmt.Errorf("%w: image is required", store.ErrInvalidState))
+ 		return
+ 	}
+-	deployment, err := s.controlPlane.RolloutService(r.Context(), id, req.Image)
++	if req.MaxUnavailable < 0 {
++		s.writeError(w, r, fmt.Errorf("%w: maxUnavailable cannot be negative", store.ErrInvalidState))
++		return
++	}
++	if req.MaxSurge < 0 {
++		s.writeError(w, r, fmt.Errorf("%w: maxSurge cannot be negative", store.ErrInvalidState))
++		return
++	}
++	if req.MaxUnavailable == 0 && req.MaxSurge == 0 {
++		req.MaxUnavailable = 1
++		req.MaxSurge = 1
++	}
++	deployment, err := s.controlPlane.RolloutService(r.Context(), id, controlplane.RolloutSpec{
++		Image:          req.Image,
++		MaxUnavailable: req.MaxUnavailable,
++		MaxSurge:       req.MaxSurge,
++	})
+ 	if err != nil {
+ 		s.writeError(w, r, err)
+ 		return
+@@ -461,6 +481,33 @@ func (s *Server) rolloutService(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusAccepted, DeploymentResponse{Deployment: deployment})
+ }
+ 
++func (s *Server) getServiceRollout(w http.ResponseWriter, r *http.Request) {
++	id, ok := s.pathServiceID(w, r)
++	if !ok {
++		return
++	}
++	deployment, err := s.controlPlane.GetServiceRollout(r.Context(), id)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, DeploymentResponse{Deployment: deployment})
++}
++
++func (s *Server) getRollout(w http.ResponseWriter, r *http.Request) {
++	id := strings.TrimSpace(r.PathValue("id"))
++	if !validUUID(id) {
++		s.writeError(w, r, fmt.Errorf("%w: rollout id must be a UUID", store.ErrInvalidState))
++		return
++	}
++	deployment, err := s.controlPlane.GetDeployment(r.Context(), types.DeploymentID(id))
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, DeploymentResponse{Deployment: deployment})
++}
++
+ func (s *Server) rollbackService(w http.ResponseWriter, r *http.Request) {
+ 	id, ok := s.pathServiceID(w, r)
+ 	if !ok {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 31a553e..1260e1a 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -313,6 +313,52 @@ func TestScaleService(t *testing.T) {
+ 	}
+ }
+ 
++func TestStartAndGetRollout(t *testing.T) {
++	handler := newTestHandler()
++	create := doRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "api",
++			"image": "nginx:1.27",
++			"replicas": 2,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	var created ServiceResponse
++	decodeResponse(t, create, &created)
++
++	start := doRequest(t, handler, http.MethodPost, "/v1/services/"+string(created.Service.ID)+"/rollout", `{
++		"image": "nginx:1.28",
++		"maxUnavailable": 0,
++		"maxSurge": 2
++	}`)
++	if start.Code != http.StatusAccepted {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusAccepted, start.Code, start.Body.String())
++	}
++	var started DeploymentResponse
++	decodeResponse(t, start, &started)
++	if started.Deployment.Status != types.DeploymentPending {
++		t.Fatalf("expected pending deployment, got %q", started.Deployment.Status)
++	}
++	if started.Deployment.MaxUnavailable != 0 || started.Deployment.MaxSurge != 2 {
++		t.Fatalf("unexpected rollout limits %#v", started.Deployment)
++	}
++
++	latest := doRequest(t, handler, http.MethodGet, "/v1/services/"+string(created.Service.ID)+"/rollout", nil)
++	if latest.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, latest.Code, latest.Body.String())
++	}
++	var latestBody DeploymentResponse
++	decodeResponse(t, latest, &latestBody)
++	if latestBody.Deployment.ID != started.Deployment.ID {
++		t.Fatalf("expected latest rollout %q, got %q", started.Deployment.ID, latestBody.Deployment.ID)
++	}
++
++	byID := doRequest(t, handler, http.MethodGet, "/v1/rollouts/"+string(started.Deployment.ID), nil)
++	if byID.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, byID.Code, byID.Body.String())
++	}
++}
++
+ func TestListEvents(t *testing.T) {
+ 	handler := newTestHandler()
+ 	create := doRequest(t, handler, http.MethodPost, "/v1/services", `{
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 4e8be45..768aeae 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -106,9 +106,21 @@ func (c *APIClient) ScaleService(ctx context.Context, id string, replicas int) (
+ 	return out.Service, nil
+ }
+ 
+-func (c *APIClient) RolloutService(ctx context.Context, id string, image string) (types.Deployment, error) {
++func (c *APIClient) RolloutService(ctx context.Context, id string, image string, maxUnavailable int, maxSurge int) (types.Deployment, error) {
+ 	var out api.DeploymentResponse
+-	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollout", api.RolloutServiceRequest{Image: image}, &out); err != nil {
++	if err := c.do(ctx, http.MethodPost, "/v1/services/"+id+"/rollout", api.RolloutServiceRequest{
++		Image:          image,
++		MaxUnavailable: maxUnavailable,
++		MaxSurge:       maxSurge,
++	}, &out); err != nil {
++		return types.Deployment{}, err
++	}
++	return out.Deployment, nil
++}
++
++func (c *APIClient) GetServiceRollout(ctx context.Context, id string) (types.Deployment, error) {
++	var out api.DeploymentResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/services/"+id+"/rollout", nil, &out); err != nil {
+ 		return types.Deployment{}, err
+ 	}
+ 	return out.Deployment, nil
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 8737b6b..811929f 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -29,7 +29,8 @@ type Client interface {
+ 	GetService(ctx context.Context, id string) (types.Service, error)
+ 	DeleteService(ctx context.Context, id string) error
+ 	ScaleService(ctx context.Context, id string, replicas int) (types.Service, error)
+-	RolloutService(ctx context.Context, id string, image string) (types.Deployment, error)
++	RolloutService(ctx context.Context, id string, image string, maxUnavailable int, maxSurge int) (types.Deployment, error)
++	GetServiceRollout(ctx context.Context, id string) (types.Deployment, error)
+ 	RollbackService(ctx context.Context, id string) (types.Deployment, error)
+ 	ListTasks(ctx context.Context, query url.Values) ([]types.Task, error)
+ 	GetTask(ctx context.Context, id string) (types.Task, error)
+@@ -300,6 +301,8 @@ func (a *app) scaleCommand() *cobra.Command {
+ 
+ func (a *app) rolloutCommand() *cobra.Command {
+ 	var image string
++	var maxUnavailable int
++	var maxSurge int
+ 	cmd := &cobra.Command{
+ 		Use:   "rollout <service-name-or-id>",
+ 		Short: "Roll out a new service image",
+@@ -313,7 +316,16 @@ func (a *app) rolloutCommand() *cobra.Command {
+ 			if err != nil {
+ 				return err
+ 			}
+-			deployment, err := client.RolloutService(cmd.Context(), string(service.ID), image)
++			if maxUnavailable < 0 {
++				return fmt.Errorf("--max-unavailable must be zero or greater")
++			}
++			if maxSurge < 0 {
++				return fmt.Errorf("--max-surge must be zero or greater")
++			}
++			if maxUnavailable == 0 && maxSurge == 0 {
++				return fmt.Errorf("--max-unavailable and --max-surge cannot both be zero")
++			}
++			deployment, err := client.RolloutService(cmd.Context(), string(service.ID), image, maxUnavailable, maxSurge)
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -321,7 +333,25 @@ func (a *app) rolloutCommand() *cobra.Command {
+ 		},
+ 	}
+ 	cmd.Flags().StringVar(&image, "image", "", "new image")
++	cmd.Flags().IntVar(&maxUnavailable, "max-unavailable", 1, "maximum unavailable replicas during rollout")
++	cmd.Flags().IntVar(&maxSurge, "max-surge", 1, "maximum extra replicas during rollout")
+ 	_ = cmd.MarkFlagRequired("image")
++	cmd.AddCommand(&cobra.Command{
++		Use:   "status <service-name-or-id>",
++		Short: "Show latest rollout status",
++		Args:  cobra.ExactArgs(1),
++		RunE: func(cmd *cobra.Command, args []string) error {
++			client, service, err := a.clientAndService(cmd.Context(), args[0])
++			if err != nil {
++				return err
++			}
++			deployment, err := client.GetServiceRollout(cmd.Context(), string(service.ID))
++			if err != nil {
++				return err
++			}
++			return writeDeployment(a.out, a.output, deployment)
++		},
++	})
+ 	return cmd
+ }
+ 
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index 6624c0d..e8b46fe 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -30,6 +30,7 @@ func TestRootCommandConstruction(t *testing.T) {
+ 		"service ps",
+ 		"scale",
+ 		"rollout",
++		"rollout status",
+ 		"rollback",
+ 		"delete",
+ 		"events",
+@@ -196,16 +197,74 @@ func TestEventsCommandFiltersByServiceName(t *testing.T) {
+ 	}
+ }
+ 
++func TestRolloutCommandSendsStrategyLimits(t *testing.T) {
++	client := &fakeClient{
++		services: []types.Service{{
++			ID:                "00000000-0000-4000-8000-000000000010",
++			Spec:              types.ServiceSpec{Name: "api", Image: "nginx", Replicas: 2},
++			DeploymentVersion: 1,
++		}},
++	}
++	cmd := NewRootCommand(Options{
++		Out: &bytes.Buffer{},
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "rollout", "api", "--image", "nginx:2", "--max-unavailable", "0", "--max-surge", "2"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute rollout: %v", err)
++	}
++	if client.rolloutID != "00000000-0000-4000-8000-000000000010" || client.rolloutImage != "nginx:2" {
++		t.Fatalf("unexpected rollout target id=%q image=%q", client.rolloutID, client.rolloutImage)
++	}
++	if client.rolloutMaxUnavailable != 0 || client.rolloutMaxSurge != 2 {
++		t.Fatalf("unexpected rollout limits maxUnavailable=%d maxSurge=%d", client.rolloutMaxUnavailable, client.rolloutMaxSurge)
++	}
++}
++
++func TestRolloutStatusResolvesService(t *testing.T) {
++	client := &fakeClient{
++		services: []types.Service{{
++			ID:                "00000000-0000-4000-8000-000000000010",
++			Spec:              types.ServiceSpec{Name: "api", Image: "nginx", Replicas: 1},
++			DeploymentVersion: 1,
++		}},
++	}
++	cmd := NewRootCommand(Options{
++		Out: &bytes.Buffer{},
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "rollout", "status", "api"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute rollout status: %v", err)
++	}
++	if client.rolloutStatusID != "00000000-0000-4000-8000-000000000010" {
++		t.Fatalf("unexpected rollout status id %q", client.rolloutStatusID)
++	}
++}
++
+ type fakeClient struct {
+-	services       []types.Service
+-	created        types.Service
+-	scaledID       string
+-	scaledReplicas int
+-	logServiceID   string
+-	logTaskID      string
+-	logFollow      bool
+-	logTail        string
+-	eventFilter    events.Filter
++	services              []types.Service
++	created               types.Service
++	scaledID              string
++	scaledReplicas        int
++	rolloutID             string
++	rolloutImage          string
++	rolloutMaxUnavailable int
++	rolloutMaxSurge       int
++	rolloutStatusID       string
++	logServiceID          string
++	logTaskID             string
++	logFollow             bool
++	logTail               string
++	eventFilter           events.Filter
+ }
+ 
+ func (f *fakeClient) ListNodes(context.Context) ([]types.Node, error) {
+@@ -258,10 +317,19 @@ func (f *fakeClient) ScaleService(_ context.Context, id string, replicas int) (t
+ 	return types.Service{ID: types.ServiceID(id), Spec: types.ServiceSpec{Name: "api", Image: "nginx", Replicas: replicas}}, nil
+ }
+ 
+-func (f *fakeClient) RolloutService(_ context.Context, id string, _ string) (types.Deployment, error) {
++func (f *fakeClient) RolloutService(_ context.Context, id string, image string, maxUnavailable int, maxSurge int) (types.Deployment, error) {
++	f.rolloutID = id
++	f.rolloutImage = image
++	f.rolloutMaxUnavailable = maxUnavailable
++	f.rolloutMaxSurge = maxSurge
+ 	return types.Deployment{ID: "00000000-0000-4000-8000-000000000030", ServiceID: types.ServiceID(id)}, nil
+ }
+ 
++func (f *fakeClient) GetServiceRollout(_ context.Context, id string) (types.Deployment, error) {
++	f.rolloutStatusID = id
++	return types.Deployment{ID: "00000000-0000-4000-8000-000000000030", ServiceID: types.ServiceID(id), Status: types.DeploymentRunning}, nil
++}
++
+ func (f *fakeClient) RollbackService(_ context.Context, id string) (types.Deployment, error) {
+ 	return types.Deployment{ID: "00000000-0000-4000-8000-000000000031", ServiceID: types.ServiceID(id)}, nil
+ }
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index 7a3a06a..c4aa47b 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -177,7 +177,7 @@ func TestTaskAssignmentReconcilesWhenNodeRegistersAfterService(t *testing.T) {
+ 	}
+ }
+ 
+-func TestRolloutCreatesReplacementTasks(t *testing.T) {
++func TestRolloutStartsAsyncDeployment(t *testing.T) {
+ 	service := NewMemoryService()
+ 	ctx := context.Background()
+ 
+@@ -207,29 +207,44 @@ func TestRolloutCreatesReplacementTasks(t *testing.T) {
+ 		t.Fatalf("expected one task before rollout, got %d", len(before))
+ 	}
+ 
+-	if _, err := service.RolloutService(ctx, created.ID, "ghcr.io/example/api:2.0.0"); err != nil {
++	deployment, err := service.RolloutService(ctx, created.ID, RolloutSpec{
++		Image:          "ghcr.io/example/api:2.0.0",
++		MaxUnavailable: 1,
++		MaxSurge:       1,
++	})
++	if err != nil {
+ 		t.Fatalf("rollout service: %v", err)
+ 	}
++	if deployment.Status != types.DeploymentPending {
++		t.Fatalf("expected pending deployment, got %q", deployment.Status)
++	}
++	updated, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get updated service: %v", err)
++	}
++	if updated.Spec.Image != "ghcr.io/example/api:2.0.0" || updated.DeploymentVersion != 2 {
++		t.Fatalf("expected updated service version/image, got version=%d image=%q", updated.DeploymentVersion, updated.Spec.Image)
++	}
+ 	after, err := service.ListAssignedTasks(ctx, registered.Node.ID)
+ 	if err != nil {
+ 		t.Fatalf("list tasks after rollout: %v", err)
+ 	}
+ 	if len(after) != 1 {
+-		t.Fatalf("expected one active task after rollout, got %d", len(after))
++		t.Fatalf("expected old active task before rollout controller runs, got %d", len(after))
+ 	}
+-	if after[0].Task.ID == before[0].Task.ID {
+-		t.Fatalf("expected replacement task id, got same task %q", after[0].Task.ID)
++	if after[0].Task.ID != before[0].Task.ID {
++		t.Fatalf("expected existing task to remain assigned, got replacement %q", after[0].Task.ID)
+ 	}
+-	if after[0].Task.Image != "ghcr.io/example/api:2.0.0" {
+-		t.Fatalf("expected rollout image, got %q", after[0].Task.Image)
++	if after[0].Task.Image != "ghcr.io/example/api:1.0.0" {
++		t.Fatalf("expected old task image, got %q", after[0].Task.Image)
+ 	}
+ 
+ 	allTasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: created.ID})
+ 	if err != nil {
+ 		t.Fatalf("list all service tasks: %v", err)
+ 	}
+-	if len(allTasks) != 2 {
+-		t.Fatalf("expected old and replacement tasks, got %d", len(allTasks))
++	if len(allTasks) != 1 {
++		t.Fatalf("expected only existing task before controller runs, got %d", len(allTasks))
+ 	}
+ }
+ 
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index d0d85f5..664f6b8 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -6,6 +6,7 @@ import (
+ 	"errors"
+ 	"fmt"
+ 	"slices"
++	"strings"
+ 	"sync"
+ 	"time"
+ 
+@@ -28,7 +29,9 @@ type Service interface {
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+ 	DeleteService(ctx context.Context, id types.ServiceID) error
+ 	ScaleService(ctx context.Context, id types.ServiceID, replicas int) (types.Service, error)
+-	RolloutService(ctx context.Context, id types.ServiceID, image string) (types.Deployment, error)
++	RolloutService(ctx context.Context, id types.ServiceID, spec RolloutSpec) (types.Deployment, error)
++	GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error)
++	GetServiceRollout(ctx context.Context, id types.ServiceID) (types.Deployment, error)
+ 	RollbackService(ctx context.Context, id types.ServiceID) (types.Deployment, error)
+ 	ListTasks(ctx context.Context, filter TaskFilter) ([]types.Task, error)
+ 	GetTask(ctx context.Context, id types.TaskID) (types.Task, error)
+@@ -81,6 +84,12 @@ type TaskFilter struct {
+ 	Status    types.TaskStatus
+ }
+ 
++type RolloutSpec struct {
++	Image          string
++	MaxUnavailable int
++	MaxSurge       int
++}
++
+ type MemoryService struct {
+ 	mu          sync.RWMutex
+ 	nodes       map[types.NodeID]types.Node
+@@ -452,13 +461,23 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 	return service, nil
+ }
+ 
+-func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID, image string) (types.Deployment, error) {
++func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID, spec RolloutSpec) (types.Deployment, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Deployment{}, err
+ 	}
+-	if image == "" {
++	spec.Image = strings.TrimSpace(spec.Image)
++	if spec.Image == "" {
+ 		return types.Deployment{}, fmt.Errorf("%w: image is required", store.ErrInvalidState)
+ 	}
++	if spec.MaxUnavailable < 0 {
++		return types.Deployment{}, fmt.Errorf("%w: maxUnavailable cannot be negative", store.ErrInvalidState)
++	}
++	if spec.MaxSurge < 0 {
++		return types.Deployment{}, fmt.Errorf("%w: maxSurge cannot be negative", store.ErrInvalidState)
++	}
++	if spec.MaxUnavailable == 0 && spec.MaxSurge == 0 {
++		return types.Deployment{}, fmt.Errorf("%w: maxUnavailable and maxSurge cannot both be zero", store.ErrInvalidState)
++	}
+ 
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+@@ -469,11 +488,10 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	}
+ 	now := s.now()
+ 	fromVersion := service.DeploymentVersion
+-	service.Spec.Image = image
++	service.Spec.Image = spec.Image
+ 	service.DeploymentVersion++
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
+-	s.reconcileServiceTasksLocked(service, now)
+ 
+ 	deployment := types.Deployment{
+ 		ID:             types.DeploymentID(newUUID()),
+@@ -482,8 +500,8 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 		ToVersion:      service.DeploymentVersion,
+ 		Strategy:       types.RolloutRollingUpdate,
+ 		Status:         types.DeploymentPending,
+-		MaxUnavailable: 1,
+-		MaxSurge:       1,
++		MaxUnavailable: spec.MaxUnavailable,
++		MaxSurge:       spec.MaxSurge,
+ 		CreatedAt:      now,
+ 		UpdatedAt:      now,
+ 	}
+@@ -492,6 +510,45 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	return deployment, nil
+ }
+ 
++func (s *MemoryService) GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Deployment{}, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	deployment, ok := s.deployments[id]
++	if !ok {
++		return types.Deployment{}, store.ErrNotFound
++	}
++	return deployment, nil
++}
++
++func (s *MemoryService) GetServiceRollout(ctx context.Context, id types.ServiceID) (types.Deployment, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Deployment{}, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	if _, ok := s.services[id]; !ok {
++		return types.Deployment{}, store.ErrNotFound
++	}
++	var latest types.Deployment
++	for _, deployment := range s.deployments {
++		if deployment.ServiceID != id {
++			continue
++		}
++		if latest.ID == "" || deployment.CreatedAt.After(latest.CreatedAt) || (deployment.CreatedAt.Equal(latest.CreatedAt) && deployment.ID > latest.ID) {
++			latest = deployment
++		}
++	}
++	if latest.ID == "" {
++		return types.Deployment{}, store.ErrNotFound
++	}
++	return latest, nil
++}
++
+ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID) (types.Deployment, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Deployment{}, err
+@@ -568,6 +625,146 @@ func (s *MemoryService) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ 	return task, nil
+ }
+ 
++func (s *MemoryService) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Task{}, err
++	}
++	if task.ServiceID == "" {
++		return types.Task{}, fmt.Errorf("%w: service id is required", store.ErrInvalidState)
++	}
++	if task.DesiredStatus == "" {
++		task.DesiredStatus = types.TaskRunning
++	}
++	if task.ActualStatus == "" {
++		task.ActualStatus = types.TaskPending
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	if _, ok := s.services[task.ServiceID]; !ok {
++		return types.Task{}, store.ErrNotFound
++	}
++	now := s.now()
++	if task.ID == "" {
++		task.ID = types.TaskID(newUUID())
++	}
++	if task.CreatedAt.IsZero() {
++		task.CreatedAt = now
++	}
++	task.UpdatedAt = now
++	s.tasks[task.ID] = task
++	return task, nil
++}
++
++func (s *MemoryService) StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Task{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	task, ok := s.tasks[id]
++	if !ok {
++		return types.Task{}, store.ErrNotFound
++	}
++	if !expectedUpdatedAt.IsZero() && !task.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Task{}, store.ErrConflict
++	}
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return task, nil
++	}
++	task.DesiredStatus = types.TaskStopped
++	task.UpdatedAt = s.now()
++	s.tasks[id] = task
++	return task, nil
++}
++
++func (s *MemoryService) ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error) {
++	return s.ListTasks(ctx, TaskFilter{ServiceID: serviceID})
++}
++
++func (s *MemoryService) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	deployments := make([]types.Deployment, 0)
++	for _, deployment := range s.deployments {
++		if deployment.Status == status {
++			deployments = append(deployments, deployment)
++		}
++	}
++	slices.SortFunc(deployments, func(a, b types.Deployment) int {
++		if a.CreatedAt.Equal(b.CreatedAt) {
++			if a.ID < b.ID {
++				return -1
++			}
++			if a.ID > b.ID {
++				return 1
++			}
++			return 0
++		}
++		if a.CreatedAt.Before(b.CreatedAt) {
++			return -1
++		}
++		return 1
++	})
++	return deployments, nil
++}
++
++func (s *MemoryService) UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Deployment{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	deployment, ok := s.deployments[id]
++	if !ok {
++		return types.Deployment{}, store.ErrNotFound
++	}
++	if !expectedUpdatedAt.IsZero() && !deployment.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Deployment{}, store.ErrConflict
++	}
++	now := s.now()
++	deployment.Status = status
++	deployment.UpdatedAt = now
++	if status == types.DeploymentRunning && deployment.StartedAt.IsZero() {
++		deployment.StartedAt = now
++	}
++	if status == types.DeploymentSucceeded || status == types.DeploymentFailed || status == types.DeploymentPaused || status == types.DeploymentRolledBack {
++		if deployment.CompletedAt.IsZero() {
++			deployment.CompletedAt = now
++		}
++	}
++	s.deployments[id] = deployment
++	return deployment, nil
++}
++
++func (s *MemoryService) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Event{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	if event.ID == "" {
++		event.ID = types.EventID(newUUID())
++	}
++	if event.Timestamp.IsZero() {
++		event.Timestamp = s.now()
++	}
++	event.Timestamp = event.Timestamp.UTC()
++	if event.Severity == "" {
++		event.Severity = types.EventInfo
++	}
++	s.events = append(s.events, event)
++	return event, nil
++}
++
+ func (s *MemoryService) ListEvents(ctx context.Context, filter events.Filter) ([]types.Event, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+@@ -675,6 +872,9 @@ func (s *MemoryService) reconcileAllServicesLocked(timestamp time.Time) {
+ }
+ 
+ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, timestamp time.Time) {
++	if s.hasActiveDeploymentLocked(service.ID) {
++		return
++	}
+ 	active := make([]types.Task, 0)
+ 	for _, task := range s.tasks {
+ 		if task.ServiceID != service.ID {
+@@ -733,6 +933,18 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 	}
+ }
+ 
++func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) bool {
++	for _, deployment := range s.deployments {
++		if deployment.ServiceID != serviceID {
++			continue
++		}
++		if deployment.Status == types.DeploymentPending || deployment.Status == types.DeploymentRunning {
++			return true
++		}
++	}
++	return false
++}
++
+ func (s *MemoryService) readyNodesLocked() []types.Node {
+ 	nodes := make([]types.Node, 0, len(s.nodes))
+ 	for _, node := range s.nodes {
+diff --git a/internal/events/events.go b/internal/events/events.go
+index 6193c1c..cc95263 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -26,6 +26,10 @@ const (
+ 	TypeReconcilerTaskCreated = "reconciler.task.created"
+ 	TypeReconcilerTaskStopped = "reconciler.task.stopped"
+ 	TypeRolloutManagerStarted = "rollout.started"
++	TypeRolloutAdvanced       = "rollout.advanced"
++	TypeRolloutTaskCreated    = "rollout.task.created"
++	TypeRolloutTaskStopped    = "rollout.task.stopped"
++	TypeRolloutStatusChanged  = "rollout.status.changed"
+ )
+ 
+ type Event = types.Event
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index fe01a4e..29487fb 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -2,46 +2,304 @@ package rollout
+ 
+ import (
+ 	"context"
++	"fmt"
++	"log/slog"
++	"sort"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+-type Plan struct {
+-	ServiceID string
+-	Image     string
+-	BatchSize int
++type Store interface {
++	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
++	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
++	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
++	StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)
++	ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error)
++	UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error)
++	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
+ }
+ 
+-type Manager struct {
+-	events events.Store
++type Controller struct {
++	store  Store
++	logger *slog.Logger
+ 	now    func() time.Time
+ }
+ 
+-func NewManager(eventStore ...events.Store) *Manager {
+-	var store events.Store
+-	if len(eventStore) > 0 {
+-		store = eventStore[0]
++func NewController(store Store, logger *slog.Logger) *Controller {
++	if logger == nil {
++		logger = slog.Default()
+ 	}
+-	return &Manager{
+-		events: store,
++	return &Controller{
++		store:  store,
++		logger: logger,
+ 		now:    func() time.Time { return time.Now().UTC() },
+ 	}
+ }
+ 
+-func (m *Manager) Start(ctx context.Context, plan Plan) error {
+-	if err := ctx.Err(); err != nil {
++func (c *Controller) Run(ctx context.Context, interval time.Duration) error {
++	if interval <= 0 {
++		interval = 5 * time.Second
++	}
++	ticker := time.NewTicker(interval)
++	defer ticker.Stop()
++	for {
++		if err := c.RunOnce(ctx); err != nil {
++			c.logger.Warn("rollout controller pass failed", "error", err)
++		}
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++		}
++	}
++}
++
++func (c *Controller) RunOnce(ctx context.Context) error {
++	if c.store == nil {
++		return fmt.Errorf("rollout store is required")
++	}
++	deployments, err := c.activeDeployments(ctx)
++	if err != nil {
+ 		return err
+ 	}
+-	_ = events.Emit(ctx, m.events, types.Event{
+-		Type:              events.TypeRolloutManagerStarted,
+-		Severity:          types.EventInfo,
+-		Source:            "rollout",
+-		Message:           "rollout manager started rollout",
+-		RelatedObjectType: "service",
+-		RelatedObjectID:   plan.ServiceID,
+-		Timestamp:         m.now(),
++	for _, deployment := range deployments {
++		if err := ctx.Err(); err != nil {
++			return err
++		}
++		if err := c.reconcileDeployment(ctx, deployment); err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++func (c *Controller) activeDeployments(ctx context.Context) ([]types.Deployment, error) {
++	var deployments []types.Deployment
++	for _, status := range []types.DeploymentStatus{types.DeploymentPending, types.DeploymentRunning} {
++		items, err := c.store.ListDeploymentsByStatus(ctx, status)
++		if err != nil {
++			return nil, fmt.Errorf("list %s deployments: %w", status, err)
++		}
++		deployments = append(deployments, items...)
++	}
++	sort.Slice(deployments, func(i, j int) bool {
++		if deployments[i].CreatedAt.Equal(deployments[j].CreatedAt) {
++			return deployments[i].ID < deployments[j].ID
++		}
++		return deployments[i].CreatedAt.Before(deployments[j].CreatedAt)
+ 	})
++	return deployments, nil
++}
++
++func (c *Controller) reconcileDeployment(ctx context.Context, deployment types.Deployment) error {
++	service, err := c.store.GetService(ctx, deployment.ServiceID)
++	if err != nil {
++		return fmt.Errorf("get rollout service %s: %w", deployment.ServiceID, err)
++	}
++	tasks, err := c.store.ListTasksByService(ctx, deployment.ServiceID)
++	if err != nil {
++		return fmt.Errorf("list rollout tasks for service %s: %w", deployment.ServiceID, err)
++	}
++
++	state := rolloutStateFor(deployment, service, tasks)
++	if state.newFailed > 0 {
++		_, err := c.setStatus(ctx, deployment, types.DeploymentFailed, "rollout failed because a new task failed health checks", types.EventError)
++		return err
++	}
++	if state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {
++		_, err := c.setStatus(ctx, deployment, types.DeploymentSucceeded, "rollout completed", types.EventInfo)
++		return err
++	}
++	if deployment.Status == types.DeploymentPending {
++		updated, err := c.setStatus(ctx, deployment, types.DeploymentRunning, "rollout started", types.EventInfo)
++		if err != nil {
++			return err
++		}
++		deployment = updated
++	}
++
++	created, err := c.createNewTasks(ctx, deployment, service, state)
++	if err != nil {
++		return err
++	}
++	state.newActive += created
++	state.totalActive += created
++
++	stopped, err := c.stopOldTasks(ctx, deployment, service, state)
++	if err != nil {
++		return err
++	}
++	state.oldActive -= stopped
++	state.totalActive -= stopped
++	if stopped > 0 || created > 0 {
++		_ = events.Emit(ctx, c.store, types.Event{
++			Type:              events.TypeRolloutAdvanced,
++			Severity:          types.EventInfo,
++			Source:            "rollout",
++			Message:           fmt.Sprintf("rollout advanced: created=%d stopped=%d", created, stopped),
++			RelatedObjectType: "service",
++			RelatedObjectID:   string(deployment.ServiceID),
++			Timestamp:         c.now(),
++		}, events.WithLogger(c.logger))
++	}
++	if state.oldActive == 0 && state.newHealthy >= service.Spec.Replicas {
++		_, err := c.setStatus(ctx, deployment, types.DeploymentSucceeded, "rollout completed", types.EventInfo)
++		return err
++	}
+ 	return nil
+ }
++
++func (c *Controller) createNewTasks(ctx context.Context, deployment types.Deployment, service types.Service, state rolloutState) (int, error) {
++	created := 0
++	surgeLimit := service.Spec.Replicas + deployment.MaxSurge
++	if surgeLimit < service.Spec.Replicas {
++		surgeLimit = service.Spec.Replicas
++	}
++	for state.newActive+created < service.Spec.Replicas && state.totalActive+created < surgeLimit {
++		task, err := c.store.CreateTask(ctx, types.Task{
++			ServiceID:     service.ID,
++			DesiredStatus: types.TaskRunning,
++			ActualStatus:  types.TaskPending,
++			Image:         service.Spec.Image,
++			Version:       deployment.ToVersion,
++		})
++		if err != nil {
++			return created, fmt.Errorf("create rollout task: %w", err)
++		}
++		created++
++		_ = events.Emit(ctx, c.store, types.Event{
++			Type:              events.TypeRolloutTaskCreated,
++			Severity:          types.EventInfo,
++			Source:            "rollout",
++			Message:           "created new-version task",
++			RelatedObjectType: "task",
++			RelatedObjectID:   string(task.ID),
++			Timestamp:         c.now(),
++		}, events.WithLogger(c.logger))
++	}
++	return created, nil
++}
++
++func (c *Controller) stopOldTasks(ctx context.Context, deployment types.Deployment, service types.Service, state rolloutState) (int, error) {
++	stopped := 0
++	oldTasks := append([]types.Task(nil), state.oldTasks...)
++	sort.Slice(oldTasks, func(i, j int) bool {
++		return oldTasks[i].ID > oldTasks[j].ID
++	})
++	for _, task := range oldTasks {
++		if state.newHealthy <= state.oldStopped+stopped {
++			break
++		}
++		if service.Spec.Replicas-(state.available-stopped-1) > deployment.MaxUnavailable {
++			break
++		}
++		stoppedTask, err := c.store.StopTask(ctx, task.ID, task.UpdatedAt)
++		if err != nil {
++			return stopped, fmt.Errorf("stop old rollout task %s: %w", task.ID, err)
++		}
++		stopped++
++		_ = events.Emit(ctx, c.store, types.Event{
++			Type:              events.TypeRolloutTaskStopped,
++			Severity:          types.EventInfo,
++			Source:            "rollout",
++			Message:           "stopped old-version task",
++			RelatedObjectType: "task",
++			RelatedObjectID:   string(stoppedTask.ID),
++			Timestamp:         c.now(),
++		}, events.WithLogger(c.logger))
++	}
++	return stopped, nil
++}
++
++func (c *Controller) setStatus(ctx context.Context, deployment types.Deployment, status types.DeploymentStatus, message string, severity types.EventSeverity) (types.Deployment, error) {
++	if deployment.Status != status {
++		updated, err := c.store.UpdateDeploymentStatus(ctx, deployment.ID, status, deployment.UpdatedAt)
++		if err != nil {
++			return types.Deployment{}, fmt.Errorf("update rollout status: %w", err)
++		}
++		deployment = updated
++	}
++	_ = events.Emit(ctx, c.store, types.Event{
++		Type:              events.TypeRolloutStatusChanged,
++		Severity:          severity,
++		Source:            "rollout",
++		Message:           message,
++		RelatedObjectType: "service",
++		RelatedObjectID:   string(deployment.ServiceID),
++		Timestamp:         c.now(),
++	}, events.WithLogger(c.logger))
++	return deployment, nil
++}
++
++type rolloutState struct {
++	oldTasks    []types.Task
++	oldActive   int
++	oldStopped  int
++	newActive   int
++	newHealthy  int
++	newFailed   int
++	totalActive int
++	available   int
++}
++
++func rolloutStateFor(deployment types.Deployment, service types.Service, tasks []types.Task) rolloutState {
++	state := rolloutState{}
++	for _, task := range tasks {
++		if task.Version == deployment.FromVersion {
++			if isActive(task) {
++				state.oldActive++
++				state.oldTasks = append(state.oldTasks, task)
++				if isAvailable(task) {
++					state.available++
++				}
++			} else {
++				state.oldStopped++
++			}
++			continue
++		}
++		if task.Version != deployment.ToVersion {
++			continue
++		}
++		if task.ActualStatus == types.TaskFailed {
++			state.newFailed++
++		}
++		if isActive(task) {
++			state.newActive++
++			if task.ActualStatus == types.TaskHealthy {
++				state.newHealthy++
++				state.available++
++			}
++		}
++	}
++	state.totalActive = state.oldActive + state.newActive
++	if state.oldActive == 0 && state.oldStopped == 0 {
++		state.oldStopped = service.Spec.Replicas
++	}
++	return state
++}
++
++func isActive(task types.Task) bool {
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return false
++	}
++	switch task.ActualStatus {
++	case types.TaskPending,
++		types.TaskAssigned,
++		types.TaskPulling,
++		types.TaskCreated,
++		types.TaskStarting,
++		types.TaskRunning,
++		types.TaskHealthy,
++		types.TaskUnhealthy,
++		types.TaskStopping:
++		return true
++	default:
++		return false
++	}
++}
++
++func isAvailable(task types.Task) bool {
++	return task.ActualStatus == types.TaskRunning || task.ActualStatus == types.TaskHealthy
++}
+diff --git a/internal/rollout/rollout_test.go b/internal/rollout/rollout_test.go
+new file mode 100644
+index 0000000..5427972
+--- /dev/null
++++ b/internal/rollout/rollout_test.go
+@@ -0,0 +1,267 @@
++package rollout
++
++import (
++	"context"
++	"errors"
++	"log/slog"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestControllerSuccessfulRollout(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})
++	controller := NewController(fake, slog.Default())
++
++	mustRunOnce(t, controller, ctx)
++	assertTaskVersions(t, fake.tasks, map[int64]int{1: 2, 2: 1})
++	fake.markNewestNewTask(types.TaskHealthy)
++
++	mustRunOnce(t, controller, ctx)
++	assertTaskCounts(t, fake.tasks, 2, 1)
++
++	mustRunOnce(t, controller, ctx)
++	assertTaskVersions(t, fake.tasks, map[int64]int{1: 1, 2: 2})
++	fake.markNewestNewTask(types.TaskHealthy)
++
++	mustRunOnce(t, controller, ctx)
++	if fake.deployment.Status != types.DeploymentSucceeded {
++		t.Fatalf("expected succeeded rollout, got %q", fake.deployment.Status)
++	}
++	assertTaskCounts(t, fake.tasks, 2, 2)
++}
++
++func TestControllerFailsWhenNewTaskFails(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(1, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})
++	fake.tasks["new-failed"] = task("new-failed", 2, types.TaskRunning, types.TaskFailed)
++
++	if err := NewController(fake, slog.Default()).RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++	if fake.deployment.Status != types.DeploymentFailed {
++		t.Fatalf("expected failed rollout, got %q", fake.deployment.Status)
++	}
++}
++
++func TestControllerRespectsMaxUnavailable(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 0, MaxSurge: 1})
++	fake.tasks["new-pending"] = task("new-pending", 2, types.TaskRunning, types.TaskPending)
++	fake.deployment.Status = types.DeploymentRunning
++
++	if err := NewController(fake, slog.Default()).RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++	assertTaskCounts(t, fake.tasks, 3, 0)
++}
++
++func TestControllerRespectsMaxSurge(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})
++
++	if err := NewController(fake, slog.Default()).RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++	assertTaskVersions(t, fake.tasks, map[int64]int{1: 2, 2: 1})
++}
++
++func TestControllerIdempotentResume(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 1, MaxSurge: 1})
++	fake.deployment.Status = types.DeploymentRunning
++	fake.tasks["new-existing"] = task("new-existing", 2, types.TaskRunning, types.TaskPending)
++
++	if err := NewController(fake, slog.Default()).RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++	assertTaskVersions(t, fake.tasks, map[int64]int{1: 2, 2: 1})
++}
++
++func mustRunOnce(t *testing.T, controller *Controller, ctx context.Context) {
++	t.Helper()
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("run once: %v", err)
++	}
++}
++
++type fakeStore struct {
++	service    types.Service
++	deployment types.Deployment
++	tasks      map[types.TaskID]types.Task
++	events     []types.Event
++	nextTask   int
++	now        time.Time
++}
++
++func newFakeStore(replicas int, deployment types.Deployment) *fakeStore {
++	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	if deployment.ID == "" {
++		deployment.ID = "00000000-0000-4000-8000-000000000100"
++	}
++	deployment.ServiceID = "00000000-0000-4000-8000-000000000001"
++	deployment.FromVersion = 1
++	deployment.ToVersion = 2
++	deployment.Strategy = types.RolloutRollingUpdate
++	if deployment.Status == "" {
++		deployment.Status = types.DeploymentPending
++	}
++	deployment.CreatedAt = now
++	deployment.UpdatedAt = now
++
++	fake := &fakeStore{
++		service: types.Service{
++			ID: deployment.ServiceID,
++			Spec: types.ServiceSpec{
++				Name:     "api",
++				Image:    "ghcr.io/example/api:2.0.0",
++				Replicas: replicas,
++			},
++			DeploymentVersion: 2,
++			CreatedAt:         now,
++			UpdatedAt:         now,
++		},
++		deployment: deployment,
++		tasks:      make(map[types.TaskID]types.Task),
++		now:        now,
++	}
++	for i := 0; i < replicas; i++ {
++		id := types.TaskID("old-" + string(rune('a'+i)))
++		fake.tasks[id] = task(string(id), 1, types.TaskRunning, types.TaskHealthy)
++	}
++	return fake
++}
++
++func task(id string, version int64, desired types.TaskStatus, actual types.TaskStatus) types.Task {
++	now := time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	return types.Task{
++		ID:            types.TaskID(id),
++		ServiceID:     "00000000-0000-4000-8000-000000000001",
++		DesiredStatus: desired,
++		ActualStatus:  actual,
++		Image:         "ghcr.io/example/api:2.0.0",
++		Version:       version,
++		CreatedAt:     now,
++		UpdatedAt:     now,
++	}
++}
++
++func (s *fakeStore) GetService(context.Context, types.ServiceID) (types.Service, error) {
++	return s.service, nil
++}
++
++func (s *fakeStore) ListTasksByService(context.Context, types.ServiceID) ([]types.Task, error) {
++	tasks := make([]types.Task, 0, len(s.tasks))
++	for _, task := range s.tasks {
++		tasks = append(tasks, task)
++	}
++	return tasks, nil
++}
++
++func (s *fakeStore) CreateTask(_ context.Context, task types.Task) (types.Task, error) {
++	s.nextTask++
++	task.ID = types.TaskID("new-" + string(rune('a'+s.nextTask-1)))
++	task.CreatedAt = s.now
++	task.UpdatedAt = s.now
++	s.tasks[task.ID] = task
++	return task, nil
++}
++
++func (s *fakeStore) StopTask(_ context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error) {
++	task, ok := s.tasks[id]
++	if !ok {
++		return types.Task{}, store.ErrNotFound
++	}
++	if !task.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Task{}, store.ErrConflict
++	}
++	task.DesiredStatus = types.TaskStopped
++	task.UpdatedAt = s.now.Add(time.Duration(len(s.events)+1) * time.Second)
++	s.tasks[id] = task
++	return task, nil
++}
++
++func (s *fakeStore) ListDeploymentsByStatus(_ context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
++	if s.deployment.Status == status {
++		return []types.Deployment{s.deployment}, nil
++	}
++	return nil, nil
++}
++
++func (s *fakeStore) UpdateDeploymentStatus(_ context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
++	if s.deployment.ID != id {
++		return types.Deployment{}, store.ErrNotFound
++	}
++	if !s.deployment.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Deployment{}, store.ErrConflict
++	}
++	s.deployment.Status = status
++	s.deployment.UpdatedAt = s.deployment.UpdatedAt.Add(time.Second)
++	if status == types.DeploymentRunning && s.deployment.StartedAt.IsZero() {
++		s.deployment.StartedAt = s.deployment.UpdatedAt
++	}
++	if status == types.DeploymentSucceeded || status == types.DeploymentFailed {
++		s.deployment.CompletedAt = s.deployment.UpdatedAt
++	}
++	return s.deployment, nil
++}
++
++func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
++	if event.Type == "" {
++		return types.Event{}, errors.New("event type is required")
++	}
++	s.events = append(s.events, event)
++	return event, nil
++}
++
++func (s *fakeStore) markNewestNewTask(status types.TaskStatus) {
++	var selected types.TaskID
++	for id, task := range s.tasks {
++		if task.Version == 2 && task.ActualStatus != types.TaskHealthy {
++			if selected == "" || id > selected {
++				selected = id
++			}
++		}
++	}
++	task := s.tasks[selected]
++	task.ActualStatus = status
++	s.tasks[selected] = task
++}
++
++func assertTaskVersions(t *testing.T, tasks map[types.TaskID]types.Task, want map[int64]int) {
++	t.Helper()
++	got := map[int64]int{}
++	for _, task := range tasks {
++		if isActive(task) {
++			got[task.Version]++
++		}
++	}
++	for version, count := range want {
++		if got[version] != count {
++			t.Fatalf("expected %d active tasks at version %d, got %d (all=%#v)", count, version, got[version], got)
++		}
++	}
++	if len(got) != len(want) {
++		t.Fatalf("unexpected task versions: got %#v want %#v", got, want)
++	}
++}
++
++func assertTaskCounts(t *testing.T, tasks map[types.TaskID]types.Task, active int, stopped int) {
++	t.Helper()
++	var gotActive, gotStopped int
++	for _, task := range tasks {
++		if isActive(task) {
++			gotActive++
++			continue
++		}
++		if task.DesiredStatus == types.TaskStopped {
++			gotStopped++
++		}
++	}
++	if gotActive != active || gotStopped != stopped {
++		t.Fatalf("expected active=%d stopped=%d, got active=%d stopped=%d", active, stopped, gotActive, gotStopped)
++	}
++}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 6110768..8132700 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -432,10 +432,33 @@ func (s *PostgresStore) GetDeployment(ctx context.Context, id types.DeploymentID
+ 	return deployment, nil
+ }
+ 
++func (s *PostgresStore) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
++	rows, err := s.pool.Query(ctx, deploymentSelectSQL()+` WHERE status = $1 ORDER BY created_at, id`, string(status))
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	var deployments []types.Deployment
++	for rows.Next() {
++		deployment, err := scanDeployment(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		deployments = append(deployments, deployment)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return deployments, nil
++}
++
+ func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
+ 	row := s.pool.QueryRow(ctx, `
+ 		UPDATE deployments
+ 		SET status = $2,
++			started_at = CASE WHEN $2 = 'running' AND started_at IS NULL THEN timezone('utc', now()) ELSE started_at END,
++			completed_at = CASE WHEN $2 IN ('succeeded', 'failed', 'paused', 'rolled_back') AND completed_at IS NULL THEN timezone('utc', now()) ELSE completed_at END,
+ 			updated_at = timezone('utc', now()),
+ 			row_version = row_version + 1
+ 		WHERE id = $1 AND updated_at = $3
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 56554ea..0b33896 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -36,6 +36,7 @@ type TaskStore interface {
+ type DeploymentStore interface {
+ 	CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error)
+ 	GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error)
++	ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error)
+ 	UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error)
+ }
+ 

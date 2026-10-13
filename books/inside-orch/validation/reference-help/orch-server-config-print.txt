@@ -1,0 +1,36 @@
+addr: :8080
+bootstrap_token: '[REDACTED]'
+cluster_policy:
+    allow_host_network: false
+    allow_host_pid: false
+    allow_mutable_tags: true
+    allow_privileged: false
+    allowed_capabilities: []
+    allowed_host_path_prefixes: []
+    allowed_image_registries: []
+    block_latest_tag: false
+    deny_latest_tag: false
+    max_public_ports_per_service: 0
+    max_replicas_per_service: 0
+    require_digest: false
+    require_healthcheck: false
+    require_resource_limits: false
+    require_resource_requests: false
+database_url: '[REDACTED]'
+debug_addr: 127.0.0.1:6060
+enable_pprof: false
+graceful_shutdown_ttl: 10s
+heartbeat_timeout: 30s
+jwt_secret: ""
+log_level: info
+node_monitor_interval: 5s
+retention:
+    events: 720h0m0s
+    auditlogs: 2160h0m0s
+    completedtasks: 168h0m0s
+    failedtasks: 720h0m0s
+    rollouts: 720h0m0s
+    completedjobs: 168h0m0s
+    gitopsrecords: 720h0m0s
+secret_key: '[REDACTED]'
+users: ""

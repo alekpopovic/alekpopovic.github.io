@@ -1,0 +1,345 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewer_scope": "Independent source_foundation review of editorial_foundation-authored chapters17\u201324, their32answers, AppendixD and24practiceanswers. Own chapters01\u201308/33\u201340 excluded from independent acceptance. Existing actual run records inspected, not rerun here.",
+  "reviewed_at_utc": "2026-10-13T01:58:51.802585+00:00",
+  "reviewed_paths": [
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/solutions/ch17.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/solutions/ch18.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/solutions/ch19.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/solutions/ch20.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/solutions/ch21.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/solutions/ch22.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/solutions/ch23.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "manuscript/solutions/ch24.md",
+    "manuscript/appendices/d-exercises-solutions.md",
+    "manuscript/solutions/appendix-d.md",
+    "exercises/questions.md",
+    "exercises/catalog.json"
+  ],
+  "input_sha256": {
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+    "manuscript/solutions/ch17.md": "b4add5a7bc435be8e889a14c87a0577b25e949712cdeb260c1de0f83e4443845",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+    "manuscript/solutions/ch18.md": "86290e17a033fcc709b05fe305b5e6dd255ee2b65518acd4c6089909665526a4",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+    "manuscript/solutions/ch19.md": "78acaf96bd9daeed912509af7675dbad0c4db7de8dfff96589e81c2843aa4a7f",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+    "manuscript/solutions/ch20.md": "7ecc54fe7518741f203420ab6a322e10d9cd7b21cd83449f06c637851a11082b",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+    "manuscript/solutions/ch21.md": "7d5d2ff6433872ff3865904162a209dc21b79d62fada7229471fccbc6c34fe36",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+    "manuscript/solutions/ch22.md": "310da6dd6bc659629b421fdee3565e644800d6ddadcbc54774b7b00917a38674",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+    "manuscript/solutions/ch23.md": "9d89f4362ec38b7c9aa5de96ddeb42f745591fa9f9fcb4fd94ffdd91df28a03e",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+    "manuscript/solutions/ch24.md": "27347a0d00a077438d6c19928f7ef84fcca4ec1c6059d427df2a596c97cab2ea",
+    "manuscript/appendices/d-exercises-solutions.md": "0924820a589889b9830cbd9d1926ba986b009fb81ca71902b12a2bc5cb7f8923",
+    "manuscript/solutions/appendix-d.md": "88ace1a293d3fb35be40ca67c6c68e348fe2dd4608de84899db1dac3ab2b849f",
+    "exercises/questions.md": "45fe12fbd97b7241166a0bc1980aae1f8b34684ceb83328ae65909caaa40bf42",
+    "exercises/catalog.json": "2d5a2c9425af341ac12461a91b3fff7fe0d969244d61f200dfc4d4e3e3997d6b"
+  },
+  "chapters": [
+    {
+      "chapter": 17,
+      "four_answers_reviewed": true,
+      "reasoning": "Independent budget recomputation3+1=4; stop guards and healthy-only new cohort; desired-stop count differs from physical acknowledgement; rollback identity volatile.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/rollout/rollout.go",
+          "line_start": 140,
+          "line_end": 180
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/rollout/rollout.go",
+          "line_start": 237,
+          "line_end": 276
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/rollout/rollout.go",
+          "line_start": 358,
+          "line_end": 399
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 18,
+      "four_answers_reviewed": true,
+      "reasoning": "Deletion keeps retained identity; all actualRemoved required; ownership predicate prevents unmanaged deletion; runtime stop/removal errors withhold removed report.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 1437,
+          "line_end": 1482
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2645,
+          "line_end": 2666
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/agent/agent.go",
+          "line_start": 425,
+          "line_end": 472
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/agent/agent.go",
+          "line_start": 634,
+          "line_end": 639
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 19,
+      "four_answers_reviewed": true,
+      "reasoning": "Strict Before cutoff; running/healthy drain replacement; drain completion counts desired work; stateful node-loss metadata is not fencing.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 670,
+          "line_end": 710
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2071,
+          "line_end": 2095
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2347,
+          "line_end": 2415
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 2500,
+          "line_end": 2545
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 20,
+      "four_answers_reviewed": true,
+      "reasoning": "HTTP desired-running filter differs from DNS actual-only; DNS deduplicates IPv4 and omits ports; TTL is no universal recovery deadline.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/discovery/discovery.go",
+          "line_start": 97,
+          "line_end": 110
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/dns/server.go",
+          "line_start": 67,
+          "line_end": 133
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 21,
+      "four_answers_reviewed": true,
+      "reasoning": "Backend uses node host plus workload published port and HTTP; router TLS is external-facing configuration; gateway topology/overlay are separate.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/traefik/config.go",
+          "line_start": 40,
+          "line_end": 90
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/traefik/config.go",
+          "line_start": 143,
+          "line_end": 176
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 22,
+      "four_answers_reviewed": true,
+      "reasoning": "ceil(3*90/60)=5 then max4; cooldown map lost on reconstruction; stabilization unused; startup has no controller/provider construction.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/autoscaler/autoscaler.go",
+          "line_start": 142,
+          "line_end": 198
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/autoscaler/autoscaler.go",
+          "line_start": 213,
+          "line_end": 244
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "cmd/orch-server/main.go",
+          "line_start": 120,
+          "line_end": 228
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 23,
+      "four_answers_reviewed": true,
+      "reasoning": "Empty JWT secret bypasses human roles only; static user overrides namespace claims; node credential rotates before acknowledgement; no mTLS/socket containment.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/api/api.go",
+          "line_start": 1258,
+          "line_end": 1299
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/auth/auth.go",
+          "line_start": 82,
+          "line_end": 139
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/auth/agent.go",
+          "line_start": 34,
+          "line_end": 66
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    },
+    {
+      "chapter": 24,
+      "four_answers_reviewed": true,
+      "reasoning": "Metadata omits plaintext while assignedEnv legitimately delivers it; GCM nonce+AAD verified; precedence overrides>env>file; update neither refreshes container nor rotates keyring.",
+      "source_evidence": [
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/controlplane/controlplane.go",
+          "line_start": 821,
+          "line_end": 837
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/secrets/envelope.go",
+          "line_start": 29,
+          "line_end": 82
+        },
+        {
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "path": "internal/config/config.go",
+          "line_start": 95,
+          "line_end": 107
+        }
+      ],
+      "result": "accepted after ch17 stop-accounting correction"
+    }
+  ],
+  "practice_review": {
+    "ids": [
+      "DEV-01",
+      "DEV-02",
+      "DEV-03",
+      "DEV-04",
+      "DEV-05",
+      "DEV-06",
+      "DEV-07",
+      "DEV-08",
+      "OPS-01",
+      "OPS-02",
+      "OPS-03",
+      "OPS-04",
+      "OPS-05",
+      "OPS-06",
+      "OPS-07",
+      "OPS-08",
+      "ARC-01",
+      "ARC-02",
+      "ARC-03",
+      "ARC-04",
+      "ARC-05",
+      "ARC-06",
+      "ARC-07",
+      "ARC-08"
+    ],
+    "criteria_count": 72,
+    "arithmetic_recomputed": {
+      "DEV-04_active": 3,
+      "DEV-04_minavailable": 1,
+      "DEV-06_total": 3,
+      "DEV-08_catchup": 2,
+      "ARC-01_active": 7,
+      "ARC-01_minavailable": 4,
+      "ARC-02_CPU_millicores": 1250,
+      "ARC-02_memory_bytes": 671088640
+    },
+    "finding": "Source-derived mechanisms separated from future recovery protocols; known namespace gaps and physical fencing absence explicitly preserved.",
+    "actual_test_mutations_inspected": "validation/exercises/mutation-runs.json",
+    "mutation_scope": "Eight named one-line source mutations rejected by specific tests; not exhaustive mutation testing."
+  },
+  "findings": [
+    {
+      "id": "XREVIEW-017-STOP",
+      "severity": "major",
+      "target": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "relevant_claim_ids": [],
+      "source_evidence": [
+        [
+          "internal/rollout/rollout.go",
+          140,
+          180
+        ],
+        [
+          "internal/rollout/rollout.go",
+          237,
+          276
+        ],
+        [
+          "internal/rollout/rollout.go",
+          358,
+          399
+        ]
+      ],
+      "recommended_action": "State desired/store accounting can free capacity before physical stop acknowledgement.",
+      "resolution_status": "resolved; exact edit audit validation/reviews/ch17-independent-stop-accounting.json"
+    }
+  ],
+  "checks": [
+    {
+      "status": "passed",
+      "record": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "scope": "Existing actual focused-source package suite inspected, no new run claimed"
+    },
+    {
+      "status": "passed",
+      "record": "validation/exercises/mutation-runs.json",
+      "scope": "Existing actual eight semantic mutation outcomes inspected"
+    }
+  ],
+  "overall_status": "passed",
+  "limitations": [
+    "Independent reasoning and bounded source checks; neither general production guarantee nor coverage of every nonchapter website page.",
+    "No new daemon/database execution in this review."
+  ]
+}

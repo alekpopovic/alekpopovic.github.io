@@ -1,0 +1,1334 @@
+commit ad738d1867eefb3c92cc4280659ae76943341426
+Date: 2026-07-14T15:34:50+02:00
+Subject: Add secrets MVP
+
+
+---
+ cmd/orch-server/main.go                 |   7 +-
+ cmd/orch-server/main_test.go            |   1 +
+ deployments/examples/.env.local.example |   1 +
+ docker-compose.yml                      |   1 +
+ docs/API.md                             |  16 +++-
+ docs/SECRETS.md                         |  65 +++++++++++++
+ docs/SECURITY.md                        |   2 +-
+ internal/agent/agent.go                 |   1 +
+ internal/agent/agent_test.go            |   5 +
+ internal/api/api.go                     |  81 ++++++++++++++++
+ internal/api/api_test.go                |  92 ++++++++++++++++++
+ internal/cli/deploy.go                  |  59 +++++++++++-
+ internal/cli/deploy_test.go             |   8 ++
+ internal/config/config.go               |   5 +
+ internal/controlplane/controlplane.go   | 165 +++++++++++++++++++++++++++++++-
+ internal/events/events.go               |   2 +
+ internal/secrets/envelope.go            | 108 +++++++++++++++++++++
+ internal/secrets/envelope_test.go       |  45 +++++++++
+ internal/store/postgres.go              |  97 +++++++++++++++++++
+ internal/store/postgres_test.go         |   2 +
+ internal/store/store.go                 |   8 ++
+ migrations/000004_secrets.down.sql      |   1 +
+ migrations/000004_secrets.up.sql        |   7 ++
+ pkg/types/types.go                      |  50 ++++++++++
+ prompts/EXECUTION_TRACKER.md            |   8 +-
+ 25 files changed, 826 insertions(+), 11 deletions(-)
+
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 8f605d8..8f545f1 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -17,6 +17,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/internal/rollout"
++	"github.com/alekpopovic/orch/internal/secrets"
+ )
+ 
+ func main() {
+@@ -40,7 +41,11 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 		return err
+ 	}
+ 
+-	controlPlane := controlplane.NewMemoryService()
++	envelope, err := secrets.NewLocalEnvelope(cfg.SecretKey)
++	if err != nil {
++		return err
++	}
++	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope))
+ 	serverMetrics := metrics.NewServer()
+ 	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+diff --git a/cmd/orch-server/main_test.go b/cmd/orch-server/main_test.go
+index a6fd8cc..ddcd725 100644
+--- a/cmd/orch-server/main_test.go
++++ b/cmd/orch-server/main_test.go
+@@ -17,6 +17,7 @@ func TestServerStartsAndStopsCleanly(t *testing.T) {
+ 			Addr:                "127.0.0.1:0",
+ 			DatabaseURL:         "postgres://orch:orch@localhost:5432/orch?sslmode=disable",
+ 			BootstrapToken:      "test-registration-token",
++			SecretKey:           "test-secret-key",
+ 			GracefulShutdownTTL: time.Second,
+ 		})
+ 	}()
+diff --git a/deployments/examples/.env.local.example b/deployments/examples/.env.local.example
+index 582e25c..70059ab 100644
+--- a/deployments/examples/.env.local.example
++++ b/deployments/examples/.env.local.example
+@@ -2,6 +2,7 @@ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+ ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
++ORCH_SECRET_KEY=dev-secret-key-change-me
+ ORCH_NODE_NAME=local-node
+ ORCH_ADVERTISE_ADDRESS=127.0.0.1
+ ORCH_NODE_LABELS=role=worker
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 40da5e0..c00b750 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -27,6 +27,7 @@ services:
+       ORCH_SERVER_ADDR: :8080
+       ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
+       ORCH_JWT_SECRET: ""
++      ORCH_SECRET_KEY: ${ORCH_SECRET_KEY:-dev-secret-key-change-me}
+       ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
+     ports:
+       - "8080:8080"
+diff --git a/docs/API.md b/docs/API.md
+index aeeedfe..6a86e87 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -74,7 +74,7 @@ curl -X POST http://localhost:8080/v1/services \
+       "image": "nginx:1.27",
+       "replicas": 2,
+       "env": {"APP_ENV": "local"},
+-      "secret_refs": [{"name": "registry-creds", "key": "password"}],
++      "secret_refs": [{"name": "prod/database-url", "env": "DATABASE_URL"}],
+       "ports": [{"protocol": "tcp", "container_port": 8080, "published_port": 18080}],
+       "routes": [{"host": "web.localhost", "path_prefix": "/", "port": 8080, "tls": false}],
+       "resource_requirements": {
+@@ -133,6 +133,20 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ 
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
++## Secrets
++
++```sh
++curl -X POST http://localhost:8080/v1/secrets \
++  -H 'Content-Type: application/json' \
++  -d '{"name":"prod/database-url","value":"postgres://user:pass@db/app"}'
++
++curl http://localhost:8080/v1/secrets
++curl http://localhost:8080/v1/secrets/prod%2Fdatabase-url
++curl -X DELETE http://localhost:8080/v1/secrets/prod%2Fdatabase-url
++```
++
++Secret GET responses include metadata only and never return plaintext. Services can reference secrets with `secret_refs`, and agents receive decrypted values only in assigned task payloads. See [SECRETS.md](SECRETS.md).
++
+ ## Service Discovery
+ 
+ ```sh
+diff --git a/docs/SECRETS.md b/docs/SECRETS.md
+new file mode 100644
+index 0000000..1a3ad2e
+--- /dev/null
++++ b/docs/SECRETS.md
+@@ -0,0 +1,65 @@
++# Secrets
++
++`orch` supports an MVP secret store for environment-variable injection without putting plaintext values in service YAML, service metadata responses, or events.
++
++## Configuration
++
++Set a stable server-side encryption key:
++
++```sh
++export ORCH_SECRET_KEY='replace-with-a-long-random-value'
++```
++
++The MVP uses a local envelope provider backed by AES-GCM. The provider interface is intentionally small so a future Vault/KMS-backed implementation can replace the local master key without changing service specs or agent task payloads.
++
++## API
++
++Create or update a secret:
++
++```sh
++curl -X POST http://localhost:8080/v1/secrets \
++  -H 'Content-Type: application/json' \
++  -d '{"name":"prod/database-url","value":"postgres://user:pass@db/app"}'
++```
++
++List and read metadata:
++
++```sh
++curl http://localhost:8080/v1/secrets
++curl http://localhost:8080/v1/secrets/prod%2Fdatabase-url
++```
++
++Delete a secret:
++
++```sh
++curl -X DELETE http://localhost:8080/v1/secrets/prod%2Fdatabase-url
++```
++
++GET endpoints never return plaintext values. Secret create/delete events contain only metadata-level messages.
++
++## Service YAML
++
++Use `secretRef` inside `env`:
++
++```yaml
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 1
++env:
++  DATABASE_URL:
++    secretRef: prod/database-url
++  NODE_ENV:
++    value: production
++resources:
++  cpu: 100m
++  memory: 128Mi
++```
++
++The CLI keeps literal env values in the service spec and stores secret references separately. Agents receive plaintext only in their assigned task payload when a task needs to start a container.
++
++## Operational Notes
++
++- Keep `ORCH_SECRET_KEY` stable across server restarts and restores.
++- Rotating the local key requires re-creating or re-encrypting stored secrets.
++- Do not put secret values in service names, event messages, labels, route hostnames, or failure reasons.
++- External Vault/KMS integration is intentionally deferred.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 3700416..4a92310 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -67,7 +67,7 @@ Recommended controls:
+ 
+ ## Secret Handling
+ 
+-Service specs support secret references, not plaintext secret storage. Do not put secret values in service env vars, deploy YAML, logs, or events.
++Service specs support secret references for environment variables. Secret values are encrypted at rest with the local envelope provider and are returned to agents only in assigned task payloads when needed to start containers. Do not put secret values in service names, labels, route hostnames, logs, or events.
+ 
+ Roadmap:
+ 
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 297e631..18f73e3 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -223,6 +223,7 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 		TaskID:    string(task.ID),
+ 		NodeID:    string(nodeID),
+ 		Version:   task.Version,
++		Env:       assigned.Env,
+ 		Ports:     dockerPortBindings(assigned.Ports),
+ 	})
+ 	if err != nil {
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 17083ce..c3a1875 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -34,6 +34,7 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 				Version:       1,
+ 			},
+ 			Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			Env:   map[string]string{"DATABASE_URL": "postgres://secret"},
+ 		}},
+ 	}
+ 	runtime := orchdocker.NewFakeRuntime(orchdocker.WithFakeContainerIDs("container-1"))
+@@ -47,6 +48,10 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
+ 		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+ 	}
++	specs := runtime.CreatedSpecs()
++	if len(specs) != 1 || specs[0].Env["DATABASE_URL"] != "postgres://secret" {
++		t.Fatalf("expected secret env in container spec, got %#v", specs)
++	}
+ 	wantStatuses := []types.TaskStatus{types.TaskPulling, types.TaskCreated, types.TaskRunning}
+ 	if !equalStatuses(client.statuses, wantStatuses) {
+ 		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 2e7ca48..b4b67ba 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -138,6 +138,10 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/nodes/{id}", server.getNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/drain", server.drainNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/uncordon", server.uncordonNode)
++	mux.HandleFunc("POST /v1/secrets", server.createSecret)
++	mux.HandleFunc("GET /v1/secrets", server.listSecrets)
++	mux.HandleFunc("GET /v1/secrets/{name...}", server.getSecret)
++	mux.HandleFunc("DELETE /v1/secrets/{name...}", server.deleteSecret)
+ 	mux.HandleFunc("POST /v1/services", server.createService)
+ 	mux.HandleFunc("GET /v1/services", server.listServices)
+ 	mux.HandleFunc("GET /v1/services/{id}", server.getService)
+@@ -219,6 +223,19 @@ type NodeResponse struct {
+ 	Node types.Node `json:"node"`
+ }
+ 
++type CreateSecretRequest struct {
++	Name  string `json:"name"`
++	Value string `json:"value"`
++}
++
++type SecretResponse struct {
++	Secret types.SecretMetadata `json:"secret"`
++}
++
++type ListSecretsResponse struct {
++	Secrets []types.SecretMetadata `json:"secrets"`
++}
++
+ type CreateServiceRequest struct {
+ 	Spec types.ServiceSpec `json:"spec"`
+ }
+@@ -444,6 +461,59 @@ func (s *Server) uncordonNode(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusOK, NodeResponse{Node: node})
+ }
+ 
++func (s *Server) createSecret(w http.ResponseWriter, r *http.Request) {
++	var req CreateSecretRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	if strings.TrimSpace(req.Name) == "" {
++		s.writeError(w, r, fmt.Errorf("%w: secret name is required", store.ErrInvalidState))
++		return
++	}
++	secret, err := s.controlPlane.CreateSecret(r.Context(), req.Name, req.Value)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusCreated, SecretResponse{Secret: secret})
++}
++
++func (s *Server) listSecrets(w http.ResponseWriter, r *http.Request) {
++	secrets, err := s.controlPlane.ListSecrets(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListSecretsResponse{Secrets: secrets})
++}
++
++func (s *Server) getSecret(w http.ResponseWriter, r *http.Request) {
++	name := strings.TrimSpace(r.PathValue("name"))
++	if name == "" {
++		s.writeError(w, r, fmt.Errorf("%w: secret name is required", store.ErrInvalidState))
++		return
++	}
++	secret, err := s.controlPlane.GetSecret(r.Context(), name)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, SecretResponse{Secret: secret})
++}
++
++func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request) {
++	name := strings.TrimSpace(r.PathValue("name"))
++	if name == "" {
++		s.writeError(w, r, fmt.Errorf("%w: secret name is required", store.ErrInvalidState))
++		return
++	}
++	if err := s.controlPlane.DeleteSecret(r.Context(), name); err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++
+ func (s *Server) createService(w http.ResponseWriter, r *http.Request) {
+ 	var req CreateServiceRequest
+ 	if !s.decodeJSON(w, r, &req) {
+@@ -818,6 +888,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 		switch {
+ 		case path == "/v1/nodes" || strings.HasPrefix(path, "/v1/nodes/"):
+ 			return auth.RoleViewer, true
++		case path == "/v1/secrets" || strings.HasPrefix(path, "/v1/secrets/"):
++			return auth.RoleViewer, true
+ 		case path == "/v1/services" || strings.HasPrefix(path, "/v1/services/"):
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/tasks" || strings.HasPrefix(path, "/v1/tasks/"):
+@@ -838,10 +910,15 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 		switch {
+ 		case strings.HasSuffix(path, "/drain") || strings.HasSuffix(path, "/uncordon"):
+ 			return auth.RoleAdmin, true
++		case path == "/v1/secrets":
++			return auth.RoleOperator, true
+ 		case path == "/v1/services" || strings.Contains(path, "/scale") || strings.Contains(path, "/rollout") || strings.Contains(path, "/rollback"):
+ 			return auth.RoleOperator, true
+ 		}
+ 	}
++	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/secrets/") {
++		return auth.RoleOperator, true
++	}
+ 	if r.Method == http.MethodDelete && strings.HasPrefix(path, "/v1/services/") {
+ 		return auth.RoleOperator, true
+ 	}
+@@ -933,6 +1010,10 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/nodes/{id}/uncordon", true
+ 	case strings.HasPrefix(path, "/v1/nodes/"):
+ 		return "/v1/nodes/{id}", true
++	case path == "/v1/secrets":
++		return "/v1/secrets", true
++	case strings.HasPrefix(path, "/v1/secrets/"):
++		return "/v1/secrets/{name}", true
+ 	case path == "/v1/services":
+ 		return "/v1/services", true
+ 	case strings.HasPrefix(path, "/v1/services/") && strings.HasSuffix(path, "/scale"):
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index d86ef94..117e0b5 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"log/slog"
+ 	"net/http"
+ 	"net/http/httptest"
++	"net/url"
+ 	"strings"
+ 	"testing"
+ 	"time"
+@@ -144,6 +145,97 @@ func TestDrainNode(t *testing.T) {
+ 	}
+ }
+ 
++func TestSecretsCreateRetrieveMetadataAndRedactPlaintext(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	const secretValue = "postgres://user:pass@db/app"
++
++	create := doRequest(t, handler, http.MethodPost, "/v1/secrets", CreateSecretRequest{
++		Name:  "prod/database-url",
++		Value: secretValue,
++	})
++	if create.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
++	}
++	if strings.Contains(create.Body.String(), secretValue) {
++		t.Fatalf("create response leaked secret plaintext: %s", create.Body.String())
++	}
++	var created SecretResponse
++	decodeResponse(t, create, &created)
++	if created.Secret.Name != "prod/database-url" || created.Secret.CreatedAt.IsZero() {
++		t.Fatalf("unexpected secret metadata %#v", created.Secret)
++	}
++
++	get := doRequest(t, handler, http.MethodGet, "/v1/secrets/"+url.PathEscape("prod/database-url"), nil)
++	if get.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, get.Code, get.Body.String())
++	}
++	if strings.Contains(get.Body.String(), secretValue) {
++		t.Fatalf("get response leaked secret plaintext: %s", get.Body.String())
++	}
++	var got SecretResponse
++	decodeResponse(t, get, &got)
++	if got.Secret.Name != created.Secret.Name {
++		t.Fatalf("expected secret %q, got %q", created.Secret.Name, got.Secret.Name)
++	}
++
++	list := doRequest(t, handler, http.MethodGet, "/v1/secrets", nil)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	if strings.Contains(list.Body.String(), secretValue) {
++		t.Fatalf("list response leaked secret plaintext: %s", list.Body.String())
++	}
++	events := doRequest(t, handler, http.MethodGet, "/v1/events?type=secret.created", nil)
++	if events.Code != http.StatusOK {
++		t.Fatalf("expected events status %d, got %d: %s", http.StatusOK, events.Code, events.Body.String())
++	}
++	if strings.Contains(events.Body.String(), secretValue) {
++		t.Fatalf("event response leaked secret plaintext: %s", events.Body.String())
++	}
++}
++
++func TestSecretInjectedIntoAgentTaskEnv(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++	const secretValue = "postgres://user:pass@db/app"
++	createSecret := doRequest(t, handler, http.MethodPost, "/v1/secrets", CreateSecretRequest{
++		Name:  "prod/database-url",
++		Value: secretValue,
++	})
++	if createSecret.Code != http.StatusCreated {
++		t.Fatalf("expected secret status %d, got %d: %s", http.StatusCreated, createSecret.Code, createSecret.Body.String())
++	}
++	createService := doRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "secret-api",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"env": {"NODE_ENV": "production"},
++			"secret_refs": [{"name": "prod/database-url", "env": "DATABASE_URL"}],
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	if createService.Code != http.StatusCreated {
++		t.Fatalf("expected service status %d, got %d: %s", http.StatusCreated, createService.Code, createService.Body.String())
++	}
++
++	list := doAgentCredentialRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil, registered.Credential.Token)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected tasks status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	var tasks AgentTasksResponse
++	decodeResponse(t, list, &tasks)
++	if len(tasks.Tasks) != 1 {
++		t.Fatalf("expected one assigned task, got %#v", tasks.Tasks)
++	}
++	if tasks.Tasks[0].Env["DATABASE_URL"] != secretValue {
++		t.Fatalf("expected secret env to be injected, got %#v", tasks.Tasks[0].Env)
++	}
++	if tasks.Tasks[0].Env["NODE_ENV"] != "production" {
++		t.Fatalf("expected literal env to be preserved, got %#v", tasks.Tasks[0].Env)
++	}
++}
++
+ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
+ 	registered := registerTestNode(t, handler)
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index 855488e..8de46b9 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -3,6 +3,7 @@ package cli
+ import (
+ 	"fmt"
+ 	"os"
++	"sort"
+ 	"strings"
+ 	"time"
+ 
+@@ -15,7 +16,7 @@ type DeployFile struct {
+ 	Image       string            `yaml:"image"`
+ 	Replicas    int               `yaml:"replicas"`
+ 	Ports       []DeployPort      `yaml:"ports"`
+-	Env         map[string]string `yaml:"env"`
++	Env         DeployEnv         `yaml:"env"`
+ 	Resources   DeployResources   `yaml:"resources"`
+ 	Healthcheck DeployHealthcheck `yaml:"healthcheck"`
+ 	Restart     DeployRestart     `yaml:"restart"`
+@@ -28,6 +29,34 @@ type DeployPort struct {
+ 	Public    int `yaml:"public"`
+ }
+ 
++type DeployEnv map[string]DeployEnvValue
++
++type DeployEnvValue struct {
++	Value     string
++	SecretRef string
++}
++
++func (value *DeployEnvValue) UnmarshalYAML(node *yaml.Node) error {
++	switch node.Kind {
++	case yaml.ScalarNode:
++		value.Value = node.Value
++		return nil
++	case yaml.MappingNode:
++		var raw struct {
++			Value     string `yaml:"value"`
++			SecretRef string `yaml:"secretRef"`
++		}
++		if err := node.Decode(&raw); err != nil {
++			return err
++		}
++		value.Value = raw.Value
++		value.SecretRef = raw.SecretRef
++		return nil
++	default:
++		return fmt.Errorf("env value must be a scalar or mapping")
++	}
++}
++
+ type DeployResources struct {
+ 	CPU    string `yaml:"cpu"`
+ 	Memory string `yaml:"memory"`
+@@ -80,7 +109,6 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 		Name:     strings.TrimSpace(deploy.Name),
+ 		Image:    strings.TrimSpace(deploy.Image),
+ 		Replicas: deploy.Replicas,
+-		Env:      deploy.Env,
+ 		ResourceRequirements: types.ResourceRequirements{
+ 			Requests: requests,
+ 			Limits:   requests,
+@@ -88,6 +116,7 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 		RestartPolicy:        restartPolicy(deploy.Restart.Policy),
+ 		PlacementConstraints: placementConstraints(deploy.Placement.Labels),
+ 	}
++	spec.Env, spec.SecretRefs = deploy.Env.toDomain()
+ 
+ 	for _, port := range deploy.Ports {
+ 		spec.Ports = append(spec.Ports, types.Port{
+@@ -126,6 +155,32 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	return spec, nil
+ }
+ 
++func (env DeployEnv) toDomain() (map[string]string, []types.SecretRef) {
++	if len(env) == 0 {
++		return nil, nil
++	}
++	literals := make(map[string]string)
++	refs := make([]types.SecretRef, 0)
++	keys := make([]string, 0, len(env))
++	for key := range env {
++		keys = append(keys, key)
++	}
++	sort.Strings(keys)
++	for _, key := range keys {
++		name := strings.TrimSpace(key)
++		value := env[key]
++		if strings.TrimSpace(value.SecretRef) != "" {
++			refs = append(refs, types.SecretRef{Name: strings.TrimSpace(value.SecretRef), Env: name})
++			continue
++		}
++		literals[name] = value.Value
++	}
++	if len(literals) == 0 {
++		literals = nil
++	}
++	return literals, refs
++}
++
+ func (r DeployResources) toRequests() (types.Resources, error) {
+ 	cpu, err := types.ParseCPU(r.CPU)
+ 	if err != nil {
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index 5491042..0da0078 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -20,6 +20,8 @@ routes:
+     port: 8080
+     tls: true
+ env:
++  DATABASE_URL:
++    secretRef: prod/database-url
+   NODE_ENV: production
+ resources:
+   cpu: 500m
+@@ -65,6 +67,12 @@ placement:
+ 	if spec.RestartPolicy.Condition != types.RestartAlways {
+ 		t.Fatalf("unexpected restart policy %q", spec.RestartPolicy.Condition)
+ 	}
++	if spec.Env["NODE_ENV"] != "production" {
++		t.Fatalf("unexpected env %#v", spec.Env)
++	}
++	if len(spec.SecretRefs) != 1 || spec.SecretRefs[0].Name != "prod/database-url" || spec.SecretRefs[0].Env != "DATABASE_URL" {
++		t.Fatalf("unexpected secret refs %#v", spec.SecretRefs)
++	}
+ 	if len(spec.PlacementConstraints) != 1 || spec.PlacementConstraints[0].Key != "role" {
+ 		t.Fatalf("unexpected constraints %#v", spec.PlacementConstraints)
+ 	}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 0030b36..fb527e5 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -15,6 +15,7 @@ type ServerConfig struct {
+ 	BootstrapToken      string
+ 	JWTSecret           string
+ 	Users               string
++	SecretKey           string
+ 	GracefulShutdownTTL time.Duration
+ }
+ 
+@@ -39,6 +40,7 @@ func LoadServer() ServerConfig {
+ 		BootstrapToken:      getenv("ORCH_AGENT_REGISTRATION_TOKEN", getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token")),
+ 		JWTSecret:           getenv("ORCH_JWT_SECRET", ""),
+ 		Users:               getenv("ORCH_USERS", ""),
++		SecretKey:           getenv("ORCH_SECRET_KEY", "dev-secret-key-change-me"),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+ 	}
+ }
+@@ -114,6 +116,9 @@ func (cfg ServerConfig) Validate() error {
+ 	if cfg.GracefulShutdownTTL <= 0 {
+ 		return fmt.Errorf("shutdown timeout must be positive")
+ 	}
++	if strings.TrimSpace(cfg.SecretKey) == "" {
++		return fmt.Errorf("secret encryption key is required")
++	}
+ 	return nil
+ }
+ 
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index a7c0c58..5690353 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -11,6 +11,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -26,6 +27,10 @@ type Service interface {
+ 	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	DrainNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	UncordonNode(ctx context.Context, id types.NodeID) (types.Node, error)
++	CreateSecret(ctx context.Context, name string, plaintext string) (types.SecretMetadata, error)
++	ListSecrets(ctx context.Context) ([]types.SecretMetadata, error)
++	GetSecret(ctx context.Context, name string) (types.SecretMetadata, error)
++	DeleteSecret(ctx context.Context, name string) error
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	ListServices(ctx context.Context) ([]types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+@@ -70,6 +75,7 @@ type AgentTask struct {
+ 	Task        types.Task         `json:"task"`
+ 	Healthcheck *types.Healthcheck `json:"healthcheck,omitempty"`
+ 	Ports       []types.Port       `json:"ports,omitempty"`
++	Env         map[string]string  `json:"env,omitempty"`
+ }
+ 
+ type TaskStatusReport struct {
+@@ -99,20 +105,39 @@ type MemoryService struct {
+ 	versions    map[types.ServiceID]map[int64]types.ServiceSpec
+ 	tasks       map[types.TaskID]types.Task
+ 	deployments map[types.DeploymentID]types.Deployment
++	secrets     map[string]types.Secret
++	envelope    secrets.Envelope
+ 	events      []types.Event
+ 	now         func() time.Time
+ }
+ 
+-func NewMemoryService() *MemoryService {
++type Option func(*MemoryService)
++
++func WithSecretEnvelope(envelope secrets.Envelope) Option {
++	return func(service *MemoryService) {
++		if envelope != nil {
++			service.envelope = envelope
++		}
++	}
++}
++
++func NewMemoryService(opts ...Option) *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+-	return &MemoryService{
++	envelope, _ := secrets.NewLocalEnvelope("dev-secret-key-change-me")
++	service := &MemoryService{
+ 		nodes:       make(map[types.NodeID]types.Node),
+ 		services:    make(map[types.ServiceID]types.Service),
+ 		versions:    make(map[types.ServiceID]map[int64]types.ServiceSpec),
+ 		tasks:       make(map[types.TaskID]types.Task),
+ 		deployments: make(map[types.DeploymentID]types.Deployment),
++		secrets:     make(map[string]types.Secret),
++		envelope:    envelope,
+ 		now:         now,
+ 	}
++	for _, opt := range opts {
++		opt(service)
++	}
++	return service
+ }
+ 
+ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error) {
+@@ -285,10 +310,15 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 			continue
+ 		}
+ 		service := s.services[task.ServiceID]
++		env, err := s.resolveEnvLocked(ctx, service.Spec)
++		if err != nil {
++			return nil, err
++		}
+ 		tasks = append(tasks, AgentTask{
+ 			Task:        task,
+ 			Healthcheck: service.Spec.Healthcheck,
+ 			Ports:       taskPortsForAgent(task, service),
++			Env:         env,
+ 		})
+ 	}
+ 	slices.SortFunc(tasks, func(a, b AgentTask) int {
+@@ -310,6 +340,39 @@ func taskPortsForAgent(task types.Task, service types.Service) []types.Port {
+ 	return append([]types.Port(nil), service.Spec.Ports...)
+ }
+ 
++func (s *MemoryService) resolveEnvLocked(ctx context.Context, spec types.ServiceSpec) (map[string]string, error) {
++	env := cloneStringMap(spec.Env)
++	for _, ref := range spec.SecretRefs {
++		secret, ok := s.secrets[strings.TrimSpace(ref.Name)]
++		if !ok {
++			return nil, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
++		}
++		if s.envelope == nil {
++			return nil, fmt.Errorf("%w: secret envelope is not configured", store.ErrInvalidState)
++		}
++		plaintext, err := s.envelope.Decrypt(ctx, secrets.Ciphertext{KeyID: secret.KeyID, Data: secret.EncryptedValue})
++		if err != nil {
++			return nil, fmt.Errorf("%w: decrypt secret %q", store.ErrInvalidState, ref.Name)
++		}
++		env[ref.EnvName()] = string(plaintext)
++	}
++	if len(env) == 0 {
++		return nil, nil
++	}
++	return env, nil
++}
++
++func cloneStringMap(values map[string]string) map[string]string {
++	if len(values) == 0 {
++		return map[string]string{}
++	}
++	cloned := make(map[string]string, len(values))
++	for key, value := range values {
++		cloned[key] = value
++	}
++	return cloned
++}
++
+ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Task{}, err
+@@ -427,6 +490,99 @@ func (s *MemoryService) UncordonNode(ctx context.Context, id types.NodeID) (type
+ 	return s.setNodeStatus(ctx, id, types.NodeReady)
+ }
+ 
++func (s *MemoryService) CreateSecret(ctx context.Context, name string, plaintext string) (types.SecretMetadata, error) {
++	if err := ctx.Err(); err != nil {
++		return types.SecretMetadata{}, err
++	}
++	name = strings.TrimSpace(name)
++	if name == "" {
++		return types.SecretMetadata{}, fmt.Errorf("%w: secret name is required", store.ErrInvalidState)
++	}
++	if s.envelope == nil {
++		return types.SecretMetadata{}, fmt.Errorf("%w: secret envelope is not configured", store.ErrInvalidState)
++	}
++	ciphertext, err := s.envelope.Encrypt(ctx, []byte(plaintext))
++	if err != nil {
++		return types.SecretMetadata{}, fmt.Errorf("encrypt secret %q: %w", name, err)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	now := s.now()
++	if existing, ok := s.secrets[name]; ok {
++		existing.EncryptedValue = append([]byte(nil), ciphertext.Data...)
++		existing.KeyID = ciphertext.KeyID
++		existing.UpdatedAt = now
++		s.secrets[name] = existing
++		return existing.Metadata(), nil
++	}
++	secret := types.Secret{
++		Name:           name,
++		EncryptedValue: append([]byte(nil), ciphertext.Data...),
++		KeyID:          ciphertext.KeyID,
++		CreatedAt:      now,
++		UpdatedAt:      now,
++	}
++	s.secrets[name] = secret
++	s.appendEventLocked(events.TypeSecretCreated, types.EventInfo, "controlplane", "secret created", "secret", "", now)
++	return secret.Metadata(), nil
++}
++
++func (s *MemoryService) ListSecrets(ctx context.Context) ([]types.SecretMetadata, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	items := make([]types.SecretMetadata, 0, len(s.secrets))
++	for _, secret := range s.secrets {
++		items = append(items, secret.Metadata())
++	}
++	slices.SortFunc(items, func(a, b types.SecretMetadata) int {
++		if a.Name < b.Name {
++			return -1
++		}
++		if a.Name > b.Name {
++			return 1
++		}
++		return 0
++	})
++	return items, nil
++}
++
++func (s *MemoryService) GetSecret(ctx context.Context, name string) (types.SecretMetadata, error) {
++	if err := ctx.Err(); err != nil {
++		return types.SecretMetadata{}, err
++	}
++	name = strings.TrimSpace(name)
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	secret, ok := s.secrets[name]
++	if !ok {
++		return types.SecretMetadata{}, store.ErrNotFound
++	}
++	return secret.Metadata(), nil
++}
++
++func (s *MemoryService) DeleteSecret(ctx context.Context, name string) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	name = strings.TrimSpace(name)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	if _, ok := s.secrets[name]; !ok {
++		return store.ErrNotFound
++	}
++	delete(s.secrets, name)
++	s.appendEventLocked(events.TypeSecretDeleted, types.EventInfo, "controlplane", "secret deleted", "secret", "", s.now())
++	return nil
++}
++
+ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Service{}, err
+@@ -448,6 +604,11 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 			return types.Service{}, store.ErrDuplicate
+ 		}
+ 	}
++	for _, ref := range spec.SecretRefs {
++		if _, ok := s.secrets[strings.TrimSpace(ref.Name)]; !ok {
++			return types.Service{}, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
++		}
++	}
+ 
+ 	now := s.now()
+ 	service := types.Service{
+diff --git a/internal/events/events.go b/internal/events/events.go
+index 4ffd9d5..980c701 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -18,6 +18,8 @@ const (
+ 	TypeServiceDeleted         = "service.deleted"
+ 	TypeServiceDeletionStarted = "service.deletion.started"
+ 	TypeServiceScaled          = "service.scaled"
++	TypeSecretCreated          = "secret.created"
++	TypeSecretDeleted          = "secret.deleted"
+ 	TypeRolloutStarted         = "service.rollout.started"
+ 	TypeRollbackStarted        = "service.rollback.started"
+ 	TypeTaskAssigned           = "task.assigned"
+diff --git a/internal/secrets/envelope.go b/internal/secrets/envelope.go
+new file mode 100644
+index 0000000..25ce37a
+--- /dev/null
++++ b/internal/secrets/envelope.go
+@@ -0,0 +1,108 @@
++package secrets
++
++import (
++	"context"
++	"crypto/aes"
++	"crypto/cipher"
++	"crypto/rand"
++	"crypto/sha256"
++	"encoding/base64"
++	"encoding/hex"
++	"fmt"
++	"io"
++	"strings"
++)
++
++type Ciphertext struct {
++	KeyID string
++	Data  []byte
++}
++
++type Envelope interface {
++	Encrypt(ctx context.Context, plaintext []byte) (Ciphertext, error)
++	Decrypt(ctx context.Context, ciphertext Ciphertext) ([]byte, error)
++}
++
++type LocalEnvelope struct {
++	key   []byte
++	keyID string
++}
++
++func NewLocalEnvelope(keyMaterial string) (*LocalEnvelope, error) {
++	keyMaterial = strings.TrimSpace(keyMaterial)
++	if keyMaterial == "" {
++		return nil, fmt.Errorf("secret encryption key is required")
++	}
++	key, err := decodeKeyMaterial(keyMaterial)
++	if err != nil {
++		return nil, err
++	}
++	digest := sha256.Sum256(key)
++	return &LocalEnvelope{
++		key:   key,
++		keyID: "local:" + hex.EncodeToString(digest[:8]),
++	}, nil
++}
++
++func (e *LocalEnvelope) Encrypt(ctx context.Context, plaintext []byte) (Ciphertext, error) {
++	if err := ctx.Err(); err != nil {
++		return Ciphertext{}, err
++	}
++	gcm, err := e.gcm()
++	if err != nil {
++		return Ciphertext{}, err
++	}
++	nonce := make([]byte, gcm.NonceSize())
++	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
++		return Ciphertext{}, fmt.Errorf("generate secret nonce: %w", err)
++	}
++	data := append([]byte(nil), nonce...)
++	data = gcm.Seal(data, nonce, plaintext, []byte(e.keyID))
++	return Ciphertext{KeyID: e.keyID, Data: data}, nil
++}
++
++func (e *LocalEnvelope) Decrypt(ctx context.Context, ciphertext Ciphertext) ([]byte, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	if ciphertext.KeyID != "" && ciphertext.KeyID != e.keyID {
++		return nil, fmt.Errorf("secret key id mismatch")
++	}
++	gcm, err := e.gcm()
++	if err != nil {
++		return nil, err
++	}
++	if len(ciphertext.Data) < gcm.NonceSize() {
++		return nil, fmt.Errorf("secret ciphertext is invalid")
++	}
++	nonce := ciphertext.Data[:gcm.NonceSize()]
++	data := ciphertext.Data[gcm.NonceSize():]
++	plaintext, err := gcm.Open(nil, nonce, data, []byte(e.keyID))
++	if err != nil {
++		return nil, fmt.Errorf("decrypt secret: %w", err)
++	}
++	return plaintext, nil
++}
++
++func (e *LocalEnvelope) gcm() (cipher.AEAD, error) {
++	block, err := aes.NewCipher(e.key)
++	if err != nil {
++		return nil, fmt.Errorf("create secret cipher: %w", err)
++	}
++	gcm, err := cipher.NewGCM(block)
++	if err != nil {
++		return nil, fmt.Errorf("create secret gcm: %w", err)
++	}
++	return gcm, nil
++}
++
++func decodeKeyMaterial(value string) ([]byte, error) {
++	if decoded, err := base64.StdEncoding.DecodeString(value); err == nil {
++		switch len(decoded) {
++		case 16, 24, 32:
++			return append([]byte(nil), decoded...), nil
++		}
++	}
++	digest := sha256.Sum256([]byte(value))
++	return digest[:], nil
++}
+diff --git a/internal/secrets/envelope_test.go b/internal/secrets/envelope_test.go
+new file mode 100644
+index 0000000..a24f647
+--- /dev/null
++++ b/internal/secrets/envelope_test.go
+@@ -0,0 +1,45 @@
++package secrets
++
++import (
++	"context"
++	"testing"
++)
++
++func TestLocalEnvelopeEncryptDecrypt(t *testing.T) {
++	envelope, err := NewLocalEnvelope("test-secret-key")
++	if err != nil {
++		t.Fatalf("create envelope: %v", err)
++	}
++	ciphertext, err := envelope.Encrypt(context.Background(), []byte("super-secret"))
++	if err != nil {
++		t.Fatalf("encrypt: %v", err)
++	}
++	if string(ciphertext.Data) == "super-secret" {
++		t.Fatalf("expected ciphertext not to store plaintext")
++	}
++	plaintext, err := envelope.Decrypt(context.Background(), ciphertext)
++	if err != nil {
++		t.Fatalf("decrypt: %v", err)
++	}
++	if string(plaintext) != "super-secret" {
++		t.Fatalf("unexpected plaintext %q", plaintext)
++	}
++}
++
++func TestLocalEnvelopeWrongKeyFails(t *testing.T) {
++	first, err := NewLocalEnvelope("first-key")
++	if err != nil {
++		t.Fatalf("create first envelope: %v", err)
++	}
++	second, err := NewLocalEnvelope("second-key")
++	if err != nil {
++		t.Fatalf("create second envelope: %v", err)
++	}
++	ciphertext, err := first.Encrypt(context.Background(), []byte("super-secret"))
++	if err != nil {
++		t.Fatalf("encrypt: %v", err)
++	}
++	if _, err := second.Decrypt(context.Background(), ciphertext); err == nil {
++		t.Fatalf("expected wrong key to fail")
++	}
++}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index a540462..239d86b 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -339,6 +339,85 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 	return service, nil
+ }
+ 
++func (s *postgresStore) CreateSecret(ctx context.Context, secret types.Secret) (types.Secret, error) {
++	secret.Name = strings.TrimSpace(secret.Name)
++	if secret.Name == "" {
++		return types.Secret{}, fmt.Errorf("%w: secret name is required", ErrInvalidState)
++	}
++	if len(secret.EncryptedValue) == 0 {
++		return types.Secret{}, fmt.Errorf("%w: encrypted secret value is required", ErrInvalidState)
++	}
++	if strings.TrimSpace(secret.KeyID) == "" {
++		return types.Secret{}, fmt.Errorf("%w: secret key id is required", ErrInvalidState)
++	}
++	row := s.db.QueryRow(ctx, `
++		INSERT INTO secrets (name, encrypted_value, key_id)
++		VALUES ($1, $2, $3)
++		ON CONFLICT (name) DO UPDATE
++		SET encrypted_value = EXCLUDED.encrypted_value,
++			key_id = EXCLUDED.key_id,
++			updated_at = timezone('utc', now())
++		RETURNING name, encrypted_value, key_id, created_at, updated_at`,
++		secret.Name,
++		secret.EncryptedValue,
++		secret.KeyID,
++	)
++	created, err := scanSecret(row)
++	if err != nil {
++		return types.Secret{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *postgresStore) GetSecret(ctx context.Context, name string) (types.Secret, error) {
++	row := s.db.QueryRow(ctx, `
++		SELECT name, encrypted_value, key_id, created_at, updated_at
++		FROM secrets
++		WHERE name = $1`,
++		strings.TrimSpace(name),
++	)
++	secret, err := scanSecret(row)
++	if err != nil {
++		return types.Secret{}, mapPostgresError(err)
++	}
++	return secret, nil
++}
++
++func (s *postgresStore) ListSecrets(ctx context.Context) ([]types.Secret, error) {
++	rows, err := s.db.Query(ctx, `
++		SELECT name, encrypted_value, key_id, created_at, updated_at
++		FROM secrets
++		ORDER BY name`)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	secrets := make([]types.Secret, 0)
++	for rows.Next() {
++		secret, err := scanSecret(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		secrets = append(secrets, secret)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return secrets, nil
++}
++
++func (s *postgresStore) DeleteSecret(ctx context.Context, name string) error {
++	tag, err := s.db.Exec(ctx, `DELETE FROM secrets WHERE name = $1`, strings.TrimSpace(name))
++	if err != nil {
++		return mapPostgresError(err)
++	}
++	if tag.RowsAffected() == 0 {
++		return ErrNotFound
++	}
++	return nil
++}
++
+ func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
+ 	if task.DesiredStatus == "" {
+ 		task.DesiredStatus = types.TaskRunning
+@@ -975,6 +1054,24 @@ func scanTask(row pgx.Row) (types.Task, error) {
+ 	return task, nil
+ }
+ 
++func scanSecret(row pgx.Row) (types.Secret, error) {
++	var secret types.Secret
++	err := row.Scan(
++		&secret.Name,
++		&secret.EncryptedValue,
++		&secret.KeyID,
++		&secret.CreatedAt,
++		&secret.UpdatedAt,
++	)
++	if err != nil {
++		return types.Secret{}, err
++	}
++	secret.EncryptedValue = append([]byte(nil), secret.EncryptedValue...)
++	secret.CreatedAt = secret.CreatedAt.UTC()
++	secret.UpdatedAt = secret.UpdatedAt.UTC()
++	return secret, nil
++}
++
+ func scanDeployment(row pgx.Row) (types.Deployment, error) {
+ 	var deployment types.Deployment
+ 	var id, serviceID string
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 3eb49de..fd6b946 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -383,12 +383,14 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
+ 
+ 	for _, file := range []string{
++		"000004_secrets.down.sql",
+ 		"000003_service_routes.down.sql",
+ 		"000002_task_ports.down.sql",
+ 		"000001_initial_schema.down.sql",
+ 		"000001_initial_schema.up.sql",
+ 		"000002_task_ports.up.sql",
+ 		"000003_service_routes.up.sql",
++		"000004_secrets.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 23d2c44..becbea5 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -47,12 +47,20 @@ type EventStore interface {
+ 	ListEvents(ctx context.Context, filter events.Filter) ([]types.Event, error)
+ }
+ 
++type SecretStore interface {
++	CreateSecret(ctx context.Context, secret types.Secret) (types.Secret, error)
++	GetSecret(ctx context.Context, name string) (types.Secret, error)
++	ListSecrets(ctx context.Context) ([]types.Secret, error)
++	DeleteSecret(ctx context.Context, name string) error
++}
++
+ type Store interface {
+ 	NodeStore
+ 	ServiceStore
+ 	TaskStore
+ 	DeploymentStore
+ 	EventStore
++	SecretStore
+ }
+ 
+ // TxFunc runs a set of store operations inside one transaction boundary.
+diff --git a/migrations/000004_secrets.down.sql b/migrations/000004_secrets.down.sql
+new file mode 100644
+index 0000000..42f8140
+--- /dev/null
++++ b/migrations/000004_secrets.down.sql
+@@ -0,0 +1 @@
++DROP TABLE IF EXISTS secrets;
+diff --git a/migrations/000004_secrets.up.sql b/migrations/000004_secrets.up.sql
+new file mode 100644
+index 0000000..e76eac1
+--- /dev/null
++++ b/migrations/000004_secrets.up.sql
+@@ -0,0 +1,7 @@
++CREATE TABLE secrets (
++    name TEXT PRIMARY KEY,
++    encrypted_value BYTEA NOT NULL,
++    key_id TEXT NOT NULL,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 3895b0d..3b3ad9b 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -181,6 +181,11 @@ func (spec ServiceSpec) Validate() error {
+ 			return fmt.Errorf("ports[%d]: %w", i, err)
+ 		}
+ 	}
++	for i, ref := range spec.SecretRefs {
++		if err := ref.Validate(); err != nil {
++			return fmt.Errorf("secret_refs[%d]: %w", i, err)
++		}
++	}
+ 	if spec.Healthcheck != nil {
+ 		if err := spec.Healthcheck.Validate(); err != nil {
+ 			return err
+@@ -207,6 +212,51 @@ func (spec ServiceSpec) Validate() error {
+ type SecretRef struct {
+ 	Name string `json:"name"`
+ 	Key  string `json:"key,omitempty"`
++	Env  string `json:"env,omitempty"`
++}
++
++func (ref SecretRef) Validate() error {
++	if strings.TrimSpace(ref.Name) == "" {
++		return fmt.Errorf("secret name is required")
++	}
++	if strings.TrimSpace(ref.EnvName()) == "" {
++		return fmt.Errorf("secret env name is required")
++	}
++	return nil
++}
++
++func (ref SecretRef) EnvName() string {
++	if strings.TrimSpace(ref.Env) != "" {
++		return strings.TrimSpace(ref.Env)
++	}
++	if strings.TrimSpace(ref.Key) != "" {
++		return strings.TrimSpace(ref.Key)
++	}
++	return strings.TrimSpace(ref.Name)
++}
++
++type Secret struct {
++	Name           string    `json:"name"`
++	EncryptedValue []byte    `json:"-"`
++	KeyID          string    `json:"key_id,omitempty"`
++	CreatedAt      time.Time `json:"created_at"`
++	UpdatedAt      time.Time `json:"updated_at"`
++}
++
++func (secret Secret) Metadata() SecretMetadata {
++	return SecretMetadata{
++		Name:      secret.Name,
++		KeyID:     secret.KeyID,
++		CreatedAt: secret.CreatedAt.UTC(),
++		UpdatedAt: secret.UpdatedAt.UTC(),
++	}
++}
++
++type SecretMetadata struct {
++	Name      string    `json:"name"`
++	KeyID     string    `json:"key_id,omitempty"`
++	CreatedAt time.Time `json:"created_at"`
++	UpdatedAt time.Time `json:"updated_at"`
+ }
+ 
+ type Port struct {
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 48ce854..affe178 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `36-traefik-integration.md`
+-- Last matching commit: `ea0760e Add optional Traefik integration`
+-- Completed prompt range: `00` through `36`
+-- Next prompt to execute: `37-secrets-mvp.md`
++- Last executed prompt: `37-secrets-mvp.md`
++- Last matching commit: `same commit: Add secrets MVP`
++- Completed prompt range: `00` through `37`
++- Next prompt to execute: `38-image-registry-authentication.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

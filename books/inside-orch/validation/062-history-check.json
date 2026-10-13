@@ -1,0 +1,26 @@
+{
+  "command": [
+    "git",
+    "--git-dir=/tmp/inside-orch-reference-history.git",
+    "rev-list",
+    "--reverse",
+    "--topo-order",
+    "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:12:27.873176+00:00",
+  "finished_at_utc": "2026-10-13T01:12:29.184261+00:00",
+  "exit_code": 0,
+  "observed_commits": 105,
+  "observed_prompts": 91,
+  "parent_completeness": true,
+  "duplicates": 0,
+  "missing_numbers": [],
+  "historical_paths_checked": 169,
+  "historical_snippets": 12,
+  "exported_set_matches": true,
+  "tree_matches_lock": true,
+  "immutable_permalinks": "Full SHA and actual blob existence verified locally; HTTP status not required for Git objects.",
+  "errors": []
+}

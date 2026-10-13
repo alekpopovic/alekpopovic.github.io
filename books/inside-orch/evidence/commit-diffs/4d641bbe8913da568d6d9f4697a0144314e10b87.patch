@@ -1,0 +1,4121 @@
+commit 4d641bbe8913da568d6d9f4697a0144314e10b87
+Date: 2026-08-21T14:43:45+02:00
+Subject: Add jobs storage DNS and notifications
+
+
+---
+ api/openapi.yaml                                   |  97 ++++
+ api/openapi_test.go                                |   2 +-
+ cmd/orch-server/main.go                            |  44 +-
+ deployments/examples/internal-dns-compose.yaml     |  20 +
+ docs/GITOPS.md                                     |   4 +
+ docs/JOBS.md                                       |   5 +
+ docs/JOBS_DESIGN.md                                |  21 +
+ docs/NETWORKING.md                                 |   2 +
+ docs/NETWORKING_DESIGN.md                          |  11 +
+ docs/NOTIFICATIONS.md                              |   7 +
+ docs/PLUGIN_SYSTEM_DESIGN.md                       |  11 +
+ docs/SERVICE_DISCOVERY.md                          |   4 +-
+ docs/STATEFUL_WORKLOADS_DESIGN.md                  |  15 +
+ docs/STORAGE.md                                    |   7 +
+ internal/agent/agent.go                            |  27 +-
+ internal/api/api.go                                |  40 +-
+ internal/api/workloads.go                          | 243 +++++++++
+ internal/api/workloads_test.go                     |  63 +++
+ internal/cli/client.go                             |  68 ++-
+ internal/cli/output.go                             |  47 ++
+ internal/cli/root.go                               |  58 ++-
+ internal/cli/workloads.go                          | 232 +++++++++
+ internal/controlplane/controlplane.go              | 122 ++++-
+ internal/controlplane/workloads.go                 | 563 +++++++++++++++++++++
+ internal/controlplane/workloads_test.go            | 162 ++++++
+ internal/cronjobs/cronjobs.go                      | 224 ++++++++
+ internal/cronjobs/cronjobs_test.go                 |  87 ++++
+ internal/dns/server.go                             | 218 ++++++++
+ internal/dns/server_test.go                        |  79 +++
+ internal/docker/docker.go                          |  27 +-
+ internal/gitops/gitops.go                          |  29 +-
+ internal/metrics/prometheus.go                     |   9 +
+ internal/notifications/notifications.go            | 184 +++++++
+ internal/notifications/notifications_test.go       |  70 +++
+ internal/scheduler/scheduler.go                    |  57 ++-
+ internal/scheduler/workloads_test.go               |  30 ++
+ internal/store/postgres.go                         |  21 +-
+ internal/store/store.go                            |  28 +
+ .../000015_jobs_storage_notifications.down.sql     |  17 +
+ .../000015_jobs_storage_notifications.up.sql       |  84 +++
+ pkg/types/types.go                                 |  98 ++--
+ pkg/types/workloads.go                             | 195 +++++++
+ 42 files changed, 3234 insertions(+), 98 deletions(-)
+
+diff --git a/api/openapi.yaml b/api/openapi.yaml
+index 6d1a0e6..ab698f6 100644
+--- a/api/openapi.yaml
++++ b/api/openapi.yaml
+@@ -163,6 +163,103 @@ paths:
+             application/json:
+               schema:
+                 $ref: "#/components/schemas/GitOpsSourceResponse"
++  /v1/gitops/status:
++    get:
++      summary: List GitOps drift status
++      responses: {"200": {description: Drift status}}
++  /v1/gitops/diff/{service}:
++    get:
++      summary: Diff live and Git desired service
++      parameters:
++        - {name: service, in: path, required: true, schema: {type: string}}
++      responses: {"200": {description: Service diff}}
++  /v1/jobs:
++    get:
++      summary: List jobs
++      responses: {"200": {description: Jobs}}
++    post:
++      summary: Run a one-shot job
++      requestBody: {required: true, content: {application/json: {schema: {type: object}}}}
++      responses: {"201": {description: Job created}}
++  /v1/jobs/{id}:
++    get:
++      summary: Get job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Job}}
++    delete:
++      summary: Delete job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"204": {description: Job deleted}}
++  /v1/cronjobs:
++    get:
++      summary: List cron jobs
++      responses: {"200": {description: Cron jobs}}
++    post:
++      summary: Apply cron job
++      requestBody: {required: true, content: {application/json: {schema: {type: object}}}}
++      responses: {"201": {description: Cron job created}}
++  /v1/cronjobs/{id}:
++    get:
++      summary: Get cron job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Cron job}}
++    delete:
++      summary: Delete cron job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"204": {description: Cron job deleted}}
++  /v1/cronjobs/{id}/suspend:
++    post:
++      summary: Suspend cron job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Cron job suspended}}
++  /v1/cronjobs/{id}/resume:
++    post:
++      summary: Resume cron job
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Cron job resumed}}
++  /v1/volumes:
++    get:
++      summary: List volumes
++      responses: {"200": {description: Volumes}}
++    post:
++      summary: Create local volume
++      requestBody: {required: true, content: {application/json: {schema: {type: object}}}}
++      responses: {"201": {description: Volume created}}
++  /v1/volumes/{id}:
++    get:
++      summary: Get volume
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Volume}}
++    delete:
++      summary: Delete volume
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"204": {description: Volume deleted}}
++  /v1/volume-claims:
++    get:
++      summary: List volume claims
++      responses: {"200": {description: Volume claims}}
++    post:
++      summary: Create volume claim
++      requestBody: {required: true, content: {application/json: {schema: {type: object}}}}
++      responses: {"201": {description: Volume claim created}}
++  /v1/notification-sinks:
++    get:
++      summary: List notification sinks
++      responses: {"200": {description: Notification sinks}}
++    post:
++      summary: Create notification sink
++      requestBody: {required: true, content: {application/json: {schema: {type: object}}}}
++      responses: {"201": {description: Notification sink created}}
++  /v1/notification-sinks/{id}:
++    delete:
++      summary: Delete notification sink
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"204": {description: Notification sink deleted}}
++  /v1/notification-sinks/{id}/test:
++    post:
++      summary: Test notification sink
++      parameters: [{$ref: "#/components/parameters/ID"}]
++      responses: {"200": {description: Test delivered}}
+   /v1/nodes:
+     get:
+       summary: List nodes
+diff --git a/api/openapi_test.go b/api/openapi_test.go
+index 8315139..e230b64 100644
+--- a/api/openapi_test.go
++++ b/api/openapi_test.go
+@@ -25,7 +25,7 @@ func TestOpenAPISyntax(t *testing.T) {
+ 	if doc.OpenAPI == "" || len(doc.Paths) == 0 || len(doc.Components) == 0 {
+ 		t.Fatalf("invalid OpenAPI shape: openapi=%q paths=%d components=%d", doc.OpenAPI, len(doc.Paths), len(doc.Components))
+ 	}
+-	for _, path := range []string{"/healthz", "/v1/nodes", "/v1/services", "/v1/tasks", "/v1/events", "/v1/logs", "/v1/secrets", "/v1/registry-credentials", "/v1/audit"} {
++	for _, path := range []string{"/healthz", "/v1/nodes", "/v1/services", "/v1/tasks", "/v1/events", "/v1/logs", "/v1/secrets", "/v1/registry-credentials", "/v1/audit", "/v1/jobs", "/v1/cronjobs", "/v1/volumes", "/v1/volume-claims", "/v1/notification-sinks", "/v1/gitops/status"} {
+ 		if _, ok := doc.Paths[path]; !ok {
+ 			t.Fatalf("OpenAPI spec missing path %s", path)
+ 		}
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index 062bbac..6cc4889 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -17,11 +17,15 @@ import (
+ 	"github.com/alekpopovic/orch/internal/cli"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/cronjobs"
++	orchdns "github.com/alekpopovic/orch/internal/dns"
+ 	"github.com/alekpopovic/orch/internal/gitops"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
+ 	"github.com/alekpopovic/orch/internal/node"
++	"github.com/alekpopovic/orch/internal/notifications"
+ 	"github.com/alekpopovic/orch/internal/rollout"
++	"github.com/alekpopovic/orch/internal/scheduler"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"gopkg.in/yaml.v3"
+ )
+@@ -90,13 +94,51 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 		return err
+ 	}
+ 	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy))
++	controlPlane.SetNotificationDispatcher(notifications.NewDispatcher(controlPlane, nil))
++	serverMetrics := metrics.NewServer()
++	if dnsAddress := os.Getenv("ORCH_DNS_ADDR"); dnsAddress != "" {
++		dnsTTL := 30 * time.Second
++		if raw := os.Getenv("ORCH_DNS_TTL"); raw != "" {
++			parsed, parseErr := time.ParseDuration(raw)
++			if parseErr != nil || parsed <= 0 {
++				return fmt.Errorf("ORCH_DNS_TTL must be a positive duration")
++			}
++			dnsTTL = parsed
++		}
++		dnsServer := orchdns.New(controlPlane, dnsTTL, "default", serverMetrics)
++		go func() {
++			if err := dnsServer.ServeUDP(ctx, dnsAddress); err != nil && !errors.Is(err, context.Canceled) {
++				logger.Warn("internal DNS stopped", "error", err)
++			}
++		}()
++	}
+ 	gitopsController := gitops.NewController(controlPlane, nil, cli.ParseDeploy, logger)
+ 	go func() {
+ 		if err := gitopsController.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+ 			logger.Warn("GitOps controller stopped", "error", err)
+ 		}
+ 	}()
+-	serverMetrics := metrics.NewServer()
++	cronController := cronjobs.New(controlPlane, nil)
++	go func() {
++		if err := cronController.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
++			logger.Warn("cronjob controller stopped", "error", err)
++		}
++	}()
++	schedulerController := scheduler.New(controlPlane, scheduler.WithMetrics(serverMetrics))
++	go func() {
++		ticker := time.NewTicker(time.Second)
++		defer ticker.Stop()
++		for {
++			select {
++			case <-ctx.Done():
++				return
++			case <-ticker.C:
++				if _, err := schedulerController.RunOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
++					logger.Warn("scheduler iteration failed", "error", err)
++				}
++			}
++		}
++	}()
+ 	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+ 		if err := rolloutController.Run(ctx, 5*time.Second); err != nil && !errors.Is(err, context.Canceled) {
+diff --git a/deployments/examples/internal-dns-compose.yaml b/deployments/examples/internal-dns-compose.yaml
+new file mode 100644
+index 0000000..3aab83f
+--- /dev/null
++++ b/deployments/examples/internal-dns-compose.yaml
+@@ -0,0 +1,20 @@
++services:
++  orch-server:
++    image: orch-server:dev
++    environment:
++      ORCH_DNS_ADDR: 0.0.0.0:53
++    ports:
++      - "8053:53/udp"
++    networks:
++      default:
++        ipv4_address: 172.28.0.2
++  client:
++    image: busybox:1.36
++    command: ["sh", "-c", "nslookup api.default.svc.orch; sleep 3600"]
++    dns:
++      - 172.28.0.2
++networks:
++  default:
++    ipam:
++      config:
++        - subnet: 172.28.0.0/24
+diff --git a/docs/GITOPS.md b/docs/GITOPS.md
+index be115e5..51d4178 100644
+--- a/docs/GITOPS.md
++++ b/docs/GITOPS.md
+@@ -1,5 +1,9 @@
+ # GitOps Sources
+ 
++Each applied Service records its GitOps source, commit SHA, repository-relative manifest path, desired spec, drift policy, and last check. `orch gitops status` reports `in_sync`, `drifted`, `unknown`, or `sync_error`; `orch gitops diff <service>` returns live and desired specs.
++
++Manual scale or rollout changes are drift. The default `warn` policy preserves the live change and emits `gitops.drift.detected`. `auto_revert` restores the desired spec and emits `gitops.drift.reverted`. With prune enabled, removing a managed manifest deletes the Service on the next successful sync.
++
+ The GitOps controller periodically checks out a Git branch, validates deployment YAML with the same parser and admission path as `orch deploy`, and applies services in the source namespace. Each source records its last revision, managed service names, last sync time, and last error.
+ 
+ ## Configure a Source
+diff --git a/docs/JOBS.md b/docs/JOBS.md
+new file mode 100644
+index 0000000..9347ddb
+--- /dev/null
++++ b/docs/JOBS.md
+@@ -0,0 +1,5 @@
++# Jobs
++
++Run finite work with `orch job run job.yaml`, inspect it with `orch job ls`, and stream its latest attempt with `orch job logs <job-id>`. Jobs retry non-zero exits through `backoffLimit` and finish as `succeeded` or `failed`.
++
++CronJobs use five-field cron syntax, an explicit IANA timezone (UTC by default), and `Allow`, `Forbid`, or `Replace` concurrency. Use `orch cronjob apply`, `ls`, `suspend`, and `resume`. Missed occurrences are bounded. See [JOBS_DESIGN.md](JOBS_DESIGN.md) for lifecycle and failure semantics.
+diff --git a/docs/JOBS_DESIGN.md b/docs/JOBS_DESIGN.md
+new file mode 100644
+index 0000000..67235e3
+--- /dev/null
++++ b/docs/JOBS_DESIGN.md
+@@ -0,0 +1,21 @@
++# Jobs and cron jobs design
++
++`Job` represents finite work and `CronJob` creates Jobs on a schedule. Services remain the abstraction for continuously running workloads. The MVP reuses the Task lifecycle, scheduler resource accounting, agent container execution, logs, secrets, placement, and events.
++
++## One-shot execution
++
++A Job owns an immutable template and one or more attempt Tasks. It moves `pending -> running -> succeeded|failed`. Exit zero succeeds; non-zero exits retry until `backoffLimit` is exhausted, using capped exponential backoff with jitter. Future `parallelism` controls simultaneous Tasks, `completions` counts required successes, and an active deadline stops all attempts.
++
++Logs remain addressable by Job and attempt. Events cover creation, scheduling, start, retry, success, failure, deadline, and deletion. Resource requests, secrets, volume claims, and placement use the same validation boundaries as Services.
++
++## Scheduling
++
++CronJobs use five-field cron expressions and explicit IANA timezones (UTC by default). An injected clock makes decisions deterministic. `Allow` permits overlap, `Forbid` skips while an owned Job is active, and `Replace` deletes active Jobs before starting the new occurrence. Catch-up is bounded by `missedScheduleLimit`.
++
++## API, persistence, and controllers
++
++Jobs use `POST/GET /v1/jobs`, `GET/DELETE /v1/jobs/{id}` and `orch job run|ls|logs`. CronJobs use `POST/GET /v1/cronjobs`, `GET/DELETE /v1/cronjobs/{id}`, suspend/resume subresources and `orch cronjob apply|ls|suspend|resume`.
++
++`jobs` stores namespace, immutable JSON spec, status, attempts, exit code, and timestamps. Tasks carry nullable `job_id`; the final schema should enforce exactly one owner (`service_id` xor `job_id`). `cron_jobs` stores its template and last/next schedule. For HA, schedule advancement and Job creation must share a transaction and uniqueness key `(cron_job_id, scheduled_at)`.
++
++Agent loss is handled through node-loss recovery. Image, secret, volume, placement and admission errors are permanent until the spec changes; runtime exits are retryable within the limit. `ttlSecondsAfterFinished` is the proposed cleanup control; until then deletion is explicit and logs/events follow independent retention policies.
+diff --git a/docs/NETWORKING.md b/docs/NETWORKING.md
+index 5d647ac..d4f0760 100644
+--- a/docs/NETWORKING.md
++++ b/docs/NETWORKING.md
+@@ -1,5 +1,7 @@
+ # Networking
+ 
++The optional internal DNS MVP provides stable names over the host-port endpoint model; it does not create overlay addresses. Containers use the orch DNS listener and published service port. See `deployments/examples/internal-dns-compose.yaml` and [NETWORKING_DESIGN.md](NETWORKING_DESIGN.md).
++
+ `orch` supports host-port publishing for MVP services. It does not implement overlay networking yet.
+ 
+ ## Service Ports
+diff --git a/docs/NETWORKING_DESIGN.md b/docs/NETWORKING_DESIGN.md
+new file mode 100644
+index 0000000..2b3caf9
+--- /dev/null
++++ b/docs/NETWORKING_DESIGN.md
+@@ -0,0 +1,11 @@
++# Advanced networking design
++
++The current host-port model is simple and debuggable, with endpoint discovery and optional Traefik configuration. It consumes scarce ports, reveals node topology, requires clients to follow rescheduling, and lacks workload identity and network policy.
++
++Internal DNS is the first migration step: `<service>.<namespace>.svc.orch` and `<service>.svc.orch` return healthy node addresses with a short TTL. It improves naming but provides no virtual IP; clients still use published ports and retry changes.
++
++An overlay could supply routable task IPs through VXLAN or WireGuard and controlled IPAM. CNI integration would invoke established bridge, overlay, and policy plugins through typed, checkpointed results. Calls must be isolated, version-pinned, time-bounded, idempotent, and least-privilege. A native overlay has tighter integration but a larger correctness and security burden.
++
++NetworkPolicy should select namespace/workload labels and define default-deny ingress/egress with explicit peers and ports. DNS/control-plane traffic needs protected system rules. Ingress remains a gateway concern; egress rules require stable identity, IPv4/IPv6 parity, and auditable rejection.
++
++Threats include identity spoofing, malicious plugins, route injection, tenant crossing, DNS poisoning, key leakage, and exhaustion. Encrypt node traffic, rotate keys, validate plugin output, and fail closed. Migrate behind a feature gate: DNS, task addressing, overlay, ingress, then policy. Test namespaces, IPAM properties/fuzzing, partitions, MTU, stale DNS, plugin timeout, conformance, and tenant isolation before retiring host ports.
+diff --git a/docs/NOTIFICATIONS.md b/docs/NOTIFICATIONS.md
+new file mode 100644
+index 0000000..9d39525
+--- /dev/null
++++ b/docs/NOTIFICATIONS.md
+@@ -0,0 +1,7 @@
++# Notifications
++
++Notification sinks deliver important events to webhook, Slack-compatible webhook, or generic HTTP endpoints. Manage them through `/v1/notification-sinks`; the test subresource performs a real delivery.
++
++Delivery uses JSON, bounded exponential retry, a request timeout, and optional HMAC-SHA256 in `X-Orch-Signature`. Secret-like fields and inline credential markers are redacted. Signing secrets are write-only and must be envelope-encrypted by durable stores.
++
++Notifiable categories include rollout failure, node offline, task failure threshold, admission rejection, quota exhaustion, service/secret deletion, and inability to place a Task. Receivers must deduplicate by event ID because retry delivery is at-least-once.
+diff --git a/docs/PLUGIN_SYSTEM_DESIGN.md b/docs/PLUGIN_SYSTEM_DESIGN.md
+new file mode 100644
+index 0000000..90d95d1
+--- /dev/null
++++ b/docs/PLUGIN_SYSTEM_DESIGN.md
+@@ -0,0 +1,11 @@
++# Plugin system design
++
++Plugins extend runtime, storage, secrets, registry, policy, metrics, and notification boundaries without coupling reconciliation to vendors. This is not a general code-loading framework and does not accept arbitrary untrusted in-process binaries.
++
++Built-ins remain in-process behind narrow interfaces. Third-party plugins run as least-privilege processes over versioned RPC on Unix sockets or mutually authenticated TCP. This isolates crashes and dependencies and permits independent upgrades. Runtime/storage calls use request IDs and idempotency keys.
++
++Handshake data contains protocol version, plugin type, implementation version, capabilities, and supported orch range. Major mismatch fails startup; capabilities allow additive evolution. Configuration names an instance, endpoint/executable, type, non-secret settings, secret references, timeouts, and restart policy. Secrets are scoped and never returned by status APIs.
++
++The supervisor validates, starts/connects, handshakes, health-checks, drains calls, and stops. Enforce resource/process limits, filesystem/network restrictions, signed artifacts, socket ownership, mTLS, and deny-by-default host access. Runtime/storage plugins remain part of the trusted computing base.
++
++Observe latency, errors, restarts, protocol/capability data, health, and redacted logs. Contract suites cover every type; fake plugins cover timeout, malformed output, crash, replay/idempotency, mismatch, backpressure, and redaction. Examples should include an external notification sink and read-only registry provider.
+diff --git a/docs/SERVICE_DISCOVERY.md b/docs/SERVICE_DISCOVERY.md
+index 2365b1b..aac9720 100644
+--- a/docs/SERVICE_DISCOVERY.md
++++ b/docs/SERVICE_DISCOVERY.md
+@@ -1,6 +1,8 @@
+ # Service Discovery
+ 
+-MVP service discovery exposes running task endpoints over the control-plane API and CLI. It does not provide DNS yet.
++Optional internal DNS resolves `<service>.<namespace>.svc.orch` and `<service>.svc.orch` to node addresses for healthy/running endpoints. Set `ORCH_DNS_ADDR` on `orch-server` (for example `0.0.0.0:53`) to enable UDP DNS. `ORCH_DNS_TTL` configures TTL and defaults to 30 seconds. The component tracks `dns_queries_total` and `dns_errors_total`.
++
++MVP service discovery also exposes running task endpoints over the control-plane API and CLI. DNS intentionally does not implement full Kubernetes compatibility.
+ 
+ ## API
+ 
+diff --git a/docs/STATEFUL_WORKLOADS_DESIGN.md b/docs/STATEFUL_WORKLOADS_DESIGN.md
+new file mode 100644
+index 0000000..77acb06
+--- /dev/null
++++ b/docs/STATEFUL_WORKLOADS_DESIGN.md
+@@ -0,0 +1,15 @@
++# Stateful workloads design
++
++## Goals and non-goals
++
++The goal is stable ordinal identity, persistent storage, conservative replacement, ordered lifecycle, and observable recovery. This design does not promise distributed storage, synchronous replication, automatic database failover, or safe fencing for arbitrary applications.
++
++Tasks are named `<workload>-0..N`; ordinals and claims survive rescheduling. Startup defaults to ordinal order and readiness gates; shutdown reverses it. Headless discovery publishes workload and per-ordinal names. Parallel startup is opt-in.
++
++Each claim binds once. Local volumes pin an ordinal to a node; remote drivers may advertise topology. The scheduler combines topology with resources and rejects a second `ReadWriteOnce` writer. Claims are not deleted with Tasks. Snapshot and backup hooks precede risky replacement, emit events, and have explicit timeouts.
++
++An unreachable node is not proof that its process stopped. Automatic replacement can create split brain. Local-volume workloads remain blocked until the node returns or an operator confirms fencing and force-detach. Every forced action requires audit history and a data-loss warning.
++
++Default rollout is ordered, highest ordinal first, with one unavailable Task, no writable-claim surge, and readiness before continuing. Partitioned rollout enables canaries. Rollback restores the spec but cannot restore storage without an application-aware snapshot.
++
++The proposed `StatefulService` YAML adds `serviceName`, template, `volumeClaimTemplates`, ordered/parallel policy, update partition, and retention. Scheduler input gains ordinal and volume topology; agents gain idempotent attach/mount/detach plus hooks. Tests cover ordinals, ordering, RWO conflicts, agent restart, detach, migrations, Docker local volumes, fencing, partitions, backup failures, and interrupted rollout.
+diff --git a/docs/STORAGE.md b/docs/STORAGE.md
+new file mode 100644
+index 0000000..aeb5232
+--- /dev/null
++++ b/docs/STORAGE.md
+@@ -0,0 +1,7 @@
++# Storage
++
++The storage MVP supports Docker `local` volumes, claims, and task attachments. A claim referenced by a Service or Job is resolved before task creation; an unbound local claim creates a matching volume. Local topology pins later use to its first node.
++
++`ReadWriteOnce` permits one active writer unless `allow_concurrent_writers` is explicitly enabled. Read-only mounts do not consume the writer lock. Attachments detach when a Task is removed or Job deleted. A volume with an active attachment cannot be deleted.
++
++Use `orch volume create <name> [--node ID]`, `orch volume ls`, and `orch volume inspect <id>`. Distributed storage, replication, snapshots and unsafe force-detach are intentionally outside this MVP.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 7bf89b5..5418fde 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -218,9 +218,15 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 			assigned.Task.ContainerID = string(status.ID)
+ 			return r.checkTaskHealth(ctx, nodeID, assigned, status)
+ 		}
++		if task.JobID != "" && status.ExitCode == 0 {
++			code := status.ExitCode
++			_, err := r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskStopped, ContainerID: string(status.ID), ExitCode: &code})
++			return err
++		}
+ 		if status.ExitCode != 0 {
+ 			reason := fmt.Sprintf("container exited with code %d", status.ExitCode)
+-			_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(status.ID), FailureReason: reason})
++			code := status.ExitCode
++			_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(status.ID), FailureReason: reason, ExitCode: &code})
+ 			return fmt.Errorf("%s", reason)
+ 		}
+ 		if err := r.runtime.StartContainer(ctx, status.ID); err != nil {
+@@ -246,13 +252,15 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 	containerID, err := r.runtime.CreateContainer(ctx, orchdocker.ContainerSpec{
+ 		Name:      "orch-" + string(task.ID),
+ 		Image:     task.Image,
+-		ServiceID: string(task.ServiceID),
++		ServiceID: taskWorkloadID(task),
+ 		TaskID:    string(task.ID),
+ 		NodeID:    string(nodeID),
+ 		Version:   task.Version,
+ 		Env:       assigned.Env,
+ 		Ports:     dockerPortBindings(assigned.Ports),
+ 		Security:  dockerSecurityContext(assigned.SecurityContext),
++		Command:   append([]string(nil), task.Command...),
++		Volumes:   dockerVolumeMounts(task.VolumeMounts),
+ 	})
+ 	if err != nil {
+ 		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: runtimeFailureReason(err)})
+@@ -275,6 +283,21 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 	return r.checkTaskHealth(ctx, nodeID, assigned, orchdocker.ContainerStatus{ID: containerID, Running: true})
+ }
+ 
++func dockerVolumeMounts(mounts []types.ResolvedVolumeMount) []orchdocker.VolumeMount {
++	out := make([]orchdocker.VolumeMount, 0, len(mounts))
++	for _, mount := range mounts {
++		out = append(out, orchdocker.VolumeMount{Name: mount.VolumeName, Target: mount.Target, ReadOnly: mount.ReadOnly})
++	}
++	return out
++}
++
++func taskWorkloadID(task types.Task) string {
++	if task.ServiceID != "" {
++		return string(task.ServiceID)
++	}
++	return "job-" + task.JobID
++}
++
+ func dockerPortBindings(ports []types.Port) []orchdocker.PortBinding {
+ 	bindings := make([]orchdocker.PortBinding, 0, len(ports))
+ 	for _, port := range ports {
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 4ae1564..a8cf490 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -126,6 +126,9 @@ func WithGitOpsSyncer(syncer GitOpsSyncer) Option {
+ }
+ 
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
++	if logger == nil {
++		logger = slog.Default()
++	}
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+ 	}
+@@ -207,6 +210,28 @@ func (s *Server) registerV1(mux *http.ServeMux) {
+ 	mux.HandleFunc("GET /v1/gitops/sources", s.listGitOpsSources)
+ 	mux.HandleFunc("DELETE /v1/gitops/sources/{id}", s.deleteGitOpsSource)
+ 	mux.HandleFunc("POST /v1/gitops/sources/{id}/sync", s.syncGitOpsSource)
++	mux.HandleFunc("GET /v1/gitops/status", s.gitopsStatus)
++	mux.HandleFunc("GET /v1/gitops/diff/{service}", s.gitopsDiff)
++	mux.HandleFunc("POST /v1/jobs", s.createJob)
++	mux.HandleFunc("GET /v1/jobs", s.listJobs)
++	mux.HandleFunc("GET /v1/jobs/{id}", s.getJob)
++	mux.HandleFunc("DELETE /v1/jobs/{id}", s.deleteJob)
++	mux.HandleFunc("POST /v1/cronjobs", s.createCronJob)
++	mux.HandleFunc("GET /v1/cronjobs", s.listCronJobs)
++	mux.HandleFunc("GET /v1/cronjobs/{id}", s.getCronJob)
++	mux.HandleFunc("DELETE /v1/cronjobs/{id}", s.deleteCronJob)
++	mux.HandleFunc("POST /v1/cronjobs/{id}/suspend", s.suspendCronJob)
++	mux.HandleFunc("POST /v1/cronjobs/{id}/resume", s.resumeCronJob)
++	mux.HandleFunc("POST /v1/volumes", s.createVolume)
++	mux.HandleFunc("GET /v1/volumes", s.listVolumes)
++	mux.HandleFunc("GET /v1/volumes/{id}", s.getVolume)
++	mux.HandleFunc("DELETE /v1/volumes/{id}", s.deleteVolume)
++	mux.HandleFunc("POST /v1/volume-claims", s.createVolumeClaim)
++	mux.HandleFunc("GET /v1/volume-claims", s.listVolumeClaims)
++	mux.HandleFunc("POST /v1/notification-sinks", s.createNotificationSink)
++	mux.HandleFunc("GET /v1/notification-sinks", s.listNotificationSinks)
++	mux.HandleFunc("DELETE /v1/notification-sinks/{id}", s.deleteNotificationSink)
++	mux.HandleFunc("POST /v1/notification-sinks/{id}/test", s.testNotificationSink)
+ }
+ 
+ type HealthResponse struct {
+@@ -237,11 +262,12 @@ type ResourceQuotaResponse struct {
+ }
+ 
+ type CreateGitOpsSourceRequest struct {
+-	RepositoryURL string `json:"repository_url"`
+-	Branch        string `json:"branch"`
+-	Path          string `json:"path"`
+-	SyncInterval  string `json:"sync_interval"`
+-	Prune         bool   `json:"prune"`
++	RepositoryURL string                  `json:"repository_url"`
++	Branch        string                  `json:"branch"`
++	Path          string                  `json:"path"`
++	SyncInterval  string                  `json:"sync_interval"`
++	Prune         bool                    `json:"prune"`
++	DriftPolicy   types.GitOpsDriftPolicy `json:"drift_policy,omitempty"`
+ }
+ 
+ type GitOpsSourceResponse struct {
+@@ -302,6 +328,7 @@ type AgentTaskStatusRequest struct {
+ 	Status        types.TaskStatus `json:"status"`
+ 	ContainerID   string           `json:"container_id,omitempty"`
+ 	FailureReason string           `json:"failure_reason,omitempty"`
++	ExitCode      *int             `json:"exit_code,omitempty"`
+ }
+ 
+ type NodeResponse struct {
+@@ -475,7 +502,7 @@ func (s *Server) createGitOpsSource(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	source, err := s.controlPlane.CreateGitOpsSource(r.Context(), types.GitOpsSource{
+ 		RepositoryURL: request.RepositoryURL, Branch: request.Branch, Path: request.Path,
+-		SyncInterval: interval, Prune: request.Prune,
++		SyncInterval: interval, Prune: request.Prune, DriftPolicy: request.DriftPolicy,
+ 	})
+ 	if err != nil {
+ 		s.recordAudit(r, "gitops.source.create", "gitops_source", "unknown", audit.OutcomeFailure, nil)
+@@ -643,6 +670,7 @@ func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {
+ 		Status:        req.Status,
+ 		ContainerID:   req.ContainerID,
+ 		FailureReason: req.FailureReason,
++		ExitCode:      req.ExitCode,
+ 	})
+ 	if err != nil {
+ 		s.writeError(w, r, err)
+diff --git a/internal/api/workloads.go b/internal/api/workloads.go
+new file mode 100644
+index 0000000..957b6dc
+--- /dev/null
++++ b/internal/api/workloads.go
+@@ -0,0 +1,243 @@
++package api
++
++import (
++	"net/http"
++	"strings"
++
++	"github.com/alekpopovic/orch/internal/notifications"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type JobResponse struct {
++	Job types.Job `json:"job"`
++}
++type JobsResponse struct {
++	Jobs []types.Job `json:"jobs"`
++}
++type CronJobResponse struct {
++	CronJob types.CronJob `json:"cronjob"`
++}
++type CronJobsResponse struct {
++	CronJobs []types.CronJob `json:"cronjobs"`
++}
++type VolumeResponse struct {
++	Volume types.Volume `json:"volume"`
++}
++type VolumesResponse struct {
++	Volumes []types.Volume `json:"volumes"`
++}
++type VolumeClaimResponse struct {
++	Claim types.VolumeClaim `json:"claim"`
++}
++type VolumeClaimsResponse struct {
++	Claims []types.VolumeClaim `json:"claims"`
++}
++type NotificationSinkResponse struct {
++	Sink types.NotificationSink `json:"sink"`
++}
++type CreateNotificationSinkRequest struct {
++	Name          string                     `json:"name"`
++	Type          types.NotificationSinkType `json:"type"`
++	URL           string                     `json:"url"`
++	SigningSecret string                     `json:"signing_secret,omitempty"`
++}
++type NotificationSinksResponse struct {
++	Sinks []types.NotificationSink `json:"sinks"`
++}
++
++func (s *Server) gitopsStatus(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GitOpsStatus(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListServicesResponse{Services: v})
++}
++func (s *Server) gitopsDiff(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GitOpsDiff(r.Context(), strings.TrimSpace(r.PathValue("service")))
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, v)
++}
++func (s *Server) createJob(w http.ResponseWriter, r *http.Request) {
++	var v types.JobSpec
++	if !s.decodeJSON(w, r, &v) {
++		return
++	}
++	out, e := s.controlPlane.CreateJob(r.Context(), v)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusCreated, JobResponse{out})
++}
++func (s *Server) listJobs(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.ListJobs(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, JobsResponse{v})
++}
++func (s *Server) getJob(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GetJob(r.Context(), r.PathValue("id"))
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, JobResponse{v})
++}
++func (s *Server) deleteJob(w http.ResponseWriter, r *http.Request) {
++	if e := s.controlPlane.DeleteJob(r.Context(), r.PathValue("id")); e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++func (s *Server) createCronJob(w http.ResponseWriter, r *http.Request) {
++	var v types.CronJobSpec
++	if !s.decodeJSON(w, r, &v) {
++		return
++	}
++	out, e := s.controlPlane.CreateCronJob(r.Context(), v)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusCreated, CronJobResponse{out})
++}
++func (s *Server) listCronJobs(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.ListCronJobs(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, CronJobsResponse{v})
++}
++func (s *Server) getCronJob(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GetCronJob(r.Context(), r.PathValue("id"))
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, CronJobResponse{v})
++}
++func (s *Server) deleteCronJob(w http.ResponseWriter, r *http.Request) {
++	if e := s.controlPlane.DeleteCronJob(r.Context(), r.PathValue("id")); e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++func (s *Server) suspendCronJob(w http.ResponseWriter, r *http.Request) {
++	s.setCronSuspended(w, r, true)
++}
++func (s *Server) resumeCronJob(w http.ResponseWriter, r *http.Request) {
++	s.setCronSuspended(w, r, false)
++}
++func (s *Server) setCronSuspended(w http.ResponseWriter, r *http.Request, value bool) {
++	v, e := s.controlPlane.SetCronJobSuspended(r.Context(), r.PathValue("id"), value)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, CronJobResponse{v})
++}
++func (s *Server) createVolume(w http.ResponseWriter, r *http.Request) {
++	var v types.Volume
++	if !s.decodeJSON(w, r, &v) {
++		return
++	}
++	out, e := s.controlPlane.CreateVolume(r.Context(), v)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusCreated, VolumeResponse{out})
++}
++func (s *Server) listVolumes(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.ListVolumes(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, VolumesResponse{v})
++}
++func (s *Server) getVolume(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GetVolume(r.Context(), r.PathValue("id"))
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, VolumeResponse{v})
++}
++func (s *Server) deleteVolume(w http.ResponseWriter, r *http.Request) {
++	if e := s.controlPlane.DeleteVolume(r.Context(), r.PathValue("id")); e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++func (s *Server) createVolumeClaim(w http.ResponseWriter, r *http.Request) {
++	var v types.VolumeClaim
++	if !s.decodeJSON(w, r, &v) {
++		return
++	}
++	out, e := s.controlPlane.CreateVolumeClaim(r.Context(), v)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusCreated, VolumeClaimResponse{out})
++}
++func (s *Server) listVolumeClaims(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.ListVolumeClaims(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, VolumeClaimsResponse{v})
++}
++func (s *Server) createNotificationSink(w http.ResponseWriter, r *http.Request) {
++	var request CreateNotificationSinkRequest
++	if !s.decodeJSON(w, r, &request) {
++		return
++	}
++	v := types.NotificationSink{Name: request.Name, Type: request.Type, URL: request.URL, SigningSecret: request.SigningSecret}
++	out, e := s.controlPlane.CreateNotificationSink(r.Context(), v)
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusCreated, NotificationSinkResponse{out})
++}
++func (s *Server) listNotificationSinks(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.ListNotificationSinks(r.Context())
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, NotificationSinksResponse{v})
++}
++func (s *Server) deleteNotificationSink(w http.ResponseWriter, r *http.Request) {
++	if e := s.controlPlane.DeleteNotificationSink(r.Context(), r.PathValue("id")); e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	w.WriteHeader(http.StatusNoContent)
++}
++func (s *Server) testNotificationSink(w http.ResponseWriter, r *http.Request) {
++	v, e := s.controlPlane.GetNotificationSink(r.Context(), r.PathValue("id"))
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	e = notifications.New().Deliver(r.Context(), v, types.Event{Namespace: v.Namespace, Type: "notification.test", Severity: types.EventInfo, Source: "api", Message: "notification sink test", Timestamp: s.now()})
++	if e != nil {
++		s.writeError(w, r, e)
++		return
++	}
++	writeJSON(w, http.StatusOK, map[string]string{"status": "delivered"})
++}
+diff --git a/internal/api/workloads_test.go b/internal/api/workloads_test.go
+new file mode 100644
+index 0000000..ee1b45b
+--- /dev/null
++++ b/internal/api/workloads_test.go
+@@ -0,0 +1,63 @@
++package api
++
++import (
++	"bytes"
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func requestJSON(t *testing.T, handler http.Handler, method, path string, body any) *httptest.ResponseRecorder {
++	t.Helper()
++	data, err := json.Marshal(body)
++	if err != nil {
++		t.Fatal(err)
++	}
++	request := httptest.NewRequest(method, path, bytes.NewReader(data))
++	request.Header.Set("Content-Type", "application/json")
++	response := httptest.NewRecorder()
++	handler.ServeHTTP(response, request)
++	return response
++}
++
++func TestJobCronAndVolumeAPIs(t *testing.T) {
++	service := controlplane.NewMemoryService()
++	handler := NewHandler(nil, service)
++	resources := types.ResourceRequirements{Requests: types.Resources{CPU: 100, Memory: 1 << 20}, Limits: types.Resources{CPU: 100, Memory: 1 << 20}}
++	response := requestJSON(t, handler, http.MethodPost, "/v1/jobs", types.JobSpec{Name: "migrate", Image: "busybox:1.36", ResourceRequirements: resources})
++	if response.Code != http.StatusCreated {
++		t.Fatalf("job status=%d body=%s", response.Code, response.Body.String())
++	}
++	response = requestJSON(t, handler, http.MethodPost, "/v1/cronjobs", types.CronJobSpec{Name: "nightly", Schedule: "0 2 * * *", Timezone: "UTC", JobTemplate: types.JobSpec{Name: "nightly", Image: "busybox:1.36", ResourceRequirements: resources}})
++	if response.Code != http.StatusCreated {
++		t.Fatalf("cron status=%d body=%s", response.Code, response.Body.String())
++	}
++	response = requestJSON(t, handler, http.MethodPost, "/v1/volumes", types.Volume{Name: "data", Driver: "local"})
++	if response.Code != http.StatusCreated {
++		t.Fatalf("volume status=%d body=%s", response.Code, response.Body.String())
++	}
++	var volume VolumeResponse
++	if err := json.Unmarshal(response.Body.Bytes(), &volume); err != nil {
++		t.Fatal(err)
++	}
++	response = requestJSON(t, handler, http.MethodPost, "/v1/volume-claims", types.VolumeClaim{Name: "data", VolumeID: volume.Volume.ID, AccessMode: types.VolumeReadWriteOnce})
++	if response.Code != http.StatusCreated {
++		t.Fatalf("claim status=%d body=%s", response.Code, response.Body.String())
++	}
++	for _, path := range []string{"/v1/jobs", "/v1/cronjobs", "/v1/volumes", "/v1/volume-claims"} {
++		request := httptest.NewRequest(http.MethodGet, path, nil)
++		response := httptest.NewRecorder()
++		handler.ServeHTTP(response, request)
++		if response.Code != http.StatusOK {
++			t.Fatalf("GET %s status=%d", path, response.Code)
++		}
++	}
++	response = requestJSON(t, handler, http.MethodPost, "/v1/notification-sinks", CreateNotificationSinkRequest{Name: "ops", Type: types.NotificationWebhook, URL: "https://hooks.example.test", SigningSecret: "never-return-this"})
++	if response.Code != http.StatusCreated || bytes.Contains(response.Body.Bytes(), []byte("never-return-this")) {
++		t.Fatalf("notification response status=%d body=%s", response.Code, response.Body.String())
++	}
++}
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index fb075c9..6cf23bf 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -19,6 +19,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/gitops"
+ 	orchclient "github.com/alekpopovic/orch/pkg/client"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -124,7 +125,7 @@ func (c *APIClient) SetResourceQuota(ctx context.Context, value types.ResourceQu
+ 
+ func (c *APIClient) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
+ 	var out api.GitOpsSourceResponse
+-	request := api.CreateGitOpsSourceRequest{RepositoryURL: source.RepositoryURL, Branch: source.Branch, Path: source.Path, SyncInterval: source.SyncInterval.String(), Prune: source.Prune}
++	request := api.CreateGitOpsSourceRequest{RepositoryURL: source.RepositoryURL, Branch: source.Branch, Path: source.Path, SyncInterval: source.SyncInterval.String(), Prune: source.Prune, DriftPolicy: source.DriftPolicy}
+ 	if err := c.do(ctx, http.MethodPost, "/v1/gitops/sources", request, &out); err != nil {
+ 		return types.GitOpsSource{}, err
+ 	}
+@@ -151,6 +152,71 @@ func (c *APIClient) DeleteGitOpsSource(ctx context.Context, id string) error {
+ 	return c.do(ctx, http.MethodDelete, "/v1/gitops/sources/"+url.PathEscape(id), nil, nil)
+ }
+ 
++func (c *APIClient) GitOpsStatus(ctx context.Context) ([]types.Service, error) {
++	var out api.ListServicesResponse
++	if err := c.do(ctx, http.MethodGet, "/v1/gitops/status", nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Services, nil
++}
++func (c *APIClient) GitOpsDiff(ctx context.Context, name string) (gitops.Diff, error) {
++	var out gitops.Diff
++	err := c.do(ctx, http.MethodGet, "/v1/gitops/diff/"+url.PathEscape(name), nil, &out)
++	return out, err
++}
++func (c *APIClient) CreateJob(ctx context.Context, v types.JobSpec) (types.Job, error) {
++	var out api.JobResponse
++	err := c.do(ctx, http.MethodPost, "/v1/jobs", v, &out)
++	return out.Job, err
++}
++func (c *APIClient) ListJobs(ctx context.Context) ([]types.Job, error) {
++	var out api.JobsResponse
++	err := c.do(ctx, http.MethodGet, "/v1/jobs", nil, &out)
++	return out.Jobs, err
++}
++func (c *APIClient) GetJob(ctx context.Context, id string) (types.Job, error) {
++	var out api.JobResponse
++	err := c.do(ctx, http.MethodGet, "/v1/jobs/"+url.PathEscape(id), nil, &out)
++	return out.Job, err
++}
++func (c *APIClient) DeleteJob(ctx context.Context, id string) error {
++	return c.do(ctx, http.MethodDelete, "/v1/jobs/"+url.PathEscape(id), nil, nil)
++}
++func (c *APIClient) CreateCronJob(ctx context.Context, v types.CronJobSpec) (types.CronJob, error) {
++	var out api.CronJobResponse
++	err := c.do(ctx, http.MethodPost, "/v1/cronjobs", v, &out)
++	return out.CronJob, err
++}
++func (c *APIClient) ListCronJobs(ctx context.Context) ([]types.CronJob, error) {
++	var out api.CronJobsResponse
++	err := c.do(ctx, http.MethodGet, "/v1/cronjobs", nil, &out)
++	return out.CronJobs, err
++}
++func (c *APIClient) SetCronJobSuspended(ctx context.Context, id string, value bool) (types.CronJob, error) {
++	action := "resume"
++	if value {
++		action = "suspend"
++	}
++	var out api.CronJobResponse
++	err := c.do(ctx, http.MethodPost, "/v1/cronjobs/"+url.PathEscape(id)+"/"+action, nil, &out)
++	return out.CronJob, err
++}
++func (c *APIClient) CreateVolume(ctx context.Context, v types.Volume) (types.Volume, error) {
++	var out api.VolumeResponse
++	err := c.do(ctx, http.MethodPost, "/v1/volumes", v, &out)
++	return out.Volume, err
++}
++func (c *APIClient) ListVolumes(ctx context.Context) ([]types.Volume, error) {
++	var out api.VolumesResponse
++	err := c.do(ctx, http.MethodGet, "/v1/volumes", nil, &out)
++	return out.Volumes, err
++}
++func (c *APIClient) GetVolume(ctx context.Context, id string) (types.Volume, error) {
++	var out api.VolumeResponse
++	err := c.do(ctx, http.MethodGet, "/v1/volumes/"+url.PathEscape(id), nil, &out)
++	return out.Volume, err
++}
++
+ func (c *APIClient) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	var out api.ListNodesResponse
+ 	if err := c.do(ctx, http.MethodGet, "/v1/nodes", nil, &out); err != nil {
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+index e169a33..7a3430d 100644
+--- a/internal/cli/output.go
++++ b/internal/cli/output.go
+@@ -87,6 +87,53 @@ func writeGitOpsSources(w io.Writer, output string, sources []types.GitOpsSource
+ 	return tw.Flush()
+ }
+ 
++func writeGitOpsStatus(w io.Writer, output string, services []types.Service) error {
++	if output == "json" {
++		return writeValue(w, output, services)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "SERVICE\tSTATUS\tSOURCE\tCOMMIT\tPATH")
++	for _, v := range services {
++		if v.GitOps != nil {
++			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", v.Spec.Name, v.GitOps.Status, v.GitOps.SourceID, v.GitOps.SourceCommit, v.GitOps.SourcePath)
++		}
++	}
++	return tw.Flush()
++}
++func writeJobs(w io.Writer, output string, items []types.Job) error {
++	if output == "json" {
++		return writeValue(w, output, items)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tNAME\tSTATUS\tATTEMPTS\tIMAGE")
++	for _, v := range items {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%d\t%s\n", v.ID, v.Spec.Name, v.Status, v.Attempts, v.Spec.Image)
++	}
++	return tw.Flush()
++}
++func writeCronJobs(w io.Writer, output string, items []types.CronJob) error {
++	if output == "json" {
++		return writeValue(w, output, items)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tNAME\tSCHEDULE\tTIMEZONE\tSUSPENDED")
++	for _, v := range items {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%t\n", v.ID, v.Spec.Name, v.Spec.Schedule, v.Spec.Timezone, v.Spec.Suspended)
++	}
++	return tw.Flush()
++}
++func writeVolumes(w io.Writer, output string, items []types.Volume) error {
++	if output == "json" {
++		return writeValue(w, output, items)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "ID\tNAME\tDRIVER\tNODE")
++	for _, v := range items {
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", v.ID, v.Name, v.Driver, v.NodeID)
++	}
++	return tw.Flush()
++}
++
+ func writeNode(w io.Writer, output string, node types.Node) error {
+ 	if output == "json" {
+ 		return writeValue(w, output, node)
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index 73243f4..1123c8d 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/gitops"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/spf13/cobra"
+ )
+@@ -61,6 +62,26 @@ type GitOpsClient interface {
+ 	ListGitOpsSources(context.Context) ([]types.GitOpsSource, error)
+ 	SyncGitOpsSource(context.Context, string) (types.GitOpsSource, error)
+ 	DeleteGitOpsSource(context.Context, string) error
++	GitOpsStatus(context.Context) ([]types.Service, error)
++	GitOpsDiff(context.Context, string) (gitops.Diff, error)
++}
++
++type JobClient interface {
++	CreateJob(context.Context, types.JobSpec) (types.Job, error)
++	ListJobs(context.Context) ([]types.Job, error)
++	GetJob(context.Context, string) (types.Job, error)
++	DeleteJob(context.Context, string) error
++	StreamLogs(context.Context, string, string, bool, string, io.Writer) error
++}
++type CronJobClient interface {
++	CreateCronJob(context.Context, types.CronJobSpec) (types.CronJob, error)
++	ListCronJobs(context.Context) ([]types.CronJob, error)
++	SetCronJobSuspended(context.Context, string, bool) (types.CronJob, error)
++}
++type VolumeClient interface {
++	CreateVolume(context.Context, types.Volume) (types.Volume, error)
++	ListVolumes(context.Context) ([]types.Volume, error)
++	GetVolume(context.Context, string) (types.Volume, error)
+ }
+ 
+ type Options struct {
+@@ -142,6 +163,9 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.AddCommand(a.namespaceCommand())
+ 	root.AddCommand(a.quotaCommand())
+ 	root.AddCommand(a.gitopsCommand())
++	root.AddCommand(a.jobCommand())
++	root.AddCommand(a.cronJobCommand())
++	root.AddCommand(a.volumeCommand())
+ 	return root
+ }
+ 
+@@ -259,6 +283,7 @@ func (a *app) gitopsCommand() *cobra.Command {
+ 	var repositoryURL, branch, sourcePath string
+ 	var interval time.Duration
+ 	var prune bool
++	var driftPolicy string
+ 	add := &cobra.Command{
+ 		Use: "add", Short: "Add a GitOps source",
+ 		RunE: func(cmd *cobra.Command, _ []string) error {
+@@ -270,7 +295,7 @@ func (a *app) gitopsCommand() *cobra.Command {
+ 			if !ok {
+ 				return fmt.Errorf("client does not support GitOps")
+ 			}
+-			source, err := gitopsClient.CreateGitOpsSource(cmd.Context(), types.GitOpsSource{RepositoryURL: repositoryURL, Branch: branch, Path: sourcePath, SyncInterval: interval, Prune: prune})
++			source, err := gitopsClient.CreateGitOpsSource(cmd.Context(), types.GitOpsSource{RepositoryURL: repositoryURL, Branch: branch, Path: sourcePath, SyncInterval: interval, Prune: prune, DriftPolicy: types.GitOpsDriftPolicy(driftPolicy)})
+ 			if err != nil {
+ 				return err
+ 			}
+@@ -282,6 +307,7 @@ func (a *app) gitopsCommand() *cobra.Command {
+ 	add.Flags().StringVar(&sourcePath, "path", ".", "manifest file or directory")
+ 	add.Flags().DurationVar(&interval, "interval", time.Minute, "sync interval")
+ 	add.Flags().BoolVar(&prune, "prune", false, "delete services whose manifests are removed")
++	add.Flags().StringVar(&driftPolicy, "drift-policy", string(types.GitOpsWarnOnly), "drift policy: warn or auto_revert")
+ 	_ = add.MarkFlagRequired("repo")
+ 	cmd.AddCommand(add)
+ 	cmd.AddCommand(&cobra.Command{
+@@ -338,6 +364,36 @@ func (a *app) gitopsCommand() *cobra.Command {
+ 			return nil
+ 		},
+ 	})
++	cmd.AddCommand(&cobra.Command{Use: "status", Short: "Show drift status for GitOps-managed services", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(GitOpsClient)
++		if !ok {
++			return fmt.Errorf("client does not support GitOps")
++		}
++		items, err := c.GitOpsStatus(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeGitOpsStatus(a.out, a.output, items)
++	}})
++	cmd.AddCommand(&cobra.Command{Use: "diff <service>", Short: "Compare live and Git desired service specs", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(GitOpsClient)
++		if !ok {
++			return fmt.Errorf("client does not support GitOps")
++		}
++		diff, err := c.GitOpsDiff(cmd.Context(), args[0])
++		if err != nil {
++			return err
++		}
++		return writeValue(a.out, "json", diff)
++	}})
+ 	return cmd
+ }
+ 
+diff --git a/internal/cli/workloads.go b/internal/cli/workloads.go
+new file mode 100644
+index 0000000..4a5f9c7
+--- /dev/null
++++ b/internal/cli/workloads.go
+@@ -0,0 +1,232 @@
++package cli
++
++import (
++	"fmt"
++	"os"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/spf13/cobra"
++	"gopkg.in/yaml.v3"
++)
++
++func (a *app) jobCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "job", Short: "Run and inspect finite jobs"}
++	cmd.AddCommand(&cobra.Command{Use: "run <file.yaml>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		data, err := os.ReadFile(args[0])
++		if err != nil {
++			return err
++		}
++		var manifest struct {
++			Kind         string   `yaml:"kind"`
++			Name         string   `yaml:"name"`
++			Image        string   `yaml:"image"`
++			Command      []string `yaml:"command"`
++			BackoffLimit int      `yaml:"backoffLimit"`
++			Resources    struct {
++				CPU    string `yaml:"cpu"`
++				Memory string `yaml:"memory"`
++			} `yaml:"resources"`
++		}
++		if err := yaml.Unmarshal(data, &manifest); err != nil {
++			return err
++		}
++		cpu, err := types.ParseCPU(manifest.Resources.CPU)
++		if err != nil {
++			return err
++		}
++		memory, err := types.ParseMemory(manifest.Resources.Memory)
++		if err != nil {
++			return err
++		}
++		spec := types.JobSpec{Name: manifest.Name, Image: manifest.Image, Command: manifest.Command, BackoffLimit: manifest.BackoffLimit, ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: cpu, Memory: memory}, Limits: types.Resources{CPU: cpu, Memory: memory}}}
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(JobClient)
++		if !ok {
++			return fmt.Errorf("client does not support jobs")
++		}
++		job, err := c.CreateJob(cmd.Context(), spec)
++		if err != nil {
++			return err
++		}
++		return writeJobs(a.out, a.output, []types.Job{job})
++	}})
++	cmd.AddCommand(&cobra.Command{Use: "ls", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(JobClient)
++		if !ok {
++			return fmt.Errorf("client does not support jobs")
++		}
++		v, err := c.ListJobs(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeJobs(a.out, a.output, v)
++	}})
++	cmd.AddCommand(&cobra.Command{Use: "logs <job>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(JobClient)
++		if !ok {
++			return fmt.Errorf("client does not support jobs")
++		}
++		job, err := c.GetJob(cmd.Context(), args[0])
++		if err != nil {
++			return err
++		}
++		if len(job.TaskIDs) == 0 {
++			return fmt.Errorf("job has no task")
++		}
++		return c.StreamLogs(cmd.Context(), "", string(job.TaskIDs[len(job.TaskIDs)-1]), false, "all", a.out)
++	}})
++	return cmd
++}
++
++func (a *app) cronJobCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "cronjob", Short: "Manage scheduled jobs"}
++	cmd.AddCommand(&cobra.Command{Use: "apply <file.yaml>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		data, err := os.ReadFile(args[0])
++		if err != nil {
++			return err
++		}
++		var envelope struct {
++			Kind              string                  `yaml:"kind"`
++			Name              string                  `yaml:"name"`
++			Schedule          string                  `yaml:"schedule"`
++			Timezone          string                  `yaml:"timezone"`
++			ConcurrencyPolicy types.ConcurrencyPolicy `yaml:"concurrencyPolicy"`
++			JobTemplate       struct {
++				Image     string   `yaml:"image"`
++				Command   []string `yaml:"command"`
++				Resources struct {
++					CPU    string `yaml:"cpu"`
++					Memory string `yaml:"memory"`
++				} `yaml:"resources"`
++			} `yaml:"jobTemplate"`
++		}
++		if err := yaml.Unmarshal(data, &envelope); err != nil {
++			return err
++		}
++		cpu, err := types.ParseCPU(envelope.JobTemplate.Resources.CPU)
++		if err != nil {
++			return err
++		}
++		mem, err := types.ParseMemory(envelope.JobTemplate.Resources.Memory)
++		if err != nil {
++			return err
++		}
++		spec := types.CronJobSpec{Name: envelope.Name, Schedule: envelope.Schedule, Timezone: envelope.Timezone, ConcurrencyPolicy: envelope.ConcurrencyPolicy, JobTemplate: types.JobSpec{Name: envelope.Name, Image: envelope.JobTemplate.Image, Command: envelope.JobTemplate.Command, ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: cpu, Memory: mem}, Limits: types.Resources{CPU: cpu, Memory: mem}}}}
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(CronJobClient)
++		if !ok {
++			return fmt.Errorf("client does not support cronjobs")
++		}
++		v, err := c.CreateCronJob(cmd.Context(), spec)
++		if err != nil {
++			return err
++		}
++		return writeCronJobs(a.out, a.output, []types.CronJob{v})
++	}})
++	cmd.AddCommand(&cobra.Command{Use: "ls", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(CronJobClient)
++		if !ok {
++			return fmt.Errorf("client does not support cronjobs")
++		}
++		v, err := c.ListCronJobs(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeCronJobs(a.out, a.output, v)
++	}})
++	for _, value := range []bool{true, false} {
++		suspended := value
++		action := "resume"
++		if suspended {
++			action = "suspend"
++		}
++		cmd.AddCommand(&cobra.Command{Use: action + " <id>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			c, ok := client.(CronJobClient)
++			if !ok {
++				return fmt.Errorf("client does not support cronjobs")
++			}
++			v, err := c.SetCronJobSuspended(cmd.Context(), args[0], suspended)
++			if err != nil {
++				return err
++			}
++			return writeCronJobs(a.out, a.output, []types.CronJob{v})
++		}})
++	}
++	return cmd
++}
++
++func (a *app) volumeCommand() *cobra.Command {
++	cmd := &cobra.Command{Use: "volume", Short: "Manage persistent volumes"}
++	cmd.AddCommand(&cobra.Command{Use: "ls", RunE: func(cmd *cobra.Command, _ []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(VolumeClient)
++		if !ok {
++			return fmt.Errorf("client does not support volumes")
++		}
++		v, err := c.ListVolumes(cmd.Context())
++		if err != nil {
++			return err
++		}
++		return writeVolumes(a.out, a.output, v)
++	}})
++	var node string
++	create := &cobra.Command{Use: "create <name>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(VolumeClient)
++		if !ok {
++			return fmt.Errorf("client does not support volumes")
++		}
++		v, err := c.CreateVolume(cmd.Context(), types.Volume{Name: strings.TrimSpace(args[0]), Driver: "local", NodeID: types.NodeID(node)})
++		if err != nil {
++			return err
++		}
++		return writeVolumes(a.out, a.output, []types.Volume{v})
++	}}
++	create.Flags().StringVar(&node, "node", "", "pin local volume to node")
++	cmd.AddCommand(create)
++	cmd.AddCommand(&cobra.Command{Use: "inspect <id>", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
++		client, err := a.client()
++		if err != nil {
++			return err
++		}
++		c, ok := client.(VolumeClient)
++		if !ok {
++			return fmt.Errorf("client does not support volumes")
++		}
++		v, err := c.GetVolume(cmd.Context(), args[0])
++		if err != nil {
++			return err
++		}
++		return writeVolumes(a.out, a.output, []types.Volume{v})
++	}})
++	return cmd
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index da03755..d43e0f0 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -36,6 +36,27 @@ type Service interface {
+ 	GetGitOpsSource(ctx context.Context, id string) (types.GitOpsSource, error)
+ 	UpdateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error)
+ 	DeleteGitOpsSource(ctx context.Context, id string) error
++	GitOpsStatus(ctx context.Context) ([]types.Service, error)
++	GitOpsDiff(ctx context.Context, service string) (gitops.Diff, error)
++	CreateJob(ctx context.Context, spec types.JobSpec) (types.Job, error)
++	ListJobs(ctx context.Context) ([]types.Job, error)
++	GetJob(ctx context.Context, id string) (types.Job, error)
++	DeleteJob(ctx context.Context, id string) error
++	CreateCronJob(ctx context.Context, spec types.CronJobSpec) (types.CronJob, error)
++	ListCronJobs(ctx context.Context) ([]types.CronJob, error)
++	GetCronJob(ctx context.Context, id string) (types.CronJob, error)
++	DeleteCronJob(ctx context.Context, id string) error
++	SetCronJobSuspended(ctx context.Context, id string, suspended bool) (types.CronJob, error)
++	CreateVolume(ctx context.Context, volume types.Volume) (types.Volume, error)
++	ListVolumes(ctx context.Context) ([]types.Volume, error)
++	GetVolume(ctx context.Context, id string) (types.Volume, error)
++	DeleteVolume(ctx context.Context, id string) error
++	CreateVolumeClaim(ctx context.Context, claim types.VolumeClaim) (types.VolumeClaim, error)
++	ListVolumeClaims(ctx context.Context) ([]types.VolumeClaim, error)
++	CreateNotificationSink(ctx context.Context, sink types.NotificationSink) (types.NotificationSink, error)
++	ListNotificationSinks(ctx context.Context) ([]types.NotificationSink, error)
++	GetNotificationSink(ctx context.Context, id string) (types.NotificationSink, error)
++	DeleteNotificationSink(ctx context.Context, id string) error
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
+ 	MarkStaleNodesOffline(ctx context.Context, timeout time.Duration) ([]types.Node, error)
+@@ -145,6 +166,7 @@ type TaskStatusReport struct {
+ 	Status        types.TaskStatus
+ 	ContainerID   string
+ 	FailureReason string
++	ExitCode      *int
+ }
+ 
+ type TaskFilter struct {
+@@ -160,16 +182,25 @@ type RolloutSpec struct {
+ }
+ 
+ type MemoryService struct {
+-	mu            sync.RWMutex
+-	nodes         map[types.NodeID]types.Node
+-	services      map[types.ServiceID]types.Service
+-	versions      map[types.ServiceID]map[int64]types.ServiceSpec
+-	tasks         map[types.TaskID]types.Task
+-	deployments   map[types.DeploymentID]types.Deployment
+-	secrets       map[string]types.Secret
+-	registries    map[string]types.RegistryCredential
+-	quotas        map[string]types.ResourceQuota
+-	gitops        map[string]types.GitOpsSource
++	mu                     sync.RWMutex
++	nodes                  map[types.NodeID]types.Node
++	services               map[types.ServiceID]types.Service
++	versions               map[types.ServiceID]map[int64]types.ServiceSpec
++	tasks                  map[types.TaskID]types.Task
++	deployments            map[types.DeploymentID]types.Deployment
++	secrets                map[string]types.Secret
++	registries             map[string]types.RegistryCredential
++	quotas                 map[string]types.ResourceQuota
++	gitops                 map[string]types.GitOpsSource
++	jobs                   map[string]types.Job
++	cronJobs               map[string]types.CronJob
++	volumes                map[string]types.Volume
++	volumeClaims           map[string]types.VolumeClaim
++	attachments            map[string]types.VolumeAttachment
++	notificationSinks      map[string]types.NotificationSink
++	notificationDispatcher interface {
++		Notify(context.Context, types.Event) error
++	}
+ 	envelope      secrets.Envelope
+ 	policy        policy.ClusterPolicy
+ 	events        []types.Event
+@@ -208,20 +239,26 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+ 	envelope, _ := secrets.NewLocalEnvelope("dev-secret-key-change-me")
+ 	service := &MemoryService{
+-		nodes:         make(map[types.NodeID]types.Node),
+-		services:      make(map[types.ServiceID]types.Service),
+-		versions:      make(map[types.ServiceID]map[int64]types.ServiceSpec),
+-		tasks:         make(map[types.TaskID]types.Task),
+-		deployments:   make(map[types.DeploymentID]types.Deployment),
+-		secrets:       make(map[string]types.Secret),
+-		registries:    make(map[string]types.RegistryCredential),
+-		quotas:        make(map[string]types.ResourceQuota),
+-		gitops:        make(map[string]types.GitOpsSource),
+-		namespaces:    make(map[string]types.Namespace),
+-		envelope:      envelope,
+-		policy:        policy.DefaultClusterPolicy(),
+-		imageResolver: imageinfo.ParserResolver{},
+-		now:           now,
++		nodes:             make(map[types.NodeID]types.Node),
++		services:          make(map[types.ServiceID]types.Service),
++		versions:          make(map[types.ServiceID]map[int64]types.ServiceSpec),
++		tasks:             make(map[types.TaskID]types.Task),
++		deployments:       make(map[types.DeploymentID]types.Deployment),
++		secrets:           make(map[string]types.Secret),
++		registries:        make(map[string]types.RegistryCredential),
++		quotas:            make(map[string]types.ResourceQuota),
++		gitops:            make(map[string]types.GitOpsSource),
++		jobs:              make(map[string]types.Job),
++		cronJobs:          make(map[string]types.CronJob),
++		volumes:           make(map[string]types.Volume),
++		volumeClaims:      make(map[string]types.VolumeClaim),
++		attachments:       make(map[string]types.VolumeAttachment),
++		notificationSinks: make(map[string]types.NotificationSink),
++		namespaces:        make(map[string]types.Namespace),
++		envelope:          envelope,
++		policy:            policy.DefaultClusterPolicy(),
++		imageResolver:     imageinfo.ParserResolver{},
++		now:               now,
+ 	}
+ 	for _, opt := range opts {
+ 		opt(service)
+@@ -375,6 +412,9 @@ func (s *MemoryService) CreateGitOpsSource(ctx context.Context, source types.Git
+ 	if source.Path == "" {
+ 		source.Path = "."
+ 	}
++	if source.DriftPolicy == "" {
++		source.DriftPolicy = types.GitOpsWarnOnly
++	}
+ 	if err := gitops.ValidateSource(source); err != nil {
+ 		return types.GitOpsSource{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
+@@ -667,6 +707,10 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		if task.DesiredStatus == types.TaskRunning && !countsTowardDesiredReplicas(task) {
+ 			continue
+ 		}
++		if task.JobID != "" {
++			tasks = append(tasks, AgentTask{Task: task})
++			continue
++		}
+ 		service := s.services[task.ServiceID]
+ 		env, err := s.resolveEnvLocked(ctx, service.Namespace, service.Spec)
+ 		if err != nil {
+@@ -817,6 +861,7 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 	task.ActualStatus = status
+ 	task.ContainerID = report.ContainerID
+ 	task.FailureReason = report.FailureReason
++	task.ExitCode = report.ExitCode
+ 	task.UpdatedAt = s.now()
+ 	if (status == types.TaskRunning || status == types.TaskHealthy) && task.StartedAt.IsZero() {
+ 		task.StartedAt = task.UpdatedAt
+@@ -825,8 +870,14 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 		task.FinishedAt = task.UpdatedAt
+ 	}
+ 	s.tasks[task.ID] = task
++	if task.JobID != "" && (status == types.TaskRunning || status == types.TaskHealthy || status == types.TaskFailed || status == types.TaskStopped) {
++		s.updateJobForTaskLocked(task)
++	}
+ 	if status == types.TaskRemoved {
+-		s.maybeFinalizeServiceDeletionLocked(task.ServiceID, task.UpdatedAt)
++		if task.ServiceID != "" {
++			s.maybeFinalizeServiceDeletionLocked(task.ServiceID, task.UpdatedAt)
++		}
++		s.detachTaskVolumesLocked(task.ID)
+ 	}
+ 	s.reconcileDrainingNodesLocked(task.UpdatedAt)
+ 	s.appendEventLocked(eventType, severity, "agent", message, "task", string(task.ID), task.UpdatedAt)
+@@ -1968,7 +2019,7 @@ func upsertTaskCondition(conditions []types.TaskCondition, condition types.TaskC
+ }
+ 
+ func (s *MemoryService) appendEventLocked(eventType string, severity types.EventSeverity, source string, message string, objectType string, objectID string, timestamp time.Time) {
+-	s.events = append(s.events, types.Event{
++	event := types.Event{
+ 		ID:                types.EventID(newUUID()),
+ 		Namespace:         s.namespaceForObjectLocked(objectType, objectID),
+ 		Type:              eventType,
+@@ -1978,7 +2029,11 @@ func (s *MemoryService) appendEventLocked(eventType string, severity types.Event
+ 		RelatedObjectType: objectType,
+ 		RelatedObjectID:   objectID,
+ 		Timestamp:         timestamp.UTC(),
+-	})
++	}
++	s.events = append(s.events, event)
++	if s.notificationDispatcher != nil {
++		go func() { _ = s.notificationDispatcher.Notify(context.Background(), event) }()
++	}
+ }
+ 
+ func (s *MemoryService) namespaceForObjectLocked(objectType string, objectID string) string {
+@@ -2132,12 +2187,21 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 	sortTasksForReplicaRetention(active)
+ 
+ 	nodes := s.readyNodesLocked()
++	resolvedMounts, mountErr := s.resolveVolumeMountsLocked(service.Namespace, service.Spec.VolumeClaims)
++	if mountErr != nil {
++		return
++	}
++	nodes = s.nodesForVolumeMountsLocked(nodes, resolvedMounts)
+ 	if len(nodes) == 0 {
+ 		return
+ 	}
+ 
+ 	for len(active) < service.Spec.Replicas {
+-		node := nodes[len(active)%len(nodes)]
++		eligibleNodes := s.nodesForVolumeMountsLocked(nodes, resolvedMounts)
++		if len(eligibleNodes) == 0 {
++			break
++		}
++		node := eligibleNodes[len(active)%len(eligibleNodes)]
+ 		task := types.Task{
+ 			ID:                  types.TaskID(newUUID()),
+ 			Namespace:           service.Namespace,
+@@ -2153,10 +2217,12 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 			ImageTag:            service.Spec.ImageMetadata.Tag,
+ 			Version:             service.DeploymentVersion,
+ 			Ports:               s.assignPortsForNodeLocked(service.Spec.Ports, node.ID),
++			VolumeMounts:        append([]types.ResolvedVolumeMount(nil), resolvedMounts...),
+ 			CreatedAt:           timestamp,
+ 			UpdatedAt:           timestamp,
+ 		}
+ 		s.tasks[task.ID] = task
++		s.attachTaskVolumesLocked(task, node.ID)
+ 		active = append(active, task)
+ 	}
+ 
+diff --git a/internal/controlplane/workloads.go b/internal/controlplane/workloads.go
+new file mode 100644
+index 0000000..8fb113c
+--- /dev/null
++++ b/internal/controlplane/workloads.go
+@@ -0,0 +1,563 @@
++package controlplane
++
++import (
++	"context"
++	"fmt"
++	"reflect"
++	"slices"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/gitops"
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func (s *MemoryService) SetNotificationDispatcher(dispatcher interface {
++	Notify(context.Context, types.Event) error
++}) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	s.notificationDispatcher = dispatcher
++}
++
++func (s *MemoryService) MarkGitOpsManaged(ctx context.Context, id types.ServiceID, state types.GitOpsManagedState) (types.Service, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	service, ok := s.services[id]
++	if !ok || !namespace.Matches(ctx, service.Namespace) {
++		return types.Service{}, store.ErrNotFound
++	}
++	if state.DesiredSpec.Name == "" {
++		state.DesiredSpec = service.Spec
++	}
++	state.Status = types.GitOpsInSync
++	state.LastCheckedAt = s.now()
++	service.GitOps = &state
++	s.services[id] = service
++	return service, nil
++}
++
++func (s *MemoryService) ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error) {
++	items, err := s.ListNodes(ctx)
++	if err != nil {
++		return nil, err
++	}
++	out := make([]types.Node, 0)
++	for _, item := range items {
++		if item.Status == status {
++			out = append(out, item)
++		}
++	}
++	return out, nil
++}
++func (s *MemoryService) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
++	return s.ListTasks(ctx, TaskFilter{Status: status})
++}
++func (s *MemoryService) ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++	return s.ListTasks(ctx, TaskFilter{NodeID: nodeID})
++}
++
++func (s *MemoryService) GitOpsStatus(ctx context.Context) ([]types.Service, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	items := make([]types.Service, 0)
++	for id, service := range s.services {
++		if service.GitOps == nil || !namespace.Matches(ctx, service.Namespace) {
++			continue
++		}
++		state := *service.GitOps
++		state.LastCheckedAt = s.now()
++		source, sourceExists := s.gitops[state.SourceID]
++		if !sourceExists {
++			state.Status = types.GitOpsUnknown
++		} else if source.LastError != "" || state.LastError != "" {
++			state.Status = types.GitOpsSyncError
++		} else if reflect.DeepEqual(service.Spec, state.DesiredSpec) {
++			state.Status = types.GitOpsInSync
++		} else {
++			state.Status = types.GitOpsDrifted
++		}
++		if state.Status == types.GitOpsDrifted {
++			s.appendEventLocked(gitops.EventDriftDetected, types.EventWarning, "gitops", "GitOps-managed service drifted", "service", string(service.ID), state.LastCheckedAt)
++			if state.Policy == types.GitOpsAutoRevert {
++				service.Spec = state.DesiredSpec
++				service.DeploymentVersion++
++				service.UpdatedAt = state.LastCheckedAt
++				state.Status = types.GitOpsInSync
++				s.reconcileServiceTasksLocked(service, state.LastCheckedAt)
++				s.appendEventLocked(gitops.EventDriftReverted, types.EventInfo, "gitops", "GitOps drift automatically reverted", "service", string(service.ID), state.LastCheckedAt)
++			}
++		}
++		service.GitOps = &state
++		s.services[id] = service
++		items = append(items, service)
++	}
++	slices.SortFunc(items, func(a, b types.Service) int { return strings.Compare(a.Spec.Name, b.Spec.Name) })
++	return items, nil
++}
++
++func (s *MemoryService) GitOpsDiff(ctx context.Context, name string) (gitops.Diff, error) {
++	items, err := s.GitOpsStatus(ctx)
++	if err != nil {
++		return gitops.Diff{}, err
++	}
++	for _, service := range items {
++		if service.Spec.Name == name || string(service.ID) == name {
++			return gitops.Diff{Service: service.Spec.Name, Status: service.GitOps.Status, Desired: service.GitOps.DesiredSpec, Live: service.Spec}, nil
++		}
++	}
++	return gitops.Diff{}, store.ErrNotFound
++}
++
++func (s *MemoryService) CreateJob(ctx context.Context, spec types.JobSpec) (types.Job, error) {
++	if err := spec.Validate(); err != nil {
++		return types.Job{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	req, err := spec.ResourceRequirements.WithDefaults(types.DefaultResourceDefaults())
++	if err != nil {
++		return types.Job{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	spec.ResourceRequirements = req
++	ns := namespace.FromContext(ctx)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if _, ok := s.namespaces[ns]; !ok {
++		return types.Job{}, store.ErrNotFound
++	}
++	for _, job := range s.jobs {
++		if job.Namespace == ns && job.Spec.Name == spec.Name && (job.Status == types.JobPending || job.Status == types.JobRunning) {
++			return types.Job{}, store.ErrDuplicate
++		}
++	}
++	now := s.now()
++	id := newUUID()
++	job := types.Job{ID: id, Namespace: ns, Spec: spec, Status: types.JobPending, Attempts: 1, CreatedAt: now, UpdatedAt: now}
++	task := types.Task{ID: types.TaskID(newUUID()), Namespace: ns, JobID: id, DesiredStatus: types.TaskRunning, ActualStatus: types.TaskPending, Image: spec.Image, RequestedImage: spec.Image, Version: 1, Command: append([]string(nil), spec.Command...), ResourceRequirements: &spec.ResourceRequirements, PlacementConstraints: append([]types.PlacementConstraint(nil), spec.PlacementConstraints...), CreatedAt: now, UpdatedAt: now}
++	resolved, err := s.resolveVolumeMountsLocked(ns, spec.VolumeClaims)
++	if err != nil {
++		return types.Job{}, err
++	}
++	task.VolumeMounts = resolved
++	job.TaskIDs = []types.TaskID{task.ID}
++	s.jobs[id] = job
++	s.tasks[task.ID] = task
++	s.appendEventLocked("job.created", types.EventInfo, "jobs", "job created", "job", id, now)
++	return job, nil
++}
++
++func (s *MemoryService) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, ports []types.Port, expectedUpdatedAt time.Time) (types.Task, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Task{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	task, ok := s.tasks[id]
++	if !ok {
++		return types.Task{}, store.ErrNotFound
++	}
++	if !expectedUpdatedAt.IsZero() && !task.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Task{}, store.ErrConflict
++	}
++	if task.ActualStatus != types.TaskPending {
++		return types.Task{}, store.ErrConflict
++	}
++	node, ok := s.nodes[nodeID]
++	if !ok || node.Status != types.NodeReady {
++		return types.Task{}, store.ErrNotFound
++	}
++	if len(s.nodesForVolumeMountsLocked([]types.Node{node}, task.VolumeMounts)) == 0 {
++		return types.Task{}, store.ErrConflict
++	}
++	task.NodeID = nodeID
++	task.Ports = append([]types.Port(nil), ports...)
++	task.ActualStatus = types.TaskAssigned
++	task.UpdatedAt = s.now()
++	s.tasks[id] = task
++	s.attachTaskVolumesLocked(task, nodeID)
++	return task, nil
++}
++
++func (s *MemoryService) updateJobForTaskLocked(task types.Task) {
++	job, ok := s.jobs[task.JobID]
++	if !ok {
++		return
++	}
++	now := s.now()
++	switch task.ActualStatus {
++	case types.TaskRunning, types.TaskHealthy:
++		job.Status = types.JobRunning
++	case types.TaskStopped:
++		code := 0
++		if task.ExitCode != nil {
++			code = *task.ExitCode
++		}
++		job.LastExitCode = &code
++		if code == 0 {
++			job.Status = types.JobSucceeded
++			job.CompletedAt = now
++		} else {
++			s.retryOrFailJobLocked(&job, task, code, now)
++		}
++	case types.TaskFailed:
++		code := 1
++		if task.ExitCode != nil {
++			code = *task.ExitCode
++		}
++		job.LastExitCode = &code
++		s.retryOrFailJobLocked(&job, task, code, now)
++	}
++	job.UpdatedAt = now
++	s.jobs[job.ID] = job
++}
++
++func (s *MemoryService) retryOrFailJobLocked(job *types.Job, previous types.Task, code int, now time.Time) {
++	if job.Attempts > job.Spec.BackoffLimit {
++		job.Status = types.JobFailed
++		job.CompletedAt = now
++		return
++	}
++	job.Attempts++
++	task := previous
++	task.ID = types.TaskID(newUUID())
++	task.NodeID = ""
++	task.ContainerID = ""
++	task.ActualStatus = types.TaskPending
++	task.DesiredStatus = types.TaskRunning
++	task.RestartCount = job.Attempts - 1
++	task.ExitCode = nil
++	task.FailureReason = ""
++	task.CreatedAt = now
++	task.UpdatedAt = now
++	task.StartedAt = time.Time{}
++	task.FinishedAt = time.Time{}
++	s.tasks[task.ID] = task
++	job.TaskIDs = append(job.TaskIDs, task.ID)
++	job.Status = types.JobPending
++}
++
++func (s *MemoryService) ListJobs(ctx context.Context) ([]types.Job, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.Job{}
++	for _, j := range s.jobs {
++		if namespace.Matches(ctx, j.Namespace) {
++			out = append(out, j)
++		}
++	}
++	slices.SortFunc(out, func(a, b types.Job) int { return strings.Compare(a.ID, b.ID) })
++	return out, nil
++}
++func (s *MemoryService) GetJob(ctx context.Context, id string) (types.Job, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	j, ok := s.jobs[id]
++	if !ok || !namespace.Matches(ctx, j.Namespace) {
++		return types.Job{}, store.ErrNotFound
++	}
++	return j, nil
++}
++func (s *MemoryService) DeleteJob(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	j, ok := s.jobs[id]
++	if !ok || !namespace.Matches(ctx, j.Namespace) {
++		return store.ErrNotFound
++	}
++	for _, tid := range j.TaskIDs {
++		delete(s.tasks, tid)
++		s.detachTaskVolumesLocked(tid)
++	}
++	delete(s.jobs, id)
++	s.appendEventLocked("job.deleted", types.EventInfo, "jobs", "job deleted", "job", id, s.now())
++	return nil
++}
++
++func (s *MemoryService) CreateCronJob(ctx context.Context, spec types.CronJobSpec) (types.CronJob, error) {
++	if strings.TrimSpace(spec.Name) == "" || strings.TrimSpace(spec.Schedule) == "" {
++		return types.CronJob{}, fmt.Errorf("%w: name and schedule are required", store.ErrInvalidState)
++	}
++	if spec.Timezone == "" {
++		spec.Timezone = "UTC"
++	}
++	if spec.ConcurrencyPolicy == "" {
++		spec.ConcurrencyPolicy = types.ConcurrencyAllow
++	}
++	if spec.ConcurrencyPolicy != types.ConcurrencyAllow && spec.ConcurrencyPolicy != types.ConcurrencyForbid && spec.ConcurrencyPolicy != types.ConcurrencyReplace {
++		return types.CronJob{}, fmt.Errorf("%w: invalid concurrency policy", store.ErrInvalidState)
++	}
++	if err := spec.JobTemplate.Validate(); err != nil {
++		return types.CronJob{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	ns := namespace.FromContext(ctx)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	now := s.now()
++	item := types.CronJob{ID: newUUID(), Namespace: ns, Spec: spec, CreatedAt: now, UpdatedAt: now}
++	s.cronJobs[item.ID] = item
++	return item, nil
++}
++func (s *MemoryService) ListCronJobs(ctx context.Context) ([]types.CronJob, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.CronJob{}
++	for _, v := range s.cronJobs {
++		if namespace.Matches(ctx, v.Namespace) {
++			out = append(out, v)
++		}
++	}
++	slices.SortFunc(out, func(a, b types.CronJob) int { return strings.Compare(a.ID, b.ID) })
++	return out, nil
++}
++func (s *MemoryService) GetCronJob(ctx context.Context, id string) (types.CronJob, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	v, ok := s.cronJobs[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return types.CronJob{}, store.ErrNotFound
++	}
++	return v, nil
++}
++func (s *MemoryService) DeleteCronJob(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	v, ok := s.cronJobs[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return store.ErrNotFound
++	}
++	delete(s.cronJobs, id)
++	return nil
++}
++func (s *MemoryService) SetCronJobSuspended(ctx context.Context, id string, value bool) (types.CronJob, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	v, ok := s.cronJobs[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return types.CronJob{}, store.ErrNotFound
++	}
++	v.Spec.Suspended = value
++	v.UpdatedAt = s.now()
++	s.cronJobs[id] = v
++	return v, nil
++}
++func (s *MemoryService) UpdateCronJob(ctx context.Context, v types.CronJob) (types.CronJob, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	old, ok := s.cronJobs[v.ID]
++	if !ok || !namespace.Matches(ctx, old.Namespace) {
++		return types.CronJob{}, store.ErrNotFound
++	}
++	v.Namespace = old.Namespace
++	v.CreatedAt = old.CreatedAt
++	v.UpdatedAt = s.now()
++	s.cronJobs[v.ID] = v
++	return v, nil
++}
++
++func (s *MemoryService) CreateVolume(ctx context.Context, v types.Volume) (types.Volume, error) {
++	v.Name = strings.TrimSpace(v.Name)
++	if v.Name == "" {
++		return types.Volume{}, fmt.Errorf("%w: volume name is required", store.ErrInvalidState)
++	}
++	if v.Driver == "" {
++		v.Driver = "local"
++	}
++	if v.Driver != "local" {
++		return types.Volume{}, fmt.Errorf("%w: only local volumes are supported", store.ErrInvalidState)
++	}
++	v.Namespace = namespace.FromContext(ctx)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	for _, x := range s.volumes {
++		if x.Namespace == v.Namespace && x.Name == v.Name {
++			return types.Volume{}, store.ErrDuplicate
++		}
++	}
++	v.ID = newUUID()
++	v.CreatedAt = s.now()
++	s.volumes[v.ID] = v
++	return v, nil
++}
++func (s *MemoryService) ListVolumes(ctx context.Context) ([]types.Volume, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.Volume{}
++	for _, v := range s.volumes {
++		if namespace.Matches(ctx, v.Namespace) {
++			out = append(out, v)
++		}
++	}
++	return out, nil
++}
++func (s *MemoryService) GetVolume(ctx context.Context, id string) (types.Volume, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	v, ok := s.volumes[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return types.Volume{}, store.ErrNotFound
++	}
++	return v, nil
++}
++func (s *MemoryService) DeleteVolume(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	v, ok := s.volumes[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return store.ErrNotFound
++	}
++	for _, a := range s.attachments {
++		if a.VolumeID == id && a.DetachedAt.IsZero() {
++			return store.ErrConflict
++		}
++	}
++	delete(s.volumes, id)
++	return nil
++}
++func (s *MemoryService) CreateVolumeClaim(ctx context.Context, c types.VolumeClaim) (types.VolumeClaim, error) {
++	c.Name = strings.TrimSpace(c.Name)
++	if c.Name == "" {
++		return types.VolumeClaim{}, fmt.Errorf("%w: claim name is required", store.ErrInvalidState)
++	}
++	if c.AccessMode == "" {
++		c.AccessMode = types.VolumeReadWriteOnce
++	}
++	c.Namespace = namespace.FromContext(ctx)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if c.VolumeID != "" {
++		v, ok := s.volumes[c.VolumeID]
++		if !ok || v.Namespace != c.Namespace {
++			return types.VolumeClaim{}, store.ErrNotFound
++		}
++	}
++	c.ID = newUUID()
++	c.CreatedAt = s.now()
++	s.volumeClaims[namespacedKey(c.Namespace, c.Name)] = c
++	return c, nil
++}
++func (s *MemoryService) ListVolumeClaims(ctx context.Context) ([]types.VolumeClaim, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.VolumeClaim{}
++	for _, v := range s.volumeClaims {
++		if namespace.Matches(ctx, v.Namespace) {
++			out = append(out, v)
++		}
++	}
++	return out, nil
++}
++
++func (s *MemoryService) resolveVolumeMountsLocked(ns string, mounts []types.VolumeClaimMount) ([]types.ResolvedVolumeMount, error) {
++	out := make([]types.ResolvedVolumeMount, 0, len(mounts))
++	for _, m := range mounts {
++		c, ok := s.volumeClaims[namespacedKey(ns, m.Claim)]
++		if !ok {
++			return nil, fmt.Errorf("%w: volume claim %q not found", store.ErrInvalidState, m.Claim)
++		}
++		if c.VolumeID == "" {
++			for id, v := range s.volumes {
++				if v.Namespace == ns && v.Name == c.Name {
++					c.VolumeID = id
++					break
++				}
++			}
++			if c.VolumeID == "" {
++				v := types.Volume{ID: newUUID(), Namespace: ns, Name: c.Name, Driver: "local", CreatedAt: s.now()}
++				s.volumes[v.ID] = v
++				c.VolumeID = v.ID
++				s.volumeClaims[namespacedKey(ns, c.Name)] = c
++			}
++		}
++		v := s.volumes[c.VolumeID]
++		out = append(out, types.ResolvedVolumeMount{ClaimID: c.ID, VolumeID: v.ID, VolumeName: v.Name, NodeID: v.NodeID, Target: m.Target, ReadOnly: m.ReadOnly, AccessMode: c.AccessMode, AllowConcurrentWriters: c.AllowConcurrentWriters})
++	}
++	return out, nil
++}
++func (s *MemoryService) detachTaskVolumesLocked(tid types.TaskID) {
++	now := s.now()
++	for id, a := range s.attachments {
++		if a.TaskID == tid && a.DetachedAt.IsZero() {
++			a.DetachedAt = now
++			s.attachments[id] = a
++		}
++	}
++}
++func (s *MemoryService) nodesForVolumeMountsLocked(nodes []types.Node, mounts []types.ResolvedVolumeMount) []types.Node {
++	out := []types.Node{}
++	for _, n := range nodes {
++		ok := true
++		for _, m := range mounts {
++			if m.NodeID != "" && m.NodeID != n.ID {
++				ok = false
++				break
++			}
++			if !m.ReadOnly && m.AccessMode == types.VolumeReadWriteOnce && !m.AllowConcurrentWriters {
++				for _, a := range s.attachments {
++					if a.VolumeID == m.VolumeID && a.DetachedAt.IsZero() {
++						ok = false
++						break
++					}
++				}
++			}
++		}
++		if ok {
++			out = append(out, n)
++		}
++	}
++	return out
++}
++func (s *MemoryService) attachTaskVolumesLocked(task types.Task, node types.NodeID) {
++	for _, m := range task.VolumeMounts {
++		v := s.volumes[m.VolumeID]
++		if v.NodeID == "" {
++			v.NodeID = node
++			s.volumes[v.ID] = v
++		}
++		id := newUUID()
++		s.attachments[id] = types.VolumeAttachment{ID: id, VolumeID: m.VolumeID, TaskID: task.ID, NodeID: node, ReadOnly: m.ReadOnly, AttachedAt: s.now()}
++	}
++}
++
++func (s *MemoryService) CreateNotificationSink(ctx context.Context, v types.NotificationSink) (types.NotificationSink, error) {
++	if err := v.Validate(); err != nil {
++		return types.NotificationSink{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
++	v.Namespace = namespace.FromContext(ctx)
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	v.ID = newUUID()
++	v.CreatedAt = s.now()
++	s.notificationSinks[v.ID] = v
++	return v, nil
++}
++func (s *MemoryService) ListNotificationSinks(ctx context.Context) ([]types.NotificationSink, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	out := []types.NotificationSink{}
++	for _, v := range s.notificationSinks {
++		if namespace.Matches(ctx, v.Namespace) {
++			out = append(out, v)
++		}
++	}
++	return out, nil
++}
++func (s *MemoryService) GetNotificationSink(ctx context.Context, id string) (types.NotificationSink, error) {
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++	v, ok := s.notificationSinks[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return types.NotificationSink{}, store.ErrNotFound
++	}
++	return v, nil
++}
++func (s *MemoryService) DeleteNotificationSink(ctx context.Context, id string) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	v, ok := s.notificationSinks[id]
++	if !ok || !namespace.Matches(ctx, v.Namespace) {
++		return store.ErrNotFound
++	}
++	delete(s.notificationSinks, id)
++	return nil
++}
+diff --git a/internal/controlplane/workloads_test.go b/internal/controlplane/workloads_test.go
+new file mode 100644
+index 0000000..44a898d
+--- /dev/null
++++ b/internal/controlplane/workloads_test.go
+@@ -0,0 +1,162 @@
++package controlplane
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func readyTestNode(t *testing.T, s *MemoryService) types.Node {
++	t.Helper()
++	out, err := s.RegisterNode(context.Background(), NodeRegistration{Name: "worker-1", AdvertiseAddress: "10.0.0.1:7443", Capacity: types.Resources{CPU: 4000, Memory: 8 << 30}, Allocatable: types.Resources{CPU: 4000, Memory: 8 << 30}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	return out.Node
++}
++func jobSpec(name string, limit int) types.JobSpec {
++	return types.JobSpec{Name: name, Image: "busybox:1.36", Command: []string{"true"}, BackoffLimit: limit, ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: 100, Memory: 1 << 20}, Limits: types.Resources{CPU: 100, Memory: 1 << 20}}}
++}
++
++func TestJobSuccessFailureRetryAndDelete(t *testing.T) {
++	ctx := context.Background()
++	s := NewMemoryService()
++	node := readyTestNode(t, s)
++	success, err := s.CreateJob(ctx, jobSpec("success", 0))
++	if err != nil {
++		t.Fatal(err)
++	}
++	task := s.tasks[success.TaskIDs[0]]
++	task, err = s.AssignTask(ctx, task.ID, node.ID, nil, task.UpdatedAt)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.ReportTaskStatus(ctx, TaskStatusReport{TaskID: task.ID, NodeID: node.ID, Status: types.TaskRunning}); err != nil {
++		t.Fatal(err)
++	}
++	zero := 0
++	if _, err = s.ReportTaskStatus(ctx, TaskStatusReport{TaskID: task.ID, NodeID: node.ID, Status: types.TaskStopped, ExitCode: &zero}); err != nil {
++		t.Fatal(err)
++	}
++	success, _ = s.GetJob(ctx, success.ID)
++	if success.Status != types.JobSucceeded {
++		t.Fatalf("status=%s", success.Status)
++	}
++	failing, err := s.CreateJob(ctx, jobSpec("failure", 1))
++	if err != nil {
++		t.Fatal(err)
++	}
++	first := s.tasks[failing.TaskIDs[0]]
++	first, err = s.AssignTask(ctx, first.ID, node.ID, nil, first.UpdatedAt)
++	if err != nil {
++		t.Fatal(err)
++	}
++	one := 1
++	if _, err = s.ReportTaskStatus(ctx, TaskStatusReport{TaskID: first.ID, NodeID: node.ID, Status: types.TaskFailed, ExitCode: &one}); err != nil {
++		t.Fatal(err)
++	}
++	failing, _ = s.GetJob(ctx, failing.ID)
++	if failing.Status != types.JobPending || len(failing.TaskIDs) != 2 {
++		t.Fatalf("retry not created: %#v", failing)
++	}
++	second := s.tasks[failing.TaskIDs[1]]
++	second, err = s.AssignTask(ctx, second.ID, node.ID, nil, second.UpdatedAt)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.ReportTaskStatus(ctx, TaskStatusReport{TaskID: second.ID, NodeID: node.ID, Status: types.TaskFailed, ExitCode: &one}); err != nil {
++		t.Fatal(err)
++	}
++	failing, _ = s.GetJob(ctx, failing.ID)
++	if failing.Status != types.JobFailed {
++		t.Fatalf("status=%s", failing.Status)
++	}
++	if err = s.DeleteJob(ctx, failing.ID); err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.GetJob(ctx, failing.ID); err != store.ErrNotFound {
++		t.Fatalf("delete err=%v", err)
++	}
++}
++
++func TestGitOpsManualChangesCreateDriftAndAutoRevert(t *testing.T) {
++	ctx := context.Background()
++	s := NewMemoryService()
++	_ = readyTestNode(t, s)
++	source, err := s.CreateGitOpsSource(ctx, types.GitOpsSource{RepositoryURL: "https://example.test/repo.git", Branch: "main", Path: ".", SyncInterval: time.Minute})
++	if err != nil {
++		t.Fatal(err)
++	}
++	service, err := s.CreateService(ctx, types.ServiceSpec{Name: "api", Image: "nginx:1.27", Replicas: 1})
++	if err != nil {
++		t.Fatal(err)
++	}
++	desired := service.Spec
++	if _, err = s.MarkGitOpsManaged(ctx, service.ID, types.GitOpsManagedState{SourceID: source.ID, SourceCommit: "abc", SourcePath: "api.yaml", Policy: types.GitOpsWarnOnly, DesiredSpec: desired}); err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.ScaleService(ctx, service.ID, 3); err != nil {
++		t.Fatal(err)
++	}
++	items, err := s.GitOpsStatus(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if items[0].GitOps.Status != types.GitOpsDrifted {
++		t.Fatalf("status=%s", items[0].GitOps.Status)
++	}
++	state := *items[0].GitOps
++	state.Policy = types.GitOpsAutoRevert
++	if _, err = s.MarkGitOpsManaged(ctx, service.ID, state); err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.RolloutService(ctx, service.ID, RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1}); err != nil {
++		t.Fatal(err)
++	}
++	items, err = s.GitOpsStatus(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if items[0].Spec.Image != desired.Image || items[0].GitOps.Status != types.GitOpsInSync {
++		t.Fatalf("auto-revert failed: %#v", items[0])
++	}
++}
++
++func TestLocalVolumeSchedulingConflictAndCleanup(t *testing.T) {
++	ctx := context.Background()
++	s := NewMemoryService()
++	node := readyTestNode(t, s)
++	volume, err := s.CreateVolume(ctx, types.Volume{Name: "data", Driver: "local", NodeID: node.ID})
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err = s.CreateVolumeClaim(ctx, types.VolumeClaim{Name: "data", VolumeID: volume.ID, AccessMode: types.VolumeReadWriteOnce}); err != nil {
++		t.Fatal(err)
++	}
++	service, err := s.CreateService(ctx, types.ServiceSpec{Name: "db", Image: "postgres:17", Replicas: 2, VolumeClaims: []types.VolumeClaimMount{{Claim: "data", Target: "/var/lib/data"}}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	tasks, err := s.ListTasksByService(ctx, service.ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(tasks) != 1 {
++		t.Fatalf("RWO should allow one writer, got %d", len(tasks))
++	}
++	task := tasks[0]
++	if len(task.VolumeMounts) != 1 || task.VolumeMounts[0].VolumeID != volume.ID {
++		t.Fatal("volume not attached")
++	}
++	if _, err = s.ReportTaskStatus(ctx, TaskStatusReport{TaskID: task.ID, NodeID: node.ID, Status: types.TaskRemoved}); err != nil {
++		t.Fatal(err)
++	}
++	for _, a := range s.attachments {
++		if a.TaskID == task.ID && a.DetachedAt.IsZero() {
++			t.Fatal("attachment not cleaned up")
++		}
++	}
++}
+diff --git a/internal/cronjobs/cronjobs.go b/internal/cronjobs/cronjobs.go
+new file mode 100644
+index 0000000..b3f6d44
+--- /dev/null
++++ b/internal/cronjobs/cronjobs.go
+@@ -0,0 +1,224 @@
++package cronjobs
++
++import (
++	"context"
++	"fmt"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Store interface {
++	ListCronJobs(context.Context) ([]types.CronJob, error)
++	UpdateCronJob(context.Context, types.CronJob) (types.CronJob, error)
++	CreateJob(context.Context, types.JobSpec) (types.Job, error)
++	ListJobs(context.Context) ([]types.Job, error)
++	DeleteJob(context.Context, string) error
++}
++
++type Clock interface{ Now() time.Time }
++type realClock struct{}
++
++func (realClock) Now() time.Time { return time.Now().UTC() }
++
++type Controller struct {
++	store    Store
++	clock    Clock
++	interval time.Duration
++}
++
++func New(store Store, clock Clock) *Controller {
++	if clock == nil {
++		clock = realClock{}
++	}
++	return &Controller{store: store, clock: clock, interval: time.Second}
++}
++
++func (c *Controller) Run(ctx context.Context) error {
++	ticker := time.NewTicker(c.interval)
++	defer ticker.Stop()
++	for {
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++			if err := c.RunOnce(ctx); err != nil {
++				return err
++			}
++		}
++	}
++}
++
++func (c *Controller) RunOnce(ctx context.Context) error {
++	items, err := c.store.ListCronJobs(ctx)
++	if err != nil {
++		return err
++	}
++	now := c.clock.Now().UTC()
++	for _, item := range items {
++		loc, err := time.LoadLocation(item.Spec.Timezone)
++		if err != nil {
++			return fmt.Errorf("cronjob %s timezone: %w", item.ID, err)
++		}
++		schedule, err := Parse(item.Spec.Schedule)
++		if err != nil {
++			return fmt.Errorf("cronjob %s schedule: %w", item.ID, err)
++		}
++		base := item.LastScheduleAt
++		if base.IsZero() {
++			base = item.CreatedAt
++		}
++		due := schedule.Between(base.In(loc), now.In(loc), item.Spec.MissedScheduleLimit)
++		item.NextScheduleAt = schedule.Next(now.In(loc)).UTC()
++		if item.Spec.Suspended || len(due) == 0 {
++			_, err = c.store.UpdateCronJob(namespace.WithContext(ctx, item.Namespace), item)
++			if err != nil {
++				return err
++			}
++			continue
++		}
++		jobCtx := namespace.WithContext(ctx, item.Namespace)
++		jobs, err := c.store.ListJobs(jobCtx)
++		if err != nil {
++			return err
++		}
++		active := activeJobs(item.ActiveJobIDs, jobs)
++		switch item.Spec.ConcurrencyPolicy {
++		case types.ConcurrencyForbid:
++			if len(active) > 0 {
++				due = nil
++			}
++		case types.ConcurrencyReplace:
++			for _, id := range active {
++				if err := c.store.DeleteJob(jobCtx, id); err != nil {
++					return err
++				}
++			}
++			item.ActiveJobIDs = nil
++		}
++		for _, at := range due {
++			spec := item.Spec.JobTemplate
++			spec.Name = item.Spec.Name + "-" + at.UTC().Format("20060102-150405")
++			job, err := c.store.CreateJob(jobCtx, spec)
++			if err != nil {
++				return err
++			}
++			item.ActiveJobIDs = append(item.ActiveJobIDs, job.ID)
++			item.LastScheduleAt = at.UTC()
++		}
++		_, err = c.store.UpdateCronJob(jobCtx, item)
++		if err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++func activeJobs(ids []string, jobs []types.Job) []string {
++	set := map[string]types.JobStatus{}
++	for _, j := range jobs {
++		set[j.ID] = j.Status
++	}
++	out := []string{}
++	for _, id := range ids {
++		if set[id] == types.JobPending || set[id] == types.JobRunning {
++			out = append(out, id)
++		}
++	}
++	return out
++}
++
++type Schedule struct{ fields [5]field }
++type field map[int]struct{}
++
++func Parse(value string) (Schedule, error) {
++	parts := strings.Fields(value)
++	if len(parts) != 5 {
++		return Schedule{}, fmt.Errorf("schedule must contain five fields")
++	}
++	bounds := [][2]int{{0, 59}, {0, 23}, {1, 31}, {1, 12}, {0, 6}}
++	var s Schedule
++	for i, p := range parts {
++		f, err := parseField(p, bounds[i][0], bounds[i][1])
++		if err != nil {
++			return Schedule{}, fmt.Errorf("field %d: %w", i+1, err)
++		}
++		s.fields[i] = f
++	}
++	return s, nil
++}
++func parseField(raw string, min, max int) (field, error) {
++	out := field{}
++	for _, part := range strings.Split(raw, ",") {
++		step := 1
++		base := part
++		if x := strings.Split(part, "/"); len(x) == 2 {
++			base = x[0]
++			v, err := strconv.Atoi(x[1])
++			if err != nil || v <= 0 {
++				return nil, fmt.Errorf("invalid step")
++			}
++			step = v
++		} else if len(x) > 2 {
++			return nil, fmt.Errorf("invalid field")
++		}
++		lo, hi := min, max
++		if base != "*" {
++			r := strings.Split(base, "-")
++			v, err := strconv.Atoi(r[0])
++			if err != nil {
++				return nil, fmt.Errorf("invalid value")
++			}
++			lo, hi = v, v
++			if len(r) == 2 {
++				hi, err = strconv.Atoi(r[1])
++				if err != nil {
++					return nil, fmt.Errorf("invalid range")
++				}
++			} else if len(r) > 2 {
++				return nil, fmt.Errorf("invalid range")
++			}
++		}
++		if lo < min || hi > max || lo > hi {
++			return nil, fmt.Errorf("value outside %d-%d", min, max)
++		}
++		for v := lo; v <= hi; v += step {
++			out[v] = struct{}{}
++		}
++	}
++	return out, nil
++}
++func (s Schedule) matches(t time.Time) bool {
++	vals := []int{t.Minute(), t.Hour(), t.Day(), int(t.Month()), int(t.Weekday())}
++	for i, v := range vals {
++		if _, ok := s.fields[i][v]; !ok {
++			return false
++		}
++	}
++	return true
++}
++func (s Schedule) Next(after time.Time) time.Time {
++	v := after.Truncate(time.Minute).Add(time.Minute)
++	for i := 0; i < 366*24*60; i++ {
++		if s.matches(v) {
++			return v
++		}
++		v = v.Add(time.Minute)
++	}
++	return time.Time{}
++}
++func (s Schedule) Between(after, through time.Time, limit int) []time.Time {
++	if limit <= 0 {
++		limit = 100
++	}
++	out := []time.Time{}
++	next := s.Next(after)
++	for !next.IsZero() && !next.After(through) && len(out) < limit {
++		out = append(out, next)
++		next = s.Next(next)
++	}
++	return out
++}
+diff --git a/internal/cronjobs/cronjobs_test.go b/internal/cronjobs/cronjobs_test.go
+new file mode 100644
+index 0000000..eea3e85
+--- /dev/null
++++ b/internal/cronjobs/cronjobs_test.go
+@@ -0,0 +1,87 @@
++package cronjobs
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type fakeClock struct{ now time.Time }
++
++func (f fakeClock) Now() time.Time { return f.now }
++
++type fakeStore struct {
++	cron []types.CronJob
++	jobs []types.Job
++}
++
++func (f *fakeStore) ListCronJobs(context.Context) ([]types.CronJob, error) {
++	return append([]types.CronJob(nil), f.cron...), nil
++}
++func (f *fakeStore) UpdateCronJob(_ context.Context, value types.CronJob) (types.CronJob, error) {
++	f.cron[0] = value
++	return value, nil
++}
++func (f *fakeStore) CreateJob(_ context.Context, spec types.JobSpec) (types.Job, error) {
++	job := types.Job{ID: spec.Name, Spec: spec, Status: types.JobPending}
++	f.jobs = append(f.jobs, job)
++	return job, nil
++}
++func (f *fakeStore) ListJobs(context.Context) ([]types.Job, error) {
++	return append([]types.Job(nil), f.jobs...), nil
++}
++func (f *fakeStore) DeleteJob(_ context.Context, id string) error {
++	for i, job := range f.jobs {
++		if job.ID == id {
++			f.jobs = append(f.jobs[:i], f.jobs[i+1:]...)
++			break
++		}
++	}
++	return nil
++}
++
++func TestParseAndRunWithFakeClock(t *testing.T) {
++	schedule, err := Parse("*/5 2 * * 1-5")
++	if err != nil {
++		t.Fatal(err)
++	}
++	monday := time.Date(2026, 8, 17, 2, 1, 0, 0, time.UTC)
++	if got := schedule.Next(monday); !got.Equal(time.Date(2026, 8, 17, 2, 5, 0, 0, time.UTC)) {
++		t.Fatalf("next=%s", got)
++	}
++	created := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
++	store := &fakeStore{cron: []types.CronJob{{ID: "cron", Namespace: "default", CreatedAt: created, Spec: types.CronJobSpec{Name: "report", Schedule: "* * * * *", Timezone: "UTC", ConcurrencyPolicy: types.ConcurrencyAllow, MissedScheduleLimit: 2, JobTemplate: types.JobSpec{Name: "report", Image: "busybox:1.36"}}}}}
++	controller := New(store, fakeClock{now: created.Add(3 * time.Minute)})
++	if err := controller.RunOnce(context.Background()); err != nil {
++		t.Fatal(err)
++	}
++	if len(store.jobs) != 2 {
++		t.Fatalf("missed limit not enforced: %d", len(store.jobs))
++	}
++	if store.cron[0].LastScheduleAt.IsZero() || store.cron[0].NextScheduleAt.IsZero() {
++		t.Fatal("schedule state not persisted")
++	}
++}
++
++func TestConcurrencyForbidAndReplace(t *testing.T) {
++	created := time.Date(2026, 8, 21, 12, 0, 0, 0, time.UTC)
++	active := types.Job{ID: "active", Status: types.JobRunning}
++	base := types.CronJob{ID: "cron", Namespace: "default", CreatedAt: created, ActiveJobIDs: []string{"active"}, Spec: types.CronJobSpec{Name: "work", Schedule: "* * * * *", Timezone: "UTC", ConcurrencyPolicy: types.ConcurrencyForbid, JobTemplate: types.JobSpec{Name: "work", Image: "busybox"}}}
++	store := &fakeStore{cron: []types.CronJob{base}, jobs: []types.Job{active}}
++	if err := New(store, fakeClock{now: created.Add(time.Minute)}).RunOnce(context.Background()); err != nil {
++		t.Fatal(err)
++	}
++	if len(store.jobs) != 1 {
++		t.Fatal("Forbid created overlapping job")
++	}
++	base.Spec.ConcurrencyPolicy = types.ConcurrencyReplace
++	store.cron[0] = base
++	if err := New(store, fakeClock{now: created.Add(time.Minute)}).RunOnce(context.Background()); err != nil {
++		t.Fatal(err)
++	}
++	if len(store.jobs) != 1 || store.jobs[0].ID == "active" {
++		t.Fatal("Replace did not replace active job")
++	}
++}
+diff --git a/internal/dns/server.go b/internal/dns/server.go
+new file mode 100644
+index 0000000..cd00733
+--- /dev/null
++++ b/internal/dns/server.go
+@@ -0,0 +1,218 @@
++package dns
++
++import (
++	"context"
++	"encoding/binary"
++	"fmt"
++	"net"
++	"strings"
++	"sync/atomic"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/namespace"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Store interface {
++	ListServices(context.Context) ([]types.Service, error)
++	ListTasks(context.Context, controlplane.TaskFilter) ([]types.Task, error)
++	ListNodes(context.Context) ([]types.Node, error)
++}
++type Metrics struct {
++	queries atomic.Uint64
++	errors  atomic.Uint64
++}
++type MetricsRecorder interface { IncDNSQuery(); IncDNSError() }
++func (m *Metrics) IncDNSQuery() { m.queries.Add(1) }
++func (m *Metrics) IncDNSError() { m.errors.Add(1) }
++
++func (m *Metrics) Queries() uint64 { return m.queries.Load() }
++func (m *Metrics) Errors() uint64  { return m.errors.Load() }
++func (m *Metrics) Prometheus() string {
++	return fmt.Sprintf("# TYPE dns_queries_total counter\ndns_queries_total %d\n# TYPE dns_errors_total counter\ndns_errors_total %d\n", m.Queries(), m.Errors())
++}
++
++type Server struct {
++	store            Store
++	ttl              uint32
++	defaultNamespace string
++	metrics          MetricsRecorder
++}
++
++func New(store Store, ttl time.Duration, defaultNamespace string, metrics MetricsRecorder) *Server {
++	if ttl <= 0 {
++		ttl = 30 * time.Second
++	}
++	if defaultNamespace == "" {
++		defaultNamespace = namespace.Default
++	}
++	if metrics == nil {
++		metrics = &Metrics{}
++	}
++	return &Server{store: store, ttl: uint32(ttl / time.Second), defaultNamespace: defaultNamespace, metrics: metrics}
++}
++
++func (s *Server) Resolve(ctx context.Context, name string) ([]net.IP, error) {
++	s.metrics.IncDNSQuery()
++	serviceName, ns, ok := parseName(name, s.defaultNamespace)
++	if !ok {
++		s.metrics.IncDNSError()
++		return nil, fmt.Errorf("unsupported DNS name %q", name)
++	}
++	ctx = namespace.WithContext(ctx, ns)
++	services, err := s.store.ListServices(ctx)
++	if err != nil {
++		s.metrics.IncDNSError()
++		return nil, err
++	}
++	var service types.Service
++	for _, v := range services {
++		if v.Spec.Name == serviceName && v.Status == types.ServiceActive {
++			service = v
++			break
++		}
++	}
++	if service.ID == "" {
++		return nil, nil
++	}
++	tasks, err := s.store.ListTasks(ctx, controlplane.TaskFilter{ServiceID: service.ID})
++	if err != nil {
++		s.metrics.IncDNSError()
++		return nil, err
++	}
++	nodes, err := s.store.ListNodes(ctx)
++	if err != nil {
++		s.metrics.IncDNSError()
++		return nil, err
++	}
++	addresses := map[types.NodeID]string{}
++	for _, n := range nodes {
++		addresses[n.ID] = n.AdvertiseAddress
++	}
++	out := []net.IP{}
++	seen := map[string]struct{}{}
++	for _, t := range tasks {
++		if t.ActualStatus != types.TaskHealthy && t.ActualStatus != types.TaskRunning {
++			continue
++		}
++		host, _, err := net.SplitHostPort(addresses[t.NodeID])
++		if err != nil {
++			host = addresses[t.NodeID]
++		}
++		ip := net.ParseIP(host).To4()
++		if ip == nil {
++			continue
++		}
++		if _, ok := seen[ip.String()]; !ok {
++			seen[ip.String()] = struct{}{}
++			out = append(out, ip)
++		}
++	}
++	return out, nil
++}
++func parseName(name, defaultNS string) (string, string, bool) {
++	parts := strings.Split(strings.TrimSuffix(strings.ToLower(strings.TrimSpace(name)), "."), ".")
++	if len(parts) == 4 && parts[1] == "svc" && parts[2] == "orch" {
++		return "", "", false
++	}
++	if len(parts) == 3 && parts[1] == "svc" && parts[2] == "orch" {
++		return parts[0], defaultNS, true
++	}
++	if len(parts) == 5 && parts[2] == "svc" && parts[3] == "orch" {
++		return "", "", false
++	}
++	if len(parts) == 4 && parts[2] == "svc" && parts[3] == "orch" {
++		return parts[0], parts[1], true
++	}
++	return "", "", false
++}
++
++func (s *Server) ServePacket(ctx context.Context, request []byte) ([]byte, error) {
++	if len(request) < 12 {
++		return nil, fmt.Errorf("short DNS packet")
++	}
++	qd := binary.BigEndian.Uint16(request[4:6])
++	if qd != 1 {
++		return nil, fmt.Errorf("exactly one question is required")
++	}
++	name, offset, err := decodeName(request, 12)
++	if err != nil {
++		return nil, err
++	}
++	if offset+4 > len(request) {
++		return nil, fmt.Errorf("truncated DNS question")
++	}
++	qtype := binary.BigEndian.Uint16(request[offset : offset+2])
++	questionEnd := offset + 4
++	ips, err := s.Resolve(ctx, name)
++	if err != nil {
++		return nil, err
++	}
++	response := append([]byte(nil), request[:questionEnd]...)
++	binary.BigEndian.PutUint16(response[2:4], 0x8180)
++	binary.BigEndian.PutUint16(response[6:8], 0)
++	if qtype != 1 {
++		return response, nil
++	}
++	binary.BigEndian.PutUint16(response[6:8], uint16(len(ips)))
++	for _, ip := range ips {
++		v := ip.To4()
++		if v == nil {
++			continue
++		}
++		answer := make([]byte, 16)
++		binary.BigEndian.PutUint16(answer[0:2], 0xc00c)
++		binary.BigEndian.PutUint16(answer[2:4], 1)
++		binary.BigEndian.PutUint16(answer[4:6], 1)
++		binary.BigEndian.PutUint32(answer[6:10], s.ttl)
++		binary.BigEndian.PutUint16(answer[10:12], 4)
++		copy(answer[12:], v)
++		response = append(response, answer...)
++	}
++	return response, nil
++}
++func decodeName(packet []byte, offset int) (string, int, error) {
++	labels := []string{}
++	for {
++		if offset >= len(packet) {
++			return "", 0, fmt.Errorf("truncated DNS name")
++		}
++		size := int(packet[offset])
++		offset++
++		if size == 0 {
++			break
++		}
++		if size > 63 || offset+size > len(packet) {
++			return "", 0, fmt.Errorf("invalid DNS label")
++		}
++		labels = append(labels, string(packet[offset:offset+size]))
++		offset += size
++	}
++	return strings.Join(labels, "."), offset, nil
++}
++
++func (s *Server) ServeUDP(ctx context.Context, address string) error {
++	conn, err := net.ListenPacket("udp", address)
++	if err != nil {
++		return err
++	}
++	defer conn.Close()
++	go func() { <-ctx.Done(); _ = conn.Close() }()
++	buffer := make([]byte, 4096)
++	for {
++		n, peer, err := conn.ReadFrom(buffer)
++		if err != nil {
++			if ctx.Err() != nil {
++				return ctx.Err()
++			}
++			continue
++		}
++		response, err := s.ServePacket(ctx, buffer[:n])
++		if err != nil {
++			s.metrics.IncDNSError()
++			continue
++		}
++		_, _ = conn.WriteTo(response, peer)
++	}
++}
+diff --git a/internal/dns/server_test.go b/internal/dns/server_test.go
+new file mode 100644
+index 0000000..0444dc0
+--- /dev/null
++++ b/internal/dns/server_test.go
+@@ -0,0 +1,79 @@
++package dns
++
++import (
++	"context"
++	"encoding/binary"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type fakeStore struct {
++	services []types.Service
++	tasks    []types.Task
++	nodes    []types.Node
++}
++
++func (f fakeStore) ListServices(context.Context) ([]types.Service, error) { return f.services, nil }
++func (f fakeStore) ListTasks(context.Context, controlplane.TaskFilter) ([]types.Task, error) {
++	return f.tasks, nil
++}
++func (f fakeStore) ListNodes(context.Context) ([]types.Node, error) { return f.nodes, nil }
++func query(name string) []byte {
++	packet := make([]byte, 12)
++	binary.BigEndian.PutUint16(packet[0:2], 7)
++	binary.BigEndian.PutUint16(packet[4:6], 1)
++	for _, label := range split(name) {
++		packet = append(packet, byte(len(label)))
++		packet = append(packet, label...)
++	}
++	packet = append(packet, 0, 0, 1, 0, 1)
++	return packet
++}
++func split(v string) []string {
++	out := []string{}
++	start := 0
++	for i := 0; i <= len(v); i++ {
++		if i == len(v) || v[i] == '.' {
++			out = append(out, v[start:i])
++			start = i + 1
++		}
++	}
++	return out
++}
++
++func TestResolveHealthyEndpointsAndDNSPacket(t *testing.T) {
++	metrics := &Metrics{}
++	store := fakeStore{services: []types.Service{{ID: "service", Namespace: "payments", Status: types.ServiceActive, Spec: types.ServiceSpec{Name: "api"}}}, tasks: []types.Task{{ServiceID: "service", NodeID: "node", ActualStatus: types.TaskHealthy}}, nodes: []types.Node{{ID: "node", AdvertiseAddress: "10.0.0.8:7443"}}}
++	server := New(store, 15*time.Second, "default", metrics)
++	ips, err := server.Resolve(context.Background(), "api.payments.svc.orch")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(ips) != 1 || ips[0].String() != "10.0.0.8" {
++		t.Fatalf("ips=%v", ips)
++	}
++	response, err := server.ServePacket(context.Background(), query("api.payments.svc.orch"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if got := binary.BigEndian.Uint16(response[6:8]); got != 1 {
++		t.Fatalf("answers=%d", got)
++	}
++	if metrics.Queries() != 2 {
++		t.Fatalf("queries=%d", metrics.Queries())
++	}
++	if text := metrics.Prometheus(); text == "" {
++		t.Fatal("missing metrics")
++	}
++}
++
++func TestResolveRejectsUnsupportedName(t *testing.T) {
++	metrics := &Metrics{}
++	_, err := New(fakeStore{}, time.Second, "default", metrics).Resolve(context.Background(), "example.com")
++	if err == nil || metrics.Errors() != 1 {
++		t.Fatalf("err=%v errors=%d", err, metrics.Errors())
++	}
++}
+diff --git a/internal/docker/docker.go b/internal/docker/docker.go
+index 1cef304..dc26a7e 100644
+--- a/internal/docker/docker.go
++++ b/internal/docker/docker.go
+@@ -69,6 +69,13 @@ type ContainerSpec struct {
+ 	Healthcheck *Healthcheck
+ 	Labels      map[string]string
+ 	Command     []string
++	Volumes     []VolumeMount
++}
++
++type VolumeMount struct {
++	Name     string
++	Target   string
++	ReadOnly bool
+ }
+ 
+ type PortBinding struct {
+@@ -394,6 +401,11 @@ func (spec ContainerSpec) Validate() error {
+ 			return fmt.Errorf("security host path mounts[%d]: container path is required", i)
+ 		}
+ 	}
++	for i, mount := range spec.Volumes {
++		if strings.TrimSpace(mount.Name) == "" || strings.TrimSpace(mount.Target) == "" {
++			return fmt.Errorf("volumes[%d]: name and target are required", i)
++		}
++	}
+ 	return nil
+ }
+ 
+@@ -427,7 +439,7 @@ func dockerContainerConfig(spec ContainerSpec) (*container.Config, *container.Ho
+ 		ReadonlyRootfs: spec.Security.ReadOnlyRootFilesystem,
+ 		CapAdd:         append([]string(nil), spec.Security.CapAdd...),
+ 		CapDrop:        dockerCapDrop(spec.Security.CapDrop),
+-		Binds:          dockerHostPathMounts(spec.Security.HostPathMounts),
++		Binds:          append(dockerHostPathMounts(spec.Security.HostPathMounts), dockerVolumeBinds(spec.Volumes)...),
+ 	}
+ 	if spec.Security.HostNetwork {
+ 		hostConfig.NetworkMode = "host"
+@@ -438,6 +450,19 @@ func dockerContainerConfig(spec ContainerSpec) (*container.Config, *container.Ho
+ 	return config, hostConfig, nil
+ }
+ 
++func dockerVolumeBinds(mounts []VolumeMount) []string {
++	binds := make([]string, 0, len(mounts))
++	for _, mount := range mounts {
++		mode := "rw"
++		if mount.ReadOnly {
++			mode = "ro"
++		}
++		binds = append(binds, mount.Name+":"+mount.Target+":"+mode)
++	}
++	sort.Strings(binds)
++	return binds
++}
++
+ func dockerCapDrop(configured []string) []string {
+ 	if len(configured) > 0 {
+ 		return append([]string(nil), configured...)
+diff --git a/internal/gitops/gitops.go b/internal/gitops/gitops.go
+index 9e55c79..0d63894 100644
+--- a/internal/gitops/gitops.go
++++ b/internal/gitops/gitops.go
+@@ -21,8 +21,21 @@ import (
+ const (
+ 	EventSyncSucceeded = "gitops.sync.succeeded"
+ 	EventSyncFailed    = "gitops.sync.failed"
++	EventDriftDetected = "gitops.drift.detected"
++	EventDriftReverted = "gitops.drift.reverted"
+ )
+ 
++type Diff struct {
++	Service string                  `json:"service"`
++	Status  types.GitOpsDriftStatus `json:"status"`
++	Desired types.ServiceSpec       `json:"desired"`
++	Live    types.ServiceSpec       `json:"live"`
++}
++
++type managedStore interface {
++	MarkGitOpsManaged(context.Context, types.ServiceID, types.GitOpsManagedState) (types.Service, error)
++}
++
+ type Store interface {
+ 	ListNamespaces(context.Context) ([]types.Namespace, error)
+ 	ListGitOpsSources(context.Context) ([]types.GitOpsSource, error)
+@@ -82,6 +95,9 @@ func ValidateSource(source types.GitOpsSource) error {
+ 	if source.SyncInterval <= 0 {
+ 		return fmt.Errorf("sync_interval must be positive")
+ 	}
++	if source.DriftPolicy != "" && source.DriftPolicy != types.GitOpsWarnOnly && source.DriftPolicy != types.GitOpsAutoRevert {
++		return fmt.Errorf("drift_policy must be warn or auto_revert")
++	}
+ 	parsed, err := url.Parse(source.RepositoryURL)
+ 	if err != nil {
+ 		return fmt.Errorf("repository_url is invalid: %w", err)
+@@ -210,9 +226,20 @@ func (controller *Controller) Sync(ctx context.Context, id string) (types.GitOps
+ 		if err != nil {
+ 			return controller.fail(syncCtx, source, fmt.Errorf("validate manifest %q: %w", file, err))
+ 		}
+-		if _, err := controller.store.ApplyService(syncCtx, spec); err != nil {
++		service, err := controller.store.ApplyService(syncCtx, spec)
++		if err != nil {
+ 			return controller.fail(syncCtx, source, fmt.Errorf("apply service %q: %w", spec.Name, err))
+ 		}
++		if marker, ok := controller.store.(managedStore); ok {
++			relative, _ := filepath.Rel(checkout.Directory, file)
++			policy := source.DriftPolicy
++			if policy == "" {
++				policy = types.GitOpsWarnOnly
++			}
++			if _, err := marker.MarkGitOpsManaged(syncCtx, service.ID, types.GitOpsManagedState{SourceID: source.ID, SourceCommit: checkout.Revision, SourcePath: filepath.ToSlash(relative), Status: types.GitOpsInSync, Policy: policy, DesiredSpec: spec, LastCheckedAt: time.Now().UTC()}); err != nil {
++				return controller.fail(syncCtx, source, fmt.Errorf("mark service %q managed: %w", spec.Name, err))
++			}
++		}
+ 		managed = append(managed, spec.Name)
+ 	}
+ 	slices.Sort(managed)
+diff --git a/internal/metrics/prometheus.go b/internal/metrics/prometheus.go
+index a609652..0483334 100644
+--- a/internal/metrics/prometheus.go
++++ b/internal/metrics/prometheus.go
+@@ -34,6 +34,8 @@ type Server struct {
+ 	autoscalerRecommend *prometheus.GaugeVec
+ 	leaderStatus        *prometheus.GaugeVec
+ 	leaderFailures      *prometheus.CounterVec
++	dnsQueries          prometheus.Counter
++	dnsErrors           prometheus.Counter
+ }
+ 
+ func NewServer() *Server {
+@@ -126,6 +128,8 @@ func NewServer() *Server {
+ 			Name: "controller_leader_acquisition_failures_total",
+ 			Help: "Total controller leader lock acquisition failures by controller name.",
+ 		}, []string{"controller"}),
++		dnsQueries: prometheus.NewCounter(prometheus.CounterOpts{Name: "dns_queries_total", Help: "Total internal DNS queries."}),
++		dnsErrors:  prometheus.NewCounter(prometheus.CounterOpts{Name: "dns_errors_total", Help: "Total internal DNS errors."}),
+ 	}
+ 	m.registry.MustRegister(
+ 		m.apiRequests,
+@@ -149,10 +153,15 @@ func NewServer() *Server {
+ 		m.autoscalerRecommend,
+ 		m.leaderStatus,
+ 		m.leaderFailures,
++		m.dnsQueries,
++		m.dnsErrors,
+ 	)
+ 	return m
+ }
+ 
++func (m *Server) IncDNSQuery() { m.dnsQueries.Inc() }
++func (m *Server) IncDNSError() { m.dnsErrors.Inc() }
++
+ func (m *Server) Handler() http.Handler {
+ 	return promhttp.HandlerFor(m.registry, promhttp.HandlerOpts{})
+ }
+diff --git a/internal/notifications/notifications.go b/internal/notifications/notifications.go
+new file mode 100644
+index 0000000..773a18b
+--- /dev/null
++++ b/internal/notifications/notifications.go
+@@ -0,0 +1,184 @@
++package notifications
++
++import (
++	"bytes"
++	"context"
++	"crypto/hmac"
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net/http"
++	"strings"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++var NotifiableEvents = map[string]struct{}{
++	"rollout.failed": {}, "node.offline": {}, "task.failure_threshold_exceeded": {},
++	"admission.rejected": {}, "quota.exceeded": {}, "service.deleted": {},
++	"secret.deleted": {}, "scheduler.unable_to_place": {},
++	"node.offline.detected": {}, "task.failed": {}, "rollout.status.changed": {},
++}
++
++type Delivery struct {
++	Event  types.Event `json:"event"`
++	SentAt time.Time   `json:"sent_at"`
++}
++type Sender struct {
++	client      *http.Client
++	attempts    int
++	baseBackoff time.Duration
++	sleep       func(context.Context, time.Duration) error
++	now         func() time.Time
++}
++type Option func(*Sender)
++
++func WithAttempts(v int) Option {
++	return func(s *Sender) {
++		if v > 0 {
++			s.attempts = v
++		}
++	}
++}
++func WithBackoff(v time.Duration) Option {
++	return func(s *Sender) {
++		if v >= 0 {
++			s.baseBackoff = v
++		}
++	}
++}
++func WithHTTPClient(v *http.Client) Option {
++	return func(s *Sender) {
++		if v != nil {
++			s.client = v
++		}
++	}
++}
++func New(opts ...Option) *Sender {
++	s := &Sender{client: &http.Client{Timeout: 10 * time.Second}, attempts: 3, baseBackoff: 100 * time.Millisecond, now: func() time.Time { return time.Now().UTC() }, sleep: func(ctx context.Context, d time.Duration) error {
++		t := time.NewTimer(d)
++		defer t.Stop()
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-t.C:
++			return nil
++		}
++	}}
++	for _, o := range opts {
++		o(s)
++	}
++	return s
++}
++
++func (s *Sender) Deliver(ctx context.Context, sink types.NotificationSink, event types.Event) error {
++	if err := sink.Validate(); err != nil {
++		return err
++	}
++	event = RedactEvent(event)
++	payload, err := json.Marshal(Delivery{Event: event, SentAt: s.now()})
++	if err != nil {
++		return err
++	}
++	var last error
++	for attempt := 0; attempt < s.attempts; attempt++ {
++		req, err := http.NewRequestWithContext(ctx, http.MethodPost, sink.URL, bytes.NewReader(payload))
++		if err != nil {
++			return err
++		}
++		req.Header.Set("Content-Type", "application/json")
++		req.Header.Set("User-Agent", "orch-notifier/1")
++		if sink.SigningSecret != "" {
++			mac := hmac.New(sha256.New, []byte(sink.SigningSecret))
++			_, _ = mac.Write(payload)
++			req.Header.Set("X-Orch-Signature", "sha256="+hex.EncodeToString(mac.Sum(nil)))
++		}
++		resp, err := s.client.Do(req)
++		if err == nil {
++			_, _ = io.Copy(io.Discard, resp.Body)
++			_ = resp.Body.Close()
++			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
++				return nil
++			}
++			err = fmt.Errorf("notification endpoint returned %s", resp.Status)
++		}
++		last = err
++		if attempt+1 < s.attempts {
++			if err := s.sleep(ctx, s.baseBackoff*time.Duration(1<<attempt)); err != nil {
++				return err
++			}
++		}
++	}
++	return fmt.Errorf("deliver notification after %d attempts: %w", s.attempts, last)
++}
++
++func RedactEvent(event types.Event) types.Event {
++	event.Message = redact(event.Message)
++	if event.Details != nil {
++		details := make(map[string]string, len(event.Details))
++		for k, v := range event.Details {
++			lower := strings.ToLower(k)
++			if strings.Contains(lower, "secret") || strings.Contains(lower, "token") || strings.Contains(lower, "password") || strings.Contains(lower, "authorization") {
++				details[k] = "[REDACTED]"
++			} else {
++				details[k] = redact(v)
++			}
++		}
++		event.Details = details
++	}
++	return event
++}
++func redact(v string) string {
++	lower := strings.ToLower(v)
++	for _, marker := range []string{"password=", "token=", "secret=", "authorization:"} {
++		idx := strings.Index(lower, marker)
++		if idx < 0 {
++			continue
++		}
++		end := strings.IndexAny(v[idx+len(marker):], " ,;\n\t")
++		if end < 0 {
++			end = len(v) - idx - len(marker)
++		}
++		start := idx + len(marker)
++		v = v[:start] + "[REDACTED]" + v[start+end:]
++		lower = strings.ToLower(v)
++	}
++	return v
++}
++
++type SinkStore interface {
++	ListNotificationSinks(context.Context) ([]types.NotificationSink, error)
++}
++type Dispatcher struct {
++	store  SinkStore
++	sender *Sender
++}
++
++func NewDispatcher(store SinkStore, sender *Sender) *Dispatcher {
++	if sender == nil {
++		sender = New()
++	}
++	return &Dispatcher{store: store, sender: sender}
++}
++func (d *Dispatcher) Notify(ctx context.Context, event types.Event) error {
++	if _, ok := NotifiableEvents[event.Type]; !ok {
++		return nil
++	}
++	sinks, err := d.store.ListNotificationSinks(ctx)
++	if err != nil {
++		return err
++	}
++	var failures []string
++	for _, sink := range sinks {
++		if err := d.sender.Deliver(ctx, sink, event); err != nil {
++			failures = append(failures, sink.ID+": "+err.Error())
++		}
++	}
++	if len(failures) > 0 {
++		return fmt.Errorf("notification delivery failed: %s", strings.Join(failures, "; "))
++	}
++	return nil
++}
+diff --git a/internal/notifications/notifications_test.go b/internal/notifications/notifications_test.go
+new file mode 100644
+index 0000000..5323d38
+--- /dev/null
++++ b/internal/notifications/notifications_test.go
+@@ -0,0 +1,70 @@
++package notifications
++
++import (
++	"context"
++	"io"
++	"net/http"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type roundTripFunc func(*http.Request) (*http.Response, error)
++
++func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
++func TestDeliveryRetriesSignsAndRedacts(t *testing.T) {
++	attempts := 0
++	var body, signature string
++	client := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
++		attempts++
++		data, _ := io.ReadAll(r.Body)
++		body = string(data)
++		signature = r.Header.Get("X-Orch-Signature")
++		status := http.StatusServiceUnavailable
++		if attempts == 3 {
++			status = http.StatusNoContent
++		}
++		return &http.Response{StatusCode: status, Status: http.StatusText(status), Body: io.NopCloser(strings.NewReader("")), Header: make(http.Header)}, nil
++	})}
++	sender := New(WithHTTPClient(client), WithAttempts(3), WithBackoff(0))
++	sink := types.NotificationSink{Name: "ops", Type: types.NotificationWebhook, URL: "https://hooks.example.test", SigningSecret: "sign-me"}
++	event := types.Event{Type: "rollout.failed", Message: "token=super-secret failed", Details: map[string]string{"password": "bad"}}
++	if err := sender.Deliver(context.Background(), sink, event); err != nil {
++		t.Fatal(err)
++	}
++	if attempts != 3 {
++		t.Fatalf("attempts=%d", attempts)
++	}
++	if strings.Contains(body, "super-secret") || strings.Contains(body, "\"bad\"") {
++		t.Fatalf("secret leaked: %s", body)
++	}
++	if !strings.HasPrefix(signature, "sha256=") {
++		t.Fatalf("signature=%q", signature)
++	}
++}
++func TestDeliveryFailureAndDispatcherFilter(t *testing.T) {
++	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
++		return &http.Response{StatusCode: 500, Status: "500", Body: io.NopCloser(strings.NewReader("")), Header: make(http.Header)}, nil
++	})}
++	sender := New(WithHTTPClient(client), WithAttempts(2), WithBackoff(0))
++	sink := types.NotificationSink{ID: "sink", Name: "ops", Type: types.NotificationHTTP, URL: "https://example.test"}
++	if err := sender.Deliver(context.Background(), sink, types.Event{}); err == nil {
++		t.Fatal("expected delivery failure")
++	}
++	store := fakeSinkStore{sinks: []types.NotificationSink{sink}}
++	dispatcher := NewDispatcher(store, sender)
++	if err := dispatcher.Notify(context.Background(), types.Event{Type: "unrelated", Timestamp: time.Now()}); err != nil {
++		t.Fatal(err)
++	}
++	if err := dispatcher.Notify(context.Background(), types.Event{Type: "node.offline"}); err == nil {
++		t.Fatal("expected dispatcher failure")
++	}
++}
++
++type fakeSinkStore struct{ sinks []types.NotificationSink }
++
++func (f fakeSinkStore) ListNotificationSinks(context.Context) ([]types.NotificationSink, error) {
++	return f.sinks, nil
++}
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index 67f43d5..9e2d202 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -154,6 +154,16 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 			assignments = append(assignments, claimed)
+ 		}
+ 	}
++	plannedIDs := make(map[types.TaskID]struct{}, len(planned))
++	for _, assignment := range planned {
++		plannedIDs[assignment.TaskID] = struct{}{}
++	}
++	for _, task := range pending {
++		if _, ok := plannedIDs[task.ID]; ok {
++			continue
++		}
++		_ = events.Emit(ctx, s.store, types.Event{Namespace: task.Namespace, Type: "scheduler.unable_to_place", Severity: types.EventWarning, Source: "scheduler", Message: "scheduler unable to place task", RelatedObjectType: "task", RelatedObjectID: string(task.ID), Timestamp: s.now()})
++	}
+ 	return assignments, nil
+ }
+ 
+@@ -268,6 +278,9 @@ func Plan(input PlanInput) []Assignment {
+ 			continue
+ 		}
+ 		service, ok := input.Services[task.ServiceID]
++		if !ok && task.JobID != "" {
++			service, ok = jobTaskService(task)
++		}
+ 		if !ok {
+ 			continue
+ 		}
+@@ -281,7 +294,7 @@ func Plan(input PlanInput) []Assignment {
+ 			Ports:             ports,
+ 			ExpectedUpdatedAt: task.UpdatedAt.UTC(),
+ 		})
+-		state.addPlanned(node.ID, task.ServiceID, service.Spec.ResourceRequirements.Requests, ports)
++		state.addPlanned(node.ID, task, service.Spec.ResourceRequirements.Requests, ports)
+ 	}
+ 	return assignments
+ }
+@@ -291,6 +304,7 @@ type clusterState struct {
+ 	runningByNode        map[types.NodeID]int
+ 	runningByNodeService map[types.NodeID]map[types.ServiceID]int
+ 	portsByNode          map[types.NodeID]map[portKey]struct{}
++	volumeWriters        map[string]types.TaskID
+ }
+ 
+ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map[types.ServiceID]types.Service) *clusterState {
+@@ -299,6 +313,7 @@ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map
+ 		runningByNode:        make(map[types.NodeID]int, len(nodes)),
+ 		runningByNodeService: make(map[types.NodeID]map[types.ServiceID]int, len(nodes)),
+ 		portsByNode:          make(map[types.NodeID]map[portKey]struct{}, len(nodes)),
++		volumeWriters:        make(map[string]types.TaskID),
+ 	}
+ 	knownNodes := make(map[types.NodeID]struct{}, len(nodes))
+ 	for _, node := range nodes {
+@@ -311,6 +326,9 @@ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map
+ 			continue
+ 		}
+ 		service, ok := services[task.ServiceID]
++		if !ok && task.JobID != "" {
++			service, ok = jobTaskService(task)
++		}
+ 		if !ok {
+ 			continue
+ 		}
+@@ -319,6 +337,17 @@ func newClusterState(nodes []types.Node, runningTasks []types.Task, services map
+ 	return state
+ }
+ 
++func jobTaskService(task types.Task) (types.Service, bool) {
++	if task.JobID == "" {
++		return types.Service{}, false
++	}
++	requirements := types.ResourceRequirements{}
++	if task.ResourceRequirements != nil {
++		requirements = *task.ResourceRequirements
++	}
++	return types.Service{ID: types.ServiceID("job-" + task.JobID), Namespace: task.Namespace, Status: types.ServiceActive, Spec: types.ServiceSpec{Name: "job-" + task.JobID, Image: task.Image, Replicas: 1, ResourceRequirements: requirements, PlacementConstraints: task.PlacementConstraints}}, true
++}
++
+ func (s *clusterState) addExisting(task types.Task, service types.Service) {
+ 	if types.IsActiveTask(task) {
+ 		s.addResourceUse(task.NodeID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
+@@ -326,11 +355,21 @@ func (s *clusterState) addExisting(task types.Task, service types.Service) {
+ 	if types.IsActiveTask(task) || isPortAllocationFailure(task) {
+ 		s.reservePorts(task.NodeID, portsForTask(task, service))
+ 	}
++	s.reserveVolumes(task)
+ }
+ 
+-func (s *clusterState) addPlanned(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources, ports []types.Port) {
+-	s.addResourceUse(nodeID, serviceID, requests)
++func (s *clusterState) addPlanned(nodeID types.NodeID, task types.Task, requests types.Resources, ports []types.Port) {
++	s.addResourceUse(nodeID, task.ServiceID, requests)
+ 	s.reservePorts(nodeID, ports)
++	s.reserveVolumes(task)
++}
++
++func (s *clusterState) reserveVolumes(task types.Task) {
++	for _, m := range task.VolumeMounts {
++		if !m.ReadOnly && m.AccessMode == types.VolumeReadWriteOnce && !m.AllowConcurrentWriters {
++			s.volumeWriters[m.VolumeID] = task.ID
++		}
++	}
+ }
+ 
+ func (s *clusterState) addResourceUse(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources) {
+@@ -382,10 +421,20 @@ func bestNode(task types.Task, service types.Service, nodes []types.Node, state
+ 	return best, bestPorts, found
+ }
+ 
+-func fits(_ types.Task, service types.Service, node types.Node, state *clusterState, requests types.Resources) bool {
++func fits(task types.Task, service types.Service, node types.Node, state *clusterState, requests types.Resources) bool {
+ 	if node.Status != types.NodeReady {
+ 		return false
+ 	}
++	for _, mount := range task.VolumeMounts {
++		if mount.NodeID != "" && mount.NodeID != node.ID {
++			return false
++		}
++		if !mount.ReadOnly && mount.AccessMode == types.VolumeReadWriteOnce && !mount.AllowConcurrentWriters {
++			if owner, used := state.volumeWriters[mount.VolumeID]; used && owner != task.ID {
++				return false
++			}
++		}
++	}
+ 	if !placementMatches(service.Spec.PlacementConstraints, node.Labels) {
+ 		return false
+ 	}
+diff --git a/internal/scheduler/workloads_test.go b/internal/scheduler/workloads_test.go
+new file mode 100644
+index 0000000..6d5ad8a
+--- /dev/null
++++ b/internal/scheduler/workloads_test.go
+@@ -0,0 +1,30 @@
++package scheduler
++
++import (
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestPlanPlacesJobTask(t *testing.T) {
++	req := types.ResourceRequirements{Requests: types.Resources{CPU: 250, Memory: 256 << 20}, Limits: types.Resources{CPU: 250, Memory: 256 << 20}}
++	task := types.Task{ID: "job-task", JobID: "job", Namespace: "default", ActualStatus: types.TaskPending, DesiredStatus: types.TaskRunning, Image: "busybox", ResourceRequirements: &req, UpdatedAt: time.Now()}
++	node := types.Node{ID: "node", Status: types.NodeReady, Allocatable: types.Resources{CPU: 1000, Memory: 1 << 30}}
++	planned := Plan(PlanInput{PendingTasks: []types.Task{task}, Nodes: []types.Node{node}, Services: map[types.ServiceID]types.Service{}})
++	if len(planned) != 1 || planned[0].NodeID != node.ID {
++		t.Fatalf("assignments=%#v", planned)
++	}
++}
++
++func TestPlanBlocksConflictingReadWriteOnceVolume(t *testing.T) {
++	service := types.Service{ID: "service", Status: types.ServiceActive, Spec: types.ServiceSpec{Name: "db", Image: "postgres", ResourceRequirements: types.ResourceRequirements{Requests: types.Resources{CPU: 100, Memory: 1 << 20}}}}
++	mount := types.ResolvedVolumeMount{VolumeID: "volume", VolumeName: "data", Target: "/data", AccessMode: types.VolumeReadWriteOnce}
++	running := types.Task{ID: "running", ServiceID: service.ID, NodeID: "node", ActualStatus: types.TaskRunning, DesiredStatus: types.TaskRunning, VolumeMounts: []types.ResolvedVolumeMount{mount}}
++	pending := types.Task{ID: "pending", ServiceID: service.ID, ActualStatus: types.TaskPending, DesiredStatus: types.TaskRunning, VolumeMounts: []types.ResolvedVolumeMount{mount}}
++	node := types.Node{ID: "node", Status: types.NodeReady, Allocatable: types.Resources{CPU: 1000, Memory: 1 << 30}}
++	planned := Plan(PlanInput{PendingTasks: []types.Task{pending}, RunningTasks: []types.Task{running}, Nodes: []types.Node{node}, Services: map[types.ServiceID]types.Service{service.ID: service}})
++	if len(planned) != 0 {
++		t.Fatalf("conflicting writer scheduled: %#v", planned)
++	}
++}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index eff0c23..74b2916 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -214,16 +214,19 @@ func addServiceUsageStore(usage *types.ResourceUsage, spec types.ServiceSpec) {
+ 
+ func (s *postgresStore) CreateGitOpsSource(ctx context.Context, source types.GitOpsSource) (types.GitOpsSource, error) {
+ 	source.Namespace = namespace.FromContext(ctx)
++	if source.DriftPolicy == "" {
++		source.DriftPolicy = types.GitOpsWarnOnly
++	}
+ 	managed, err := jsonBytes(defaultSlice(source.ManagedServices))
+ 	if err != nil {
+ 		return types.GitOpsSource{}, err
+ 	}
+ 	row := s.db.QueryRow(ctx, `
+-		INSERT INTO gitops_sources (namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services)
+-		VALUES ($1,$2,$3,$4,$5,$6,$7)
+-		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++		INSERT INTO gitops_sources (namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services, drift_policy)
++		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
++		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services, drift_policy,
+ 			last_revision, last_error, last_synced_at, created_at, updated_at`, source.Namespace, source.RepositoryURL,
+-		source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed)
++		source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed, source.DriftPolicy)
+ 	return scanGitOpsSource(row)
+ }
+ 
+@@ -255,12 +258,12 @@ func (s *postgresStore) UpdateGitOpsSource(ctx context.Context, source types.Git
+ 	}
+ 	row := s.db.QueryRow(ctx, `
+ 		UPDATE gitops_sources SET repository_url=$3, branch=$4, path=$5, sync_interval_ns=$6, prune=$7,
+-			managed_services=$8, last_revision=nullif($9,''), last_error=nullif($10,''), last_synced_at=$11,
++			managed_services=$8, drift_policy=$9, last_revision=nullif($10,''), last_error=nullif($11,''), last_synced_at=$12,
+ 			updated_at=timezone('utc',now())
+ 		WHERE namespace=$1 AND id=nullif($2,'')::uuid
+-		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++		RETURNING id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services, drift_policy,
+ 			last_revision, last_error, last_synced_at, created_at, updated_at`, namespace.FromContext(ctx), source.ID,
+-		source.RepositoryURL, source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed,
++		source.RepositoryURL, source.Branch, source.Path, int64(source.SyncInterval), source.Prune, managed, source.DriftPolicy,
+ 		source.LastRevision, source.LastError, nilTime(source.LastSyncedAt))
+ 	return scanGitOpsSource(row)
+ }
+@@ -277,7 +280,7 @@ func (s *postgresStore) DeleteGitOpsSource(ctx context.Context, id string) error
+ }
+ 
+ func gitOpsSelectSQL() string {
+-	return `SELECT id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services,
++	return `SELECT id, namespace, repository_url, branch, path, sync_interval_ns, prune, managed_services, drift_policy,
+ 		last_revision, last_error, last_synced_at, created_at, updated_at FROM gitops_sources`
+ }
+ 
+@@ -288,7 +291,7 @@ func scanGitOpsSource(row pgx.Row) (types.GitOpsSource, error) {
+ 	var revision, lastError *string
+ 	var lastSynced *time.Time
+ 	err := row.Scan(&source.ID, &source.Namespace, &source.RepositoryURL, &source.Branch, &source.Path, &interval,
+-		&source.Prune, &managed, &revision, &lastError, &lastSynced, &source.CreatedAt, &source.UpdatedAt)
++		&source.Prune, &managed, &source.DriftPolicy, &revision, &lastError, &lastSynced, &source.CreatedAt, &source.UpdatedAt)
+ 	if err != nil {
+ 		return types.GitOpsSource{}, mapPostgresError(err)
+ 	}
+diff --git a/internal/store/store.go b/internal/store/store.go
+index aa91b4c..62e33ff 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -35,6 +35,34 @@ type GitOpsStore interface {
+ 	DeleteGitOpsSource(ctx context.Context, id string) error
+ }
+ 
++type JobStore interface {
++	CreateJob(context.Context, types.JobSpec) (types.Job, error)
++	ListJobs(context.Context) ([]types.Job, error)
++	GetJob(context.Context, string) (types.Job, error)
++	DeleteJob(context.Context, string) error
++}
++type CronJobStore interface {
++	CreateCronJob(context.Context, types.CronJobSpec) (types.CronJob, error)
++	ListCronJobs(context.Context) ([]types.CronJob, error)
++	GetCronJob(context.Context, string) (types.CronJob, error)
++	UpdateCronJob(context.Context, types.CronJob) (types.CronJob, error)
++	DeleteCronJob(context.Context, string) error
++}
++type VolumeStore interface {
++	CreateVolume(context.Context, types.Volume) (types.Volume, error)
++	ListVolumes(context.Context) ([]types.Volume, error)
++	GetVolume(context.Context, string) (types.Volume, error)
++	DeleteVolume(context.Context, string) error
++	CreateVolumeClaim(context.Context, types.VolumeClaim) (types.VolumeClaim, error)
++	ListVolumeClaims(context.Context) ([]types.VolumeClaim, error)
++}
++type NotificationSinkStore interface {
++	CreateNotificationSink(context.Context, types.NotificationSink) (types.NotificationSink, error)
++	ListNotificationSinks(context.Context) ([]types.NotificationSink, error)
++	GetNotificationSink(context.Context, string) (types.NotificationSink, error)
++	DeleteNotificationSink(context.Context, string) error
++}
++
+ type ServiceStore interface {
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+diff --git a/migrations/000015_jobs_storage_notifications.down.sql b/migrations/000015_jobs_storage_notifications.down.sql
+new file mode 100644
+index 0000000..f8ff7ad
+--- /dev/null
++++ b/migrations/000015_jobs_storage_notifications.down.sql
+@@ -0,0 +1,17 @@
++DROP TABLE IF EXISTS notification_sinks;
++DROP INDEX IF EXISTS volume_attachments_active_writer;
++DROP TABLE IF EXISTS volume_attachments;
++DROP TABLE IF EXISTS volume_claims;
++DROP TABLE IF EXISTS volumes;
++DROP TABLE IF EXISTS cron_jobs;
++ALTER TABLE tasks DROP CONSTRAINT IF EXISTS tasks_exactly_one_owner;
++ALTER TABLE tasks DROP COLUMN IF EXISTS job_id;
++ALTER TABLE tasks ALTER COLUMN service_id SET NOT NULL;
++DROP TABLE IF EXISTS jobs;
++ALTER TABLE services
++    DROP COLUMN IF EXISTS gitops_desired_spec,
++    DROP COLUMN IF EXISTS gitops_drift_status,
++    DROP COLUMN IF EXISTS gitops_source_path,
++    DROP COLUMN IF EXISTS gitops_source_commit,
++    DROP COLUMN IF EXISTS gitops_source_id;
++ALTER TABLE gitops_sources DROP COLUMN IF EXISTS drift_policy;
+diff --git a/migrations/000015_jobs_storage_notifications.up.sql b/migrations/000015_jobs_storage_notifications.up.sql
+new file mode 100644
+index 0000000..2e76801
+--- /dev/null
++++ b/migrations/000015_jobs_storage_notifications.up.sql
+@@ -0,0 +1,84 @@
++ALTER TABLE gitops_sources ADD COLUMN drift_policy TEXT NOT NULL DEFAULT 'warn' CHECK (drift_policy IN ('warn','auto_revert'));
++
++ALTER TABLE services
++    ADD COLUMN gitops_source_id UUID REFERENCES gitops_sources(id) ON DELETE SET NULL,
++    ADD COLUMN gitops_source_commit TEXT,
++    ADD COLUMN gitops_source_path TEXT,
++    ADD COLUMN gitops_drift_status TEXT,
++    ADD COLUMN gitops_desired_spec JSONB;
++
++CREATE TABLE jobs (
++    id UUID PRIMARY KEY,
++    namespace TEXT NOT NULL REFERENCES namespaces(name),
++    name TEXT NOT NULL,
++    spec JSONB NOT NULL,
++    status TEXT NOT NULL CHECK (status IN ('pending','running','succeeded','failed')),
++    attempts INTEGER NOT NULL DEFAULT 1,
++    last_exit_code INTEGER,
++    created_at TIMESTAMPTZ NOT NULL,
++    updated_at TIMESTAMPTZ NOT NULL,
++    completed_at TIMESTAMPTZ,
++    UNIQUE(namespace, name, created_at)
++);
++
++ALTER TABLE tasks
++    ALTER COLUMN service_id DROP NOT NULL,
++    ADD COLUMN job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
++    ADD CONSTRAINT tasks_exactly_one_owner CHECK ((service_id IS NOT NULL) <> (job_id IS NOT NULL));
++
++CREATE TABLE cron_jobs (
++    id UUID PRIMARY KEY,
++    namespace TEXT NOT NULL REFERENCES namespaces(name),
++    name TEXT NOT NULL,
++    spec JSONB NOT NULL,
++    last_schedule_at TIMESTAMPTZ,
++    next_schedule_at TIMESTAMPTZ,
++    created_at TIMESTAMPTZ NOT NULL,
++    updated_at TIMESTAMPTZ NOT NULL,
++    UNIQUE(namespace, name)
++);
++
++CREATE TABLE volumes (
++    id UUID PRIMARY KEY,
++    namespace TEXT NOT NULL REFERENCES namespaces(name),
++    name TEXT NOT NULL,
++    driver TEXT NOT NULL CHECK (driver = 'local'),
++    node_id UUID REFERENCES nodes(id),
++    created_at TIMESTAMPTZ NOT NULL,
++    UNIQUE(namespace, name)
++);
++
++CREATE TABLE volume_claims (
++    id UUID PRIMARY KEY,
++    namespace TEXT NOT NULL REFERENCES namespaces(name),
++    name TEXT NOT NULL,
++    volume_id UUID REFERENCES volumes(id),
++    access_mode TEXT NOT NULL CHECK (access_mode IN ('ReadWriteOnce','ReadWriteMany')),
++    allow_concurrent_writers BOOLEAN NOT NULL DEFAULT FALSE,
++    created_at TIMESTAMPTZ NOT NULL,
++    UNIQUE(namespace, name)
++);
++
++CREATE TABLE volume_attachments (
++    id UUID PRIMARY KEY,
++    volume_id UUID NOT NULL REFERENCES volumes(id),
++    task_id UUID NOT NULL REFERENCES tasks(id),
++    node_id UUID NOT NULL REFERENCES nodes(id),
++    read_only BOOLEAN NOT NULL DEFAULT FALSE,
++    attached_at TIMESTAMPTZ NOT NULL,
++    detached_at TIMESTAMPTZ
++);
++CREATE UNIQUE INDEX volume_attachments_active_writer
++    ON volume_attachments(volume_id) WHERE detached_at IS NULL AND read_only = FALSE;
++
++CREATE TABLE notification_sinks (
++    id UUID PRIMARY KEY,
++    namespace TEXT NOT NULL REFERENCES namespaces(name),
++    name TEXT NOT NULL,
++    type TEXT NOT NULL CHECK (type IN ('webhook','slack','http')),
++    url TEXT NOT NULL,
++    encrypted_signing_secret BYTEA,
++    key_id TEXT,
++    created_at TIMESTAMPTZ NOT NULL,
++    UNIQUE(namespace, name)
++);
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index cf76c61..8e135d8 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -52,19 +52,20 @@ type ImageMetadata struct {
+ }
+ 
+ type GitOpsSource struct {
+-	ID              string        `json:"id"`
+-	Namespace       string        `json:"namespace"`
+-	RepositoryURL   string        `json:"repository_url"`
+-	Branch          string        `json:"branch"`
+-	Path            string        `json:"path"`
+-	SyncInterval    time.Duration `json:"sync_interval"`
+-	Prune           bool          `json:"prune"`
+-	ManagedServices []string      `json:"managed_services,omitempty"`
+-	LastRevision    string        `json:"last_revision,omitempty"`
+-	LastError       string        `json:"last_error,omitempty"`
+-	LastSyncedAt    time.Time     `json:"last_synced_at,omitempty"`
+-	CreatedAt       time.Time     `json:"created_at"`
+-	UpdatedAt       time.Time     `json:"updated_at"`
++	ID              string            `json:"id"`
++	Namespace       string            `json:"namespace"`
++	RepositoryURL   string            `json:"repository_url"`
++	Branch          string            `json:"branch"`
++	Path            string            `json:"path"`
++	SyncInterval    time.Duration     `json:"sync_interval"`
++	Prune           bool              `json:"prune"`
++	DriftPolicy     GitOpsDriftPolicy `json:"drift_policy,omitempty"`
++	ManagedServices []string          `json:"managed_services,omitempty"`
++	LastRevision    string            `json:"last_revision,omitempty"`
++	LastError       string            `json:"last_error,omitempty"`
++	LastSyncedAt    time.Time         `json:"last_synced_at,omitempty"`
++	CreatedAt       time.Time         `json:"created_at"`
++	UpdatedAt       time.Time         `json:"updated_at"`
+ }
+ 
+ type Node struct {
+@@ -185,13 +186,14 @@ func (spec NodeSpec) Validate() error {
+ }
+ 
+ type Service struct {
+-	ID                ServiceID     `json:"id"`
+-	Namespace         string        `json:"namespace"`
+-	Spec              ServiceSpec   `json:"spec"`
+-	Status            ServiceStatus `json:"status"`
+-	DeploymentVersion int64         `json:"deployment_version"`
+-	CreatedAt         time.Time     `json:"created_at"`
+-	UpdatedAt         time.Time     `json:"updated_at"`
++	ID                ServiceID           `json:"id"`
++	Namespace         string              `json:"namespace"`
++	Spec              ServiceSpec         `json:"spec"`
++	Status            ServiceStatus       `json:"status"`
++	DeploymentVersion int64               `json:"deployment_version"`
++	CreatedAt         time.Time           `json:"created_at"`
++	UpdatedAt         time.Time           `json:"updated_at"`
++	GitOps            *GitOpsManagedState `json:"gitops,omitempty"`
+ }
+ 
+ type ServiceStatus string
+@@ -219,6 +221,7 @@ type ServiceSpec struct {
+ 	RestartPolicy        RestartPolicy         `json:"restart_policy"`
+ 	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+ 	Routes               []Route               `json:"routes,omitempty"`
++	VolumeClaims         []VolumeClaimMount    `json:"volume_claims,omitempty" yaml:"volumeClaims,omitempty"`
+ }
+ 
+ func (spec ServiceSpec) EffectiveImage() string {
+@@ -281,6 +284,11 @@ func (spec ServiceSpec) Validate() error {
+ 			return fmt.Errorf("routes[%d]: %w", i, err)
+ 		}
+ 	}
++	for i, mount := range spec.VolumeClaims {
++		if strings.TrimSpace(mount.Claim) == "" || !strings.HasPrefix(strings.TrimSpace(mount.Target), "/") {
++			return fmt.Errorf("volume_claims[%d]: claim and absolute target are required", i)
++		}
++	}
+ 	return nil
+ }
+ 
+@@ -761,28 +769,34 @@ const (
+ )
+ 
+ type Task struct {
+-	ID                  TaskID          `json:"id"`
+-	Namespace           string          `json:"namespace"`
+-	ServiceID           ServiceID       `json:"service_id"`
+-	NodeID              NodeID          `json:"node_id,omitempty"`
+-	ContainerID         string          `json:"container_id,omitempty"`
+-	DesiredStatus       TaskStatus      `json:"desired_status"`
+-	ActualStatus        TaskStatus      `json:"actual_status"`
+-	Image               string          `json:"image"`
+-	RequestedImage      string          `json:"requested_image,omitempty"`
+-	ResolvedImageDigest string          `json:"resolved_image_digest,omitempty"`
+-	ImageRegistry       string          `json:"image_registry,omitempty"`
+-	ImageName           string          `json:"image_name,omitempty"`
+-	ImageTag            string          `json:"image_tag,omitempty"`
+-	Version             int64           `json:"version"`
+-	Ports               []Port          `json:"ports,omitempty"`
+-	RestartCount        int             `json:"restart_count"`
+-	FailureReason       string          `json:"failure_reason,omitempty"`
+-	Conditions          []TaskCondition `json:"conditions,omitempty"`
+-	CreatedAt           time.Time       `json:"created_at"`
+-	UpdatedAt           time.Time       `json:"updated_at"`
+-	StartedAt           time.Time       `json:"started_at,omitempty"`
+-	FinishedAt          time.Time       `json:"finished_at,omitempty"`
++	ID                   TaskID                `json:"id"`
++	Namespace            string                `json:"namespace"`
++	ServiceID            ServiceID             `json:"service_id"`
++	JobID                string                `json:"job_id,omitempty"`
++	NodeID               NodeID                `json:"node_id,omitempty"`
++	ContainerID          string                `json:"container_id,omitempty"`
++	DesiredStatus        TaskStatus            `json:"desired_status"`
++	ActualStatus         TaskStatus            `json:"actual_status"`
++	Image                string                `json:"image"`
++	RequestedImage       string                `json:"requested_image,omitempty"`
++	ResolvedImageDigest  string                `json:"resolved_image_digest,omitempty"`
++	ImageRegistry        string                `json:"image_registry,omitempty"`
++	ImageName            string                `json:"image_name,omitempty"`
++	ImageTag             string                `json:"image_tag,omitempty"`
++	Version              int64                 `json:"version"`
++	Ports                []Port                `json:"ports,omitempty"`
++	RestartCount         int                   `json:"restart_count"`
++	FailureReason        string                `json:"failure_reason,omitempty"`
++	Conditions           []TaskCondition       `json:"conditions,omitempty"`
++	CreatedAt            time.Time             `json:"created_at"`
++	UpdatedAt            time.Time             `json:"updated_at"`
++	StartedAt            time.Time             `json:"started_at,omitempty"`
++	FinishedAt           time.Time             `json:"finished_at,omitempty"`
++	ExitCode             *int                  `json:"exit_code,omitempty"`
++	Command              []string              `json:"command,omitempty"`
++	VolumeMounts         []ResolvedVolumeMount `json:"volume_mounts,omitempty"`
++	ResourceRequirements *ResourceRequirements `json:"resource_requirements,omitempty"`
++	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+ }
+ 
+ type TaskCondition struct {
+diff --git a/pkg/types/workloads.go b/pkg/types/workloads.go
+new file mode 100644
+index 0000000..a99e795
+--- /dev/null
++++ b/pkg/types/workloads.go
+@@ -0,0 +1,195 @@
++package types
++
++import (
++	"fmt"
++	"net/url"
++	"strings"
++	"time"
++)
++
++type GitOpsDriftStatus string
++
++const (
++	GitOpsInSync    GitOpsDriftStatus = "in_sync"
++	GitOpsDrifted   GitOpsDriftStatus = "drifted"
++	GitOpsUnknown   GitOpsDriftStatus = "unknown"
++	GitOpsSyncError GitOpsDriftStatus = "sync_error"
++)
++
++type GitOpsDriftPolicy string
++
++const (
++	GitOpsWarnOnly   GitOpsDriftPolicy = "warn"
++	GitOpsAutoRevert GitOpsDriftPolicy = "auto_revert"
++)
++
++type GitOpsManagedState struct {
++	SourceID      string            `json:"source_id"`
++	SourceCommit  string            `json:"source_commit"`
++	SourcePath    string            `json:"source_path"`
++	Status        GitOpsDriftStatus `json:"status"`
++	Policy        GitOpsDriftPolicy `json:"policy"`
++	DesiredSpec   ServiceSpec       `json:"-"`
++	LastCheckedAt time.Time         `json:"last_checked_at"`
++	LastError     string            `json:"last_error,omitempty"`
++}
++
++type JobStatus string
++
++const (
++	JobPending   JobStatus = "pending"
++	JobRunning   JobStatus = "running"
++	JobSucceeded JobStatus = "succeeded"
++	JobFailed    JobStatus = "failed"
++)
++
++type JobSpec struct {
++	Name                 string                `json:"name" yaml:"name"`
++	Image                string                `json:"image" yaml:"image"`
++	Command              []string              `json:"command,omitempty" yaml:"command,omitempty"`
++	BackoffLimit         int                   `json:"backoff_limit,omitempty" yaml:"backoffLimit,omitempty"`
++	ResourceRequirements ResourceRequirements  `json:"resources" yaml:"resources"`
++	SecretRefs           []SecretRef           `json:"secret_refs,omitempty" yaml:"secrets,omitempty"`
++	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty" yaml:"placement,omitempty"`
++	VolumeClaims         []VolumeClaimMount    `json:"volume_claims,omitempty" yaml:"volumeClaims,omitempty"`
++}
++
++func (s JobSpec) Validate() error {
++	if strings.TrimSpace(s.Name) == "" {
++		return fmt.Errorf("job name is required")
++	}
++	if strings.TrimSpace(s.Image) == "" || !validImageReference(s.Image) {
++		return fmt.Errorf("job image is invalid")
++	}
++	if s.BackoffLimit < 0 {
++		return fmt.Errorf("backoff_limit cannot be negative")
++	}
++	return s.ResourceRequirements.Validate()
++}
++
++type Job struct {
++	ID           string    `json:"id"`
++	Namespace    string    `json:"namespace"`
++	Spec         JobSpec   `json:"spec"`
++	Status       JobStatus `json:"status"`
++	TaskIDs      []TaskID  `json:"task_ids,omitempty"`
++	Attempts     int       `json:"attempts"`
++	LastExitCode *int      `json:"last_exit_code,omitempty"`
++	CreatedAt    time.Time `json:"created_at"`
++	UpdatedAt    time.Time `json:"updated_at"`
++	CompletedAt  time.Time `json:"completed_at,omitempty"`
++}
++
++type ConcurrencyPolicy string
++
++const (
++	ConcurrencyAllow   ConcurrencyPolicy = "Allow"
++	ConcurrencyForbid  ConcurrencyPolicy = "Forbid"
++	ConcurrencyReplace ConcurrencyPolicy = "Replace"
++)
++
++type CronJobSpec struct {
++	Name                string            `json:"name" yaml:"name"`
++	Schedule            string            `json:"schedule" yaml:"schedule"`
++	Timezone            string            `json:"timezone,omitempty" yaml:"timezone,omitempty"`
++	ConcurrencyPolicy   ConcurrencyPolicy `json:"concurrency_policy,omitempty" yaml:"concurrencyPolicy,omitempty"`
++	JobTemplate         JobSpec           `json:"job_template" yaml:"jobTemplate"`
++	Suspended           bool              `json:"suspended,omitempty" yaml:"suspended,omitempty"`
++	MissedScheduleLimit int               `json:"missed_schedule_limit,omitempty" yaml:"missedScheduleLimit,omitempty"`
++}
++
++type CronJob struct {
++	ID             string      `json:"id"`
++	Namespace      string      `json:"namespace"`
++	Spec           CronJobSpec `json:"spec"`
++	LastScheduleAt time.Time   `json:"last_schedule_at,omitempty"`
++	NextScheduleAt time.Time   `json:"next_schedule_at,omitempty"`
++	ActiveJobIDs   []string    `json:"active_job_ids,omitempty"`
++	CreatedAt      time.Time   `json:"created_at"`
++	UpdatedAt      time.Time   `json:"updated_at"`
++}
++
++type VolumeAccessMode string
++
++const (
++	VolumeReadWriteOnce VolumeAccessMode = "ReadWriteOnce"
++	VolumeReadWriteMany VolumeAccessMode = "ReadWriteMany"
++)
++
++type Volume struct {
++	ID        string    `json:"id"`
++	Namespace string    `json:"namespace"`
++	Name      string    `json:"name"`
++	Driver    string    `json:"driver"`
++	NodeID    NodeID    `json:"node_id,omitempty"`
++	CreatedAt time.Time `json:"created_at"`
++}
++
++type VolumeClaim struct {
++	ID                     string           `json:"id"`
++	Namespace              string           `json:"namespace"`
++	Name                   string           `json:"name"`
++	VolumeID               string           `json:"volume_id,omitempty"`
++	AccessMode             VolumeAccessMode `json:"access_mode"`
++	AllowConcurrentWriters bool             `json:"allow_concurrent_writers,omitempty"`
++	CreatedAt              time.Time        `json:"created_at"`
++}
++
++type VolumeClaimMount struct {
++	Claim    string `json:"claim" yaml:"claim"`
++	Target   string `json:"target" yaml:"target"`
++	ReadOnly bool   `json:"read_only,omitempty" yaml:"readOnly,omitempty"`
++}
++
++type ResolvedVolumeMount struct {
++	ClaimID                string           `json:"claim_id"`
++	VolumeID               string           `json:"volume_id"`
++	VolumeName             string           `json:"volume_name"`
++	NodeID                 NodeID           `json:"node_id,omitempty"`
++	Target                 string           `json:"target"`
++	ReadOnly               bool             `json:"read_only,omitempty"`
++	AccessMode             VolumeAccessMode `json:"access_mode"`
++	AllowConcurrentWriters bool             `json:"allow_concurrent_writers,omitempty"`
++}
++
++type VolumeAttachment struct {
++	ID         string    `json:"id"`
++	VolumeID   string    `json:"volume_id"`
++	TaskID     TaskID    `json:"task_id"`
++	NodeID     NodeID    `json:"node_id"`
++	ReadOnly   bool      `json:"read_only"`
++	AttachedAt time.Time `json:"attached_at"`
++	DetachedAt time.Time `json:"detached_at,omitempty"`
++}
++
++type NotificationSinkType string
++
++const (
++	NotificationWebhook NotificationSinkType = "webhook"
++	NotificationSlack   NotificationSinkType = "slack"
++	NotificationHTTP    NotificationSinkType = "http"
++)
++
++type NotificationSink struct {
++	ID            string               `json:"id"`
++	Namespace     string               `json:"namespace"`
++	Name          string               `json:"name"`
++	Type          NotificationSinkType `json:"type"`
++	URL           string               `json:"url"`
++	SigningSecret string               `json:"-"`
++	CreatedAt     time.Time            `json:"created_at"`
++}
++
++func (s NotificationSink) Validate() error {
++	if strings.TrimSpace(s.Name) == "" {
++		return fmt.Errorf("sink name is required")
++	}
++	if s.Type != NotificationWebhook && s.Type != NotificationSlack && s.Type != NotificationHTTP {
++		return fmt.Errorf("unsupported sink type %q", s.Type)
++	}
++	u, err := url.Parse(s.URL)
++	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
++		return fmt.Errorf("sink URL must be HTTP(S)")
++	}
++	return nil
++}

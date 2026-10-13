@@ -1,0 +1,25 @@
+{
+  "id": "lab01-manifest",
+  "command": [
+    "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+    "validate",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/labs/01-initialization-restart/book-http.yaml"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "ORCH_JWT_SECRET",
+    "ORCH_USERS",
+    "ORCH_SECRET_KEY",
+    "ORCH_AGENT_REGISTRATION_TOKEN",
+    "DATABASE_URL"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:53:29.751368+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T00:53:29.755399+00:00",
+  "duration_seconds": 0.004,
+  "stdout": "validation/labs/lab01-manifest.stdout.txt",
+  "stderr": "validation/labs/lab01-manifest.stderr.txt"
+}

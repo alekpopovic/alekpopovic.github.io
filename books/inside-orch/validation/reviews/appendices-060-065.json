@@ -1,0 +1,116 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T02:01:15.558146+00:00",
+  "outputs": [
+    {
+      "prompt_id": "060",
+      "path": "manuscript/appendices/a-cli-api-config.md",
+      "substantive_words_excluding_code_and_link_destinations": 1752,
+      "prose_words_excluding_reference_tables": 1217,
+      "sha256": "36077d9631361ab46b881011e6d4622374ee526fc2ea775155987705723de36c"
+    },
+    {
+      "prompt_id": "061",
+      "path": "manuscript/appendices/b-lifecycle-invariants.md",
+      "substantive_words_excluding_code_and_link_destinations": 1536,
+      "prose_words_excluding_reference_tables": 1190,
+      "sha256": "c9a04d773f4ac4e8ff76d1b828daa460829a6dcdfa611ff97b557d7b128cbced"
+    },
+    {
+      "prompt_id": "062",
+      "path": "manuscript/appendices/c-annotated-history.md",
+      "substantive_words_excluding_code_and_link_destinations": 1579,
+      "prose_words_excluding_reference_tables": 1579,
+      "sha256": "3fc5d10c55bd7a4b622098ada7a9efc00d4516485d678e35d7316a99e1ede227"
+    },
+    {
+      "prompt_id": "063",
+      "path": "manuscript/appendices/d-exercises-solutions.md",
+      "substantive_words_excluding_code_and_link_destinations": 1716,
+      "prose_words_excluding_reference_tables": 1019,
+      "sha256": "bf903c344ad490fd329cc794019151ba03c542223de5c1f64e1db2e58627b493"
+    },
+    {
+      "prompt_id": "064",
+      "path": "manuscript/appendices/e-ops-measurement.md",
+      "substantive_words_excluding_code_and_link_destinations": 1287,
+      "prose_words_excluding_reference_tables": 931,
+      "sha256": "a2b1cdae1d551ba44d58d49c041cf0d8116093fef69856137c16d30faf65ce16"
+    },
+    {
+      "prompt_id": "065",
+      "path": "manuscript/appendices/f-glossary-bibliography.md",
+      "substantive_words_excluding_code_and_link_destinations": 2644,
+      "prose_words_excluding_reference_tables": 802,
+      "sha256": "cdecf81711ad0914d052b1de460d4c373a7e81eb744134eeda5be77b81a377c6"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/check_appendix_references.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:01:15.566040+00:00",
+      "ended_at_utc": "2026-10-13T02:01:15.601649+00:00",
+      "exit_code": 0,
+      "stdout": "{\"commands\": 61, \"invariants\": 7, \"metrics\": 30, \"errors\": []}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/check_exercises.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:01:15.601666+00:00",
+      "ended_at_utc": "2026-10-13T02:01:15.631483+00:00",
+      "exit_code": 0,
+      "stdout": "{\"unique_ids\": 24, \"audience_counts\": {\"developer\": 8, \"devops\": 8, \"architect\": 8}, \"executable_entries\": 8, \"errors\": [], \"pending_dependencies\": [], \"status\": \"passed\"}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/check_bibliography.py",
+        "--git-dir",
+        "/tmp/inside-orch-reference-history.git"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:01:15.631496+00:00",
+      "ended_at_utc": "2026-10-13T02:01:15.743831+00:00",
+      "exit_code": 0,
+      "stdout": "{\"glossary_count\": 83, \"bibliography_entries\": 202, \"citations_resolved\": 437, \"historical_blob_checks\": 11, \"errors\": [], \"pending_dependencies\": [], \"status\": \"passed\"}\n{\"unresolved_external_urls\": []}\n",
+      "stderr": ""
+    }
+  ],
+  "independent_reviews": [
+    "validation/reviews/ch17-24-appendix-d-independent.json",
+    "validation/reviews/copyedit.json"
+  ],
+  "actual_execution_evidence": [
+    "validation/reference-offline-inventory.json",
+    "validation/reference-help.json",
+    "validation/exercises/offline-runs.json",
+    "validation/exercises/mutation-runs.json",
+    "validation/ops-fake-load.json",
+    "validation/history-snippets.json"
+  ],
+  "evidence_by_prompt": {
+    "060": "validation/060-reference-check.json",
+    "061": "validation/061-transition-check.json",
+    "062": "validation/062-history-check.json",
+    "063": "validation/063-exercise-check.json",
+    "064": "validation/064-ops-contract-check.json",
+    "065": "validation/065-reference-check.json"
+  },
+  "all_eight_lab_readme_links_resolve": true,
+  "overall_status": "passed",
+  "limitations": [
+    "Reference construction and deterministic tests do not certify production behavior.",
+    "The fake load tool measures memory/fake-agent behavior, not Docker or PostgreSQL throughput.",
+    "Word counts include substantive reference tables; code and link destinations are excluded.",
+    "No new live application or website deployment was performed."
+  ]
+}

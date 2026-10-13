@@ -1,0 +1,444 @@
+{
+  "accounted_resources": {
+    "b": {
+      "cpu": 500,
+      "memory": 201326592
+    },
+    "c": {
+      "cpu": 800,
+      "memory": 268435456
+    }
+  },
+  "actual_stopping_desired_running_counted": true,
+  "assignments": [
+    {
+      "task_id": "atlas-01",
+      "node_id": "c",
+      "ports": [
+        {
+          "protocol": "tcp",
+          "container_port": 80,
+          "published_port": 31080
+        }
+      ],
+      "assigned_at": "0001-01-01T00:00:00Z",
+      "expected_updated_at": "2026-10-13T00:00:00Z"
+    },
+    {
+      "task_id": "atlas-02",
+      "node_id": "b",
+      "ports": [
+        {
+          "protocol": "tcp",
+          "container_port": 80,
+          "published_port": 30000
+        }
+      ],
+      "assigned_at": "0001-01-01T00:00:00Z",
+      "expected_updated_at": "2026-10-13T00:00:00Z"
+    },
+    {
+      "task_id": "atlas-03",
+      "node_id": "c",
+      "ports": [
+        {
+          "protocol": "tcp",
+          "container_port": 80,
+          "published_port": 30000
+        }
+      ],
+      "assigned_at": "0001-01-01T00:00:00Z",
+      "expected_updated_at": "2026-10-13T00:00:00Z"
+    }
+  ],
+  "desired_stopped_before_actual_ack_excluded": true,
+  "distinct_input_permutations": [
+    {
+      "nodes": [
+        0,
+        1,
+        2
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        1,
+        2
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        1,
+        2
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        1,
+        2
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        2,
+        1
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        2,
+        1
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        2,
+        1
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        0,
+        2,
+        1
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        0,
+        2
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        0,
+        2
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        0,
+        2
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        0,
+        2
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        2,
+        0
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        2,
+        0
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        2,
+        0
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        1,
+        2,
+        0
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        0,
+        1
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        0,
+        1
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        0,
+        1
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        0,
+        1
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        1,
+        0
+      ],
+      "tasks": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        1,
+        0
+      ],
+      "tasks": [
+        0,
+        5,
+        4,
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        1,
+        0
+      ],
+      "tasks": [
+        2,
+        5,
+        4,
+        3,
+        0,
+        1
+      ]
+    },
+    {
+      "nodes": [
+        2,
+        1,
+        0
+      ],
+      "tasks": [
+        5,
+        4,
+        3,
+        2,
+        1,
+        0
+      ]
+    }
+  ],
+  "fixture": "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json",
+  "lexical_tie_node": "b",
+  "memory_path": {
+    "actual_task_status": "assigned",
+    "advertised_allocatable": {
+      "cpu": 100,
+      "memory": 67108864
+    },
+    "declared_requests": {
+      "cpu": 600,
+      "memory": 268435456
+    },
+    "node_labels": {
+      "zone": "red"
+    },
+    "ordinary_task_resource_requirements_absent": true,
+    "required_zone": "blue"
+  },
+  "pending_no_fit": [
+    "atlas-04",
+    "atlas-05",
+    "atlas-06"
+  ],
+  "permutations_checked": 24,
+  "scope": "Deterministic planner and actual in-process MemoryService methods; no Docker, SQL, network listeners or physical resource pressure",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed"
+}

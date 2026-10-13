@@ -1,0 +1,9 @@
+	for _, task := range oldTasks {
+		if state.newHealthy <= state.oldStopped+stopped {
+			break
+		}
+		if service.Spec.Replicas-(state.available-stopped-1) > deployment.MaxUnavailable {
+			break
+		}
+		transactional := c.transactional()
+		stoppedTask := types.Task{}

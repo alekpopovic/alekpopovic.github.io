@@ -1,0 +1,21 @@
+name: atlas-api
+image: nginx:1.27-alpine
+replicas: 1
+ports:
+  - container: 80
+    public: 0
+resources:
+  cpu: 100m
+  memory: 128Mi
+restart:
+  policy: always
+placement:
+  labels:
+    role: worker
+healthcheck:
+  type: http
+  path: /
+  interval: 2s
+  timeout: 1s
+  healthyThreshold: 1
+  unhealthyThreshold: 2

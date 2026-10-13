@@ -1,0 +1,16 @@
+{"Time":"2026-10-13T03:44:18.366172335+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/scheduler"}
+{"Time":"2026-10-13T03:44:18.36960813+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce"}
+{"Time":"2026-10-13T03:44:18.36964808+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Output":"=== RUN   TestConcurrentSchedulerAttemptsAssignTaskOnce\n"}
+{"Time":"2026-10-13T03:44:18.369752845+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Output":"--- PASS: TestConcurrentSchedulerAttemptsAssignTaskOnce (0.00s)\n"}
+{"Time":"2026-10-13T03:44:18.369760039+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Elapsed":0}
+{"Time":"2026-10-13T03:44:18.369825901+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers"}
+{"Time":"2026-10-13T03:44:18.369834072+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers","Output":"=== RUN   TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers\n"}
+{"Time":"2026-10-13T03:44:18.36996+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers","Output":"--- PASS: TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers (0.00s)\n"}
+{"Time":"2026-10-13T03:44:18.369967473+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers","Elapsed":0}
+{"Time":"2026-10-13T03:44:18.369995969+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestRunOnceAccountsForNonTerminalAssignedTasks"}
+{"Time":"2026-10-13T03:44:18.370003861+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestRunOnceAccountsForNonTerminalAssignedTasks","Output":"=== RUN   TestRunOnceAccountsForNonTerminalAssignedTasks\n"}
+{"Time":"2026-10-13T03:44:18.370041996+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestRunOnceAccountsForNonTerminalAssignedTasks","Output":"--- PASS: TestRunOnceAccountsForNonTerminalAssignedTasks (0.00s)\n"}
+{"Time":"2026-10-13T03:44:18.370050656+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestRunOnceAccountsForNonTerminalAssignedTasks","Elapsed":0}
+{"Time":"2026-10-13T03:44:18.370124061+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Output":"PASS\n"}
+{"Time":"2026-10-13T03:44:18.370251246+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Output":"ok  \tgithub.com/alekpopovic/orch/internal/scheduler\t0.004s\n"}
+{"Time":"2026-10-13T03:44:18.370265773+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/scheduler","Elapsed":0.004}

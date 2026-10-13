@@ -1,0 +1,19 @@
+{
+  "id": "095-independent-checksums",
+  "command": [
+    "sha256sum",
+    "-c",
+    "SHA256SUMS.txt"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io/books/inside-orch/dist",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T04:06:45.617557+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T04:06:45.642376+00:00",
+  "duration_seconds": 0.025,
+  "stdout": "validation/publication/095-checksums-command.stdout.txt",
+  "stderr": "validation/publication/095-checksums-command.stderr.txt"
+}

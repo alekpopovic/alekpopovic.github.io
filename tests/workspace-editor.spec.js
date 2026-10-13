@@ -156,7 +156,7 @@ test('workspace and newsletter archive stay useful without JavaScript or email s
   const context = await browser.newContext({ javaScriptEnabled: false }), page = await context.newPage();
   try {
     await page.goto('http://127.0.0.1:4173/learn/workspace/');
-    await expect(page.locator('[data-workspace-book]')).toHaveCount(5);
+    await expect(page.locator('[data-workspace-book]')).toHaveCount(6);
     await expect(page.locator('[data-workspace-path]')).toHaveCount(5);
     await expect(page.locator('[data-workspace-workshop]')).toHaveCount(6);
     await page.goto('http://127.0.0.1:4173/newsletter/');

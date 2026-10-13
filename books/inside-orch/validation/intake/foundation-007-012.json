@@ -1,0 +1,69 @@
+{
+  "checked_at_utc": "2026-10-13T00:40:00.087918+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "prompts": {
+    "007": {
+      "artifacts": [
+        "labs/ENVIRONMENT.md",
+        "scripts/check_lab_prerequisites.py",
+        "scripts/run_database_tests.py"
+      ],
+      "evidence": [
+        "validation/intake/lab-environment.json",
+        "validation/intake/lab-isolation-guard.json"
+      ],
+      "checks": "Read-only tool version probes; eight database isolation guard unit cases passed. No DB reset by this agent."
+    },
+    "008": {
+      "artifacts": [
+        "editorial/READER_PATHS.md",
+        "editorial/LEARNING_OBJECTIVES.md"
+      ],
+      "evidence": [
+        "validation/intake/learning-paths.json"
+      ],
+      "checks": "40chapters assigned; dependency graph topologically sorted; critical boundaries retained in all paths."
+    },
+    "009": {
+      "artifacts": [
+        "editorial/DECISION_REGISTER.md"
+      ],
+      "evidence": [
+        "validation/intake/decisions.json"
+      ],
+      "checks": "16decision entries anchored to existing source with explicit inferred rationale and separate teaching plans."
+    },
+    "010": {
+      "artifacts": [
+        "editorial/REFERENCES.md"
+      ],
+      "evidence": [
+        "validation/intake/reference-register.json"
+      ],
+      "checks": "Full repository SHAs exist in commit corpus; six primary sources retrieved. Incomplete Docker API shell excluded from precise claims."
+    },
+    "011": {
+      "artifacts": [
+        "examples/source-excerpts/registry.json"
+      ],
+      "evidence": [
+        "validation/intake/excerpt-review.md",
+        "validation/intake/excerpt-check.json"
+      ],
+      "checks": "46byte-derived listings: sixoriginalseeds unchanged plus40chapteranchors. Allsourcechecksums and slicehashes independentlychecked."
+    },
+    "012": {
+      "artifacts": [
+        "labs/CASE_STUDY.md",
+        "labs/case-study-manifest.json",
+        "labs/specs/"
+      ],
+      "evidence": [
+        "validation/intake/case-study-parse.json"
+      ],
+      "checks": "Actual baseline parser accepts3servicefixtures/domainJobSpec; unknownfieldfixture rejected. Eight lab stages designed; no lab results invented."
+    }
+  },
+  "dependencies": "Reconciled with editorial/CAPABILITIES.md. Root owns final tracker and execution evidence. Baseline tests and observed database failure remain separate records.",
+  "not_executed": "No Docker workload, DB reset, benchmark, process restart or live publication by this agent."
+}

@@ -1,0 +1,97 @@
+{
+  "chapter_id": "17",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch17.target-health",
+      "statement": "New-version readiness requires TaskHealthy, not merely running.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/rollout/rollout.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 358,
+      "line_end": 385,
+      "associated_commits": [
+        "de5900bced92ad9d5786cd258ff7941d67369d33",
+        "430a061fe7f01df966e33d0b86654c627b7d5e39",
+        "5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Controller consumes reported store state, not independent traffic.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch17.stop-limits",
+      "statement": "Old stopping requires replacement readiness and MaxUnavailable arithmetic.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/rollout/rollout.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 239,
+      "line_end": 273,
+      "associated_commits": [
+        "de5900bced92ad9d5786cd258ff7941d67369d33",
+        "430a061fe7f01df966e33d0b86654c627b7d5e39",
+        "5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Distributed removal can lag desired-state mutation.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch17.rollback",
+      "statement": "Rollback preserves failed history and targets previous successful version.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/rollback_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 12,
+      "line_end": 51,
+      "associated_commits": [
+        "de5900bced92ad9d5786cd258ff7941d67369d33",
+        "430a061fe7f01df966e33d0b86654c627b7d5e39",
+        "5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Memory-backed tests do not prove process durability.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch17.operation-order",
+      "statement": "Identical rollout retries reuse active identity; conflicting operations reject; delete wins.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/operation_lock_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 13,
+      "line_end": 116,
+      "associated_commits": [
+        "de5900bced92ad9d5786cd258ff7941d67369d33",
+        "430a061fe7f01df966e33d0b86654c627b7d5e39",
+        "5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Per-process mutex and maps, not distributed locking.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestControllerSuccessfulRollout",
+    "TestControllerFailsWhenNewTaskFails",
+    "TestControllerRespectsMaxUnavailable",
+    "TestControllerRespectsMaxSurge",
+    "TestControllerIdempotentResume",
+    "TestControllerCompletesRollback",
+    "TestRollbackAfterFailedRollout",
+    "TestDeleteWinsOverActiveRollout"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

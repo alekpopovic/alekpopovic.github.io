@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:35:06.866797+00:00",
+  "scope": "Source-inspected evidence contracts; not captured lab output",
+  "metrics": [
+    {
+      "name": "api_requests_total",
+      "declaration": "internal/metrics/prometheus.go:45",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L45",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "api_request_duration_seconds",
+      "declaration": "internal/metrics/prometheus.go:49",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L49",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_runs_total",
+      "declaration": "internal/metrics/prometheus.go:54",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L54",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_errors_total",
+      "declaration": "internal/metrics/prometheus.go:58",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L58",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_scheduling_attempts_total",
+      "declaration": "internal/metrics/prometheus.go:62",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L62",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_scheduling_failures_total",
+      "declaration": "internal/metrics/prometheus.go:66",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L66",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_tasks_claimed_total",
+      "declaration": "internal/metrics/prometheus.go:70",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L70",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_assignment_conflicts_total",
+      "declaration": "internal/metrics/prometheus.go:74",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L74",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "scheduler_duration_seconds",
+      "declaration": "internal/metrics/prometheus.go:78",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L78",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "reconciler_runs_total",
+      "declaration": "internal/metrics/prometheus.go:83",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L83",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "reconciler_errors_total",
+      "declaration": "internal/metrics/prometheus.go:87",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L87",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "reconciler_duration_seconds",
+      "declaration": "internal/metrics/prometheus.go:91",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L91",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "tasks_created_total",
+      "declaration": "internal/metrics/prometheus.go:96",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L96",
+      "default_scope": "partial integration; rollout increments, direct memory placement does not use this counter"
+    },
+    {
+      "name": "tasks_failed_total",
+      "declaration": "internal/metrics/prometheus.go:100",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L100",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "rollouts_total",
+      "declaration": "internal/metrics/prometheus.go:104",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L104",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "rollout_failures_total",
+      "declaration": "internal/metrics/prometheus.go:108",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L108",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "autoscaler_decisions_total",
+      "declaration": "internal/metrics/prometheus.go:112",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L112",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "autoscaler_errors_total",
+      "declaration": "internal/metrics/prometheus.go:116",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L116",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "autoscaler_recommendation_replicas",
+      "declaration": "internal/metrics/prometheus.go:120",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L120",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "controller_leader_status",
+      "declaration": "internal/metrics/prometheus.go:124",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L124",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "controller_leader_acquisition_failures_total",
+      "declaration": "internal/metrics/prometheus.go:128",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L128",
+      "default_scope": "implemented package; no default controller wiring"
+    },
+    {
+      "name": "dns_queries_total",
+      "declaration": "internal/metrics/prometheus.go:131",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L131",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "dns_errors_total",
+      "declaration": "internal/metrics/prometheus.go:132",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L132",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "heartbeat_success_total",
+      "declaration": "internal/metrics/prometheus.go:280",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L280",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "heartbeat_failure_total",
+      "declaration": "internal/metrics/prometheus.go:284",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L284",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "docker_operations_total",
+      "declaration": "internal/metrics/prometheus.go:288",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L288",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "docker_operation_errors_total",
+      "declaration": "internal/metrics/prometheus.go:292",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L292",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "task_state_changes_total",
+      "declaration": "internal/metrics/prometheus.go:296",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L296",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "healthcheck_success_total",
+      "declaration": "internal/metrics/prometheus.go:300",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L300",
+      "default_scope": "runtime-integrated"
+    },
+    {
+      "name": "healthcheck_failure_total",
+      "declaration": "internal/metrics/prometheus.go:304",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L304",
+      "default_scope": "runtime-integrated"
+    }
+  ],
+  "observations": [
+    {
+      "id": "assignment",
+      "fields": "task.id, task.node_id, task.actual_status, task.updated_at",
+      "source_path": "internal/scheduler/scheduler.go",
+      "source_line": 99,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L99",
+      "criterion": "Pending-job claim plus assignment event; direct service placement is separate. A claim conflict must not create a second winner.",
+      "window": "One synchronous RunOnce followed by store/event read; process-local tests do not establish multi-process guarantees.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "stale-status",
+      "fields": "task.id, task.node_id, task.desired_status, task.actual_status, task.failure_reason",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_line": 74,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L74",
+      "criterion": "Submit a report from the wrong node or against a terminal/removal state; observe the specific guard or accepted idempotent state. Do not assume every old report is rejected.",
+      "window": "Before and immediately after one report, preserving original task and node identity.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "replica-health",
+      "fields": "task.service_id, task.version, task.actual_status; service.spec.replicas",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_line": 297,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L297",
+      "criterion": "Count statuses according to source. Old-version running or healthy counts as rollout availability; new-version replacement readiness requires healthy in rolloutStateFor. Running is not application-level probe success.",
+      "window": "Record each observation timestamp, then repeat after controller interval plus agent poll and probe threshold.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "rollout",
+      "fields": "deployment.id, deployment.service_id, deployment.status; task.version",
+      "source_path": "internal/rollout/rollout.go",
+      "source_line": 77,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L77",
+      "criterion": "Compare old/new task availability to the requested maxUnavailable/maxSurge and failure state. Preserve old workload responses separately.",
+      "window": "Five-second default rollout loop is scheduling cadence, not a convergence deadline; deterministic fixture uses explicit RunOnce.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "heartbeat",
+      "fields": "node.id, node.status, node.last_heartbeat_at; heartbeat_success_total, heartbeat_failure_total",
+      "source_path": "internal/agent/agent.go",
+      "source_line": 163,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L163",
+      "criterion": "Compute age against UTC observation time; success means server accepted heartbeat, not container health.",
+      "window": "Use configured heartbeat timeout and monitor interval plus scrape/evaluation delay; no universal timeout constant assumed.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "gitops-failure",
+      "fields": "gitops_source.last_error, last_revision, last_synced_at, managed_services; gitops.sync.failed event",
+      "source_path": "internal/gitops/gitops.go",
+      "source_line": 23,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L23",
+      "criterion": "A later invalid manifest can leave earlier writes. Read both GitOps source and affected services. LastSyncedAt is attempt time on failure.",
+      "window": "Trigger one explicit sync; inspect immediately after its response. Do not interpret previous LastRevision as successful current batch.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "quota",
+      "fields": "HTTP status, error.code, error.message; quota and usage fields",
+      "source_path": "internal/api/api.go",
+      "source_line": 462,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L462",
+      "criterion": "Capture rejection plus unchanged service/task counts; quota measures declared accounting, not kernel utilization.",
+      "window": "Snapshot before one rejected write and after its response; classify exact source error mapping.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "job-attempts",
+      "fields": "job.id, job.status, job.attempts, job.task_ids, job.last_exit_code; task.job_id, task.exit_code",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_line": 203,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L203",
+      "criterion": "Nonzero exit can create a fresh task immediately until limit. Record all task IDs; attempts are not exactly-once execution.",
+      "window": "Observe each explicit report and resulting job mutation; no exponential delay claimed.",
+      "execution": "expected_only"
+    },
+    {
+      "id": "docker-limits",
+      "fields": "container HostConfig.Memory, HostConfig.NanoCpus; Config.Labels; State.Running",
+      "source_path": "internal/docker/docker.go",
+      "source_line": 49,
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L49",
+      "criterion": "Inspect real Docker for active agent limits and direct adapter comparison. DTO/agent propagation gap predicts omitted ordinary limits.",
+      "window": "After actual create/start and before cleanup; package fakes cannot establish cgroup enforcement.",
+      "execution": "expected_only"
+    }
+  ],
+  "trace_columns": [
+    "observed_at_utc",
+    "namespace",
+    "service_id",
+    "service_version",
+    "deployment_id",
+    "job_id",
+    "task_id",
+    "node_id",
+    "container_id",
+    "desired_status",
+    "actual_status",
+    "event_id",
+    "request_id",
+    "independent_endpoint_result"
+  ],
+  "measurement_contract": {
+    "duration_seconds": null,
+    "sample_size": null,
+    "hardware": null,
+    "warning": "No performance numbers claimed by this contract."
+  }
+}

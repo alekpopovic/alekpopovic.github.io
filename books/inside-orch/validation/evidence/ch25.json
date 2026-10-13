@@ -1,0 +1,78 @@
+{
+  "chapter_id": "25",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch25.credentials",
+      "statement": "Ordinary service registry credential passwords are envelope-encrypted, namespace-keyed, then decrypted for assigned-task pull authentication.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 854,
+      "line_end": 873,
+      "associated_commits": [
+        "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Transient plaintext exists on the execution path; Job branch does not provide identical service credential resolution."
+      ]
+    },
+    {
+      "claim_id": "ch25.parser",
+      "statement": "Actual reference parser tests passed registry/name/tag/digest cases and pinned string construction.",
+      "classification": "implemented package",
+      "source_path": "internal/image/reference.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 24,
+      "line_end": 81,
+      "associated_commits": [
+        "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch25/focused-tests.json",
+      "limitations": [
+        "Synthetic test digests establish syntax/field behavior, not available images or cryptographic authenticity."
+      ]
+    },
+    {
+      "claim_id": "ch25.pinning",
+      "statement": "Injected fixed-resolver rollout test passed stored digest/pinned metadata and current-version task reference assertion.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/image_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 19,
+      "line_end": 65,
+      "associated_commits": [
+        "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch25/focused-tests.json",
+      "limitations": [
+        "Fake resolver/synthetic digest; test directly completes rollout state; no Docker pull or physical rollout."
+      ]
+    },
+    {
+      "claim_id": "ch25.resolver",
+      "statement": "Default ParserResolver calls Parse and performs no registry network resolution.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/image/reference.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 18,
+      "line_end": 22,
+      "associated_commits": [
+        "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+        "f2836eabfff8e442d38984433f3e1f5c642667d1"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Resolver interface permits alternatives, but default and injected fake do not establish a remote adapter."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "inside-orch-reader-ui",
+  "command": [
+    "npx",
+    "playwright",
+    "test",
+    "tests/inside-orch.spec.js",
+    "--grep",
+    "connects|mobile|without JavaScript|storage"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T02:08:00.748473+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T02:08:02.664564+00:00",
+  "duration_seconds": 1.916,
+  "stdout": "validation/publication/inside-orch-reader-ui.stdout.txt",
+  "stderr": "validation/publication/inside-orch-reader-ui.stderr.txt"
+}

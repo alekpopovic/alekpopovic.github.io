@@ -1,0 +1,108 @@
+{
+  "chapter_id": "32",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch32.binding",
+      "statement": "Local claims resolve namespace-local metadata and bind volume identity/name into task mount snapshots.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 419,
+      "line_end": 477,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "CreateVolume is metadata, not distributed provisioning; claim map replacement and stale copied-node snapshot limits disclosed."
+      ]
+    },
+    {
+      "claim_id": "ch32.physical-name",
+      "statement": "Agent maps resolved VolumeName to Engine name:target:mode without namespace or metadata UUID in the bind name.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 287,
+      "line_end": 294,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Logical namespace separation does not prove equal local names use different physical volumes on one daemon."
+      ]
+    },
+    {
+      "claim_id": "ch32.attachments",
+      "statement": "Writable RWO predicate rejects any active attachment unless concurrent writers allowed; task removal detaches metadata.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 479,
+      "line_end": 523,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Existing read-only attachment can block later writer; metadata is not physical stale-host fencing."
+      ]
+    },
+    {
+      "claim_id": "ch32.scheduler",
+      "statement": "Focused scheduler fixture passed rejection of a conflicting writable RWO task.",
+      "classification": "implemented package",
+      "source_path": "internal/scheduler/workloads_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 22,
+      "line_end": 30,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch32/focused-tests.json",
+      "limitations": [
+        "Supplied snapshot only; no host data or storage migration."
+      ]
+    },
+    {
+      "claim_id": "ch32.live-path",
+      "statement": "MemoryService desired2/RWO fixture produced one writer and detached its attachment after injected removal.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/workloads_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 128,
+      "line_end": 162,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch32/focused-tests.json",
+      "limitations": [
+        "Metadata fixture only; normal service path checked independently of pure scheduler resource bypass."
+      ]
+    },
+    {
+      "claim_id": "ch32.design-boundary",
+      "statement": "Stateful-service ordinals, backup hooks, replication and controlled failover remain broader design material.",
+      "classification": "design only",
+      "source_path": "docs/STATEFUL_WORKLOADS_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 3,
+      "line_end": 15,
+      "associated_commits": [
+        "4d641bbe8913da568d6d9f4697a0144314e10b87"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Local volume MVP is not replicated storage, automatic data movement or complete backup."
+      ]
+    }
+  ]
+}

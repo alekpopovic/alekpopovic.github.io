@@ -1,0 +1,659 @@
+commit c756f9d7f3a46e8bfe4d7bca291d67f6a783553d
+Date: 2026-06-11T14:59:38+02:00
+Subject: Add core domain model types
+
+
+---
+ docs/ARCHITECTURE.md         |  10 ++
+ pkg/types/types.go           | 359 +++++++++++++++++++++++++++++++++++++++++--
+ pkg/types/validation_test.go | 236 ++++++++++++++++++++++++++++
+ 3 files changed, 589 insertions(+), 16 deletions(-)
+
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index cf23d79..896beae 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -34,6 +34,16 @@ PostgreSQL stores durable desired state, observed state, deployment history, eve
+ 7. Health checks, events, logs, and metrics update observed state and deployment progress.
+ 8. The rollout manager advances, pauses, or rolls back deployments based on health and policy.
+ 
++## Service, Task, And Container Lifecycle
++
++A service is the durable desired-state object submitted by an operator. Its spec defines the image, replica count, environment, secret references, ports, resource requests and limits, restart policy, health check, placement constraints, and deployment version.
++
++When a service is created or updated, the control plane records a deployment version and the scheduler turns the service's replica intent into task assignments. Each task is an immutable unit of work for a specific service version and target node. Tasks carry both desired status and observed status so the control plane can reason about convergence without treating Docker as the source of truth.
++
++On each worker, the agent reconciler reads assigned tasks and asks the runtime adapter to create, update, stop, or remove the corresponding Docker container. The container ID is observed runtime state attached back to the task. Docker operations must be idempotent: repeating reconciliation should converge the same task to the same container state without creating duplicates.
++
++Health checks, restart policy, and container exit state update the task's actual status, restart count, failure reason, and timestamps. Rollouts advance only when the expected tasks for the new service version become healthy; failed health checks or runtime failures can pause the deployment or trigger rollback to the previous version.
++
+ ## Design Principles
+ 
+ - Keep domain logic independent from Docker, PostgreSQL, clocks, and network probes.
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 4d0f43d..0621b76 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -1,16 +1,28 @@
+ package types
+ 
+-import "time"
++import (
++	"fmt"
++	"strings"
++	"time"
++)
+ 
+ type NodeID string
+ type TaskID string
+ type ServiceID string
++type DeploymentID string
++type EventID string
+ 
+ type Node struct {
+-	ID        NodeID            `json:"id"`
+-	Labels    map[string]string `json:"labels,omitempty"`
+-	Capacity  Resources         `json:"capacity"`
+-	UpdatedAt time.Time         `json:"updated_at"`
++	ID               NodeID            `json:"id"`
++	Hostname         string            `json:"hostname"`
++	AdvertiseAddress string            `json:"advertise_address"`
++	Labels           map[string]string `json:"labels,omitempty"`
++	Capacity         Resources         `json:"capacity"`
++	Allocatable      Resources         `json:"allocatable"`
++	Status           NodeStatus        `json:"status"`
++	LastHeartbeatAt  time.Time         `json:"last_heartbeat_at"`
++	CreatedAt        time.Time         `json:"created_at"`
++	UpdatedAt        time.Time         `json:"updated_at"`
+ }
+ 
+ type Resources struct {
+@@ -18,20 +30,335 @@ type Resources struct {
+ 	Memory int64 `json:"memory"`
+ }
+ 
++type NodeStatus string
++
++const (
++	NodeReady    NodeStatus = "ready"
++	NodeDraining NodeStatus = "draining"
++	NodeOffline  NodeStatus = "offline"
++	NodeUnknown  NodeStatus = "unknown"
++)
++
++type NodeSpec struct {
++	Hostname         string            `json:"hostname"`
++	AdvertiseAddress string            `json:"advertise_address"`
++	Labels           map[string]string `json:"labels,omitempty"`
++	Capacity         Resources         `json:"capacity"`
++	Allocatable      Resources         `json:"allocatable"`
++}
++
++func (spec NodeSpec) Validate() error {
++	if strings.TrimSpace(spec.Hostname) == "" {
++		return fmt.Errorf("hostname is required")
++	}
++	if strings.TrimSpace(spec.AdvertiseAddress) == "" {
++		return fmt.Errorf("advertise address is required")
++	}
++	if err := validateNonNegativeResources("capacity", spec.Capacity); err != nil {
++		return err
++	}
++	if err := validateNonNegativeResources("allocatable", spec.Allocatable); err != nil {
++		return err
++	}
++	if spec.Allocatable.CPU > spec.Capacity.CPU {
++		return fmt.Errorf("allocatable CPU cannot exceed capacity CPU")
++	}
++	if spec.Allocatable.Memory > spec.Capacity.Memory {
++		return fmt.Errorf("allocatable memory cannot exceed capacity memory")
++	}
++	return nil
++}
++
++type Service struct {
++	ID                ServiceID   `json:"id"`
++	Spec              ServiceSpec `json:"spec"`
++	DeploymentVersion int64       `json:"deployment_version"`
++	CreatedAt         time.Time   `json:"created_at"`
++	UpdatedAt         time.Time   `json:"updated_at"`
++}
++
++type ServiceSpec struct {
++	Name                 string                `json:"name"`
++	Image                string                `json:"image"`
++	Replicas             int                   `json:"replicas"`
++	Env                  map[string]string     `json:"env,omitempty"`
++	SecretRefs           []SecretRef           `json:"secret_refs,omitempty"`
++	Ports                []Port                `json:"ports,omitempty"`
++	ResourceRequirements ResourceRequirements  `json:"resource_requirements"`
++	Healthcheck          *Healthcheck          `json:"healthcheck,omitempty"`
++	RestartPolicy        RestartPolicy         `json:"restart_policy"`
++	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
++}
++
++func (spec ServiceSpec) Validate() error {
++	if strings.TrimSpace(spec.Name) == "" {
++		return fmt.Errorf("service name is required")
++	}
++	if strings.TrimSpace(spec.Image) == "" {
++		return fmt.Errorf("image is required")
++	}
++	if spec.Replicas < 0 {
++		return fmt.Errorf("replicas cannot be negative")
++	}
++	if err := spec.ResourceRequirements.Validate(); err != nil {
++		return err
++	}
++	for i, port := range spec.Ports {
++		if err := port.Validate(); err != nil {
++			return fmt.Errorf("ports[%d]: %w", i, err)
++		}
++	}
++	if spec.Healthcheck != nil {
++		if err := spec.Healthcheck.Validate(); err != nil {
++			return err
++		}
++	}
++	if spec.RestartPolicy.Condition != "" {
++		if !validRestartCondition(spec.RestartPolicy.Condition) {
++			return fmt.Errorf("restart policy condition %q is invalid", spec.RestartPolicy.Condition)
++		}
++	}
++	for i, constraint := range spec.PlacementConstraints {
++		if err := constraint.Validate(); err != nil {
++			return fmt.Errorf("placement_constraints[%d]: %w", i, err)
++		}
++	}
++	return nil
++}
++
++type SecretRef struct {
++	Name string `json:"name"`
++	Key  string `json:"key,omitempty"`
++}
++
++type Port struct {
++	Name          string       `json:"name,omitempty"`
++	Protocol      PortProtocol `json:"protocol"`
++	ContainerPort int          `json:"container_port"`
++	PublishedPort int          `json:"published_port,omitempty"`
++}
++
++func (port Port) Validate() error {
++	if port.Protocol == "" {
++		return fmt.Errorf("protocol is required")
++	}
++	if port.Protocol != PortTCP && port.Protocol != PortUDP {
++		return fmt.Errorf("protocol %q is invalid", port.Protocol)
++	}
++	if port.ContainerPort < 1 || port.ContainerPort > 65535 {
++		return fmt.Errorf("container port must be between 1 and 65535")
++	}
++	if port.PublishedPort < 0 || port.PublishedPort > 65535 {
++		return fmt.Errorf("published port must be between 0 and 65535")
++	}
++	return nil
++}
++
++type PortProtocol string
++
++const (
++	PortTCP PortProtocol = "tcp"
++	PortUDP PortProtocol = "udp"
++)
++
++type ResourceRequirements struct {
++	Requests Resources `json:"requests"`
++	Limits   Resources `json:"limits"`
++}
++
++func (requirements ResourceRequirements) Validate() error {
++	if err := validateNonNegativeResources("resource requests", requirements.Requests); err != nil {
++		return err
++	}
++	if err := validateNonNegativeResources("resource limits", requirements.Limits); err != nil {
++		return err
++	}
++	if requirements.Limits.CPU > 0 && requirements.Requests.CPU > requirements.Limits.CPU {
++		return fmt.Errorf("requested CPU cannot exceed CPU limit")
++	}
++	if requirements.Limits.Memory > 0 && requirements.Requests.Memory > requirements.Limits.Memory {
++		return fmt.Errorf("requested memory cannot exceed memory limit")
++	}
++	return nil
++}
++
++type Healthcheck struct {
++	Type               HealthcheckType `json:"type"`
++	Path               string          `json:"path,omitempty"`
++	Port               int             `json:"port"`
++	Interval           time.Duration   `json:"interval"`
++	Timeout            time.Duration   `json:"timeout"`
++	HealthyThreshold   int             `json:"healthy_threshold"`
++	UnhealthyThreshold int             `json:"unhealthy_threshold"`
++}
++
++func (check Healthcheck) Validate() error {
++	if check.Type != HealthcheckHTTP && check.Type != HealthcheckTCP {
++		return fmt.Errorf("healthcheck type %q is invalid", check.Type)
++	}
++	if check.Port < 1 || check.Port > 65535 {
++		return fmt.Errorf("healthcheck port must be between 1 and 65535")
++	}
++	if check.Type == HealthcheckHTTP && strings.TrimSpace(check.Path) == "" {
++		return fmt.Errorf("healthcheck path is required for HTTP checks")
++	}
++	if check.Interval < 0 {
++		return fmt.Errorf("healthcheck interval cannot be negative")
++	}
++	if check.Timeout < 0 {
++		return fmt.Errorf("healthcheck timeout cannot be negative")
++	}
++	if check.HealthyThreshold < 0 {
++		return fmt.Errorf("healthy threshold cannot be negative")
++	}
++	if check.UnhealthyThreshold < 0 {
++		return fmt.Errorf("unhealthy threshold cannot be negative")
++	}
++	return nil
++}
++
++type HealthcheckType string
++
++const (
++	HealthcheckHTTP HealthcheckType = "http"
++	HealthcheckTCP  HealthcheckType = "tcp"
++)
++
++type RestartPolicy struct {
++	Condition   RestartCondition `json:"condition"`
++	MaxAttempts int              `json:"max_attempts,omitempty"`
++}
++
++type RestartCondition string
++
++const (
++	RestartNever     RestartCondition = "never"
++	RestartOnFailure RestartCondition = "on_failure"
++	RestartAlways    RestartCondition = "always"
++)
++
++type PlacementConstraint struct {
++	Key      string             `json:"key"`
++	Operator ConstraintOperator `json:"operator"`
++	Value    string             `json:"value"`
++}
++
++func (constraint PlacementConstraint) Validate() error {
++	if strings.TrimSpace(constraint.Key) == "" {
++		return fmt.Errorf("key is required")
++	}
++	if constraint.Operator != ConstraintEquals && constraint.Operator != ConstraintNotEquals {
++		return fmt.Errorf("operator %q is invalid", constraint.Operator)
++	}
++	return nil
++}
++
++type ConstraintOperator string
++
++const (
++	ConstraintEquals    ConstraintOperator = "equals"
++	ConstraintNotEquals ConstraintOperator = "not_equals"
++)
++
+ type Task struct {
+-	ID        TaskID    `json:"id"`
+-	ServiceID ServiceID `json:"service_id"`
+-	Image     string    `json:"image"`
+-	NodeID    NodeID    `json:"node_id,omitempty"`
+-	Desired   TaskState `json:"desired"`
+-	UpdatedAt time.Time `json:"updated_at"`
++	ID            TaskID     `json:"id"`
++	ServiceID     ServiceID  `json:"service_id"`
++	NodeID        NodeID     `json:"node_id,omitempty"`
++	ContainerID   string     `json:"container_id,omitempty"`
++	DesiredStatus TaskStatus `json:"desired_status"`
++	ActualStatus  TaskStatus `json:"actual_status"`
++	Image         string     `json:"image"`
++	Version       int64      `json:"version"`
++	RestartCount  int        `json:"restart_count"`
++	FailureReason string     `json:"failure_reason,omitempty"`
++	CreatedAt     time.Time  `json:"created_at"`
++	UpdatedAt     time.Time  `json:"updated_at"`
++	StartedAt     time.Time  `json:"started_at,omitempty"`
++	FinishedAt    time.Time  `json:"finished_at,omitempty"`
+ }
+ 
+-type TaskState string
++type TaskStatus string
+ 
+ const (
+-	TaskPending TaskState = "pending"
+-	TaskRunning TaskState = "running"
+-	TaskStopped TaskState = "stopped"
+-	TaskFailed  TaskState = "failed"
++	TaskPending  TaskStatus = "pending"
++	TaskAssigned TaskStatus = "assigned"
++	TaskPulling  TaskStatus = "pulling"
++	TaskStarting TaskStatus = "starting"
++	TaskRunning  TaskStatus = "running"
++	TaskStopping TaskStatus = "stopping"
++	TaskStopped  TaskStatus = "stopped"
++	TaskFailed   TaskStatus = "failed"
+ )
++
++type Deployment struct {
++	ID             DeploymentID     `json:"id"`
++	ServiceID      ServiceID        `json:"service_id"`
++	FromVersion    int64            `json:"from_version"`
++	ToVersion      int64            `json:"to_version"`
++	Strategy       RolloutStrategy  `json:"strategy"`
++	Status         DeploymentStatus `json:"status"`
++	MaxUnavailable int              `json:"max_unavailable"`
++	MaxSurge       int              `json:"max_surge"`
++	CreatedAt      time.Time        `json:"created_at"`
++	UpdatedAt      time.Time        `json:"updated_at"`
++	StartedAt      time.Time        `json:"started_at,omitempty"`
++	CompletedAt    time.Time        `json:"completed_at,omitempty"`
++}
++
++type RolloutStrategy string
++
++const (
++	RolloutRollingUpdate RolloutStrategy = "rolling_update"
++	RolloutRecreate      RolloutStrategy = "recreate"
++)
++
++type DeploymentStatus string
++
++const (
++	DeploymentPending     DeploymentStatus = "pending"
++	DeploymentRunning     DeploymentStatus = "running"
++	DeploymentPaused      DeploymentStatus = "paused"
++	DeploymentSucceeded   DeploymentStatus = "succeeded"
++	DeploymentFailed      DeploymentStatus = "failed"
++	DeploymentRollingBack DeploymentStatus = "rolling_back"
++	DeploymentRolledBack  DeploymentStatus = "rolled_back"
++)
++
++type Event struct {
++	ID                EventID       `json:"id"`
++	Type              string        `json:"type"`
++	Severity          EventSeverity `json:"severity"`
++	Source            string        `json:"source"`
++	Message           string        `json:"message"`
++	RelatedObjectType string        `json:"related_object_type,omitempty"`
++	RelatedObjectID   string        `json:"related_object_id,omitempty"`
++	Timestamp         time.Time     `json:"timestamp"`
++}
++
++type EventSeverity string
++
++const (
++	EventDebug EventSeverity = "debug"
++	EventInfo  EventSeverity = "info"
++	EventWarn  EventSeverity = "warn"
++	EventError EventSeverity = "error"
++)
++
++func validateNonNegativeResources(name string, resources Resources) error {
++	if resources.CPU < 0 {
++		return fmt.Errorf("%s CPU cannot be negative", name)
++	}
++	if resources.Memory < 0 {
++		return fmt.Errorf("%s memory cannot be negative", name)
++	}
++	return nil
++}
++
++func validRestartCondition(condition RestartCondition) bool {
++	switch condition {
++	case RestartNever, RestartOnFailure, RestartAlways:
++		return true
++	default:
++		return false
++	}
++}
+diff --git a/pkg/types/validation_test.go b/pkg/types/validation_test.go
+new file mode 100644
+index 0000000..aa9f619
+--- /dev/null
++++ b/pkg/types/validation_test.go
+@@ -0,0 +1,236 @@
++package types
++
++import (
++	"strings"
++	"testing"
++	"time"
++)
++
++func TestNodeSpecValidate(t *testing.T) {
++	valid := NodeSpec{
++		Hostname:         "node-1",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity: Resources{
++			CPU:    4000,
++			Memory: 8 * 1024 * 1024 * 1024,
++		},
++		Allocatable: Resources{
++			CPU:    3500,
++			Memory: 7 * 1024 * 1024 * 1024,
++		},
++	}
++
++	tests := []struct {
++		name    string
++		spec    NodeSpec
++		wantErr string
++	}{
++		{
++			name: "valid",
++			spec: valid,
++		},
++		{
++			name: "hostname required",
++			spec: func() NodeSpec {
++				spec := valid
++				spec.Hostname = ""
++				return spec
++			}(),
++			wantErr: "hostname is required",
++		},
++		{
++			name: "advertise address required",
++			spec: func() NodeSpec {
++				spec := valid
++				spec.AdvertiseAddress = ""
++				return spec
++			}(),
++			wantErr: "advertise address is required",
++		},
++		{
++			name: "capacity cannot be negative",
++			spec: func() NodeSpec {
++				spec := valid
++				spec.Capacity.CPU = -1
++				return spec
++			}(),
++			wantErr: "capacity CPU cannot be negative",
++		},
++		{
++			name: "allocatable cannot exceed capacity",
++			spec: func() NodeSpec {
++				spec := valid
++				spec.Allocatable.Memory = spec.Capacity.Memory + 1
++				return spec
++			}(),
++			wantErr: "allocatable memory cannot exceed capacity memory",
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			err := tt.spec.Validate()
++			assertValidationError(t, err, tt.wantErr)
++		})
++	}
++}
++
++func TestServiceSpecValidate(t *testing.T) {
++	valid := ServiceSpec{
++		Name:     "web",
++		Image:    "nginx:1.27",
++		Replicas: 2,
++		Env: map[string]string{
++			"APP_ENV": "local",
++		},
++		SecretRefs: []SecretRef{
++			{Name: "registry-creds", Key: "password"},
++		},
++		Ports: []Port{
++			{Protocol: PortTCP, ContainerPort: 8080, PublishedPort: 18080},
++		},
++		ResourceRequirements: ResourceRequirements{
++			Requests: Resources{CPU: 100, Memory: 128 * 1024 * 1024},
++			Limits:   Resources{CPU: 500, Memory: 512 * 1024 * 1024},
++		},
++		Healthcheck: &Healthcheck{
++			Type:               HealthcheckHTTP,
++			Path:               "/healthz",
++			Port:               8080,
++			Interval:           10 * time.Second,
++			Timeout:            2 * time.Second,
++			HealthyThreshold:   1,
++			UnhealthyThreshold: 3,
++		},
++		RestartPolicy: RestartPolicy{Condition: RestartOnFailure, MaxAttempts: 3},
++		PlacementConstraints: []PlacementConstraint{
++			{Key: "region", Operator: ConstraintEquals, Value: "us-east"},
++		},
++	}
++
++	tests := []struct {
++		name    string
++		spec    ServiceSpec
++		wantErr string
++	}{
++		{
++			name: "valid",
++			spec: valid,
++		},
++		{
++			name: "name required",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Name = ""
++				return spec
++			}(),
++			wantErr: "service name is required",
++		},
++		{
++			name: "image required",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Image = ""
++				return spec
++			}(),
++			wantErr: "image is required",
++		},
++		{
++			name: "replicas cannot be negative",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Replicas = -1
++				return spec
++			}(),
++			wantErr: "replicas cannot be negative",
++		},
++		{
++			name: "request cannot exceed limit",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.ResourceRequirements.Requests.CPU = 600
++				return spec
++			}(),
++			wantErr: "requested CPU cannot exceed CPU limit",
++		},
++		{
++			name: "invalid port",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Ports[0].ContainerPort = 0
++				return spec
++			}(),
++			wantErr: "ports[0]: container port must be between 1 and 65535",
++		},
++		{
++			name: "http healthcheck path required",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Healthcheck = &Healthcheck{Type: HealthcheckHTTP, Port: 8080}
++				return spec
++			}(),
++			wantErr: "healthcheck path is required for HTTP checks",
++		},
++		{
++			name: "invalid restart policy",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.RestartPolicy.Condition = "sometimes"
++				return spec
++			}(),
++			wantErr: "restart policy condition",
++		},
++		{
++			name: "invalid placement constraint",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.PlacementConstraints[0].Key = ""
++				return spec
++			}(),
++			wantErr: "placement_constraints[0]: key is required",
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			err := tt.spec.Validate()
++			assertValidationError(t, err, tt.wantErr)
++		})
++	}
++}
++
++func cloneServiceSpec(spec ServiceSpec) ServiceSpec {
++	if spec.Env != nil {
++		env := make(map[string]string, len(spec.Env))
++		for key, value := range spec.Env {
++			env[key] = value
++		}
++		spec.Env = env
++	}
++	spec.SecretRefs = append([]SecretRef(nil), spec.SecretRefs...)
++	spec.Ports = append([]Port(nil), spec.Ports...)
++	spec.PlacementConstraints = append([]PlacementConstraint(nil), spec.PlacementConstraints...)
++	if spec.Healthcheck != nil {
++		healthcheck := *spec.Healthcheck
++		spec.Healthcheck = &healthcheck
++	}
++	return spec
++}
++
++func assertValidationError(t *testing.T, err error, want string) {
++	t.Helper()
++
++	if want == "" {
++		if err != nil {
++			t.Fatalf("expected no error, got %v", err)
++		}
++		return
++	}
++
++	if err == nil {
++		t.Fatalf("expected error containing %q, got nil", want)
++	}
++	if !strings.Contains(err.Error(), want) {
++		t.Fatalf("expected error containing %q, got %q", want, err.Error())
++	}
++}

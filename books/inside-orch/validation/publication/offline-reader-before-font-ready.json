@@ -1,0 +1,1887 @@
+{
+  "started_at_utc": "2026-10-13T03:48:42.941Z",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "scope": "Actual Chromium with JavaScript disabled; all HTML local targets/fragments checked. Two transports: file URL and temporary owned127.0.0.1 server. No search/modules/service worker required.",
+  "command": [
+    "/home/popac/.local/share/mise/installs/node/26.4.0/bin/node",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/validate_offline_reader.cjs"
+  ],
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "input_sha256": {
+    "00-preface.html": "e322ec6d29a24575016ddce92cc7792101c70bbaee96a04cecc326dbab648688",
+    "01-why-build-a-container-orchestrator.html": "43d15365fc8c3bcb963447d489f320e915c2970f74f20ebee3e8ce4c46c9b247",
+    "02-a-repository-built-for-reasoning.html": "b9385d86fce3a7aef0ec008575c9712902b5e333edecff2522800339df75ca6e",
+    "03-boot-the-lab-and-deploy-the-first-service.html": "3db912eb51edfca5006c1a166ffa6fedec230f00a6d398957e673d1d3011143a",
+    "04-domain-models-and-state-machines.html": "4bd56f70ef791fda1f3302e50b7e71f84e8d4179ee30272ce337aff4625699e2",
+    "05-service-specifications-resources-and-ports.html": "204cdd460ca7cae333868be16dd0bdcb706b160b36f7b7b397b3e52df88e7c03",
+    "06-follow-one-request-through-the-control-plane.html": "6b2b4386f01f007550c8a1c05bedba9d514ae0f07c4bacc7ba09bbf93c0a9b0d",
+    "07-http-contracts-and-compatible-apis.html": "20d5f5093de76fc94cf9e09627c48319739aa66d887df360625fa7bd4ce72acf",
+    "08-a-cli-that-operators-can-automate.html": "7d92d52a06f1dc80f5df4d0ed621ac1c1788733420a4f5fd073c6973a3107bd5",
+    "09-persistence-transactions-and-optimistic-concurrency.html": "575b8f96007d71c55b65fd2523507c7fd1ea879b240c107e0badc7f409f9f3ed",
+    "10-a-deterministic-scheduler.html": "318b2b9ed0881c496a45dae6eb0cb0e839c37115198a44c3d4937889a3ad52cd",
+    "11-reconciliation-as-repeated-convergence.html": "b236fd666a1fd8393fb51f5ff94c9d712d7905ab76db6a765e837d691d348ba6",
+    "12-idempotent-docker-operations-and-drift.html": "016aa62b10e9b88067196b388df36ccc885459022b24df9b20dde2bd8818ee94",
+    "13-agents-heartbeats-and-task-reports.html": "af4de989481e651ff19974e354d07e9764e9667d45c3f8b50d54a6ba3fbd8824",
+    "14-health-checks-that-respect-trust-boundaries.html": "0428afcdd747a15a64da0b5b18dea133050da3c8aa7c03d522635a37a2c3de36",
+    "15-events-audits-and-notification-boundaries.html": "f06aeb901c43817696e1bec79d709c28f8ef1a3888db7799fa9975d0b9939084",
+    "16-log-streaming-without-losing-control.html": "67bb7048b1bef0522a1d553057fdc359260ea22ff0ed72de2dac00b763c1e18a",
+    "17-rolling-updates-and-rollback-invariants.html": "0b150f9b1f71591950c2db951c5459debe5dcd5ab5b2f0d074ad63078c6045c8",
+    "18-safe-deletion-and-resource-cleanup.html": "04583a12c992340c9b78d669f60b087fa71df98cff467c7217e9f64cd2c4c566",
+    "19-offline-nodes-draining-and-rescheduling.html": "1e4922fb91fef4984a7cb9b666af3e28b40c77ba4fa4d5c456e03aa311eafea8",
+    "20-endpoint-discovery-and-internal-dns.html": "a3afb07442754f2d434012209e01a6060ab7580dd5e7a91eb79e1ea99e5b79f7",
+    "21-ingress-host-networking-and-the-overlay-roadmap.html": "45f61573f5f30d40ba385b60e8ab6c6bb21f04f0df5eb38feb0e5ac9b79b9e95",
+    "22-autoscaling-decisions-and-missing-integration.html": "109fa630329b796ad4f42f5fde7d11e2bda85d6a7e4613e2fa7f4991bf8a79f6",
+    "23-authentication-authorization-and-node-trust.html": "5d721dc3521aa20d0e1cc14b54a8826c891467576e00a97eee5d0398c734bc35",
+    "24-encrypted-secrets-and-configuration-redaction.html": "b687580c15460fc837044f7dd60ac3dfb2a7c5a7a29feb5705cd3caf3641b62e",
+    "25-registry-credentials-and-immutable-image-identity.html": "fc817a70beef55e682fb378587f09c4bdd06a7f733769c26c7a72dbce5153362",
+    "26-security-contexts-admission-and-policy.html": "847345655daf2226a900a89591a7279fe6ea05b6729fa0c011d8abee60c38c82",
+    "27-namespaces-and-the-limits-of-multi-tenancy.html": "194fcdfd726c04c51fca01b02f08b775efd0a19dbb1889c8347d7f53db5f3e48",
+    "28-quotas-and-usage-accounting.html": "7e9a661b707589e21173d0bd1f599cd19b5be2d3046e19ff38fc8d0fbd56f7f9",
+    "29-supply-chain-designs-without-false-guarantees.html": "fa95f194150dd6181fadf07f9973204aa681b70f247f68890f5367b87026b776",
+    "30-gitops-drift-and-controlled-reconciliation.html": "6ffaa4362662ba270df843fb2b473aa3ceba0bf99a9de1f12df5da80f88fa55d",
+    "31-finite-jobs-and-time-based-work.html": "83f8e157a6ce3ba7149a063553f14a21e32317fe30ed48931948ec8d0e176902",
+    "32-local-volumes-claims-and-workload-topology.html": "88bfb3323c7d30cf0e9a2fc61f3926c165adf6e84b31f87ba4321d37a986e2ea",
+    "33-extension-interfaces-and-a-plugin-roadmap.html": "76bb91c85489d2a0e3ea924408a90732d718b6f79845e6f2751f955ad8e366bd",
+    "34-leader-election-and-the-durable-ha-boundary.html": "3397c360d68e2a753f2945bce14ba297695609e6f5b3cfab1a8a8da4d36a3a02",
+    "35-upgrades-migrations-maintenance-and-retention.html": "664182b5f9c4531f6fc43623b54ae4f9fb84156cf7ded5b4d16b702bdaa2caaa",
+    "36-fakes-property-tests-fuzzing-and-contracts.html": "31f719d60a41345fbfe49263838fe3d8782b4b3706339b0a8806706063a8f8c7",
+    "37-failure-injection-and-recovery-evidence.html": "5fdcba95542e24650b6634d674ff19c132903e1cb6a0025e36b03f9aaae25514",
+    "38-metrics-dashboards-and-actionable-signals.html": "15b5dc20dc3928ae951ccea6d144180a85c63269b2a23e385fda7c0c0c8ad765",
+    "39-performance-and-scale-tests-that-say-what-they-measure.html": "eea57e6e89ca727615a13fcaa80d9592f3b8599aaddb36f90499bfdc19d8284e",
+    "40-release-a-system-you-can-honestly-operate.html": "e71a7ada56a4a573394293faf290683d7ce179b4eaf8b91257e2bf7ffb0e1734",
+    "a-cli-api-config.html": "5a49a1feb054b3c278cec75bbdc71eec0cc39ba3a06294a8ab0e520a58d3eeb3",
+    "assets/cover.png": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+    "assets/examples/diagrams/task-lifecycle.png": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+    "assets/examples/source-excerpts/ch09/metadata.json": "fc97477ee0a5732fe8eae5925b02d7bc8ac5451b73b71395fa4b78995bbd2dce",
+    "assets/examples/teaching-extensions/ch33/adapter_contract_test.go": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209",
+    "assets/examples/teaching-extensions/ch35/preflight_test.go": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f",
+    "assets/examples/teaching-extensions/ch38/metrics_contract_test.go": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532",
+    "assets/examples/teaching-extensions/ch40/verify_dossier.py": "6d8cb390696c1da0ac3972ce4fbb42156ed80d88125731f7fefb47bcd5399418",
+    "assets/examples/teaching-extensions/docker-boundary/main.go": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5",
+    "assets/examples/teaching-extensions/full-schema/main.go": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+    "assets/examples/teaching-extensions/lab02/main.go": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+    "assets/examples/teaching-extensions/rollout/main.go": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+    "assets/examples/teaching-extensions/security/main.go": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361",
+    "assets/fonts/dejavu-sans-mono-LICENSE.txt": "e180b3d65bf650dffffd71dd21b6180767b469a18dd87e1d8552be69bb9ecdf0",
+    "assets/fonts/dejavu-sans-mono-bold.ttf": "2d67eed9b325ee2e69f906ce4f3f6264d5105230a13352c8494daad4f17b12c8",
+    "assets/fonts/dejavu-sans-mono.ttf": "a54dca07c76d6289e717e75e0a58c0128f6d7269ef3faf76417c9d7d3bba37ab",
+    "assets/fonts/dm-sans-OFL.txt": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+    "assets/fonts/dm-sans.ttf": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+    "assets/fonts/noto-color-emoji-OFL.txt": "7a93e97e1c66391963c255ed6c7759fd73666f06d969051d21e8c6fc1837d27e",
+    "assets/fonts/noto-color-emoji.ttf": "9fd0a3d0ce84d77e3185dfbae77bd1abf3926aa49a032e354d076c4f17151f10",
+    "assets/fonts/passion-one-OFL.txt": "36c285c5472c625901d4a13da7e31c5ea6126678d31d56cf95572c49f27c8950",
+    "assets/fonts/passion-one-bold.ttf": "3a7249909b2e56e831f8a357a4ee549e9c5945cd003f0e5e3bd8791a76d98b7e",
+    "assets/labs/01-initialization-restart/book-http.yaml": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+    "assets/labs/02-scheduler-placement/fixtures/plan.json": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740",
+    "assets/labs/03-reconciler-drift/fixtures/cases.json": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517",
+    "assets/reader.css": "4b5e894ee7df32b8bc527659389dab52ae24d69b425ef5af431ee6c67d53edb5",
+    "assets/scripts/observe_database_recovery.py": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+    "assets/tests/test_recovery_targets.py": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d",
+    "assets/validation/evidence/appendices.json": "67f63b018e91a604d12cb3245dd7353f43062a1e75697f11d77aebbaf76ad7b4",
+    "assets/validation/evidence/ch09.json": "82988a78dee1b613536679b769752ea75bfe03680e162f60debb6950644fc665",
+    "assets/validation/evidence/ch10.json": "46881465eb9d3b2af8e5586891b745a74d5c044c320b1831ab64908916671338",
+    "assets/validation/evidence/ch11.json": "4507d31f04215130307c87c0407813dfc79a2ca6211ffadfe0a036b6246ce21a",
+    "assets/validation/evidence/ch12.json": "fd365c86d02970c4761bcb5965bf76082bb54c7835a1e8fb0dd099c2c94675f9",
+    "assets/validation/evidence/ch13.json": "719a594424bfa43af62f45a5c64ead84f083f78d8cf0e7802112fb1a052178d9",
+    "assets/validation/evidence/ch14.json": "26e3ade83113e0eaab3368d8cc2bf4b4e2029e3b3e65301d17540e33b6ace472",
+    "assets/validation/evidence/ch15.json": "a2d50697e041f9929b4371b36da55dfec8fdb2bbcbf2f45d8afdc6ac7acbc90a",
+    "assets/validation/evidence/ch16.json": "6e09eca59269159a06a19037e532801d1d14f1fd3f79a85e5733b179a0934723",
+    "assets/validation/evidence/ch25.json": "3bcea5d666c1154a8cd7a846a3d5878affde80b8096c3c410849192dbc955f8d",
+    "assets/validation/evidence/ch26.json": "17c4819f1d226b9813cb3b2e2f8f44b1784b28a8e028ce24709c94b5503923e6",
+    "assets/validation/evidence/ch27.json": "a52148ee1b5f7d177a6a0282f90e7072dad114011d78d16720aae54138ab2677",
+    "assets/validation/evidence/ch28.json": "5fbd890b0fc7676838c2d820f7cda417bbcbb5f93eadb2c9d13846240bb1569e",
+    "assets/validation/evidence/ch29.json": "abbb33f72afde808b71145f736181801f1f5c6b6e50dbdc47ee7464798b05c85",
+    "assets/validation/evidence/ch30.json": "bcbe824264ee817a692cda805fb6851f95a63c79991b09d7d5ab6bd3918bff28",
+    "assets/validation/evidence/ch31.json": "c4545649f114ec8c00d719a4565fbdc52cc983bf8f5a013b5f4e9bd4950fecfe",
+    "assets/validation/evidence/ch32.json": "e37c9d67fb7d162906c4db93aa244c0124f3e92197b68fc080fa66d9489e3620",
+    "assets/validation/evidence/ch33.json": "e3c4c4278b68ab8ca5903ad29f8d98c9f4a8d6ecc43fd76346d81670431a399e",
+    "assets/validation/evidence/ch34.json": "22fda59330f19a881c39b30f772da4bdc38f46ba4e1bb4ad2da827bcfa1316dc",
+    "assets/validation/evidence/ch35.json": "b220154cdae8098bbf2678b03d047c3ad322963eb45f3fd0b1cdc8ea03e94ee3",
+    "assets/validation/evidence/ch36.json": "58dc38382e6e0a89594eaa040d33e087f82387ce5b1cb50285175564123905ad",
+    "assets/validation/evidence/ch37.json": "f46e543a795b95b70a6a8be06fc4eb3d4e5bd775c1cabc6dba9fbfe6f3f39764",
+    "assets/validation/evidence/ch38.json": "c0c0711a565b04d6320b6b6c45c9c4e7435b2cae8d901e818de18497e2117051",
+    "assets/validation/evidence/ch39.json": "3f67b9b70c8815da2a7f64f6dc265635e5dfea3fc142eb0a52e4f7f424d7e37d",
+    "assets/validation/evidence/ch40.json": "c833d804732c751aca7f735185f36b2329b9078e06a8a3567a99d766d778639a",
+    "assets/validation/exercises/mutation-runs.json": "fe04fb74f42c58b2867cc5da99d3909e163406b5e34e1c5579d900715e71fc33",
+    "assets/validation/intake/docker-complete-flow-cleanup.json": "0a453580eb89c717485e595bec5a75a8248d14e4f401e0550a8d481c30bc43f6",
+    "assets/validation/intake/docker-complete-flow-log-guard.json": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+    "assets/validation/intake/docker-complete-flow-log-guard.stdout.txt": "4ecfc224f795b67942ea7bed175950e2c08fa85a60600a535c826a04a92d1b3e",
+    "assets/validation/intake/fresh-server-restart-authenticated.json": "ad35f2d4b1d3ec597539d8144f0be70d26f5edaf0e9d2995a736320003d2d45c",
+    "assets/validation/intake/full-schema-recovery-corrected.json": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+    "assets/validation/intake/orch-baseline-tests.json": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b",
+    "assets/validation/intake/orch-build-isolated-root.json": "81a2ce1b02a25ee2555c67fe07a6d5639b25ab4005c2fc3afe57bccad4c2ec98",
+    "assets/validation/intake/orch-race-tests.json": "cd2f6848150c7d5cd59d741f50fe00b56318fc4a3611be9497b21fee33495d42",
+    "assets/validation/intake/postgres-store-owned.json": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7",
+    "assets/validation/labs/03-check.json": "58af4a3bbcd54a7deb2b4c3c73214101de94901ba64951b3209f76c05424bc65",
+    "assets/validation/labs/04-check.json": "134e282b71c9c7aaa9053057c375ad6bcd8bc79381c271a2ed5c04861f697950",
+    "assets/validation/labs/04-timeline.csv": "7be3fcd09e140a860331f1f4bcda7451c43a48d7de6e5a105bd4b3a9a8708eba",
+    "assets/validation/labs/05-check.json": "a70328a87ffddce0d9c0a9675f9419313041e4592da5ad1e990b43f4bc4df4e9",
+    "assets/validation/labs/ch06/combined-restart.json": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075",
+    "assets/validation/labs/ch10/hand-plan.json": "f22af2b3e18a0745fe1c485c92ff2615964d3104d3783fd6b27c6bc02a05b960",
+    "assets/validation/labs/ch11/focused-tests.json": "3e5dd647c3e6944e04227e4d619f426c90e96c9f21b08b27818eea4407877618",
+    "assets/validation/labs/ch12/focused-tests.json": "2070ecfb4531ed80b042d604aac8ea4b58a50f0f1f0b28b12e11db7d38b77b5e",
+    "assets/validation/labs/ch13/focused-tests.json": "2c47d86c23267cf1ae78af45df44f2754d1cb1516dcf78a87c4e86c65a964ed4",
+    "assets/validation/labs/ch14/focused-tests-loopback.json": "e23b2367603552a493e97c8a79298ceedf348dc0090ba02dcd4dfceeb3b90855",
+    "assets/validation/labs/ch14/focused-tests.json": "a02c61cd357bde31bb52947dcf2646f5dd22addae582f25fa04d75f673b4dc07",
+    "assets/validation/labs/ch15/atlas-events-corrected.json": "74a29ef1307b2b7e812551fc7e2d3be58f18812470fb3d4ed60ffa6a8ce634c3",
+    "assets/validation/labs/ch15/focused-tests.json": "7c4d561666c2c3161a13438e23d2e7aae05553b48f6ae46a20cbf64c1ebf99dc",
+    "assets/validation/labs/ch16/focused-tests.json": "75980ae84b34fc8ab40afb79d22316f42fb218f7c779483b765e9df266e95e61",
+    "assets/validation/labs/ch25/focused-tests.json": "65f4525dc9a89275d54e0856da576f014dfcf7e6327969a15f3ef04e2f197def",
+    "assets/validation/labs/ch26/focused-tests.json": "466e224b90d7120ad219bf040e359c060b6d2400aba83b4d555b54eb3da7eb16",
+    "assets/validation/labs/ch27/focused-tests.json": "78dba1979277605940b9dcbfc409394d064ec9841a851a1cef314821f12c23dd",
+    "assets/validation/labs/ch28/focused-tests.json": "1e56ae7eb58164c73319eda16ba5f98cbae370dd41d53a24d57d7a6a776c8c6a",
+    "assets/validation/labs/ch29/teaching-fixture.json": "fcaeb94b9b5125104d0c3827f540b52aba325db12c0b4d6347a126788678d8f6",
+    "assets/validation/labs/ch30/focused-tests.json": "306789250bce246f124104f2027e0b97727e97120b8fc863e93beeaff6582a3b",
+    "assets/validation/labs/ch30/teaching-fixture.json": "ca0190c837d8dbaa82bc49e288c999572af5caaf406c7b035c7712a6bc07b03c",
+    "assets/validation/labs/ch31/focused-tests.json": "116bd803eac9d285fedeb6f18798fc65ae30bc06a60cc638af357512c56e9a78",
+    "assets/validation/labs/ch31/teaching-fixture.json": "d9378dac5608e7cfe3375902d28e7f1c919fca61faf51d096240a5fff9044f88",
+    "assets/validation/labs/ch32/focused-tests.json": "56d8fc1a1fbaa72e7c1d7e46d0bdca69669a21abe22cee432ca8b8a39f709c07",
+    "assets/validation/labs/ch33/adapter-contract.json": "a83a4a1777cd5a3587ed27996c98847453e2213a955c0451e0ab05185515c80a",
+    "assets/validation/labs/ch34/leadership-tests.json": "d730963e594c9fb83cb508fef304cc85e7e37de9eab6fe265200b75d7af2b6a2",
+    "assets/validation/labs/ch35/controlled-preflight-corrected.json": "7b08c9b3f68187f2331e67c20a5d4a4670825397ed8a4924da82b02a0014bb16",
+    "assets/validation/labs/ch35/operations-tests.json": "5b04320dd4a7d3737c703bda1bdfab5eda123dc613ab25003f20f98ae363487d",
+    "assets/validation/labs/ch36/bounded-port-fuzz.json": "d327818ff48f089693daaccf8a0c4d23e5daf288bb607baefa1e9b90246a182c",
+    "assets/validation/labs/ch36/seeded-properties.json": "50a74510d57c646dad2db3e23a8d0946e60ed4952e77246464be278c4eea97ea",
+    "assets/validation/labs/ch37/fault-tests.json": "2faef0c686b11be980f183b2d74de9481e11921369e1c91450252e76dab25b24",
+    "assets/validation/labs/ch38/failed-pull-emission.json": "209be9bb58c621974a64288c591bb2b788950d6f37aad6c832641fba17b6817a",
+    "assets/validation/labs/ch38/metrics-tests.json": "2666a00e3bd521d43c2d471da40f2681b37c0a80b321e2c173871bca0c246aa8",
+    "assets/validation/labs/ch39/bounded-benchmarks.json": "ec2356a2e562e5ce0a6b95a479b284cb0d6e95e5fbde01492fd249fa8a647ae4",
+    "assets/validation/labs/ch39/bounded-fake-load.json": "7aa9c25ea95a575f20ce6af7033ebc4f6b2016aaf5a55b493b3593d319bc4ded",
+    "assets/validation/labs/ch39/scheduler-profile-absolute.json": "8ba7a25fc86b56b74edd87eb8835d9322f668c04c526b0ff76ed9fed5dbd68c3",
+    "assets/validation/labs/ch39/scheduler-summary.json": "e083d9cfb460f8695dbc8385165bed145b8e87579291792ff6d04f3c80c338b2",
+    "assets/validation/labs/ch39/thousand-service-scale.json": "d366c928455749ae536377690273e6c166ba8ae2fe002c62088a110cf5d49fb2",
+    "assets/validation/labs/ch40/dossier-integrity-corrected.json": "031e9b901fa4b76954ca847bb824f69cbf6e939765580ff368e83d3b338fa3d5",
+    "assets/validation/labs/lab02-concurrent-claims.json": "aefabbc1054793621884b951493d39a1fef6a2448118584ca33d29a519b0490f",
+    "assets/validation/labs/lab02-model-and-permutations.json": "fd3583028a96de31678502374e166fb0d9783bfb1fa9cbb6618978d9c2ed43f4",
+    "assets/validation/labs/lab04-rollout-observed.json": "94b8b0f2fc468d0134fba0945ce62b1782cdb0a7e366da6bc0227435bfe6cbe9",
+    "assets/validation/labs/lab04-rollout-observed.stdout.txt": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+    "assets/validation/labs/lab05-security-local-probes.json": "cf3e3920a814189170f32087249d22594fdb54314128cf3280d6692affe0c8d4",
+    "assets/validation/labs/lab05-security-local-probes.stdout.txt": "aed261c15eceda60945729949f437b4eba9caa4eb82c7d2382dfd831964454d1",
+    "assets/validation/labs/lab08-fixed-seed-fake-load.json": "d9fc3eafbc7789accda0c0c924d9f1562204771dbc308036cb2e262b5fa97447",
+    "assets/validation/labs/lab08-fixed-seed-fake-load.stdout.txt": "8a7a658dd6151e5f9246aa47b1998bf87db8d639a4cda8c462de499c3f7964ef",
+    "assets/validation/reviews/ch17-24-fresh-source-tests.json": "bac2e64984036447b6446706996c941216d310b152fa5243d72f614e1a54e720",
+    "assets/validation/reviews/ch17-24-source-tests.json": "df6dc04ada213deb77e26d94c9e15702dd1bbb5cebeab282ccb25e711a441d75",
+    "b-lifecycle-invariants.html": "43b6afc7c10d71f490e8b6be0f8ceb4ac50f0e5b05ffe92e76f80378ba8cc474",
+    "c-annotated-history.html": "97190de3a1913b41f720596d409a3f404666d423f0bd59537296b05181dd8e69",
+    "companion/examples/teaching-extensions/ch34/ADR-durable-composition.html": "91166ca1f16a00893d91d064c391a4bad1c76e14a0c669a2821ef1b26d761d60",
+    "companion/exercises/questions.html": "6d3ac5fcf7f2c249f17f53ab3275752f79ac8925dd4763c9801aa213aa27636f",
+    "companion/labs/01-initialization-restart/README.html": "31776651e12325715fb45113ed5858cde25f35b580e8c58840fe76182f4e90e5",
+    "companion/labs/02-scheduler-placement/README.html": "5c095b61c63d5d21025bd182d155e6e1c0bc222b75ad8750ad6191dc07d1237f",
+    "companion/labs/03-reconciler-drift/README.html": "6abbb5444639ccd322877df6db69ccbc00ae45034dc763802b4b60a281c3e5f9",
+    "companion/labs/04-rollout-rollback/README.html": "f9794ba95b6c3e5e2b1a9ca4b6ae797359c2ced8bf3682edfce74934a36b209c",
+    "companion/labs/05-security-boundaries/README.html": "9204c6b0848ec9f2ae1316b4bc006fa9b93bda4f81750341bb65453b2e1d23fd",
+    "companion/labs/06-namespaces-quotas/README.html": "e0b7e8a7765755077c43533b6fe241f0e3e88509ca9e53c7941e982908c7a2ae",
+    "companion/labs/07-gitops-jobs-cron/README.html": "63203ce55ee830db0f02d50e816a6bc414d4f892c98d60453d70cf8787451fb3",
+    "companion/labs/08-recovery-boundaries/README.html": "99d5d456de32a07897e58c4319b990e6077ff7d195fd6370afd3fe1c95c9fe39",
+    "companion/labs/ENVIRONMENT.html": "849d3e576e7b63d383c703043f4be051fcadd35d35d77f74f6f84c3c0ecdcfab",
+    "companion/manuscript/solutions/appendix-d.html": "64727d6d3ed829ecc7ec3e14cffe345ac8d9e7df5478c4d21e1ffd84957d30a6",
+    "companion/manuscript/solutions/ch01.html": "a5b916e72f8768d84f54ae77a39fdf49f5433b269d6f4a914d6c3b4360edd42e",
+    "companion/manuscript/solutions/ch02.html": "012aab5393162604f582a8f489c297176aa0475220330a4925f92039b9641202",
+    "companion/manuscript/solutions/ch03.html": "d766e11ab7e486dda037eb48fea83b5eaa8d67b5110258714b000a3b84ce3329",
+    "companion/manuscript/solutions/ch04.html": "2d7f98a8cac4e0912b8d21dc92a944c7f82e4661cf78d699d9d0ad2ff29b28c5",
+    "companion/manuscript/solutions/ch05.html": "112121bf303791da756933db5296ec00c257517b0f6c1f0a3dd205341e1a5ef4",
+    "companion/manuscript/solutions/ch06.html": "66ac87e7cf2715fa9668f7e19b0c40fc1cc5d44ec3d22d9e90c188a528056671",
+    "companion/manuscript/solutions/ch07.html": "94726319c1cfe798afdda3e13bbb10068ee6d7d33cc508101994bab86b5f94ca",
+    "companion/manuscript/solutions/ch08.html": "80df0dcfee48f90a3dc174e43b7a6f7395dc84efaa8a8025b57ce5e952cc5764",
+    "companion/manuscript/solutions/ch09.html": "1ebcab8931ad08d43c30f290aed4164e651ac8f155c23d39785c04a6195013f7",
+    "companion/manuscript/solutions/ch10.html": "97f30afd1491fbd60ed306772748651b41682f0ea033eb2202c50b1af407696c",
+    "companion/manuscript/solutions/ch11.html": "038eac7dee462fdfe83c3d5f670c0ef1be612c3aa919c14b7351560f0ecaf53e",
+    "companion/manuscript/solutions/ch12.html": "49a2ba2bb124d53066b7e57638596a83bc64e3894d555865daa0b497c9b75f60",
+    "companion/manuscript/solutions/ch13.html": "307a7ac6a1dbbad85351ef7340eb3272d1a4b9bb2e43194eb7dc35cc80a99cc9",
+    "companion/manuscript/solutions/ch14.html": "6c164b01ab5ac60931f5a3cf75804218ae47bbafa7c24d6037eb68715e6c77ae",
+    "companion/manuscript/solutions/ch15.html": "0246890f1373409727f1b1577d5a79554c6c65d3beb26dd09e75213cf8fd00cf",
+    "companion/manuscript/solutions/ch16.html": "04cfe78669630eb7a173cd62498da95c6440fc809b472340e16de9ec5beaa00f",
+    "companion/manuscript/solutions/ch17.html": "1c6d140be8b332fedf8cf166b2c293dd60d4ee2afa80ec0eb8fd535edf2c9bf7",
+    "companion/manuscript/solutions/ch18.html": "f2eb69ad78a67ca4aef8e366a7df04a276a7debadd4445fa126e232b6d591362",
+    "companion/manuscript/solutions/ch19.html": "33314c4efd4f5c5e8d463a7a81af9dcfbe73c5aea1d9a1187e6022efd02407c3",
+    "companion/manuscript/solutions/ch20.html": "c305f4bb4c967037e4a9b131d259ae5fcf4ef7c2e5c577345f56292ca73a29b7",
+    "companion/manuscript/solutions/ch21.html": "cb19e62d254f41b86a8f217587033c9d0478fa1f565559490d2a55de77676fc2",
+    "companion/manuscript/solutions/ch22.html": "84687b54b7fa608b84cca0813aea2dbc6dccd7ae813165da9838b6edd8d1aad2",
+    "companion/manuscript/solutions/ch23.html": "f2d5994625542e9a7c003bcdfa414c6946f7f208845fde609b106ce0f0626f7b",
+    "companion/manuscript/solutions/ch24.html": "5d462149c44232ac80eebb544b611bf494973b48dbaca6a71edeed85a0811ac8",
+    "companion/manuscript/solutions/ch25.html": "0a78a3a7ddc69e42d77ca3b26a3ab6ffa60c867100d04acfdf2b14a8bcb1ea7e",
+    "companion/manuscript/solutions/ch26.html": "274c460cd864b325b632d913c412050f3db0031e8db8ca198851c9769deac30d",
+    "companion/manuscript/solutions/ch27.html": "ee26372d63090b8e022f64f4fbbd1621ef640146e2c430d1c332b79d1ebf89ca",
+    "companion/manuscript/solutions/ch28.html": "d8b28a4a04f7e432acae6eac7bb84355103dc1e2a2b8c13156832cc911b2730d",
+    "companion/manuscript/solutions/ch29.html": "45fa434785db9d7370bb2a526f9f1fb7312d462f2170b66716728dfe86bb8fb2",
+    "companion/manuscript/solutions/ch30.html": "1280082ff81fca194ae945d4c8a3e93ac196bdace056fdf7bb2c9f950bcb647b",
+    "companion/manuscript/solutions/ch31.html": "d4ee04388119991de6ed1b41dcf2c1e1e8e46d3d7d6a60e82da9d658f512d423",
+    "companion/manuscript/solutions/ch32.html": "60382f026057df4c4fbf60d422f32f4095b2049dff04923ba7f2a8be51855d75",
+    "companion/manuscript/solutions/ch33.html": "d4aaa183cf6674d7ec4aaa632626cbf4232b568032b72f147046c63c06d89505",
+    "companion/manuscript/solutions/ch34.html": "6b4a7ded389dc01366ddca3ec00533f94665ec4a530000ece9c64815b1b8db4a",
+    "companion/manuscript/solutions/ch35.html": "8e87e28bc0e77f413d86c5bd9507c757df9e9271708bcf30f6e733bf85f98479",
+    "companion/manuscript/solutions/ch36.html": "6ec69b4d7fe397e0399f1588c212dc9f28066531ca1a39383f9cf6afbca68f1f",
+    "companion/manuscript/solutions/ch37.html": "a7da017e0e519296d7d7303c63fc50f027ce12d32f8d85142932ce37bb654330",
+    "companion/manuscript/solutions/ch38.html": "a1fb5a3c061af0dc37424c8fd95eebf1a75b68f0ecf3ab4c1b012b6b7916287e",
+    "companion/manuscript/solutions/ch39.html": "78b1c029220df11b574834da53fcb0eed818b3d34f78b6f5320cfbd4fae2c1b2",
+    "companion/manuscript/solutions/ch40.html": "8edc4bbfbdc7ea80ffcffdadd94a4b8c9837cdc3097f4e6eebfe89350aee2165",
+    "d-exercises-solutions.html": "40692a48439f7445f0f16bf9cb593188aa0cb4830279b8e47d8d6f43f0df873c",
+    "downloads/inside-orch.epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+    "downloads/inside-orch.pdf": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+    "e-ops-measurement.html": "240dc9b51b011e625d96206289ee3a10e66a2350e37ebe7fa879613e17ae6fec",
+    "f-glossary-bibliography.html": "4bced1186ee353d0bcaeecc968f3dd9af49f14cb0a1203e1aa1ac0199d3830ed",
+    "index.html": "83d7e6bd67b1e533cc532eb882779c0b1c5bdc352fb6ad6443cd942471be9a53"
+  },
+  "cases": [
+    {
+      "transport": "file",
+      "file": "00-preface.html",
+      "title": "Preface · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "01-why-build-a-container-orchestrator.html",
+      "title": "Chapter 1 - Why Build a Container Orchestrator? · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "02-a-repository-built-for-reasoning.html",
+      "title": "Chapter 2 - A Repository Built for Reasoning · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "03-boot-the-lab-and-deploy-the-first-service.html",
+      "title": "Chapter 3 - Boot the Lab and Deploy the First Service · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "04-domain-models-and-state-machines.html",
+      "title": "Chapter 4 - Domain Models and State Machines · Inside orch",
+      "contents": 47,
+      "images": [
+        {
+          "src": "assets/examples/diagrams/task-lifecycle.png",
+          "loaded": true
+        }
+      ]
+    },
+    {
+      "transport": "file",
+      "file": "05-service-specifications-resources-and-ports.html",
+      "title": "Chapter 5 - Service Specifications, Resources, and Ports · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "06-follow-one-request-through-the-control-plane.html",
+      "title": "Chapter 6 - Follow One Request Through the Control Plane · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "07-http-contracts-and-compatible-apis.html",
+      "title": "Chapter 7 - HTTP Contracts and Compatible APIs · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "08-a-cli-that-operators-can-automate.html",
+      "title": "Chapter 8 - A CLI That Operators Can Automate · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "09-persistence-transactions-and-optimistic-concurrency.html",
+      "title": "Chapter 9 - Persistence, Transactions, and Optimistic Concurrency · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "10-a-deterministic-scheduler.html",
+      "title": "Chapter 10 - A Deterministic Scheduler · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "11-reconciliation-as-repeated-convergence.html",
+      "title": "Chapter 11 - Reconciliation as Repeated Convergence · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "12-idempotent-docker-operations-and-drift.html",
+      "title": "Chapter 12 - Idempotent Docker Operations and Drift · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "13-agents-heartbeats-and-task-reports.html",
+      "title": "Chapter 13 - Agents, Heartbeats, and Task Reports · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "14-health-checks-that-respect-trust-boundaries.html",
+      "title": "Chapter 14 - Health Checks That Respect Trust Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "15-events-audits-and-notification-boundaries.html",
+      "title": "Chapter 15 - Events, Audits, and Notification Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "16-log-streaming-without-losing-control.html",
+      "title": "Chapter 16 - Log Streaming Without Losing Control · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "17-rolling-updates-and-rollback-invariants.html",
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "18-safe-deletion-and-resource-cleanup.html",
+      "title": "Chapter 18 - Safe Deletion and Resource Cleanup · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "19-offline-nodes-draining-and-rescheduling.html",
+      "title": "Chapter 19 - Offline Nodes, Draining, and Rescheduling · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "20-endpoint-discovery-and-internal-dns.html",
+      "title": "Chapter 20 - Endpoint Discovery and Internal DNS · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "21-ingress-host-networking-and-the-overlay-roadmap.html",
+      "title": "Chapter 21 - Ingress, Host Networking, and the Overlay Roadmap · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "22-autoscaling-decisions-and-missing-integration.html",
+      "title": "Chapter 22 - Autoscaling Decisions and Missing Integration · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "23-authentication-authorization-and-node-trust.html",
+      "title": "Chapter 23 - Authentication, Authorization, and Node Trust · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "24-encrypted-secrets-and-configuration-redaction.html",
+      "title": "Chapter 24 - Encrypted Secrets and Configuration Redaction · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "25-registry-credentials-and-immutable-image-identity.html",
+      "title": "Chapter 25 - Registry Credentials and Immutable Image Identity · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "26-security-contexts-admission-and-policy.html",
+      "title": "Chapter 26 - Security Contexts, Admission, and Policy · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "27-namespaces-and-the-limits-of-multi-tenancy.html",
+      "title": "Chapter 27 - Namespaces and the Limits of Multi-Tenancy · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "28-quotas-and-usage-accounting.html",
+      "title": "Chapter 28 - Quotas and Usage Accounting · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "29-supply-chain-designs-without-false-guarantees.html",
+      "title": "Chapter 29 - Supply Chain Designs Without False Guarantees · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "30-gitops-drift-and-controlled-reconciliation.html",
+      "title": "Chapter 30 - GitOps, Drift, and Controlled Reconciliation · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "31-finite-jobs-and-time-based-work.html",
+      "title": "Chapter 31 - Finite Jobs and Time-Based Work · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "32-local-volumes-claims-and-workload-topology.html",
+      "title": "Chapter 32 - Local Volumes, Claims, and Workload Topology · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "33-extension-interfaces-and-a-plugin-roadmap.html",
+      "title": "Chapter 33 - Extension Interfaces and a Plugin Roadmap · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "34-leader-election-and-the-durable-ha-boundary.html",
+      "title": "Chapter 34 - Leader Election and the Durable HA Boundary · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "35-upgrades-migrations-maintenance-and-retention.html",
+      "title": "Chapter 35 - Upgrades, Migrations, Maintenance, and Retention · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "36-fakes-property-tests-fuzzing-and-contracts.html",
+      "title": "Chapter 36 - Fakes, Property Tests, Fuzzing, and Contracts · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "37-failure-injection-and-recovery-evidence.html",
+      "title": "Chapter 37 - Failure Injection and Recovery Evidence · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "38-metrics-dashboards-and-actionable-signals.html",
+      "title": "Chapter 38 - Metrics, Dashboards, and Actionable Signals · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "39-performance-and-scale-tests-that-say-what-they-measure.html",
+      "title": "Chapter 39 - Performance and Scale Tests That Say What They Measure · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "40-release-a-system-you-can-honestly-operate.html",
+      "title": "Chapter 40 - Release a System You Can Honestly Operate · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "a-cli-api-config.html",
+      "title": "Appendix A - CLI, API, and Configuration Reference · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "b-lifecycle-invariants.html",
+      "title": "Appendix B - Lifecycle States and Invariant Reference · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "c-annotated-history.html",
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/examples/teaching-extensions/ch34/ADR-durable-composition.html",
+      "title": "Atlas proposal: durable control plane before replicated APIs · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/exercises/questions.html",
+      "title": "Practice questions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/01-initialization-restart/README.html",
+      "title": "Lab 01 — Initialize, deploy, and distinguish readiness from durability · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/02-scheduler-placement/README.html",
+      "title": "Lab 02 - Deterministic placement and competing claims · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/03-reconciler-drift/README.html",
+      "title": "Lab 03 — Reconciliation and ownership under drift · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/04-rollout-rollback/README.html",
+      "title": "Lab 04 - Rollout, Rollback and Modeled Availability · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/05-security-boundaries/README.html",
+      "title": "Lab 05 - Secrets, Identities and Probe Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/06-namespaces-quotas/README.html",
+      "title": "Lab 06 — Namespace boundaries and competing quota admissions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/07-gitops-jobs-cron/README.html",
+      "title": "Lab 07 — Git intent, job attempts and scheduled occurrences · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/08-recovery-boundaries/README.html",
+      "title": "Lab 08 — Recover artifacts and state exactly what was recovered · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/labs/ENVIRONMENT.html",
+      "title": "Isolated laboratory contract · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/appendix-d.html",
+      "title": "Appendix D — worked solutions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch01.html",
+      "title": "Chapter 1 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch02.html",
+      "title": "Chapter 2 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch03.html",
+      "title": "Chapter 3 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch04.html",
+      "title": "Chapter 4 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch05.html",
+      "title": "Chapter 5 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch06.html",
+      "title": "Chapter 6 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch07.html",
+      "title": "Chapter 7 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch08.html",
+      "title": "Chapter 8 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch09.html",
+      "title": "Chapter 9 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch10.html",
+      "title": "Chapter 10 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch11.html",
+      "title": "Chapter 11 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch12.html",
+      "title": "Chapter 12 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch13.html",
+      "title": "Chapter 13 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch14.html",
+      "title": "Chapter 14 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch15.html",
+      "title": "Chapter 15 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch16.html",
+      "title": "Chapter 16 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch17.html",
+      "title": "Chapter 17 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch18.html",
+      "title": "Chapter 18 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch19.html",
+      "title": "Chapter 19 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch20.html",
+      "title": "Chapter 20 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch21.html",
+      "title": "Chapter 21 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch22.html",
+      "title": "Chapter 22 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch23.html",
+      "title": "Chapter 23 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch24.html",
+      "title": "Chapter 24 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch25.html",
+      "title": "Chapter 25 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch26.html",
+      "title": "Chapter 26 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch27.html",
+      "title": "Chapter 27 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch28.html",
+      "title": "Chapter 28 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch29.html",
+      "title": "Chapter 29 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch30.html",
+      "title": "Chapter 30 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch31.html",
+      "title": "Chapter 31 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch32.html",
+      "title": "Chapter 32 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch33.html",
+      "title": "Chapter 33 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch34.html",
+      "title": "Chapter 34 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch35.html",
+      "title": "Chapter 35 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch36.html",
+      "title": "Chapter 36 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch37.html",
+      "title": "Chapter 37 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch38.html",
+      "title": "Chapter 38 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch39.html",
+      "title": "Chapter 39 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "companion/manuscript/solutions/ch40.html",
+      "title": "Chapter 40 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "d-exercises-solutions.html",
+      "title": "Appendix D - Worked Exercises and Design Solutions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "e-ops-measurement.html",
+      "title": "Appendix E - Operator Runbooks and Measurement Contracts · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "f-glossary-bibliography.html",
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "file",
+      "file": "index.html",
+      "title": "Inside orch · Offline edition",
+      "contents": 0,
+      "images": [
+        {
+          "src": "assets/cover.png",
+          "loaded": true
+        }
+      ]
+    },
+    {
+      "transport": "file",
+      "file": "00-preface.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 0,
+      "code": 0
+    },
+    {
+      "transport": "file",
+      "file": "04-domain-models-and-state-machines.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 1,
+      "code": 2
+    },
+    {
+      "transport": "file",
+      "file": "a-cli-api-config.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 2,
+      "code": 1
+    },
+    {
+      "transport": "file",
+      "file": "b-lifecycle-invariants.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 6,
+      "code": 0
+    },
+    {
+      "transport": "file",
+      "file": "00-preface.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 0,
+      "code": 0
+    },
+    {
+      "transport": "file",
+      "file": "04-domain-models-and-state-machines.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 1,
+      "code": 2
+    },
+    {
+      "transport": "file",
+      "file": "a-cli-api-config.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 2,
+      "code": 1
+    },
+    {
+      "transport": "file",
+      "file": "b-lifecycle-invariants.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 6,
+      "code": 0
+    },
+    {
+      "transport": "loopback",
+      "file": "00-preface.html",
+      "title": "Preface · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "01-why-build-a-container-orchestrator.html",
+      "title": "Chapter 1 - Why Build a Container Orchestrator? · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "02-a-repository-built-for-reasoning.html",
+      "title": "Chapter 2 - A Repository Built for Reasoning · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "03-boot-the-lab-and-deploy-the-first-service.html",
+      "title": "Chapter 3 - Boot the Lab and Deploy the First Service · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "04-domain-models-and-state-machines.html",
+      "title": "Chapter 4 - Domain Models and State Machines · Inside orch",
+      "contents": 47,
+      "images": [
+        {
+          "src": "assets/examples/diagrams/task-lifecycle.png",
+          "loaded": true
+        }
+      ]
+    },
+    {
+      "transport": "loopback",
+      "file": "05-service-specifications-resources-and-ports.html",
+      "title": "Chapter 5 - Service Specifications, Resources, and Ports · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "06-follow-one-request-through-the-control-plane.html",
+      "title": "Chapter 6 - Follow One Request Through the Control Plane · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "07-http-contracts-and-compatible-apis.html",
+      "title": "Chapter 7 - HTTP Contracts and Compatible APIs · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "08-a-cli-that-operators-can-automate.html",
+      "title": "Chapter 8 - A CLI That Operators Can Automate · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "09-persistence-transactions-and-optimistic-concurrency.html",
+      "title": "Chapter 9 - Persistence, Transactions, and Optimistic Concurrency · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "10-a-deterministic-scheduler.html",
+      "title": "Chapter 10 - A Deterministic Scheduler · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "11-reconciliation-as-repeated-convergence.html",
+      "title": "Chapter 11 - Reconciliation as Repeated Convergence · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "12-idempotent-docker-operations-and-drift.html",
+      "title": "Chapter 12 - Idempotent Docker Operations and Drift · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "13-agents-heartbeats-and-task-reports.html",
+      "title": "Chapter 13 - Agents, Heartbeats, and Task Reports · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "14-health-checks-that-respect-trust-boundaries.html",
+      "title": "Chapter 14 - Health Checks That Respect Trust Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "15-events-audits-and-notification-boundaries.html",
+      "title": "Chapter 15 - Events, Audits, and Notification Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "16-log-streaming-without-losing-control.html",
+      "title": "Chapter 16 - Log Streaming Without Losing Control · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "17-rolling-updates-and-rollback-invariants.html",
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "18-safe-deletion-and-resource-cleanup.html",
+      "title": "Chapter 18 - Safe Deletion and Resource Cleanup · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "19-offline-nodes-draining-and-rescheduling.html",
+      "title": "Chapter 19 - Offline Nodes, Draining, and Rescheduling · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "20-endpoint-discovery-and-internal-dns.html",
+      "title": "Chapter 20 - Endpoint Discovery and Internal DNS · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "21-ingress-host-networking-and-the-overlay-roadmap.html",
+      "title": "Chapter 21 - Ingress, Host Networking, and the Overlay Roadmap · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "22-autoscaling-decisions-and-missing-integration.html",
+      "title": "Chapter 22 - Autoscaling Decisions and Missing Integration · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "23-authentication-authorization-and-node-trust.html",
+      "title": "Chapter 23 - Authentication, Authorization, and Node Trust · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "24-encrypted-secrets-and-configuration-redaction.html",
+      "title": "Chapter 24 - Encrypted Secrets and Configuration Redaction · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "25-registry-credentials-and-immutable-image-identity.html",
+      "title": "Chapter 25 - Registry Credentials and Immutable Image Identity · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "26-security-contexts-admission-and-policy.html",
+      "title": "Chapter 26 - Security Contexts, Admission, and Policy · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "27-namespaces-and-the-limits-of-multi-tenancy.html",
+      "title": "Chapter 27 - Namespaces and the Limits of Multi-Tenancy · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "28-quotas-and-usage-accounting.html",
+      "title": "Chapter 28 - Quotas and Usage Accounting · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "29-supply-chain-designs-without-false-guarantees.html",
+      "title": "Chapter 29 - Supply Chain Designs Without False Guarantees · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "30-gitops-drift-and-controlled-reconciliation.html",
+      "title": "Chapter 30 - GitOps, Drift, and Controlled Reconciliation · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "31-finite-jobs-and-time-based-work.html",
+      "title": "Chapter 31 - Finite Jobs and Time-Based Work · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "32-local-volumes-claims-and-workload-topology.html",
+      "title": "Chapter 32 - Local Volumes, Claims, and Workload Topology · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "33-extension-interfaces-and-a-plugin-roadmap.html",
+      "title": "Chapter 33 - Extension Interfaces and a Plugin Roadmap · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "34-leader-election-and-the-durable-ha-boundary.html",
+      "title": "Chapter 34 - Leader Election and the Durable HA Boundary · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "35-upgrades-migrations-maintenance-and-retention.html",
+      "title": "Chapter 35 - Upgrades, Migrations, Maintenance, and Retention · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "36-fakes-property-tests-fuzzing-and-contracts.html",
+      "title": "Chapter 36 - Fakes, Property Tests, Fuzzing, and Contracts · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "37-failure-injection-and-recovery-evidence.html",
+      "title": "Chapter 37 - Failure Injection and Recovery Evidence · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "38-metrics-dashboards-and-actionable-signals.html",
+      "title": "Chapter 38 - Metrics, Dashboards, and Actionable Signals · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "39-performance-and-scale-tests-that-say-what-they-measure.html",
+      "title": "Chapter 39 - Performance and Scale Tests That Say What They Measure · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "40-release-a-system-you-can-honestly-operate.html",
+      "title": "Chapter 40 - Release a System You Can Honestly Operate · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "a-cli-api-config.html",
+      "title": "Appendix A - CLI, API, and Configuration Reference · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "b-lifecycle-invariants.html",
+      "title": "Appendix B - Lifecycle States and Invariant Reference · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "c-annotated-history.html",
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/examples/teaching-extensions/ch34/ADR-durable-composition.html",
+      "title": "Atlas proposal: durable control plane before replicated APIs · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/exercises/questions.html",
+      "title": "Practice questions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/01-initialization-restart/README.html",
+      "title": "Lab 01 — Initialize, deploy, and distinguish readiness from durability · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/02-scheduler-placement/README.html",
+      "title": "Lab 02 - Deterministic placement and competing claims · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/03-reconciler-drift/README.html",
+      "title": "Lab 03 — Reconciliation and ownership under drift · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/04-rollout-rollback/README.html",
+      "title": "Lab 04 - Rollout, Rollback and Modeled Availability · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/05-security-boundaries/README.html",
+      "title": "Lab 05 - Secrets, Identities and Probe Boundaries · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/06-namespaces-quotas/README.html",
+      "title": "Lab 06 — Namespace boundaries and competing quota admissions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/07-gitops-jobs-cron/README.html",
+      "title": "Lab 07 — Git intent, job attempts and scheduled occurrences · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/08-recovery-boundaries/README.html",
+      "title": "Lab 08 — Recover artifacts and state exactly what was recovered · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/labs/ENVIRONMENT.html",
+      "title": "Isolated laboratory contract · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/appendix-d.html",
+      "title": "Appendix D — worked solutions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch01.html",
+      "title": "Chapter 1 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch02.html",
+      "title": "Chapter 2 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch03.html",
+      "title": "Chapter 3 - Worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch04.html",
+      "title": "Chapter 4 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch05.html",
+      "title": "Chapter 5 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch06.html",
+      "title": "Chapter 6 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch07.html",
+      "title": "Chapter 7 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch08.html",
+      "title": "Chapter 8 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch09.html",
+      "title": "Chapter 9 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch10.html",
+      "title": "Chapter 10 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch11.html",
+      "title": "Chapter 11 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch12.html",
+      "title": "Chapter 12 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch13.html",
+      "title": "Chapter 13 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch14.html",
+      "title": "Chapter 14 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch15.html",
+      "title": "Chapter 15 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch16.html",
+      "title": "Chapter 16 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch17.html",
+      "title": "Chapter 17 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch18.html",
+      "title": "Chapter 18 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch19.html",
+      "title": "Chapter 19 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch20.html",
+      "title": "Chapter 20 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch21.html",
+      "title": "Chapter 21 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch22.html",
+      "title": "Chapter 22 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch23.html",
+      "title": "Chapter 23 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch24.html",
+      "title": "Chapter 24 — worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch25.html",
+      "title": "Chapter 25 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch26.html",
+      "title": "Chapter 26 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch27.html",
+      "title": "Chapter 27 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch28.html",
+      "title": "Chapter 28 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch29.html",
+      "title": "Chapter 29 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch30.html",
+      "title": "Chapter 30 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch31.html",
+      "title": "Chapter 31 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch32.html",
+      "title": "Chapter 32 - Worked Answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch33.html",
+      "title": "Chapter 33 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch34.html",
+      "title": "Chapter 34 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch35.html",
+      "title": "Chapter 35 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch36.html",
+      "title": "Chapter 36 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch37.html",
+      "title": "Chapter 37 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch38.html",
+      "title": "Chapter 38 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch39.html",
+      "title": "Chapter 39 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "companion/manuscript/solutions/ch40.html",
+      "title": "Chapter 40 worked answers · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "d-exercises-solutions.html",
+      "title": "Appendix D - Worked Exercises and Design Solutions · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "e-ops-measurement.html",
+      "title": "Appendix E - Operator Runbooks and Measurement Contracts · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "f-glossary-bibliography.html",
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index · Inside orch",
+      "contents": 47,
+      "images": []
+    },
+    {
+      "transport": "loopback",
+      "file": "index.html",
+      "title": "Inside orch · Offline edition",
+      "contents": 0,
+      "images": [
+        {
+          "src": "assets/cover.png",
+          "loaded": true
+        }
+      ]
+    },
+    {
+      "transport": "loopback",
+      "file": "00-preface.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 0,
+      "code": 0
+    },
+    {
+      "transport": "loopback",
+      "file": "04-domain-models-and-state-machines.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 1,
+      "code": 2
+    },
+    {
+      "transport": "loopback",
+      "file": "a-cli-api-config.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 2,
+      "code": 1
+    },
+    {
+      "transport": "loopback",
+      "file": "b-lifecycle-invariants.html",
+      "viewport": 390,
+      "width": 390,
+      "document_width": 390,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 6,
+      "code": 0
+    },
+    {
+      "transport": "loopback",
+      "file": "00-preface.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 0,
+      "code": 0
+    },
+    {
+      "transport": "loopback",
+      "file": "04-domain-models-and-state-machines.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 1,
+      "code": 2
+    },
+    {
+      "transport": "loopback",
+      "file": "a-cli-api-config.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": true,
+      "tables": 2,
+      "code": 1
+    },
+    {
+      "transport": "loopback",
+      "file": "b-lifecycle-invariants.html",
+      "viewport": 1280,
+      "width": 1280,
+      "document_width": 1280,
+      "font": "DM, system-ui, sans-serif",
+      "fonts_loaded": false,
+      "tables": 6,
+      "code": 0
+    }
+  ],
+  "navigation": [
+    {
+      "transport": "file",
+      "action": "landing to preface",
+      "passed": true
+    },
+    {
+      "transport": "file",
+      "action": "preface next",
+      "passed": true
+    },
+    {
+      "transport": "file",
+      "action": "chapter1 previous",
+      "passed": true
+    },
+    {
+      "transport": "file",
+      "action": "chapter4 contents then worked answers",
+      "passed": true
+    },
+    {
+      "transport": "loopback",
+      "action": "landing to preface",
+      "passed": true
+    },
+    {
+      "transport": "loopback",
+      "action": "preface next",
+      "passed": true
+    },
+    {
+      "transport": "loopback",
+      "action": "chapter1 previous",
+      "passed": true
+    },
+    {
+      "transport": "loopback",
+      "action": "chapter4 contents then worked answers",
+      "passed": true
+    }
+  ],
+  "external_references": 940,
+  "external_network_attempts": [],
+  "failures": [
+    "file:00-preface.html:responsive/font failure",
+    "file:04-domain-models-and-state-machines.html:responsive/font failure",
+    "file:00-preface.html:responsive/font failure",
+    "file:04-domain-models-and-state-machines.html:responsive/font failure",
+    "loopback:04-domain-models-and-state-machines.html:responsive/font failure",
+    "loopback:a-cli-api-config.html:responsive/font failure",
+    "loopback:b-lifecycle-invariants.html:responsive/font failure",
+    "loopback:00-preface.html:responsive/font failure",
+    "loopback:b-lifecycle-invariants.html:responsive/font failure"
+  ],
+  "owned_server": {
+    "origin": "http://127.0.0.1:38247",
+    "binding": "127.0.0.1",
+    "ephemeral_port": true
+  },
+  "browser_version": "155.0.8059.39",
+  "finished_at_utc": "2026-10-13T03:48:52.383Z",
+  "status": "failed",
+  "owned_server_closed": true
+}

@@ -1,0 +1,89 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "entries": [
+    {
+      "id": "ARCH-BOOK-001",
+      "statement_or_representation": "Confusing logical active counts with acknowledged removal overstates physical resource/availability bounds.",
+      "evidence": [
+        "pkg/types/lifecycle.go:269\u2013275",
+        "internal/rollout/rollout.go:165\u2013180",
+        "validation/reviews/ch17-independent-stop-accounting.json",
+        "validation/labs/lab04-rollout-observed.stdout.txt"
+      ],
+      "counterexample": "Confusing logical active counts with acknowledged removal overstates physical resource/availability bounds.",
+      "correction": "Independent source_foundation reviewer corrected two sentences and one table row; no source code changed.",
+      "affected_artifacts": [
+        "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "EX-BOOK-001",
+      "statement_or_representation": "A reader could assume healthy threshold1 from the chapter example while the answer uses both thresholds2.",
+      "evidence": [
+        "internal/agent/agent.go:478\u2013549",
+        "manuscript/solutions/ch14.md"
+      ],
+      "counterexample": "A reader could assume healthy threshold1 from the chapter example while the answer uses both thresholds2.",
+      "correction": "Question narrowed; author lab_foundation independently agreed the answer sequence is deterministic.",
+      "affected_artifacts": [
+        "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "EX-BOOK-002",
+      "statement_or_representation": "Twenty-four separate answer pages had no direct return navigation to the question chapter.",
+      "evidence": [
+        "validation/reviews/answer-return-navigation.json",
+        "validation/exercises/index.json"
+      ],
+      "counterexample": "Twenty-four separate answer pages had no direct return navigation to the question chapter.",
+      "correction": "Added24return links; actual audit verifies160questions with matched answers and reciprocal paths.",
+      "affected_artifacts": [
+        "manuscript/solutions/ch01\u201308,ch17\u201324,ch33\u201340"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "CLAIM-BOOK-001",
+      "statement_or_representation": "The CLIprecedence environment demonstration contaminated the captured agent default, recording18080instead oflocalhost8080.",
+      "evidence": [
+        "internal/config/config.go:174\u2013190",
+        "validation/reference-offline-inventory.json"
+      ],
+      "counterexample": "The CLIprecedence environment demonstration contaminated the captured agent default, recording18080instead oflocalhost8080.",
+      "correction": "Moved demoenvironment set after defaults, reran actual offline Go helper and regenerated reference inventory. Self-review correction, not falsely attributed to an independent reviewer.",
+      "affected_artifacts": [
+        "reference/cli-api-config.json"
+      ],
+      "status": "resolved"
+    },
+    {
+      "id": "CLAIM-BOOK-002",
+      "statement_or_representation": "The resource-limit term navigated to the secret chapter instead of the resource field explanation.",
+      "evidence": [
+        "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+        "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md"
+      ],
+      "counterexample": "The resource-limit term navigated to the secret chapter instead of the resource field explanation.",
+      "correction": "Changed24\u219205and reran bibliography/glossary links. Author second-pass correction.",
+      "affected_artifacts": [
+        "reference/glossary.json resource-limit"
+      ],
+      "status": "resolved"
+    }
+  ],
+  "major_guarantee_controls": [
+    "MemoryService live ownership",
+    "PostgreSQL/leadership/autoscaling not composed",
+    "scheduler vs immediate assignment",
+    "DTO resource loss",
+    "parser-only supplied digest",
+    "local volume/no fencing",
+    "logical namespace/no host isolation",
+    "fake performance scope",
+    "design-only signing/scanning/CNI/plugins"
+  ],
+  "remaining_major_book_contradictions": []
+}

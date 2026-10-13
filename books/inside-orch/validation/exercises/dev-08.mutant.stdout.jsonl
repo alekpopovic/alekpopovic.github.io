@@ -1,0 +1,13 @@
+{"Time":"2026-10-13T03:38:54.810382316+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/cronjobs"}
+{"Time":"2026-10-13T03:38:54.812822218+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock"}
+{"Time":"2026-10-13T03:38:54.812862728+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Output":"=== RUN   TestParseAndRunWithFakeClock\n"}
+{"Time":"2026-10-13T03:38:54.812878512+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Output":"--- PASS: TestParseAndRunWithFakeClock (0.00s)\n"}
+{"Time":"2026-10-13T03:38:54.812885636+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestParseAndRunWithFakeClock","Elapsed":0}
+{"Time":"2026-10-13T03:38:54.81289276+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace"}
+{"Time":"2026-10-13T03:38:54.812897649+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Output":"=== RUN   TestConcurrencyForbidAndReplace\n"}
+{"Time":"2026-10-13T03:38:54.812918113+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Output":"    cronjobs_test.go:77: Forbid created overlapping job\n"}
+{"Time":"2026-10-13T03:38:54.81292859+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Output":"--- FAIL: TestConcurrencyForbidAndReplace (0.00s)\n"}
+{"Time":"2026-10-13T03:38:54.812938647+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/cronjobs","Test":"TestConcurrencyForbidAndReplace","Elapsed":0}
+{"Time":"2026-10-13T03:38:54.812945771+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:54.813349954+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/cronjobs","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/cronjobs\t0.003s\n"}
+{"Time":"2026-10-13T03:38:54.813503748+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/cronjobs","Elapsed":0.003}

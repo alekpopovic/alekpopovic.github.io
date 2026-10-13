@@ -1,0 +1,17 @@
+func (s *MemoryService) resolveEnvLocked(ctx context.Context, namespaceName string, spec types.ServiceSpec) (map[string]string, error) {
+	env := cloneStringMap(spec.Env)
+	for _, ref := range spec.SecretRefs {
+		secret, ok := s.secrets[namespacedKey(namespaceName, ref.Name)]
+		if !ok {
+			return nil, fmt.Errorf("%w: referenced secret %q not found", store.ErrInvalidState, ref.Name)
+		}
+		if s.envelope == nil {
+			return nil, fmt.Errorf("%w: secret envelope is not configured", store.ErrInvalidState)
+		}
+		plaintext, err := s.envelope.Decrypt(ctx, secrets.Ciphertext{KeyID: secret.KeyID, Data: secret.EncryptedValue})
+		if err != nil {
+			return nil, fmt.Errorf("%w: decrypt secret %q", store.ErrInvalidState, ref.Name)
+		}
+		env[ref.EnvName()] = string(plaintext)
+	}
+	if len(env) == 0 {

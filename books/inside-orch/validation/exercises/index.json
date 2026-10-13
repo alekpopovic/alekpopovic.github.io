@@ -1,0 +1,1494 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "chapter_exercises": [
+    {
+      "exercise_id": "ch01.ex1",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "question": "Explain why an accepted service and a healthy replica are separate facts. Name the owner of each fact.",
+      "solution_path": "manuscript/solutions/ch01.md",
+      "answer_heading": "Acceptance and execution",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch01.ex2",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "question": "Find the constructor that owns live state. Explain why a successful PostgreSQL migration does not change its selection.",
+      "solution_path": "manuscript/solutions/ch01.md",
+      "answer_heading": "The state owner",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch01.ex3",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "question": "An operator sees `/readyz` succeed after restarting the server and declares recovery complete. Identify two observations still missing.",
+      "solution_path": "manuscript/solutions/ch01.md",
+      "answer_heading": "The unsafe readiness assumption",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch01.ex4",
+      "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+      "question": "Decide whether Atlas should use this baseline for a disposable training cluster or a payroll workload requiring restart-safe desired state. Justify the decision using composition rather than product labels.",
+      "solution_path": "manuscript/solutions/ch01.md",
+      "answer_heading": "Deployment choice",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch02.ex1",
+      "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "question": "Locate Runtime, EngineRuntime, FakeRuntime, and the executable injection point. Explain why the four references are stronger than a directory name.",
+      "solution_path": "manuscript/solutions/ch02.md",
+      "answer_heading": "Follow both implementation and composition",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch02.ex2",
+      "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "question": "Explain what PlanAssignments can establish without Docker and which ordinary service path still needs separate examination.",
+      "solution_path": "manuscript/solutions/ch02.md",
+      "answer_heading": "Planner fixture scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch02.ex3",
+      "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "question": "A controller is reconstructed against the same MemoryService and the test passes. Which restart claim is supported, and which is unsafe?",
+      "solution_path": "manuscript/solutions/ch02.md",
+      "answer_heading": "Controller restart versus process restart",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch02.ex4",
+      "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+      "question": "make lint succeeds on a host without golangci-lint. Draft an honest validation statement and name the remaining check.",
+      "solution_path": "manuscript/solutions/ch02.md",
+      "answer_heading": "Honest tool statement",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch03.ex1",
+      "chapter_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "question": "Explain why dev-up.sh succeeding does not prove the worker is ready or migrations ran.",
+      "solution_path": "manuscript/solutions/ch03.md",
+      "answer_heading": "Startup has several boundaries",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch03.ex2",
+      "chapter_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "question": "Why can the example scale to two replicas on one host when public port is zero, and what changes with one fixed public port?",
+      "solution_path": "manuscript/solutions/ch03.md",
+      "answer_heading": "Host ports are finite per node",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch03.ex3",
+      "chapter_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "question": "The agent container is stopped before service deletion. Explain the cleanup problem and the observations needed before removing anything.",
+      "solution_path": "manuscript/solutions/ch03.md",
+      "answer_heading": "Keep the cleanup executor available",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch03.ex4",
+      "chapter_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+      "question": "A teammate reports \u201cPostgreSQL started, therefore this demo survives server process loss.\u201d Identify the wrong inference and design a narrow observation that tests it.",
+      "solution_path": "manuscript/solutions/ch03.md",
+      "answer_heading": "The constructor is decisive",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch04.ex1",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "question": "For a newly assigned Atlas task, list identity, intent, and observation fields needed to correlate a later container report. Explain why service name alone is insufficient.",
+      "solution_path": "manuscript/solutions/ch04.md",
+      "answer_heading": "Correlate a replica",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch04.ex2",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "question": "Decide whether unhealthy-to-healthy, failed-to-running, and failed-to-removed are allowed by the generic actual-state validator. Then evaluate the final case through the agent gate with desired running and desired removed.",
+      "solution_path": "manuscript/solutions/ch04.md",
+      "answer_heading": "Separate generic legality from report acceptance",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch04.ex3",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "question": "Explain why an active service with a succeeded deployment can still have a failed task. Identify which object a restart replacement changes.",
+      "solution_path": "manuscript/solutions/ch04.md",
+      "answer_heading": "Interpret three different objects",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch04.ex4",
+      "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+      "question": "An operator proposes accepting healthy reports after desired status becomes removed because they are more recent than the deletion request. Explain the unsafe assumption and give the correct rejection evidence.",
+      "solution_path": "manuscript/solutions/ch04.md",
+      "answer_heading": "Reject stale health after cleanup intent",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch05.ex1",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "question": "Calculate CPU millicores and memory bytes for five replicas requesting 0.4 CPU and 64Mi each. Explain why 64M yields another total.",
+      "solution_path": "manuscript/solutions/ch05.md",
+      "answer_heading": "Keep units throughout",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch05.ex2",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "question": "Explain the different rejection points for `cpu: bananas`, `memory: 1.5Mi`, and a misspelled replicas key. Run the fixture harness and identify each actual response.",
+      "solution_path": "manuscript/solutions/ch05.md",
+      "answer_heading": "Identify the rejecting stage",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch05.ex3",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "question": "Can two replicas publish TCP 8088 on one worker? Compare the scheduler planner's answer with the immediate memory assignment path.",
+      "solution_path": "manuscript/solutions/ch05.md",
+      "answer_heading": "Compare actual paths",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch05.ex4",
+      "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+      "question": "A reviewer sees correct Docker adapter tests and claims Atlas has CPU isolation. Trace the missing fields and state which actual observation would be necessary to support that claim.",
+      "solution_path": "manuscript/solutions/ch05.md",
+      "answer_heading": "Trace caller data",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch06.ex1",
+      "chapter_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "question": "Identify five active background activities in the server entry point and distinguish them from immediate service assignment.",
+      "solution_path": "manuscript/solutions/ch06.md",
+      "answer_heading": "Name active owners",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch06.ex2",
+      "chapter_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "question": "Trace where an Atlas create request acquires the mutation mutex and which checks precede or follow it. What atomicity does that mutex provide?",
+      "solution_path": "manuscript/solutions/ch06.md",
+      "answer_heading": "Explain local atomicity",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch06.ex3",
+      "chapter_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "question": "Explain why the combined restart observation does not establish automatic adoption of a surviving Docker container. Name the manual step that limits the claim.",
+      "solution_path": "manuscript/solutions/ch06.md",
+      "answer_heading": "Bound the restart claim",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch06.ex4",
+      "chapter_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+      "question": "A proposed recovery plan changes only DATABASE_URL and restarts the binary. Use the constructor and observed state to explain why this plan is insufficient.",
+      "solution_path": "manuscript/solutions/ch06.md",
+      "answer_heading": "Reject configuration-only durability",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch07.ex1",
+      "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "question": "Explain why a rejected JWT can still have an API-Version header and request ID. Trace the actual middleware nesting.",
+      "solution_path": "manuscript/solutions/ch07.md",
+      "answer_heading": "Read outer wrappers first",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch07.ex2",
+      "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "question": "What should an operator script branch on when a service ID is malformed? Explain the roles of code, status, message, and request ID.",
+      "solution_path": "manuscript/solutions/ch07.md",
+      "answer_heading": "Handle a malformed identifier",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch07.ex3",
+      "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "question": "Reproduce the additive-response fixture and explain why the renamed-field fixture is breaking despite successful JSON decoding.",
+      "solution_path": "manuscript/solutions/ch07.md",
+      "answer_heading": "Distinguish addition from rename",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch07.ex4",
+      "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "question": "A reviewer calls every agent route missing from public OpenAPI a defect. Correct the assumption, then name the three genuine public method omissions found by this lab.",
+      "solution_path": "manuscript/solutions/ch07.md",
+      "answer_heading": "Respect the intended audience",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch08.ex1",
+      "chapter_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "question": "Predict the selected server and namespace when YAML, environment, and nonempty flags disagree. Explain the effect of removing each higher-priority source.",
+      "solution_path": "manuscript/solutions/ch08.md",
+      "answer_heading": "Predict nonempty precedence",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch08.ex2",
+      "chapter_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "question": "Explain why local validate succeeds without a server address but service ls fails. Identify which layer first needs an API client.",
+      "solution_path": "manuscript/solutions/ch08.md",
+      "answer_heading": "Distinguish local and network work",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch08.ex3",
+      "chapter_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "question": "Modify your reasoning for an old-version healthy task alongside current-version assigned tasks. Should the status checker succeed, and which actual JSON fields decide?",
+      "solution_path": "manuscript/solutions/ch08.md",
+      "answer_heading": "Check the current version",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch08.ex4",
+      "chapter_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "question": "An operator proposes grepping the table for running and treating any matching line as success. Explain the unsafe assumptions and how the exercised checker handles missing service, non-convergence, and transport errors.",
+      "solution_path": "manuscript/solutions/ch08.md",
+      "answer_heading": "Preserve specific failures",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch09.ex1",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "question": "Trace one task row through AssignTask. Which predicate rejects a second stale writer, and why is row_version alone insufficient evidence of the guard?",
+      "solution_path": "manuscript/solutions/ch09.md",
+      "answer_heading": "A stale task claim",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch09.ex2",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "question": "Explain how a callback can accidentally escape WithTx even while executing inside its lexical body.",
+      "solution_path": "manuscript/solutions/ch09.md",
+      "answer_heading": "Escaping the transaction",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch09.ex3",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "question": "Classify the observed missing-agent_version failures. What separate fixture would isolate assignment correctness without rewriting the baseline?",
+      "solution_path": "manuscript/solutions/ch09.md",
+      "answer_heading": "A fixture/schema mismatch",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch09.ex4",
+      "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "question": "Design the minimum evidence needed to claim durable Atlas service restart. Include one API state that is absent from the composite Store interface.",
+      "solution_path": "manuscript/solutions/ch09.md",
+      "answer_heading": "Durable composition evidence",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch10.ex1",
+      "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "question": "Calculate why node b loses despite having more free memory than node c. Which condition precedes scoring?",
+      "solution_path": "manuscript/solutions/ch10.md",
+      "answer_heading": "Eligibility precedes scoring",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch10.ex2",
+      "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "question": "Change only Atlas to two dynamic published ports. Predict whether the second task can now fit node c and which score comparison matters.",
+      "solution_path": "manuscript/solutions/ch10.md",
+      "answer_heading": "Dynamic published ports",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch10.ex3",
+      "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "question": "Explain how two successful claims for different task IDs can still violate a shared capacity assumption.",
+      "solution_path": "manuscript/solutions/ch10.md",
+      "answer_heading": "Distinct rows do not serialize capacity",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch10.ex4",
+      "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "question": "An operator cites the seeded property suite to claim every deployed Atlas container is CPU-limited. Identify the two missing evidence edges.",
+      "solution_path": "manuscript/solutions/ch10.md",
+      "answer_heading": "Two missing integration edges",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch11.ex1",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "question": "Atlas has desired two, one running task and one pulling task of the current version. Predict the next create count and explain why health is irrelevant to that count.",
+      "solution_path": "manuscript/solutions/ch11.md",
+      "answer_heading": "Running plus pulling",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch11.ex2",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "question": "Repeat the calculation with one running and one failed task under restart never, then under on_failure.",
+      "solution_path": "manuscript/solutions/ch11.md",
+      "answer_heading": "A failed task and restart policy",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch11.ex3",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "question": "Identify what survives in the controller-restart fixture. Why would deleting its fake store invalidate the claimed guarantee?",
+      "solution_path": "manuscript/solutions/ch11.md",
+      "answer_heading": "What the restart fixture retains",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch11.ex4",
+      "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "question": "Design a two-controller race fixture and state which additional mechanism would be required before calling creation globally unique.",
+      "solution_path": "manuscript/solutions/ch11.md",
+      "answer_heading": "Two controllers with the same deficit",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch12.ex1",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "question": "Why can two CreateContainer operation records still establish an idempotent result? Name the additional assertion needed.",
+      "solution_path": "manuscript/solutions/ch12.md",
+      "answer_heading": "Invocation versus object identity",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch12.ex2",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "question": "Describe the safe response when InspectContainer returns a daemon transport error rather than not-found.",
+      "solution_path": "manuscript/solutions/ch12.md",
+      "answer_heading": "Uncertain inspection",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch12.ex3",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "question": "A task's ContainerID points at a user's nonmanaged container. Trace the checks that prevent deletion and explain why the task record alone is insufficient.",
+      "solution_path": "manuscript/solutions/ch12.md",
+      "answer_heading": "An unrelated recorded ID",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch12.ex4",
+      "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "question": "Design a real adoption experiment after a lost created-report response. State what it proves and why it does not prove default-server process durability.",
+      "solution_path": "manuscript/solutions/ch12.md",
+      "answer_heading": "Lost acknowledgement adoption",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch13.ex1",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "question": "Identify which operations use the generic retry helper and which status-report operation does not. How can the latter still recover later?",
+      "solution_path": "manuscript/solutions/ch13.md",
+      "answer_heading": "Retry scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch13.ex2",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "question": "Model a running report accepted by the server but not acknowledged to the agent. Which persistent identities make the next pass safe?",
+      "solution_path": "manuscript/solutions/ch13.md",
+      "answer_heading": "Accepted report with a lost response",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch13.ex3",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "question": "Explain why a rejected stale running report and an offline-node replacement do not establish physical fencing.",
+      "solution_path": "manuscript/solutions/ch13.md",
+      "answer_heading": "Logical guards versus physical fencing",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch13.ex4",
+      "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "question": "Design a cancellation test that distinguishes leaving Runner.Run from ending every transport/runtime activity. Include one observable resource that must close.",
+      "solution_path": "manuscript/solutions/ch13.md",
+      "answer_heading": "Cancellation has multiple observables",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch14.ex1",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "question": "Starting from running with both healthy and unhealthy thresholds set to two, predict reports for 200,404,200,404,404. Explain why total failures are not the deciding count.",
+      "solution_path": "manuscript/solutions/ch14.md",
+      "answer_heading": "Consecutive thresholds",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch14.ex2",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "question": "Why does a TCP success not establish HTTP health? Give an Atlas failure that separates them.",
+      "solution_path": "manuscript/solutions/ch14.md",
+      "answer_heading": "TCP versus HTTP semantics",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch14.ex3",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "question": "Compare a redirect to another path on the same origin with a redirect to another port on127.0.0.1. Which source check decides?",
+      "solution_path": "manuscript/solutions/ch14.md",
+      "answer_heading": "Origin includes port",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch14.ex4",
+      "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "question": "An engineer calls DefaultChecker directly with an arbitrary Target and cites this chapter as proof of an address allowlist. Identify the missing caller boundary and propose a safe local test.",
+      "solution_path": "manuscript/solutions/ch14.md",
+      "answer_heading": "The caller establishes the initial target",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch15.ex1",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "question": "Why do four generic task.status events not independently prove four specific lifecycle values? Which additional record supplies that meaning?",
+      "solution_path": "manuscript/solutions/ch15.md",
+      "answer_heading": "Generic events and contextual meaning",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch15.ex2",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "question": "Compare best-effort Emit, strict Emit and a strict event inside a database transaction. Which failure can roll back the mutation?",
+      "solution_path": "manuscript/solutions/ch15.md",
+      "answer_heading": "Best effort, strict and transactional",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch15.ex3",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "question": "Explain how a notifier can deliver twice after only one event was appended. What receiver key should be used for deduplication?",
+      "solution_path": "manuscript/solutions/ch15.md",
+      "answer_heading": "Duplicate external acceptance",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch15.ex4",
+      "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "question": "An operator restarts the default server and sees an empty event list. Enumerate plausible interpretations and the evidence needed to distinguish them.",
+      "solution_path": "manuscript/solutions/ch15.md",
+      "answer_heading": "An empty list after restart",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch16.ex1",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "question": "Which stdout/stderr information exists in LogLine but disappears in the final text response? Why can line order not recover it?",
+      "solution_path": "manuscript/solutions/ch16.md",
+      "answer_heading": "Information lost in plain text",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch16.ex2",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "question": "Compare tail and follow. What does a malformed tail string become in the worker handler?",
+      "solution_path": "manuscript/solutions/ch16.md",
+      "answer_heading": "Tail versus follow",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch16.ex3",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "question": "Explain why the passing fake cancellation test does not prove every Engine pipe/scanner exits after a client disconnect.",
+      "solution_path": "manuscript/solutions/ch16.md",
+      "answer_heading": "Cooperative cancellation scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch16.ex4",
+      "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "question": "Design a bounded slow-consumer extension with an explicit overflow/deadline policy and a test involving a disappearing task.",
+      "solution_path": "manuscript/solutions/ch16.md",
+      "answer_heading": "A bounded slow-consumer extension",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch17.ex1",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "question": "Atlas has three old available replicas, one healthy target, surge one and unavailable zero. How many old replicas may stop in the next decision, and which guard prevents the second stop?",
+      "solution_path": "manuscript/solutions/ch17.md",
+      "answer_heading": "One stop",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch17.ex2",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "question": "Explain why a new running target cannot replace an old running replica in this controller even though both appear live.",
+      "solution_path": "manuscript/solutions/ch17.md",
+      "answer_heading": "Cohort-specific health",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch17.ex3",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "question": "A rollout has one healthy target and one unhealthy target. Is failure status guaranteed immediately? Trace the restart-policy conversion needed and identify the waiting window.",
+      "solution_path": "manuscript/solutions/ch17.md",
+      "answer_heading": "Unhealthy is not failed",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch17.ex4",
+      "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+      "question": "The first rollback response disappears. Contrast retrying against the same live server with retrying after a fresh default server process. Which evidence would establish operation identity?",
+      "solution_path": "manuscript/solutions/ch17.md",
+      "answer_heading": "Identity survives only with its owner",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch18.ex1",
+      "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "question": "Why does repeated delete of an existing deleting service succeed while delete of an unknown service may return not found?",
+      "solution_path": "manuscript/solutions/ch18.md",
+      "answer_heading": "Existing identity versus missing identity",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch18.ex2",
+      "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "question": "A stopped container remains after the first remove failure. Identify which component retries and why the server must not finalize yet.",
+      "solution_path": "manuscript/solutions/ch18.md",
+      "answer_heading": "Agent owns runtime retry",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch18.ex3",
+      "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "question": "A task's stored ContainerID points at an unmanaged sentinel. Explain why ownership labels are checked before removal and what evidence should remain.",
+      "solution_path": "manuscript/solutions/ch18.md",
+      "answer_heading": "Metadata is not deletion authority alone",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch18.ex4",
+      "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+      "question": "After all task records say stopped, an operator deletes every local Docker volume. Identify both unsupported assumptions and design a scoped finalization observation instead.",
+      "solution_path": "manuscript/solutions/ch18.md",
+      "answer_heading": "Stopped is not removed; data is not the container",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch19.ex1",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "question": "Why does a heartbeat exactly at the timeout cutoff remain eligible on that check, and how does the monitor cadence affect observed detection?",
+      "solution_path": "manuscript/solutions/ch19.md",
+      "answer_heading": "Strict comparison and sampling",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch19.ex2",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "question": "A drain reports complete while Docker still lists the old container. Is that necessarily a bug? Name the completion predicate and the missing observation.",
+      "solution_path": "manuscript/solutions/ch19.md",
+      "answer_heading": "Decision completion differs from removal",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch19.ex3",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "question": "Explain the stateless and Stateful mutations after node loss. Which one proves exclusive access to data?",
+      "solution_path": "manuscript/solutions/ch19.md",
+      "answer_heading": "Conservative stateful policy is not fencing",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch19.ex4",
+      "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "question": "Design a partition worksheet that can demonstrate overlap without touching external hosts. Which identities and two independent endpoint observations must it retain?",
+      "solution_path": "manuscript/solutions/ch19.md",
+      "answer_heading": "Evidence must span both owners",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch20.ex1",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "question": "Two healthy Atlas tasks share a node but use different public ports. How many node-IP answers can DNS return, and why is that insufficient endpoint identity?",
+      "solution_path": "manuscript/solutions/ch20.md",
+      "answer_heading": "One node address is not two sockets",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch20.ex2",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "question": "Predict HTTP discovery and DNS selection for a task with desired stopped and actual running. Which implementation difference controls the result?",
+      "solution_path": "manuscript/solutions/ch20.md",
+      "answer_heading": "Separate predicates",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch20.ex3",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "question": "An advertise address is an IPv6 literal or hostname. Explain what this DNS resolver does and why API endpoint presence does not contradict it.",
+      "solution_path": "manuscript/solutions/ch20.md",
+      "answer_heading": "IPv4 conversion is explicit",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch20.ex4",
+      "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+      "question": "A client still reaches the old worker after the new endpoint appears. Design evidence that distinguishes TTL caching, pooled connections and a wrong public port without claiming a universal recovery deadline.",
+      "solution_path": "manuscript/solutions/ch20.md",
+      "answer_heading": "Keep three owners visible",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch21.ex1",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "question": "Why is a node's advertised agent port discarded when constructing an application backend URL?",
+      "solution_path": "manuscript/solutions/ch21.md",
+      "answer_heading": "Two different listeners",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch21.ex2",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "question": "A TLS route emits http:// backend servers. Explain why this is consistent with the builder and what must be configured separately.",
+      "solution_path": "manuscript/solutions/ch21.md",
+      "answer_heading": "TLS scope is explicit",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch21.ex3",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "question": "A task is locally healthy but unreachable from the gateway. Give a hop-by-hop investigation that preserves both observations.",
+      "solution_path": "manuscript/solutions/ch21.md",
+      "answer_heading": "Observe each hop",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch21.ex4",
+      "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+      "question": "Select one proposed overlay/CNI mechanism and define the crash window its acceptance test must cover before it could replace the current host-port behavior.",
+      "solution_path": "manuscript/solutions/ch21.md",
+      "answer_heading": "Extension acceptance needs ownership",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch22.ex1",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "question": "Compute Atlas's recommendation for three replicas, observed 90, target 60, minimum two and maximum four. Identify which step produces each intermediate value.",
+      "solution_path": "manuscript/solutions/ch22.md",
+      "answer_heading": "Five before the maximum, four after",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch22.ex2",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "question": "Explain why reconstructing a controller during cooldown can permit another decision even when the service count persists in a fixture.",
+      "solution_path": "manuscript/solutions/ch22.md",
+      "answer_heading": "Memory owns cooldown",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch22.ex3",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "question": "What do a nonzero StabilizationWindow and a successful RunOnce prove about actual stabilization and metrics availability?",
+      "solution_path": "manuscript/solutions/ch22.md",
+      "answer_heading": "Declared fields and nil results are bounded evidence",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch22.ex4",
+      "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+      "question": "Draft an acceptance boundary for a production provider and explain why adding autoscaling YAML to the default server cannot satisfy it.",
+      "solution_path": "manuscript/solutions/ch22.md",
+      "answer_heading": "Provider and composition are separate gates",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch23.ex1",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "question": "Why can an empty user JWT secret disable role checks while agent task routes still reject a missing node credential?",
+      "solution_path": "manuscript/solutions/ch23.md",
+      "answer_heading": "Two middleware paths",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch23.ex2",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "question": "A token grants a namespace viewer role, but static users configure its subject as operator. Which authority does this middleware select?",
+      "solution_path": "manuscript/solutions/ch23.md",
+      "answer_heading": "Static configuration overrides claims",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch23.ex3",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "question": "Trace the lost heartbeat-rotation response window. Which stored field changes and why can a previously valid credential stop working?",
+      "solution_path": "manuscript/solutions/ch23.md",
+      "answer_heading": "Rotation is a state mutation before acknowledgement",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch23.ex4",
+      "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "question": "Explain why a protected viewer API and short-lived node tokens do not establish mutual TLS or containment after Docker socket compromise.",
+      "solution_path": "manuscript/solutions/ch23.md",
+      "answer_heading": "Different trust properties",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch24.ex1",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "question": "Why can secret GET safely omit plaintext while an assigned task legitimately receives it? Identify both trust boundaries.",
+      "solution_path": "manuscript/solutions/ch24.md",
+      "answer_heading": "Metadata and execution are different interfaces",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch24.ex2",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "question": "Explain the nonce, KeyID and associated-data roles in the local envelope. What does the wrong-key test establish and leave unproved?",
+      "solution_path": "manuscript/solutions/ch24.md",
+      "answer_heading": "Integrity and custody have separate owners",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch24.ex3",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "question": "A file sets key A, environment sets key B and explicit overrides set key C. Which key is selected, and why is the redacted print unsuitable for proving its exact value?",
+      "solution_path": "manuscript/solutions/ch24.md",
+      "answer_heading": "Explicit override wins",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch24.ex4",
+      "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "question": "Updating a secret and changing the envelope key are two different operations. Design an observation plan that avoids assuming existing containers refresh or old ciphertext remains decryptable.",
+      "solution_path": "manuscript/solutions/ch24.md",
+      "answer_heading": "Observe three objects separately",
+      "verification": "author review; independent cross-review delegated to source_foundation",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch25.ex1",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "question": "Parse registry.example.test:5000/team/atlas:v2 into registry, name and tag. Why is the first colon not the tag separator?",
+      "solution_path": "manuscript/solutions/ch25.md",
+      "answer_heading": "Registry port versus tag",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch25.ex2",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "question": "A supplied synthetic digest passes the parser. List three operational claims this result does not establish.",
+      "solution_path": "manuscript/solutions/ch25.md",
+      "answer_heading": "Synthetic digest scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch25.ex3",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "question": "Explain why requiring a digest with ParserResolver can reject a tag even when the registry could resolve it.",
+      "solution_path": "manuscript/solutions/ch25.md",
+      "answer_heading": "Parser-only resolution",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch25.ex4",
+      "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+      "question": "Design a private-image service pull observation without recording credentials, and explain why it cannot automatically certify private-image Jobs.",
+      "solution_path": "manuscript/solutions/ch25.md",
+      "answer_heading": "Private pull evidence",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch26.ex1",
+      "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "question": "Trace read-only root filesystem from ServiceSpec to the Engine create arguments. Why does a writable bind mount remain a separate concern?",
+      "solution_path": "manuscript/solutions/ch26.md",
+      "answer_heading": "Read-only root field path",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch26.ex2",
+      "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "question": "Why can require_resource_requests reject a candidate before defaults exist? Identify the real ordering rather than quoting the design's normalized-candidate phrase.",
+      "solution_path": "manuscript/solutions/ch26.md",
+      "answer_heading": "Order before defaults",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch26.ex3",
+      "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "question": "Compare a malformed YAML request, a privileged policy denial and a quota rejection. Which should produce admission violations?",
+      "solution_path": "manuscript/solutions/ch26.md",
+      "answer_heading": "Different rejection types",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch26.ex4",
+      "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+      "question": "Explain why passing scale/rollout admission tests does not certify every Job or GitOps restoration path, or establish a hostile-tenant sandbox.",
+      "solution_path": "manuscript/solutions/ch26.md",
+      "answer_heading": "Scope of passing tests",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch27.ex1",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "question": "Explain why context.Background can permit a broader internal Matches result than an explicit default namespace context.",
+      "solution_path": "manuscript/solutions/ch27.md",
+      "answer_heading": "Absent versus explicit context",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch27.ex2",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "question": "Distinguish forbidden namespace selection from a not-found cross-namespace object ID. Which layer decides each?",
+      "solution_path": "manuscript/solutions/ch27.md",
+      "answer_heading": "Forbidden versus absent",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch27.ex3",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "question": "Trace a same-named secret reference in team-b when only team-a owns that secret. What result should the service method produce?",
+      "solution_path": "manuscript/solutions/ch27.md",
+      "answer_heading": "Secret reference scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch27.ex4",
+      "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+      "question": "An operator proposes the namespace down migration as a reversible cleanup. Identify data and evidence at risk, then explain why logical isolation still does not establish hostile-worker isolation.",
+      "solution_path": "manuscript/solutions/ch27.md",
+      "answer_heading": "Destructive rollback and physical limits",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch28.ex1",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "question": "Calculate CPU, memory, service, replica and public-port usage for the two-replica Atlas example. Which dimension is not multiplied by replicas?",
+      "solution_path": "manuscript/solutions/ch28.md",
+      "answer_heading": "Atlas arithmetic",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch28.ex2",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "question": "Explain why two individually valid scale requests cannot both succeed under the three-replica fixture. Name the MemoryService and PostgreSQL mechanisms separately.",
+      "solution_path": "manuscript/solutions/ch28.md",
+      "answer_heading": "Concurrent acceptance",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch28.ex3",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "question": "A task contributes60 seconds and then120 seconds in two snapshots. What does the current report total, and why is that not120 billable seconds?",
+      "solution_path": "manuscript/solutions/ch28.md",
+      "answer_heading": "Cumulative runtime is sampled twice",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch28.ex4",
+      "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+      "question": "Design a bounded operational export interpretation that avoids claiming measured utilization, storage bytes or invoices from the present columns.",
+      "solution_path": "manuscript/solutions/ch28.md",
+      "answer_heading": "Operational interpretation",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch29.ex1",
+      "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "question": "Explain how a digest can identify malicious content precisely without proving a trusted publisher authorized it.",
+      "solution_path": "manuscript/solutions/ch29.md",
+      "answer_heading": "Identity is not authorization",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch29.ex2",
+      "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "question": "Identify the failure window addressed by admission, rollout and agent verification separately. Which are active in the baseline?",
+      "solution_path": "manuscript/solutions/ch29.md",
+      "answer_heading": "Three proposed points",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch29.ex3",
+      "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "question": "Why must a completed scan bind database version and expiry? Explain how new findings can change acceptance without changing the image.",
+      "solution_path": "manuscript/solutions/ch29.md",
+      "answer_heading": "Freshness changes without changed bytes",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch29.ex4",
+      "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+      "question": "A developer moves the pending-scan exception before subject/signature checks. Which modeled bypass becomes possible, and which test should catch it?",
+      "solution_path": "manuscript/solutions/ch29.md",
+      "answer_heading": "Exception ordering",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch30.ex1",
+      "chapter_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "question": "Why must a lab retain both the Orch source SHA and the manifest repository's checked-out commit?",
+      "solution_path": "manuscript/solutions/ch30.md",
+      "answer_heading": "Two revision domains",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch30.ex2",
+      "chapter_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "question": "The second sorted manifest fails parsing after the first applied. What can LastError and LastRevision tell you, and what must be inspected separately?",
+      "solution_path": "manuscript/solutions/ch30.md",
+      "answer_heading": "Partial apply provenance",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch30.ex3",
+      "chapter_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "question": "Explain why GitOpsStatus under auto_revert is not a passive observation and why its acceptance path differs from ApplyService.",
+      "solution_path": "manuscript/solutions/ch30.md",
+      "answer_heading": "Mutating status",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch30.ex4",
+      "chapter_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+      "question": "Design an ownership-transfer prune test. Which extra predicate is absent from the baseline, and what does the passing unrelated-name fixture actually prove?",
+      "solution_path": "manuscript/solutions/ch30.md",
+      "answer_heading": "Prune ownership test",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch31.ex1",
+      "chapter_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "question": "Calculate maximum total attempts for backoffLimit zero and one. Why does the helper not prove delayed retry?",
+      "solution_path": "manuscript/solutions/ch31.md",
+      "answer_heading": "Attempt arithmetic",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch31.ex2",
+      "chapter_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "question": "Explain why an accepted stopped report without an exit code and a failed report without an exit code take different defaults.",
+      "solution_path": "manuscript/solutions/ch31.md",
+      "answer_heading": "Missing exit-code defaults",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch31.ex3",
+      "chapter_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "question": "For a three-minute delay and missed limit two, which occurrences are created first? What can Forbid do when several are due and none was active at the start?",
+      "solution_path": "manuscript/solutions/ch31.md",
+      "answer_heading": "Backlog and Forbid",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch31.ex4",
+      "chapter_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+      "question": "Identify the create-before-checkpoint failure window and design evidence needed for a stronger scheduling guarantee, including a concrete DST transition case.",
+      "solution_path": "manuscript/solutions/ch31.md",
+      "answer_heading": "Checkpoint and DST evidence",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch32.ex1",
+      "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "question": "Trace claim name, metadata VolumeID and physical Docker VolumeName. Which one reaches the bind string, and what namespace assumption can fail?",
+      "solution_path": "manuscript/solutions/ch32.md",
+      "answer_heading": "Three storage identities",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch32.ex2",
+      "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "question": "Explain the exact writable-RWO predicate when an active read-only attachment already exists. How does this qualify the documentation?",
+      "solution_path": "manuscript/solutions/ch32.md",
+      "answer_heading": "Conservative active attachment rule",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch32.ex3",
+      "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "question": "Why does the passing one-writer fixture not prove safe automatic failover after node loss?",
+      "solution_path": "manuscript/solutions/ch32.md",
+      "answer_heading": "Logical lock versus lost node",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch32.ex4",
+      "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+      "question": "Design a retention test with explicit cleanup, then identify the stale resolved-node snapshot case and the additional assertion needed before claiming all later placement stays pinned.",
+      "solution_path": "manuscript/solutions/ch32.md",
+      "answer_heading": "Retention and stale binding",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch33.ex1",
+      "chapter_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "question": "Locate one runtime-integrated seam and one interface whose controller is not started by the default server. Identify the constructor or missing composition that determines the classification.",
+      "solution_path": "manuscript/solutions/ch33.md",
+      "answer_heading": "Existing composition determines capability",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch33.ex2",
+      "chapter_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "question": "Run the adapter contract and change the compatible handshake to omit task idempotency. Explain why rejection must happen before container creation.",
+      "solution_path": "manuscript/solutions/ch33.md",
+      "answer_heading": "Reject an incomplete handshake",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch33.ex3",
+      "chapter_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "question": "Model a create that succeeds remotely but loses its response. Specify the identifier used for retry and the query needed after adapter restart.",
+      "solution_path": "manuscript/solutions/ch33.md",
+      "answer_heading": "Unknown completion needs inspection",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch33.ex4",
+      "chapter_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+      "question": "Review a proposal granting a storage plugin unrestricted host access because it runs outside the server process. Identify the unsafe assumption and define three concrete acceptance checks.",
+      "solution_path": "manuscript/solutions/ch33.md",
+      "answer_heading": "Isolation does not remove storage authority",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch34.ex1",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "question": "Explain why two LocalElector instances can both acquire `scheduler`, and identify the state they fail to share.",
+      "solution_path": "manuscript/solutions/ch34.md",
+      "answer_heading": "A local map is not distributed authority",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch34.ex2",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "question": "Run the leadership tests and trace the channel sequence that makes lease-loss cancellation deterministic.",
+      "solution_path": "manuscript/solutions/ch34.md",
+      "answer_heading": "Loss ordering is observable",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch34.ex3",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "question": "Explain the observed retained advisory lock after cancellation. Distinguish pool connection release from database session termination and identify the fast path that prevents a later unlock.",
+      "solution_path": "manuscript/solutions/ch34.md",
+      "answer_heading": "Done is not SQL unlock",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch34.ex4",
+      "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+      "question": "Review a proposal to add two default servers behind a load balancer. Specify the durable-state, topology, readiness, and side-effect gates required before approval.",
+      "solution_path": "manuscript/solutions/ch34.md",
+      "answer_heading": "Reject the memory-replica shortcut",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch35.ex1",
+      "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "question": "List the locked server, agent, API, and schema bounds. Explain why expected schema sixteen and accepted schema fifteen are different statements.",
+      "solution_path": "manuscript/solutions/ch35.md",
+      "answer_heading": "Read the pinned ranges",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch35.ex2",
+      "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "question": "Run the controlled preflight fixture. Design automation that rejects structured blocked status even when the command itself succeeds.",
+      "solution_path": "manuscript/solutions/ch35.md",
+      "answer_heading": "Parse the actual decision",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch35.ex3",
+      "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "question": "Trace a migration failure after earlier migrations committed. Explain what status and backup evidence you need before retrying, without executing down on real data.",
+      "solution_path": "manuscript/solutions/ch35.md",
+      "answer_heading": "Partial upgrade is possible",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch35.ex4",
+      "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+      "question": "Classify old running, unresolved failed, and replaced failed tasks for retention. Identify why an unrelated maintenance window and a GitOps retention setting do not establish the intended enforcement.",
+      "solution_path": "manuscript/solutions/ch35.md",
+      "answer_heading": "Preserve unresolved state and trace policy",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch36.ex1",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "question": "Identify one fake behavior that supports a useful agent test and one real Docker behavior it cannot establish.",
+      "solution_path": "manuscript/solutions/ch36.md",
+      "answer_heading": "Read the fake's contract",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch36.ex2",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "question": "Run the seed_42 scheduler subtest and explain why the seed must be recorded with the generator revision. Add a proposed occupied-port input without duplicating the scoring algorithm as the oracle.",
+      "solution_path": "manuscript/solutions/ch36.md",
+      "answer_heading": "Reproduce a property, not a score",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch36.ex3",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "question": "Run the bounded port fuzz command. Explain exactly which failure its callback can detect and why newly interesting inputs are not bug counts.",
+      "solution_path": "manuscript/solutions/ch36.md",
+      "answer_heading": "Fuzz scope is callback scope",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch36.ex4",
+      "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+      "question": "Design a resource-propagation acceptance test across API, agent DTO, ContainerSpec, and engine inspection. Explain why testing only the direct adapter would miss the observed gap.",
+      "solution_path": "manuscript/solutions/ch36.md",
+      "answer_heading": "Observe every handoff",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch37.ex1",
+      "chapter_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "question": "Rename two upstream chaos cases so their titles state the actual modeled action and retained state. Explain which stronger claim the original names might invite.",
+      "solution_path": "manuscript/solutions/ch37.md",
+      "answer_heading": "Name the modeled boundary",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch37.ex2",
+      "chapter_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "question": "Run the selected fault tests and identify the operation history proving no speculative container create during runtime unavailability.",
+      "solution_path": "manuscript/solutions/ch37.md",
+      "answer_heading": "Unknown existence prevents speculative create",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch37.ex3",
+      "chapter_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "question": "Draw a written timeline for node partition, stateless replacement, and returned-node cleanup. Identify the interval in which an old container may remain live.",
+      "solution_path": "manuscript/solutions/ch37.md",
+      "answer_heading": "Cleanup on return is not fencing during partition",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch37.ex4",
+      "chapter_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+      "question": "Compare controller reconstruction with the combined fresh-server experiment. Define the evidence required before claiming durable rollout recovery and a cleanup plan that touches only captured resources.",
+      "solution_path": "manuscript/solutions/ch37.md",
+      "answer_heading": "Match state owner to recovery claim",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch38.ex1",
+      "chapter_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "question": "Trace docker_operation_errors_total from a failed wrapped call to its collector, scrape target, alert, and dashboard panel. Mark which steps the lab executed.",
+      "solution_path": "manuscript/solutions/ch38.md",
+      "answer_heading": "Follow the producer and consumer",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch38.ex2",
+      "chapter_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "question": "Explain why duplicate accepted failed reports can inflate tasks_failed_total without duplicating task-failed events.",
+      "solution_path": "manuscript/solutions/ch38.md",
+      "answer_heading": "Requests and distinct transitions differ",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch38.ex3",
+      "chapter_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "question": "Rewrite the description of Task State Counts and Node Status Counts to match their actual queries. Identify the additional source needed for authoritative current counts.",
+      "solution_path": "manuscript/solutions/ch38.md",
+      "answer_heading": "Rename proxies honestly",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch38.ex4",
+      "chapter_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+      "question": "Design a live alert acceptance drill for a short pull-failure burst, sustained failure, and absent agent scrape. Explain why a single synthetic counter increment cannot establish alert firing or recovery.",
+      "solution_path": "manuscript/solutions/ch38.md",
+      "answer_heading": "Test temporal and absent-data behavior",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch39.ex1",
+      "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "question": "Identify which operations are included in average_convergence_time and which real runtime costs are absent. Explain the actual meanings of SchedulerIterations and ReconciliationIterations.",
+      "solution_path": "manuscript/solutions/ch39.md",
+      "answer_heading": "Identify the timed work",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch39.ex2",
+      "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "question": "Reproduce the scheduler benchmark with the recorded flags. Compare the sample range without inferring a production capacity or statistical confidence interval from three short runs.",
+      "solution_path": "manuscript/solutions/ch39.md",
+      "answer_heading": "Repeat bounded samples",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch39.ex3",
+      "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "question": "Explain why a debug listener bound to a public address remains dangerous even though pprof is absent from the public API handler.",
+      "solution_path": "manuscript/solutions/ch39.md",
+      "answer_heading": "Separate listener does not mean authenticated",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch39.ex4",
+      "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+      "question": "Design a production-shaped thousand-service acceptance experiment. Include authoritative readiness, durable state, runtime work, retained history, failures, and scoped cleanup rather than extrapolating the fake scenario.",
+      "solution_path": "manuscript/solutions/ch39.md",
+      "answer_heading": "Build a different production experiment",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch40.ex1",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "question": "Build a coverage table separating the ungated suite, explicit integration skips, original PostgreSQL fixture failure, full-schema extension, and guarded real-Docker flow.",
+      "solution_path": "manuscript/solutions/ch40.md",
+      "answer_heading": "Preserve separate coverage lanes",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch40.ex2",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "question": "Review the systemd restart policy and Compose database/TLS variables. Explain why they do not establish durable state or native TLS consumption.",
+      "solution_path": "manuscript/solutions/ch40.md",
+      "answer_heading": "Configuration does not compose missing behavior",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch40.ex3",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "question": "Describe the owned restore drill, including database identity, canary verification, key handling, and cleanup. Identify the state a dump cannot recover from the default server.",
+      "solution_path": "manuscript/solutions/ch40.md",
+      "answer_heading": "Restore the owner that actually persisted data",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    },
+    {
+      "exercise_id": "ch40.ex4",
+      "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+      "question": "Run the dossier verifier and select the next Atlas guarantee to implement. Define its failure case, evidence, and rejection criterion without changing production_decision merely because an inventory check passes.",
+      "solution_path": "manuscript/solutions/ch40.md",
+      "answer_heading": "A dossier is not deployment approval",
+      "verification": "independent source/argument review",
+      "evidence_record": "validation/reviews/exercises-solutions.json"
+    }
+  ],
+  "additional_practice_catalog": "exercises/catalog.json",
+  "independent_chapters": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+  ],
+  "author_chapters_require_cross_review": [
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "appendix_d_independent_review": "delegated to source_foundation; not self-certified",
+  "actual_offline_checks": "validation/exercises/offline-runs.json",
+  "specified_incorrect_behavior_rejection": "validation/exercises/mutation-runs.json",
+  "pending_dependencies": []
+}

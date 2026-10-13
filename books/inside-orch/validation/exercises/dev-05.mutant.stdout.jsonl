@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:49.344349267+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/controlplane"}
+{"Time":"2026-10-13T03:38:49.34757323+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestNamespaceIsolationAndDuplicateNames"}
+{"Time":"2026-10-13T03:38:49.347587338+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestNamespaceIsolationAndDuplicateNames","Output":"=== RUN   TestNamespaceIsolationAndDuplicateNames\n"}
+{"Time":"2026-10-13T03:38:49.347690636+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestNamespaceIsolationAndDuplicateNames","Output":"    namespace_test.go:39: cross-namespace read should look not found, got \u003cnil\u003e\n"}
+{"Time":"2026-10-13T03:38:49.347703068+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestNamespaceIsolationAndDuplicateNames","Output":"--- FAIL: TestNamespaceIsolationAndDuplicateNames (0.00s)\n"}
+{"Time":"2026-10-13T03:38:49.347712078+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestNamespaceIsolationAndDuplicateNames","Elapsed":0}
+{"Time":"2026-10-13T03:38:49.347719202+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:49.347868596+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/controlplane\t0.003s\n"}
+{"Time":"2026-10-13T03:38:49.347885359+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Elapsed":0.004}

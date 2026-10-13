@@ -1,0 +1,18 @@
+Usage:
+  orch maintenance create <name> [flags]
+
+Flags:
+      --duration duration   window duration (default 1h0m0s)
+      --enabled             enable window (default true)
+      --global              apply globally
+  -h, --help                help for create
+      --operations string   comma-separated allowed operations (default "rollout,rollback,node_drain")
+      --schedule string     five-field cron schedule
+      --timezone string     IANA timezone (default "UTC")
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

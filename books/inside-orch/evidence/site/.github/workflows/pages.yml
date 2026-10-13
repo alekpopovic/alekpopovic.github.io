@@ -1,0 +1,138 @@
+name: Deploy Jekyll site to Pages
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install book publishing dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+          python -m pip install -r requirements-books.txt
+
+      - name: Validate book publication
+        working-directory: books/modern-ci-book
+        run: |
+          python scripts/check.py
+          python -m unittest discover -s scripts -p 'test_*.py' -v
+
+      - name: Build book editions and Tailwind
+        run: npm run build
+
+      - name: Validate AgentPlane source publication and supplied EPUB
+        run: |
+          python books/agentplane-book/scripts/check.py
+          python books/agentplane-book/scripts/check_epub.py books/agentplane-book/dist/AgentPlane-Book.epub
+
+      - name: Build Jekyll
+        run: bundle exec jekyll build
+
+      - name: Check books, downloads, and linked posts
+        run: python scripts/check-books.py
+
+      - name: Check SEO, search, feeds, and local links
+        run: npm run check:site
+
+      - name: Check editorial metadata
+        run: npm run check:content
+
+      - name: Check runnable workshop starters and solutions
+        run: npm run check:labs
+
+      - name: Test public deployment checks
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Install browser for interface checks
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Check interface and accessibility
+        run: npm run test:ui
+
+      - name: Check Firefox reading and keyboard navigation
+        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js tests/study-guidance.spec.js
+        env:
+          SITE_BROWSER: firefox
+
+      - name: Check WebKit reading and keyboard navigation
+        run: npm run test:ui -- tests/compatibility.spec.js tests/interactive-learning.spec.js tests/ai-select.spec.js tests/workspace-editor.spec.js tests/study-guidance.spec.js
+        env:
+          SITE_BROWSER: webkit
+
+      - name: Check mobile performance budgets
+        run: npm run check:performance
+
+      - name: Save quality reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-quality-reports
+          path: |
+            playwright-report/
+            test-results/
+            reports/
+          retention-days: 14
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify the public deployment
+        run: python scripts/check-publication.py --expected-sha "$GITHUB_SHA" --attempts 12 --retry-delay 10

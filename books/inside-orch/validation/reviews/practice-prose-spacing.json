@@ -1,0 +1,70 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "changed_at_utc": "2026-10-13T02:24:52.565569+00:00",
+  "authorized_scope": "Root requested final question/solution joined-prose token repair after PDF450 inspection. No chapter prose or source listing edited.",
+  "files": [
+    {
+      "path": "exercises/questions.md",
+      "sha256_before": "0254e4fc703737155ccdffd36cc82d3a8312e1070c014e9afb6cb04e1028cbe4",
+      "sha256_after": "692e63c2e4a363f26c31ec91441c489286ad2a58164f22fc0cadc34b54032d83",
+      "protected_fences_inline_code_and_link_targets_unchanged": true,
+      "changed_tokens": {
+        "requests250": 1,
+        "and134217728bytes": 1,
+        "1048576bytes": 1,
+        "16schema": 1,
+        "2points": 72,
+        "CPU1250": 1,
+        "MaxSurge2": 1,
+        "MaxUnavailable1": 1,
+        "and128": 1,
+        "and700": 1,
+        "available1": 2,
+        "budget3": 1,
+        "forbiddenhits0": 1,
+        "jobs2": 1,
+        "maxactive7": 1,
+        "memory671088640": 1,
+        "minavailable4": 1,
+        "quota1500": 1,
+        "request250": 1,
+        "total3": 1
+      }
+    },
+    {
+      "path": "manuscript/solutions/appendix-d.md",
+      "sha256_before": "88ace1a293d3fb35be40ca67c6c68e348fe2dd4608de84899db1dac3ab2b849f",
+      "sha256_after": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5",
+      "protected_fences_inline_code_and_link_targets_unchanged": true,
+      "changed_tokens": {
+        "16schema": 1,
+        "CPU1250": 1,
+        "available1": 1,
+        "budget3": 1,
+        "forbiddenhits0": 1,
+        "jobs2": 1,
+        "maxactive7": 1,
+        "memory671088640": 1,
+        "minavailable4": 1,
+        "total3": 1,
+        "671088640bytes": 1,
+        "and734003200byte": 1,
+        "is1250": 1,
+        "is5": 1,
+        "least4available": 1,
+        "now12": 1,
+        "stated1500millicore": 1,
+        "the24": 1,
+        "to640": 1,
+        "to7active": 1
+      }
+    },
+    {
+      "path": "exercises/catalog.json",
+      "sha256_before": "232df94b8bb6a6ec399c92147bf61f121372f4e1dfbecc81e2848619738dc89e",
+      "sha256_after": "68dc1c208edeecc7bfd440198e4c1a071353701cc94b71e994b3994165d0d854",
+      "scope": "Question, worked_solution and rubric prose only; test commands, source URLs, serialized expected traces unchanged."
+    }
+  ],
+  "status": "passed"
+}

@@ -1,0 +1,8 @@
+kind: Job
+name: atlas-report-success
+image: busybox:1.36
+command: ["sh", "-c", "printf 'atlas report\n'; exit 0"]
+backoffLimit: 0
+resources:
+  cpu: 100m
+  memory: 1Mi

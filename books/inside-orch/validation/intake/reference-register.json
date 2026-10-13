@@ -1,0 +1,507 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T00:36:42.149523+00:00",
+  "repository_references": [
+    {
+      "id": "orch-baseline",
+      "label": "Locked Orch implementation",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/tree/cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "offline": "evidence/orch/"
+    },
+    {
+      "id": "source-history",
+      "label": "Reachable implementation history",
+      "url": "https://github.com/alekpopovic/orch/commit/cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "offline": "evidence/commits.json; evidence/commit-diffs/"
+    },
+    {
+      "id": "server-composition",
+      "label": "The concrete MemoryService constructor controls live state ownership.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L142-L158",
+      "offline": "evidence/orch/cmd/orch-server/main.go",
+      "line_start": 142,
+      "line_end": 158
+    },
+    {
+      "id": "memory-service-placement",
+      "label": "Normal service reconciliation creates assigned tasks directly; compare the separate planner path.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2287-L2307",
+      "offline": "evidence/orch/internal/controlplane/controlplane.go",
+      "line_start": 2287,
+      "line_end": 2307
+    },
+    {
+      "id": "agent-task-dto",
+      "label": "Trace which fields assignments carry before describing runtime enforcement.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L130-L137",
+      "offline": "evidence/orch/internal/controlplane/controlplane.go",
+      "line_start": 130,
+      "line_end": 137
+    },
+    {
+      "id": "pure-scheduler-plan",
+      "label": "Standalone planner entrypoint: inspect its callers before transferring invariants to the binary.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270-L298",
+      "offline": "evidence/orch/internal/scheduler/scheduler.go",
+      "line_start": 270,
+      "line_end": 298
+    },
+    {
+      "id": "postgres-claim",
+      "label": "Atomic task-state/version guard in the PostgreSQL store; not server persistence wiring.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L920",
+      "offline": "evidence/orch/internal/store/postgres.go",
+      "line_start": 892,
+      "line_end": 920
+    },
+    {
+      "id": "docker-resource-enforcement",
+      "label": "Adapter support for resource limits is distinct from populated agent inputs.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L422-L440",
+      "offline": "evidence/orch/internal/docker/docker.go",
+      "line_start": 422,
+      "line_end": 440
+    },
+    {
+      "id": "ch01-source-anchor",
+      "label": "Trace a service from API request to Docker container. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146-L165",
+      "offline": "evidence/orch/cmd/orch-server/main.go",
+      "line_start": 146,
+      "line_end": 165
+    },
+    {
+      "id": "ch02-source-anchor",
+      "label": "Navigate the actual package tree. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L47-L66",
+      "offline": "evidence/orch/internal/docker/docker.go",
+      "line_start": 47,
+      "line_end": 66
+    },
+    {
+      "id": "ch03-source-anchor",
+      "label": "Build or install the pinned CLI reproducibly. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cli/root.go#L540-L559",
+      "offline": "evidence/orch/internal/cli/root.go",
+      "line_start": 540,
+      "line_end": 559
+    },
+    {
+      "id": "ch04-source-anchor",
+      "label": "Distinguish desired task status from observed status. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L136-L155",
+      "offline": "evidence/orch/pkg/types/lifecycle.go",
+      "line_start": 136,
+      "line_end": 155
+    },
+    {
+      "id": "ch05-source-anchor",
+      "label": "Parse CPU and memory quantities without ambiguity. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cli/deploy.go#L129-L148",
+      "offline": "evidence/orch/internal/cli/deploy.go",
+      "line_start": 129,
+      "line_end": 148
+    },
+    {
+      "id": "ch06-source-anchor",
+      "label": "Locate the actual control-plane constructor. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146-L165",
+      "offline": "evidence/orch/cmd/orch-server/main.go",
+      "line_start": 146,
+      "line_end": 165
+    },
+    {
+      "id": "ch07-source-anchor",
+      "label": "Follow validation and authorization at the HTTP boundary. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/apperrors/errors.go#L35-L54",
+      "offline": "evidence/orch/internal/apperrors/errors.go",
+      "line_start": 35,
+      "line_end": 54
+    },
+    {
+      "id": "ch08-source-anchor",
+      "label": "Explain flag, environment, configuration, and default precedence. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/config/config.go#L123-L142",
+      "offline": "evidence/orch/internal/config/config.go",
+      "line_start": 123,
+      "line_end": 142
+    },
+    {
+      "id": "ch09-source-anchor",
+      "label": "Identify transaction boundaries and optimistic conflict checks. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L911",
+      "offline": "evidence/orch/internal/store/postgres.go",
+      "line_start": 892,
+      "line_end": 911
+    },
+    {
+      "id": "ch10-source-anchor",
+      "label": "Explain deterministic ordering and tie-breaking. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270-L289",
+      "offline": "evidence/orch/internal/scheduler/scheduler.go",
+      "line_start": 270,
+      "line_end": 289
+    },
+    {
+      "id": "ch11-source-anchor",
+      "label": "Separate reconciliation decisions from placement and runtime side effects. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/reconciler/reconciler.go#L125-L144",
+      "offline": "evidence/orch/internal/reconciler/reconciler.go",
+      "line_start": 125,
+      "line_end": 144
+    },
+    {
+      "id": "ch12-source-anchor",
+      "label": "Identify idempotency keys and managed-container labels. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L191-L210",
+      "offline": "evidence/orch/internal/docker/docker.go",
+      "line_start": 191,
+      "line_end": 210
+    },
+    {
+      "id": "ch13-source-anchor",
+      "label": "Follow agent bootstrap and credential use. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L128-L147",
+      "offline": "evidence/orch/internal/agent/agent.go",
+      "line_start": 128,
+      "line_end": 147
+    },
+    {
+      "id": "ch14-source-anchor",
+      "label": "Distinguish process running from healthy service state. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/health/health.go#L97-L116",
+      "offline": "evidence/orch/internal/health/health.go",
+      "line_start": 97,
+      "line_end": 116
+    },
+    {
+      "id": "ch15-source-anchor",
+      "label": "Differentiate domain events, diagnostic logs, and audits. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/events/events.go#L71-L90",
+      "offline": "evidence/orch/internal/events/events.go",
+      "line_start": 71,
+      "line_end": 90
+    },
+    {
+      "id": "ch16-source-anchor",
+      "label": "Locate actual log stream boundaries and response formats. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/logs.go#L16-L35",
+      "offline": "evidence/orch/internal/agent/logs.go",
+      "line_start": 16,
+      "line_end": 35
+    },
+    {
+      "id": "ch17-source-anchor",
+      "label": "Compute rollout availability and surge limits. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L358-L377",
+      "offline": "evidence/orch/internal/rollout/rollout.go",
+      "line_start": 358,
+      "line_end": 377
+    },
+    {
+      "id": "ch18-source-anchor",
+      "label": "Explain why removal is a workflow rather than one HTTP delete. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L1436-L1455",
+      "offline": "evidence/orch/internal/controlplane/controlplane.go",
+      "line_start": 1436,
+      "line_end": 1455
+    },
+    {
+      "id": "ch19-source-anchor",
+      "label": "Interpret stale heartbeat transitions. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/node/monitor.go#L57-L72",
+      "offline": "evidence/orch/internal/node/monitor.go",
+      "line_start": 57,
+      "line_end": 72
+    },
+    {
+      "id": "ch20-source-anchor",
+      "label": "Explain endpoint identity and health filtering. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/discovery/discovery.go#L28-L47",
+      "offline": "evidence/orch/internal/discovery/discovery.go",
+      "line_start": 28,
+      "line_end": 47
+    },
+    {
+      "id": "ch21-source-anchor",
+      "label": "Trace ingress to node-level published ports. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go#L46-L65",
+      "offline": "evidence/orch/internal/traefik/config.go",
+      "line_start": 46,
+      "line_end": 65
+    },
+    {
+      "id": "ch22-source-anchor",
+      "label": "Calculate a replica recommendation from observed CPU. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go#L114-L133",
+      "offline": "evidence/orch/internal/autoscaler/autoscaler.go",
+      "line_start": 114,
+      "line_end": 133
+    },
+    {
+      "id": "ch23-source-anchor",
+      "label": "Distinguish user authentication from agent bootstrap. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go#L36-L55",
+      "offline": "evidence/orch/internal/auth/agent.go",
+      "line_start": 36,
+      "line_end": 55
+    },
+    {
+      "id": "ch24-source-anchor",
+      "label": "Trace secret encrypt/decrypt and reference resolution. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go#L47-L66",
+      "offline": "evidence/orch/internal/secrets/envelope.go",
+      "line_start": 47,
+      "line_end": 66
+    },
+    {
+      "id": "ch25-source-anchor",
+      "label": "Parse tags and digests through actual image-reference code. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L24-L43",
+      "offline": "evidence/orch/internal/image/reference.go",
+      "line_start": 24,
+      "line_end": 43
+    },
+    {
+      "id": "ch26-source-anchor",
+      "label": "Distinguish supported security context fields from host isolation. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/admission/admission.go#L48-L67",
+      "offline": "evidence/orch/internal/admission/admission.go",
+      "line_start": 48,
+      "line_end": 67
+    },
+    {
+      "id": "ch27-source-anchor",
+      "label": "Resolve namespaces consistently across API and CLI. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/namespace/context.go#L32-L51",
+      "offline": "evidence/orch/internal/namespace/context.go",
+      "line_start": 32,
+      "line_end": 51
+    },
+    {
+      "id": "ch28-source-anchor",
+      "label": "Calculate namespace requested CPU/memory and port usage. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/quota/quota.go#L18-L37",
+      "offline": "evidence/orch/internal/quota/quota.go",
+      "line_start": 18,
+      "line_end": 37
+    },
+    {
+      "id": "ch29-source-anchor",
+      "label": "Separate digest identity from signature authenticity. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/policy/policy.go#L30-L49",
+      "offline": "evidence/orch/internal/policy/policy.go",
+      "line_start": 30,
+      "line_end": 49
+    },
+    {
+      "id": "ch30-source-anchor",
+      "label": "Explain source revision provenance and deterministic manifest order. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L198-L217",
+      "offline": "evidence/orch/internal/gitops/gitops.go",
+      "line_start": 198,
+      "line_end": 217
+    },
+    {
+      "id": "ch31-source-anchor",
+      "label": "Trace Job exit status to success, failure, or retry. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go#L55-L74",
+      "offline": "evidence/orch/internal/cronjobs/cronjobs.go",
+      "line_start": 55,
+      "line_end": 74
+    },
+    {
+      "id": "ch32-source-anchor",
+      "label": "Explain why a local claim binds future placement to a node. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/workloads.go#L128-L147",
+      "offline": "evidence/orch/pkg/types/workloads.go",
+      "line_start": 128,
+      "line_end": 147
+    },
+    {
+      "id": "ch33-source-anchor",
+      "label": "Identify present runtime, secrets, metrics, and notification seams. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L47-L66",
+      "offline": "evidence/orch/internal/docker/docker.go",
+      "line_start": 47,
+      "line_end": 66
+    },
+    {
+      "id": "ch34-source-anchor",
+      "label": "Explain per-controller leadership versus API availability. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L21-L40",
+      "offline": "evidence/orch/internal/leadership/postgres.go",
+      "line_start": 21,
+      "line_end": 40
+    },
+    {
+      "id": "ch35-source-anchor",
+      "label": "Read current server, agent, API, and schema compatibility ranges. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/migrations/manager.go#L27-L46",
+      "offline": "evidence/orch/internal/migrations/manager.go",
+      "line_start": 27,
+      "line_end": 46
+    },
+    {
+      "id": "ch36-source-anchor",
+      "label": "Select the smallest test boundary that proves an invariant. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/property_test.go#L11-L30",
+      "offline": "evidence/orch/internal/scheduler/property_test.go",
+      "line_start": 11,
+      "line_end": 30
+    },
+    {
+      "id": "ch37-source-anchor",
+      "label": "Define an invariant before injecting a fault. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/chaos_test.go#L19-L38",
+      "offline": "evidence/orch/internal/e2e/chaos_test.go",
+      "line_start": 19,
+      "line_end": 38
+    },
+    {
+      "id": "ch38-source-anchor",
+      "label": "Map an emitted metric to a subsystem and failure mode. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/metrics/prometheus.go#L41-L60",
+      "offline": "evidence/orch/internal/metrics/prometheus.go",
+      "line_start": 41,
+      "line_end": 60
+    },
+    {
+      "id": "ch39-source-anchor",
+      "label": "Separate fake control-plane throughput from real Docker capacity. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/benchmark_test.go#L9-L26",
+      "offline": "evidence/orch/internal/scheduler/benchmark_test.go",
+      "line_start": 9,
+      "line_end": 26
+    },
+    {
+      "id": "ch40-source-anchor",
+      "label": "Verify build/test/lint/release contracts and distinguish skipped checks. The listing is a contiguous source window; surrounding implementation is explained separately.",
+      "sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/.github/workflows/ci.yml#L11-L30",
+      "offline": "evidence/orch/.github/workflows/ci.yml",
+      "line_start": 11,
+      "line_end": 30
+    }
+  ],
+  "external_references": [
+    {
+      "id": "go-memory-model",
+      "label": "The Go Memory Model",
+      "url": "https://go.dev/ref/mem",
+      "version": "2022-06-06 specification revision",
+      "used_for": "Synchronization and the distinction between memory-race freedom and distributed durable concurrency.",
+      "retrieval": "Retrieved full primary text via browser; no runtime test inferred.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    },
+    {
+      "id": "go-context125",
+      "label": "Go context package",
+      "url": "https://pkg.go.dev/context@go1.25.0",
+      "version": "Go1.25.0",
+      "used_for": "Cancellation ownership and stream/loop cleanup vocabulary.",
+      "retrieval": "Retrieved primary package documentation via browser.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    },
+    {
+      "id": "docker-engine-security",
+      "label": "Docker Engine security",
+      "url": "https://docs.docker.com/engine/security/",
+      "version": "Unversioned official documentation, retrieved snapshot2026-10-13",
+      "used_for": "Docker daemon/socket trust boundary in the lab environment.",
+      "retrieval": "Retrieved primary text via browser; claims limited to socket privilege, not every historical hardening recommendation.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    },
+    {
+      "id": "postgres16-locking",
+      "label": "PostgreSQL16 Explicit Locking",
+      "url": "https://www.postgresql.org/docs/16/explicit-locking.html",
+      "version": "PostgreSQL16",
+      "used_for": "Distinguish transactional concurrency from session-owned advisory lock lifecycle.",
+      "retrieval": "Retrieved primary text via browser.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    },
+    {
+      "id": "rfc9110",
+      "label": "RFC9110 HTTP Semantics",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "version": "RFC9110 June2022",
+      "used_for": "Separate HTTP request semantics and application-level replay/idempotency.",
+      "retrieval": "Retrieved primary text via browser.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    },
+    {
+      "id": "prometheus-instrumentation",
+      "label": "Prometheus instrumentation practices",
+      "url": "https://prometheus.io/docs/practices/instrumentation/",
+      "version": "Unversioned official guidance, retrieved2026-10-13",
+      "used_for": "Bounded metric label selection and distinguishing instrumentation from observed results.",
+      "retrieval": "Retrieved primary text via browser.",
+      "retrieved_at_date": "2026-10-13",
+      "source_type": "external primary",
+      "claim_scope": "Background interpretation only; implementation claims require Orch source and actual runtime callers."
+    }
+  ],
+  "checks": {
+    "all_repository_shas_known": true,
+    "excerpt_anchors_validated_by": "validation/intake/excerpt-check.json",
+    "external_retrieval_method": "web.run open; full official text except separately excluded Docker API landing shell"
+  }
+}

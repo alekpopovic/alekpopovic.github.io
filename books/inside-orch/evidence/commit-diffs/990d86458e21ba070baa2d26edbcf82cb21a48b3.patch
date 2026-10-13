@@ -1,0 +1,297 @@
+commit 990d86458e21ba070baa2d26edbcf82cb21a48b3
+Date: 2026-06-12T00:06:21+02:00
+Subject: Prepare v0.1.0 MVP release
+
+
+---
+ Makefile                          |  8 +++++-
+ README.md                         |  2 +-
+ RELEASE_NOTES.md                  | 58 +++++++++++++++++++++++++++++++++++++++
+ cmd/orch-server/main_test.go      | 35 +++++++++++++++++++++++
+ deployments/examples/Dockerfile   |  2 +-
+ internal/e2e/orchestrator_test.go | 35 ++++++++++++++++++++---
+ scripts/migrate-up.sh             |  4 +++
+ 7 files changed, 137 insertions(+), 7 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 06270d6..32fe715 100644
+--- a/Makefile
++++ b/Makefile
+@@ -7,7 +7,13 @@ test:
+ 	go test ./...
+ 
+ lint:
+-	golangci-lint run ./...
++	@if command -v golangci-lint >/dev/null 2>&1; then \
++		golangci-lint run ./...; \
++	else \
++		echo "golangci-lint not found; running gofmt check and go vet ./..."; \
++		test -z "$$(gofmt -l .)"; \
++		go vet ./...; \
++	fi
+ 
+ run-server:
+ 	go run ./cmd/orch-server
+diff --git a/README.md b/README.md
+index 85dcf08..fe29415 100644
+--- a/README.md
++++ b/README.md
+@@ -57,7 +57,7 @@ Apply migrations:
+ ./scripts/migrate-up.sh
+ ```
+ 
+-The migrations prepare PostgreSQL for the store package and integration tests. The current local `orch-server` still uses in-memory state.
++The migration script is safe to rerun for the local initial schema. Migrations prepare PostgreSQL for the store package and integration tests; the current local `orch-server` still uses in-memory state.
+ 
+ Point the CLI at the server:
+ 
+diff --git a/RELEASE_NOTES.md b/RELEASE_NOTES.md
+new file mode 100644
+index 0000000..f15eb2f
+--- /dev/null
++++ b/RELEASE_NOTES.md
+@@ -0,0 +1,58 @@
++# Release Notes
++
++## v0.1.0 MVP
++
++This is the first MVP release candidate for `orch`, a Go-based Docker container orchestrator.
++
++### What Works
++
++- `orch-server` starts with structured logs, health endpoints, optional JWT auth, agent auth, request IDs, JSON errors, and Prometheus metrics.
++- `orch-agent` registers with the server, heartbeats, receives short-lived credentials, polls assigned tasks, and reconciles Docker containers.
++- `orch` CLI can deploy services from YAML, list/inspect services and nodes, scale services, view tasks, stream logs, list events, start rollouts, request rollback, and delete services.
++- Services model image, replicas, env, ports, resource requests/limits, healthchecks, restart policy, placement constraints, and deployment version.
++- Task lifecycle supports pending, assigned, pulling, created, running, healthy, unhealthy, failed, stopped, and removed states.
++- Scheduler and reconciler packages are deterministic and unit-tested.
++- Agent Docker execution is idempotent by task/container labels and handles process restart, missing containers, non-zero exits, pull failures, and create/start errors.
++- Soft service deletion marks services deleting, stops/removes task containers, and finalizes after tasks report removed.
++- Logs are proxied from the owning agent without unbounded buffering.
++- Events are queryable through the API and CLI for the active control-plane implementation.
++- PostgreSQL migrations and store implementation exist for nodes, services, service versions, tasks, deployments, and events.
++- Local Docker Compose environment starts PostgreSQL, server, and one agent.
++
++### Important MVP Limits
++
++- The default `orch-server` binary still uses the in-memory control plane. PostgreSQL-backed server state is not wired yet.
++- Server process restart loses in-memory services, tasks, deployments, events, node credentials, and node status.
++- No heartbeat-expiry controller marks abruptly lost nodes offline yet.
++- No HA leader election implementation yet.
++- Networking is Docker host/port based; no overlay networking or service discovery.
++- Agent authentication is token based; mTLS is roadmap.
++- Secrets are represented as references only.
++- Rollouts do not yet support manual pause/resume, progress deadlines, or automatic rollback.
++
++### Verification For This Candidate
++
++- Full Go test suite: `go test ./...`
++- Build: `go build ./...`
++- Vet: `go vet ./...`
++- Lint target: `make lint`
++- MVP fake-runtime E2E covers agent registration, service deploy, task creation/assignment, task running, log streaming, events, scale up/down, and delete cleanup.
++
++### Local Demo
++
++```sh
++./scripts/dev-up.sh
++./scripts/migrate-up.sh
++export ORCH_SERVER_URL=http://localhost:8080
++./scripts/demo-deploy.sh
++go run ./cmd/orch service ps http-api
++go run ./cmd/orch logs http-api --tail 100
++go run ./cmd/orch events --service http-api
++go run ./cmd/orch scale http-api --replicas 2
++go run ./cmd/orch delete http-api
++./scripts/dev-down.sh
++```
++
++### Upgrade Notes
++
++This is the first release; no upgrade path is required. For future releases, run migrations before deploying binaries that depend on schema changes.
+diff --git a/cmd/orch-server/main_test.go b/cmd/orch-server/main_test.go
+new file mode 100644
+index 0000000..a6fd8cc
+--- /dev/null
++++ b/cmd/orch-server/main_test.go
+@@ -0,0 +1,35 @@
++package main
++
++import (
++	"context"
++	"log/slog"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/config"
++)
++
++func TestServerStartsAndStopsCleanly(t *testing.T) {
++	ctx, cancel := context.WithCancel(context.Background())
++	errCh := make(chan error, 1)
++	go func() {
++		errCh <- run(ctx, slog.Default(), config.ServerConfig{
++			Addr:                "127.0.0.1:0",
++			DatabaseURL:         "postgres://orch:orch@localhost:5432/orch?sslmode=disable",
++			BootstrapToken:      "test-registration-token",
++			GracefulShutdownTTL: time.Second,
++		})
++	}()
++
++	time.Sleep(25 * time.Millisecond)
++	cancel()
++
++	select {
++	case err := <-errCh:
++		if err != nil {
++			t.Fatalf("server stopped with error: %v", err)
++		}
++	case <-time.After(2 * time.Second):
++		t.Fatalf("server did not stop after cancellation")
++	}
++}
+diff --git a/deployments/examples/Dockerfile b/deployments/examples/Dockerfile
+index ce50113..cf2164c 100644
+--- a/deployments/examples/Dockerfile
++++ b/deployments/examples/Dockerfile
+@@ -2,7 +2,7 @@ FROM golang:1.25-alpine AS build
+ 
+ ARG TARGET=orch-server
+ WORKDIR /src
+-COPY go.mod ./
++COPY go.mod go.sum ./
+ COPY cmd ./cmd
+ COPY internal ./internal
+ COPY pkg ./pkg
+diff --git a/internal/e2e/orchestrator_test.go b/internal/e2e/orchestrator_test.go
+index 6a46202..10355d2 100644
+--- a/internal/e2e/orchestrator_test.go
++++ b/internal/e2e/orchestrator_test.go
+@@ -1,6 +1,7 @@
+ package e2e
+ 
+ import (
++	"bytes"
+ 	"context"
+ 	"errors"
+ 	"fmt"
+@@ -9,6 +10,7 @@ import (
+ 	"net/http/httptest"
+ 	"net/url"
+ 	"os"
++	"strings"
+ 	"sync"
+ 	"testing"
+ 	"time"
+@@ -19,6 +21,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
++	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+@@ -45,6 +48,8 @@ func runOrchestratorMVP(t *testing.T, runtime orchdocker.Runtime) {
+ 	handler := api.NewHandler(logger, controlPlane, api.WithBootstrapToken("e2e-registration-token"))
+ 	server := httptest.NewServer(handler)
+ 	t.Cleanup(server.Close)
++	logServer := httptest.NewServer(agent.NewLogHandler(runtime, "e2e-registration-token", logger))
++	t.Cleanup(logServer.Close)
+ 
+ 	client, err := cli.NewAPIClient(server.URL)
+ 	if err != nil {
+@@ -59,7 +64,7 @@ func runOrchestratorMVP(t *testing.T, runtime orchdocker.Runtime) {
+ 	t.Cleanup(cancel)
+ 	runner := agent.NewRunner(config.AgentConfig{
+ 		NodeName:            "e2e-node-1",
+-		AdvertiseAddress:    "http://127.0.0.1:0",
++		AdvertiseAddress:    logServer.URL,
+ 		AgentAddr:           ":0",
+ 		Labels:              map[string]string{"role": "worker"},
+ 		ServerURL:           server.URL,
+@@ -98,6 +103,10 @@ func runOrchestratorMVP(t *testing.T, runtime orchdocker.Runtime) {
+ 	if err != nil {
+ 		t.Fatalf("deploy service: %v", err)
+ 	}
++	waitFor(t, "service create event", func() bool {
++		items, err := client.ListEvents(context.Background(), events.Filter{ServiceID: service.ID, Type: events.TypeServiceCreated})
++		return err == nil && len(items) == 1
++	})
+ 
+ 	waitFor(t, "two tasks assigned", func() bool {
+ 		tasks := serviceTasks(t, client, service.ID)
+@@ -114,6 +123,13 @@ func runOrchestratorMVP(t *testing.T, runtime orchdocker.Runtime) {
+ 	waitFor(t, "two tasks running", func() bool {
+ 		return countTasks(serviceTasks(t, client, service.ID), activeRunning) == 2
+ 	})
++	var logs bytes.Buffer
++	if err := client.StreamLogs(context.Background(), string(service.ID), "", false, "10", &logs); err != nil {
++		t.Fatalf("stream logs: %v", err)
++	}
++	if !strings.Contains(logs.String(), "started fake-container") {
++		t.Fatalf("expected task logs to include fake runtime start line, got %q", logs.String())
++	}
+ 
+ 	if _, err := client.ScaleService(context.Background(), string(service.ID), 3); err != nil {
+ 		t.Fatalf("scale service to 3: %v", err)
+@@ -215,12 +231,14 @@ type fakeRuntime struct {
+ 	next       int
+ 	containers map[orchdocker.ContainerID]orchdocker.ContainerStatus
+ 	byTask     map[string]orchdocker.ContainerID
++	logs       map[orchdocker.ContainerID][]orchdocker.LogLine
+ }
+ 
+ func newFakeRuntime() *fakeRuntime {
+ 	return &fakeRuntime{
+ 		containers: make(map[orchdocker.ContainerID]orchdocker.ContainerStatus),
+ 		byTask:     make(map[string]orchdocker.ContainerID),
++		logs:       make(map[orchdocker.ContainerID][]orchdocker.LogLine),
+ 	}
+ }
+ 
+@@ -259,6 +277,7 @@ func (r *fakeRuntime) StartContainer(_ context.Context, id orchdocker.ContainerI
+ 	status.Running = true
+ 	status.StartedAt = time.Now().UTC()
+ 	r.containers[id] = status
++	r.logs[id] = append(r.logs[id], orchdocker.LogLine{Stream: "stdout", Line: "started " + string(id), Timestamp: status.StartedAt})
+ 	return nil
+ }
+ 
+@@ -311,11 +330,19 @@ func (r *fakeRuntime) ListManagedContainers(_ context.Context, labels map[string
+ 	return statuses, nil
+ }
+ 
+-func (r *fakeRuntime) StreamLogs(context.Context, orchdocker.ContainerID, orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
++func (r *fakeRuntime) StreamLogs(_ context.Context, id orchdocker.ContainerID, _ orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
+ 	lines := make(chan orchdocker.LogLine)
+ 	errs := make(chan error, 1)
+-	close(lines)
+-	close(errs)
++	r.mu.Lock()
++	logs := append([]orchdocker.LogLine(nil), r.logs[id]...)
++	r.mu.Unlock()
++	go func() {
++		defer close(lines)
++		defer close(errs)
++		for _, line := range logs {
++			lines <- line
++		}
++	}()
+ 	return lines, errs
+ }
+ 
+diff --git a/scripts/migrate-up.sh b/scripts/migrate-up.sh
+index 2c3caf0..6ae1316 100755
+--- a/scripts/migrate-up.sh
++++ b/scripts/migrate-up.sh
+@@ -6,6 +6,10 @@ cd "$ROOT_DIR"
+ 
+ docker compose up -d postgres
+ docker compose exec -T postgres sh -c 'until pg_isready -U orch -d orch >/dev/null 2>&1; do sleep 1; done'
++if docker compose exec -T postgres psql -U orch -d orch -tAc "SELECT to_regclass('public.nodes') IS NOT NULL" | grep -q t; then
++  echo "Initial schema already exists; skipping migrations."
++  exit 0
++fi
+ docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < migrations/000001_initial_schema.up.sql
+ 
+ echo "Applied migrations."

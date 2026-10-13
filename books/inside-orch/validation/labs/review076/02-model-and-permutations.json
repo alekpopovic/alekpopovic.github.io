@@ -1,0 +1,28 @@
+{
+  "id": "076-02-model-and-permutations",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "run",
+    "./.book-labs/lab02",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOENV",
+    "GOFLAGS"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:47:20.175977+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:47:20.242141+00:00",
+  "duration_seconds": 0.066,
+  "stdout": "validation/labs/review076/02-model-and-permutations.stdout.txt",
+  "stderr": "validation/labs/review076/02-model-and-permutations.stderr.txt"
+}

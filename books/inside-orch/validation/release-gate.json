@@ -1,0 +1,974 @@
+{
+  "status": "passed_local_edition_gate",
+  "checked_at_utc": "2026-10-13T04:18:21.013663+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "source_files_verified": 361,
+  "artifacts": {
+    "pdf": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b"
+  },
+  "meaningful_words": 101211,
+  "pdf_pages": 546,
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "mandatory_labs": 8,
+  "tracker_audit": [
+    {
+      "id": "000",
+      "evidence": [
+        "validation/intake/baseline.md",
+        "validation/intake/baseline-audit.json",
+        "validation/intake/verify-pack-final.stdout.txt",
+        "validation/intake/commands.jsonl",
+        "validation/intake/site-check-books.stdout.txt",
+        "validation/intake/site-check-site.stdout.txt",
+        "validation/intake/site-check-content.stdout.txt"
+      ]
+    },
+    {
+      "id": "001",
+      "evidence": [
+        "editorial/SOURCE_MAP.md",
+        "validation/intake/source-inventory.json"
+      ]
+    },
+    {
+      "id": "002",
+      "evidence": [
+        "editorial/HISTORY.md",
+        "validation/intake/milestones.json"
+      ]
+    },
+    {
+      "id": "003",
+      "evidence": [
+        "editorial/PROMPT_HISTORY.md",
+        "validation/intake/prompt-reconciliation.json"
+      ]
+    },
+    {
+      "id": "004",
+      "evidence": [
+        "validation/intake/capabilities.json",
+        "validation/intake/foundation-review.json"
+      ]
+    },
+    {
+      "id": "005",
+      "evidence": [
+        "validation/intake/documentation-conflicts.json",
+        "validation/intake/foundation-review.json"
+      ]
+    },
+    {
+      "id": "006",
+      "evidence": [
+        "validation/intake/toolchain.json",
+        "validation/intake/foundation-review.json"
+      ]
+    },
+    {
+      "id": "007",
+      "evidence": [
+        "validation/intake/lab-environment.json",
+        "validation/intake/lab-isolation-guard.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "008",
+      "evidence": [
+        "validation/intake/learning-paths.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "009",
+      "evidence": [
+        "validation/intake/decisions.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "010",
+      "evidence": [
+        "validation/intake/reference-register.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "011",
+      "evidence": [
+        "validation/intake/excerpt-review.md",
+        "validation/intake/excerpt-check.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "012",
+      "evidence": [
+        "validation/intake/case-study-parse.json",
+        "validation/intake/foundation-007-012.json"
+      ]
+    },
+    {
+      "id": "013",
+      "evidence": [
+        "editorial/OBSERVATION_CONTRACT.md",
+        "labs/observations.json",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "014",
+      "evidence": [
+        "editorial/FAILURE_MODEL.md",
+        "labs/failure-matrix.json",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "015",
+      "evidence": [
+        "editorial/THREAT_MODEL.md",
+        "validation/intake/security-boundaries.json",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "016",
+      "evidence": [
+        "publication/RIGHTS.md",
+        "publication/NOTICE.md",
+        "publication/book-metadata.json",
+        "book.json",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "017",
+      "evidence": [
+        "publication/DESIGN_SYSTEM.md",
+        "publication/style-tokens.json",
+        "publication/style-specimen.html",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "018",
+      "evidence": [
+        "editorial/TOC.md",
+        "editorial/CHAPTER_CONTRACTS.md",
+        "manuscript/Book.txt",
+        "validation/intake/toc-coverage.json",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "019",
+      "evidence": [
+        "validation/reviews/foundation-gate.md",
+        "editorial/STYLE_REFERENCE.md",
+        "manuscript/00-preface.md",
+        "validation/intake/foundation-013-019.json"
+      ]
+    },
+    {
+      "id": "020",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch01.json"
+      ]
+    },
+    {
+      "id": "021",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch02.json"
+      ]
+    },
+    {
+      "id": "022",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch03.json"
+      ]
+    },
+    {
+      "id": "023",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch04.json"
+      ]
+    },
+    {
+      "id": "024",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch05.json"
+      ]
+    },
+    {
+      "id": "025",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch06.json"
+      ]
+    },
+    {
+      "id": "026",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch07.json"
+      ]
+    },
+    {
+      "id": "027",
+      "evidence": [
+        "validation/reviews/chapters-01-08.json",
+        "validation/reviews/chapters-01-08-execution-index.json",
+        "validation/evidence/ch08.json"
+      ]
+    },
+    {
+      "id": "028",
+      "evidence": [
+        "validation/evidence/ch09.json",
+        "validation/reviews/ch09.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "029",
+      "evidence": [
+        "validation/evidence/ch10.json",
+        "validation/reviews/ch10.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "030",
+      "evidence": [
+        "validation/evidence/ch11.json",
+        "validation/reviews/ch11.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "031",
+      "evidence": [
+        "validation/evidence/ch12.json",
+        "validation/reviews/ch12.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "032",
+      "evidence": [
+        "validation/evidence/ch13.json",
+        "validation/reviews/ch13.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "033",
+      "evidence": [
+        "validation/evidence/ch14.json",
+        "validation/reviews/ch14.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "034",
+      "evidence": [
+        "validation/evidence/ch15.json",
+        "validation/reviews/ch15.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "035",
+      "evidence": [
+        "validation/evidence/ch16.json",
+        "validation/reviews/ch16.md",
+        "validation/intake/ch09-16-completion.json"
+      ]
+    },
+    {
+      "id": "036",
+      "evidence": [
+        "validation/evidence/ch17.json",
+        "validation/reviews/ch17.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "037",
+      "evidence": [
+        "validation/evidence/ch18.json",
+        "validation/reviews/ch18.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "038",
+      "evidence": [
+        "validation/evidence/ch19.json",
+        "validation/reviews/ch19.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "039",
+      "evidence": [
+        "validation/evidence/ch20.json",
+        "validation/reviews/ch20.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "040",
+      "evidence": [
+        "validation/evidence/ch21.json",
+        "validation/reviews/ch21.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "041",
+      "evidence": [
+        "validation/evidence/ch22.json",
+        "validation/reviews/ch22.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "042",
+      "evidence": [
+        "validation/evidence/ch23.json",
+        "validation/reviews/ch23.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "043",
+      "evidence": [
+        "validation/evidence/ch24.json",
+        "validation/reviews/ch24.md",
+        "validation/reviews/chapters-17-24.json",
+        "validation/reviews/chapters-17-24-history.json",
+        "validation/reviews/ch17-24-source-tests.json"
+      ]
+    },
+    {
+      "id": "044",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch25.json",
+        "validation/reviews/ch25.md"
+      ]
+    },
+    {
+      "id": "045",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch26.json",
+        "validation/reviews/ch26.md"
+      ]
+    },
+    {
+      "id": "046",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch27.json",
+        "validation/reviews/ch27.md"
+      ]
+    },
+    {
+      "id": "047",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch28.json",
+        "validation/reviews/ch28.md"
+      ]
+    },
+    {
+      "id": "048",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch29.json",
+        "validation/reviews/ch29.md"
+      ]
+    },
+    {
+      "id": "049",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch30.json",
+        "validation/reviews/ch30.md"
+      ]
+    },
+    {
+      "id": "050",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch31.json",
+        "validation/reviews/ch31.md"
+      ]
+    },
+    {
+      "id": "051",
+      "evidence": [
+        "validation/intake/ch25-32-completion.json",
+        "validation/evidence/ch32.json",
+        "validation/reviews/ch32.md"
+      ]
+    },
+    {
+      "id": "052",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch33.json",
+        "validation/reviews/ch33.md"
+      ]
+    },
+    {
+      "id": "053",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch34.json",
+        "validation/reviews/ch34.md"
+      ]
+    },
+    {
+      "id": "054",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch35.json",
+        "validation/reviews/ch35.md"
+      ]
+    },
+    {
+      "id": "055",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch36.json",
+        "validation/reviews/ch36.md"
+      ]
+    },
+    {
+      "id": "056",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch37.json",
+        "validation/reviews/ch37.md"
+      ]
+    },
+    {
+      "id": "057",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch38.json",
+        "validation/reviews/ch38.md"
+      ]
+    },
+    {
+      "id": "058",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch39.json",
+        "validation/reviews/ch39.md"
+      ]
+    },
+    {
+      "id": "059",
+      "evidence": [
+        "validation/reviews/chapters-33-40.json",
+        "validation/evidence/ch40.json",
+        "validation/reviews/ch40.md"
+      ]
+    },
+    {
+      "id": "060",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/060-reference-check.json"
+      ]
+    },
+    {
+      "id": "061",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/061-transition-check.json"
+      ]
+    },
+    {
+      "id": "062",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/062-history-check.json"
+      ]
+    },
+    {
+      "id": "063",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/063-exercise-check.json"
+      ]
+    },
+    {
+      "id": "064",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/064-ops-contract-check.json"
+      ]
+    },
+    {
+      "id": "065",
+      "evidence": [
+        "validation/reviews/appendices-060-065.json",
+        "validation/065-reference-check.json"
+      ]
+    },
+    {
+      "id": "066",
+      "evidence": [
+        "validation/labs/01-check.json"
+      ]
+    },
+    {
+      "id": "067",
+      "evidence": [
+        "validation/labs/02-check.json"
+      ]
+    },
+    {
+      "id": "068",
+      "evidence": [
+        "validation/labs/03-check.json"
+      ]
+    },
+    {
+      "id": "069",
+      "evidence": [
+        "validation/labs/04-check.json"
+      ]
+    },
+    {
+      "id": "070",
+      "evidence": [
+        "validation/labs/05-check.json"
+      ]
+    },
+    {
+      "id": "071",
+      "evidence": [
+        "validation/labs/06-check.json"
+      ]
+    },
+    {
+      "id": "072",
+      "evidence": [
+        "validation/labs/07-check.json"
+      ]
+    },
+    {
+      "id": "073",
+      "evidence": [
+        "validation/labs/08-check.json"
+      ]
+    },
+    {
+      "id": "074",
+      "evidence": [
+        "validation/reviews/excerpt-sync.json",
+        "validation/reviews/excerpt-sync.md"
+      ]
+    },
+    {
+      "id": "075",
+      "evidence": [
+        "validation/reviews/code-compilation.json",
+        "validation/reviews/code-compilation.md"
+      ]
+    },
+    {
+      "id": "076",
+      "evidence": [
+        "validation/reviews/lab-execution.json",
+        "validation/reviews/lab-execution.md"
+      ]
+    },
+    {
+      "id": "077",
+      "evidence": [
+        "validation/reviews/architect-review.json",
+        "validation/reviews/architect-review.md"
+      ]
+    },
+    {
+      "id": "078",
+      "evidence": [
+        "validation/reviews/developer-review.json",
+        "validation/reviews/developer-review.md"
+      ]
+    },
+    {
+      "id": "079",
+      "evidence": [
+        "validation/reviews/devops-review.json",
+        "validation/reviews/devops-review.md"
+      ]
+    },
+    {
+      "id": "080",
+      "evidence": [
+        "validation/reviews/security-review.json",
+        "validation/reviews/security-review.md"
+      ]
+    },
+    {
+      "id": "081",
+      "evidence": [
+        "validation/reviews/claim-guarantee-audit.json",
+        "validation/reviews/claim-guarantee-audit.md"
+      ]
+    },
+    {
+      "id": "082",
+      "evidence": [
+        "validation/reviews/command-api-fidelity.json",
+        "validation/reviews/command-api-fidelity.md"
+      ]
+    },
+    {
+      "id": "083",
+      "evidence": [
+        "validation/reviews/copyedit.json",
+        "validation/reviews/copyedit.md"
+      ]
+    },
+    {
+      "id": "084",
+      "evidence": [
+        "validation/reviews/exercises-solutions.json",
+        "validation/reviews/exercises-solutions.md"
+      ]
+    },
+    {
+      "id": "085",
+      "evidence": [
+        "validation/reviews/evidence-link-lock.json"
+      ]
+    },
+    {
+      "id": "086",
+      "evidence": [
+        "validation/publication/metadata-cover-catalog-review.json"
+      ]
+    },
+    {
+      "id": "087",
+      "evidence": [
+        "validation/publication/pdf-typesetting-acceptance.json"
+      ]
+    },
+    {
+      "id": "088",
+      "evidence": [
+        "validation/publication/pdf-visual-review.json"
+      ]
+    },
+    {
+      "id": "089",
+      "evidence": [
+        "validation/publication/epub-publication-acceptance.json"
+      ]
+    },
+    {
+      "id": "090",
+      "evidence": [
+        "validation/publication/epub-reading-preview.json"
+      ]
+    },
+    {
+      "id": "091",
+      "evidence": [
+        "validation/publication/native-adapter-acceptance.json"
+      ]
+    },
+    {
+      "id": "092",
+      "evidence": [
+        "validation/publication/native-publisher-acceptance.json"
+      ]
+    },
+    {
+      "id": "093",
+      "evidence": [
+        "validation/publication/site-integration-acceptance.json"
+      ]
+    },
+    {
+      "id": "094",
+      "evidence": [
+        "validation/publication/site-quality.json",
+        "validation/publication/site-quality.md",
+        "validation/publication/native-site-acceptance.json"
+      ]
+    },
+    {
+      "id": "095",
+      "evidence": [
+        "validation/publication/release-packaging.json",
+        "validation/publication/release-package-verification.json",
+        "validation/publication/offline-reader.json",
+        "validation/publication/095-checksums-final-command.json",
+        "publication/REPRODUCE.md"
+      ]
+    }
+  ],
+  "complete_tracker_requested": false,
+  "evidence": [
+    {
+      "path": "validation/reviews/excerpt-sync.json",
+      "sha256": "acd6079043f70e2fbc9feb7f82a123514ffafe36a486d346cb6691e29c0162ab",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/code-compilation.json",
+      "sha256": "da649ca31d2f685057bdb52cc8e8805c31bfb3bbdd7827568a5a3c86ef10658c",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/lab-execution.json",
+      "sha256": "94f6d29a696875b909779c2c5d2cce3e73f99c595f5b9dc6ee0e04012e1462a4",
+      "status": "passed_scoped_mandatory_labs"
+    },
+    {
+      "path": "validation/reviews/architect-review.json",
+      "sha256": "abedbc3d4f3462597999781e1ddafd0c678f813e7d7582f9eab77f1e134fdef3",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/developer-review.json",
+      "sha256": "35c37b303b7e105f97ac5daffb8544e62df858832f94ea569714832b161bb2f5",
+      "status": "passed_scoped_review"
+    },
+    {
+      "path": "validation/reviews/devops-review.json",
+      "sha256": "c666a792734cc4a9d18943293212e6f030aed5609e52bd2a2d226d107e006891",
+      "status": "passed_scoped_review"
+    },
+    {
+      "path": "validation/reviews/security-review.json",
+      "sha256": "af62c0d06579b206e4c82d824da9ce4ab64278de7c1b251051d3180843867142",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/claim-guarantee-audit.json",
+      "sha256": "9cb17772f04775b986cda99616d1fa034e604176921a5af82b04e1c32b3fdca0",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/command-api-fidelity.json",
+      "sha256": "6867683e2cbc2a603d6ae186637ddcd5f2d7982221c21685afdd4d9d10e75a7b",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/copyedit.json",
+      "sha256": "7dcfcbcb79b3e94f2dd7a9182fe912cfb6f0677df933a5cfc5d5117a47e247b7",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/exercises-solutions.json",
+      "sha256": "f14f94783591f017c2c0a293e5902eef234a07517bd6195e60f32748bc6e023b",
+      "status": "passed"
+    },
+    {
+      "path": "validation/reviews/evidence-link-lock.json",
+      "sha256": "9f29b1cf409507fdf7ba7849ff92cb603598057626afca70f6df755cde13d6a9",
+      "status": "passed_offline_final_artifact_lock"
+    },
+    {
+      "path": "validation/publication/metadata-cover-catalog-review.json",
+      "sha256": "05cb4df9a3758bccecf1293e372d18fbd17b1c582d32979d68022b401191a59f",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/pdf-typesetting-acceptance.json",
+      "sha256": "f4e3a941db58ec649e622e0a1ff36c1093adf2ac0a1186d3480e6ce1c430eea8",
+      "status": "passed_build_gate"
+    },
+    {
+      "path": "validation/publication/pdf-visual-review.json",
+      "sha256": "a0be01d94a83883ffe83e5549229d96f6127b11d187a9b1114065048b8cc48da",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/epub-publication-acceptance.json",
+      "sha256": "f4e5dc0c8f54fc821e46accd6ff2261b713bb2d157474e92615ef41a84da8bbd",
+      "status": "passed_build_gate"
+    },
+    {
+      "path": "validation/publication/epub-reading-preview.json",
+      "sha256": "536c80a7f36a33874a530427218f489fee909380664895e0e82d66ac0e7f4889",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/native-adapter-acceptance.json",
+      "sha256": "5c704ab4700b54366c5ac5ae1adaa80c7c907a0807150171e406f70e43d286d8",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/native-publisher-acceptance.json",
+      "sha256": "c5ddf9284cdbb222454795c9c461352d97913ccb1e0f2951f24b5de3347e7d09",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/site-integration-acceptance.json",
+      "sha256": "0023ef16f809c85e7a06630aeb7ead9d4e25c8e99554860a57fe77719599dbf7",
+      "status": "passed_with_explicit_browser_history"
+    },
+    {
+      "path": "validation/publication/site-quality.json",
+      "sha256": "924ac84ff4a4dfb38bbc86673e6b64bee46b3a6127f72bb387a0621d782b48c2",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/native-site-acceptance.json",
+      "sha256": "60a9b0f451cc28eff2654ba0c132a254af8eb64c62683a2692029c3b7030ab4b",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/material-audit.json",
+      "sha256": "38147c9580c768d43f8efdff1e160d45c39670b1fa05160227d2b87399279c40",
+      "status": "passed_for_actual_local_materials"
+    },
+    {
+      "path": "validation/publication/offline-reader.json",
+      "sha256": "d2a060775e8d0b94398478f3050b69167923e8424ef420bf4e41caca30f987e8",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/release-packaging.json",
+      "sha256": "13ca58e4571853321cba4824aea4330484ea4a10d516c20bbf8a14316da28e0e",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/format-structure.json",
+      "sha256": "da31452c07fa8b5928bc4d4404660ab75bdd2cbc08fb7d8a47fa9885a887ec12",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/final-notice-site-build.json",
+      "sha256": "23115b924bfde296d085127706d3ec141a27b24326710c3d081c2aef4a43dca7",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/final-notice-jekyll-build.json",
+      "sha256": "3de27b57419560c9247aa29f603b9fe01c29e3f50a7d4a9fa6e86b5ccc4be679",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/notice-rebuild-books-check.json",
+      "sha256": "4315f617980db873677a22ec90fdd2e8ff12480d43a98e3de0e9bf25705fd5f7",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/notice-rebuild-site-check.json",
+      "sha256": "7c06eada7b42e443112a8fe6bf677e7639e3857e82ff7da9496dbf09060f49ba",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/final-content-check.json",
+      "sha256": "d8990f825332edb9a18640773be4626d24376ecb61eebbf698081a352cb31ec1",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/workspace-six-books-ui.json",
+      "sha256": "b3afe4ed68384ba0985489fdfa0cb1ea02f79f562628e6500fce6ee61c247580",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/final-performance.json",
+      "sha256": "6d804fd4b497a43cebd36cfcd38ca16b30adbbd4641c14e929e62e979c171153",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/notice-rebuild-native-site-check.json",
+      "sha256": "057fa326f768a1f7ba7cbcd66d64ed170a9d0957a7811eace8bd86c7cf1c7c2e",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/invariant-table-publisher-tests.json",
+      "sha256": "1c110497ecbf06b615d33e388f63ff1ce4107fb5a08b984eb18feb8d70a2940f",
+      "status": "passed"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/verify_pack.py"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"passed\",\n  \"scope\": \"Corpus integrity and workflow structure only; website/application/labs/manuscript not executed\",\n  \"source_sha\": \"cbfc94ade5b57e449d6b73bf1485b1c5b1647022\",\n  \"site_sha\": \"80801c8d3d97a4d8ff78e0fe69f3f902beda00c0\",\n  \"source_files_checked\": 361,\n  \"site_contract_files_checked\": 20,\n  \"book_prompts_checked\": 100,\n  \"original_prompts_mapped\": 91,\n  \"commits_checked\": 105,\n  \"chapters\": 40,\n  \"appendices\": 6,\n  \"planned_reader_sections\": 47,\n  \"immutable_links_checked\": 508,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/check_manuscript.py",
+        "--strict"
+      ],
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"structure_ready\",\n  \"scope\": \"Structural only; source truth, actual experiments and visual publication review remain separate gates\",\n  \"approximate_narrative_words\": 79383,\n  \"errors\": [],\n  \"warnings\": [\n    \"Final human/execution/publication gate not yet present\"\n  ]\n}\n",
+      "stderr": ""
+    }
+  ],
+  "checksum_stdout": "inside-orch.pdf: OK\ninside-orch.epub: OK\ninside-orch-offline.zip: OK\ninside-orch-sources.zip: OK\n",
+  "critical_boundaries": [
+    "Default MemoryService is process-local; PostgreSQL schema/store is not the active server state owner.",
+    "Ordinary assignment is distinct from optional scheduler.Plan/store reconciler; task CAS is not a global resource fence.",
+    "Ordinary resource values do not reach AgentTask/ContainerSpec/HostConfig; direct adapter limits and volume eligibility are distinct.",
+    "Desired stop accounting, rollout success and drain completion can precede physical stop; partitions have no network fencing.",
+    "HA advisory-lock cancellation can retain a pooled-session lock; HA/autoscaler packages are not wired default leadership.",
+    "GitOps applies are partial; logical namespaces/local volumes are not hostile kernel isolation/distributed storage.",
+    "Image digest parsing is not enforced supply-chain verification; plugins/billing/overlay designs remain proposals.",
+    "The original PostgreSQL fixture still has two failures from its fourteen-migration setup; the separately labelled full-sixteen-schema extension passed.",
+    "Baseline six external skips, fake-load measurements and optional unrun procedures remain explicitly scoped."
+  ],
+  "blockers": [],
+  "limitations": [
+    "Local reviewable edition only: no push, PR, default-branch publication, live deployment or production fitness certification.",
+    "Source/engineering/visual review was performed by AI agents with independent lenses; no external human endorsement is invented. Owner review remains the publication handoff.",
+    "Browser evidence is actual installed Chrome on Linux; no proprietary e-reader or Safari/Firefox hardware compatibility claim.",
+    "Full UI run had151passes/one stale five-book assertion; corrected six-book test passed separately. This is152distinct test coverage, not a fabricated zero-exit full rerun.",
+    "All546 final PDF rasters match the actually reviewed edition; rebuilt PDF byte hash differs. No bit-for-bit PDF rebuild promise.",
+    "Source/reader archive validation metadata is a timestamped snapshot; later gate/review records are carried separately in the final handoff."
+  ],
+  "decision": "Ready for independent skeptical-reader review097 and a local release handoff; no deployment authorization."
+}

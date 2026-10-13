@@ -1,0 +1,3 @@
+Error: parse deploy YAML: yaml: unmarshal errors:
+  line 4: field resource_requirements not found in type cli.DeployFile
+  line 11: field restart_policy not found in type cli.DeployFile

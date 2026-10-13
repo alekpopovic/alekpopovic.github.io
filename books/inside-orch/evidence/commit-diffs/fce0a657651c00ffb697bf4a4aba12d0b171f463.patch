@@ -1,0 +1,728 @@
+commit fce0a657651c00ffb697bf4a4aba12d0b171f463
+Date: 2026-06-11T16:02:21+02:00
+Subject: Implement scheduler v1
+
+
+---
+ docs/SCHEDULER.md                    |  46 ++++++
+ internal/scheduler/scheduler.go      | 310 ++++++++++++++++++++++++++++++++---
+ internal/scheduler/scheduler_test.go | 260 ++++++++++++++++++++++++++++-
+ internal/store/postgres.go           |  25 +++
+ internal/store/store.go              |   1 +
+ 5 files changed, 612 insertions(+), 30 deletions(-)
+
+diff --git a/docs/SCHEDULER.md b/docs/SCHEDULER.md
+new file mode 100644
+index 0000000..cc354be
+--- /dev/null
++++ b/docs/SCHEDULER.md
+@@ -0,0 +1,46 @@
++# Scheduler
++
++Scheduler v1 assigns pending tasks to ready worker nodes. It is deterministic and has no Docker dependency; the scheduler only reads desired/current state from the store and writes task assignments plus events.
++
++## Inputs
++
++- pending tasks with `actual_status=pending`.
++- ready nodes with labels, status, capacity, and allocatable resources.
++- running tasks already placed on each node.
++- service specs for pending and running tasks, including resource requests and placement constraints.
++
++## Filtering
++
++For each pending task, the scheduler considers nodes in stable `node_id` order and filters out nodes that are not suitable:
++
++- node status must be `ready`.
++- draining nodes are excluded because they are not `ready`.
++- service placement constraints must match node labels.
++- free allocatable CPU and memory must be greater than or equal to the service resource requests.
++
++Free resources are calculated from node allocatable resources minus the resource requests of running tasks already on that node, plus any assignments planned earlier in the same scheduler pass.
++
++## Scoring
++
++Eligible nodes are scored in this order:
++
++1. Prefer more free memory after placing the task.
++2. Prefer fewer running tasks for the same service.
++3. Prefer fewer total running tasks.
++4. Prefer the lexicographically smallest node ID as the final deterministic tie-breaker.
++
++Pending tasks are processed in stable `task_id` order. After each assignment, the in-memory scheduling state is updated so later tasks see the planned CPU, memory, and task counts.
++
++## Persistence
++
++`RunOnce` performs one scheduling pass:
++
++1. Load pending tasks.
++2. Load ready nodes.
++3. Load running tasks for those nodes.
++4. Load service specs needed for task resource and placement decisions.
++5. Plan assignments.
++6. Persist each assignment with optimistic concurrency using the task `updated_at`.
++7. Emit a `task.assigned` event.
++
++The store remains the source of truth. If another scheduler or control-plane operation updates a task first, the store returns a conflict and the next scheduler pass can retry from fresh state.
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index fda1cfb..7ff70fd 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -1,43 +1,311 @@
+ package scheduler
+ 
+ import (
++	"context"
++	"fmt"
+ 	"sort"
++	"time"
+ 
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
++type Store interface {
++	ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error)
++	ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error)
++	ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
++	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error)
++	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
++}
++
+ type Assignment struct {
+-	TaskID types.TaskID
+-	NodeID types.NodeID
++	TaskID types.TaskID `json:"task_id"`
++	NodeID types.NodeID `json:"node_id"`
+ }
+ 
+-type Scheduler struct{}
++type PlanInput struct {
++	PendingTasks []types.Task
++	Nodes        []types.Node
++	RunningTasks []types.Task
++	Services     map[types.ServiceID]types.Service
++}
+ 
+-func New() *Scheduler {
+-	return &Scheduler{}
++type Scheduler struct {
++	store Store
++	now   func() time.Time
+ }
+ 
+-func (s *Scheduler) Schedule(tasks []types.Task, nodes []types.Node) []Assignment {
+-	orderedTasks := append([]types.Task(nil), tasks...)
+-	orderedNodes := append([]types.Node(nil), nodes...)
++func New(store Store) *Scheduler {
++	return &Scheduler{
++		store: store,
++		now:   func() time.Time { return time.Now().UTC() },
++	}
++}
+ 
+-	sort.Slice(orderedTasks, func(i, j int) bool {
+-		return orderedTasks[i].ID < orderedTasks[j].ID
+-	})
+-	sort.Slice(orderedNodes, func(i, j int) bool {
+-		return orderedNodes[i].ID < orderedNodes[j].ID
++func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
++	if s.store == nil {
++		return nil, fmt.Errorf("scheduler store is required")
++	}
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++
++	pending, err := s.store.ListTasksByStatus(ctx, types.TaskPending)
++	if err != nil {
++		return nil, fmt.Errorf("list pending tasks: %w", err)
++	}
++	nodes, err := s.store.ListNodesByStatus(ctx, types.NodeReady)
++	if err != nil {
++		return nil, fmt.Errorf("list ready nodes: %w", err)
++	}
++	running, err := s.loadRunningTasks(ctx, nodes)
++	if err != nil {
++		return nil, err
++	}
++	services, err := s.loadServices(ctx, pending, running)
++	if err != nil {
++		return nil, err
++	}
++
++	assignments := Plan(PlanInput{
++		PendingTasks: pending,
++		Nodes:        nodes,
++		RunningTasks: running,
++		Services:     services,
+ 	})
++	for _, assignment := range assignments {
++		task, ok := taskByID(pending, assignment.TaskID)
++		if !ok {
++			continue
++		}
++		if _, err := s.store.AssignTask(ctx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
++			return assignments, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
++		}
++		if _, err := s.store.AppendEvent(ctx, types.Event{
++			Type:              "task.assigned",
++			Severity:          types.EventInfo,
++			Source:            "scheduler",
++			Message:           "task assigned to node",
++			RelatedObjectType: "task",
++			RelatedObjectID:   string(assignment.TaskID),
++			Timestamp:         s.now(),
++		}); err != nil {
++			return assignments, fmt.Errorf("append task assignment event: %w", err)
++		}
++	}
++	return assignments, nil
++}
+ 
+-	if len(orderedNodes) == 0 {
+-		return nil
++func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([]types.Task, error) {
++	running := make([]types.Task, 0)
++	for _, node := range sortedNodes(nodes) {
++		tasks, err := s.store.ListTasksByNode(ctx, node.ID)
++		if err != nil {
++			return nil, fmt.Errorf("list tasks for node %s: %w", node.ID, err)
++		}
++		for _, task := range tasks {
++			if task.ActualStatus == types.TaskRunning {
++				running = append(running, task)
++			}
++		}
+ 	}
++	return running, nil
++}
++
++func (s *Scheduler) loadServices(ctx context.Context, taskSets ...[]types.Task) (map[types.ServiceID]types.Service, error) {
++	services := make(map[types.ServiceID]types.Service)
++	for _, tasks := range taskSets {
++		for _, task := range tasks {
++			if task.ServiceID == "" {
++				continue
++			}
++			if _, ok := services[task.ServiceID]; ok {
++				continue
++			}
++			service, err := s.store.GetService(ctx, task.ServiceID)
++			if err != nil {
++				return nil, fmt.Errorf("get service %s: %w", task.ServiceID, err)
++			}
++			services[task.ServiceID] = service
++		}
++	}
++	return services, nil
++}
+ 
+-	assignments := make([]Assignment, 0, len(orderedTasks))
+-	for i, task := range orderedTasks {
+-		assignments = append(assignments, Assignment{
+-			TaskID: task.ID,
+-			NodeID: orderedNodes[i%len(orderedNodes)].ID,
+-		})
++func Plan(input PlanInput) []Assignment {
++	pending := sortedTasks(input.PendingTasks)
++	nodes := sortedNodes(input.Nodes)
++	state := newClusterState(nodes, input.RunningTasks, input.Services)
++
++	assignments := make([]Assignment, 0, len(pending))
++	for _, task := range pending {
++		if task.ActualStatus != types.TaskPending {
++			continue
++		}
++		service, ok := input.Services[task.ServiceID]
++		if !ok {
++			continue
++		}
++		node, ok := bestNode(task, service, nodes, state)
++		if !ok {
++			continue
++		}
++		assignments = append(assignments, Assignment{TaskID: task.ID, NodeID: node.ID})
++		state.addPlanned(node.ID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
+ 	}
+ 	return assignments
+ }
++
++type clusterState struct {
++	usedByNode           map[types.NodeID]types.Resources
++	runningByNode        map[types.NodeID]int
++	runningByNodeService map[types.NodeID]map[types.ServiceID]int
++}
++
++func newClusterState(nodes []types.Node, runningTasks []types.Task, services map[types.ServiceID]types.Service) *clusterState {
++	state := &clusterState{
++		usedByNode:           make(map[types.NodeID]types.Resources, len(nodes)),
++		runningByNode:        make(map[types.NodeID]int, len(nodes)),
++		runningByNodeService: make(map[types.NodeID]map[types.ServiceID]int, len(nodes)),
++	}
++	knownNodes := make(map[types.NodeID]struct{}, len(nodes))
++	for _, node := range nodes {
++		knownNodes[node.ID] = struct{}{}
++		state.runningByNodeService[node.ID] = make(map[types.ServiceID]int)
++	}
++	for _, task := range sortedTasks(runningTasks) {
++		if _, ok := knownNodes[task.NodeID]; !ok {
++			continue
++		}
++		service, ok := services[task.ServiceID]
++		if !ok {
++			continue
++		}
++		state.addPlanned(task.NodeID, task.ServiceID, service.Spec.ResourceRequirements.Requests)
++	}
++	return state
++}
++
++func (s *clusterState) addPlanned(nodeID types.NodeID, serviceID types.ServiceID, requests types.Resources) {
++	used := s.usedByNode[nodeID]
++	used.CPU += requests.CPU
++	used.Memory += requests.Memory
++	s.usedByNode[nodeID] = used
++	s.runningByNode[nodeID]++
++	if s.runningByNodeService[nodeID] == nil {
++		s.runningByNodeService[nodeID] = make(map[types.ServiceID]int)
++	}
++	s.runningByNodeService[nodeID][serviceID]++
++}
++
++func bestNode(task types.Task, service types.Service, nodes []types.Node, state *clusterState) (types.Node, bool) {
++	var best types.Node
++	var bestScore nodeScore
++	found := false
++	requests := service.Spec.ResourceRequirements.Requests
++	for _, node := range nodes {
++		if !fits(task, service, node, state, requests) {
++			continue
++		}
++		score := scoreNode(node, task.ServiceID, state, requests)
++		if !found || score.less(bestScore) {
++			best = node
++			bestScore = score
++			found = true
++		}
++	}
++	return best, found
++}
++
++func fits(_ types.Task, service types.Service, node types.Node, state *clusterState, requests types.Resources) bool {
++	if node.Status != types.NodeReady {
++		return false
++	}
++	if !placementMatches(service.Spec.PlacementConstraints, node.Labels) {
++		return false
++	}
++	free := freeResources(node, state)
++	return free.CPU >= requests.CPU && free.Memory >= requests.Memory
++}
++
++type nodeScore struct {
++	freeMemoryAfter  int64
++	serviceTaskCount int
++	totalTaskCount   int
++	nodeID           types.NodeID
++}
++
++func scoreNode(node types.Node, serviceID types.ServiceID, state *clusterState, requests types.Resources) nodeScore {
++	free := freeResources(node, state)
++	return nodeScore{
++		freeMemoryAfter:  free.Memory - requests.Memory,
++		serviceTaskCount: state.runningByNodeService[node.ID][serviceID],
++		totalTaskCount:   state.runningByNode[node.ID],
++		nodeID:           node.ID,
++	}
++}
++
++func (s nodeScore) less(other nodeScore) bool {
++	if s.freeMemoryAfter != other.freeMemoryAfter {
++		return s.freeMemoryAfter > other.freeMemoryAfter
++	}
++	if s.serviceTaskCount != other.serviceTaskCount {
++		return s.serviceTaskCount < other.serviceTaskCount
++	}
++	if s.totalTaskCount != other.totalTaskCount {
++		return s.totalTaskCount < other.totalTaskCount
++	}
++	return s.nodeID < other.nodeID
++}
++
++func freeResources(node types.Node, state *clusterState) types.Resources {
++	used := state.usedByNode[node.ID]
++	return types.Resources{
++		CPU:    node.Allocatable.CPU - used.CPU,
++		Memory: node.Allocatable.Memory - used.Memory,
++	}
++}
++
++func placementMatches(constraints []types.PlacementConstraint, labels map[string]string) bool {
++	for _, constraint := range constraints {
++		value, ok := labels[constraint.Key]
++		switch constraint.Operator {
++		case types.ConstraintEquals:
++			if !ok || value != constraint.Value {
++				return false
++			}
++		case types.ConstraintNotEquals:
++			if ok && value == constraint.Value {
++				return false
++			}
++		default:
++			return false
++		}
++	}
++	return true
++}
++
++func sortedTasks(tasks []types.Task) []types.Task {
++	ordered := append([]types.Task(nil), tasks...)
++	sort.Slice(ordered, func(i, j int) bool {
++		return ordered[i].ID < ordered[j].ID
++	})
++	return ordered
++}
++
++func sortedNodes(nodes []types.Node) []types.Node {
++	ordered := append([]types.Node(nil), nodes...)
++	sort.Slice(ordered, func(i, j int) bool {
++		return ordered[i].ID < ordered[j].ID
++	})
++	return ordered
++}
++
++func taskByID(tasks []types.Task, id types.TaskID) (types.Task, bool) {
++	for _, task := range tasks {
++		if task.ID == id {
++			return task, true
++		}
++	}
++	return types.Task{}, false
++}
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 1c10f66..be62bec 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -1,22 +1,264 @@
+ package scheduler
+ 
+ import (
++	"context"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+-func TestScheduleIsDeterministic(t *testing.T) {
+-	scheduler := New()
+-	tasks := []types.Task{{ID: "task-b"}, {ID: "task-a"}}
+-	nodes := []types.Node{{ID: "node-b"}, {ID: "node-a"}}
++func TestPlanAssignments(t *testing.T) {
++	service := serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil)
++	labeledService := serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, []types.PlacementConstraint{
++		{Key: "role", Operator: types.ConstraintEquals, Value: "app"},
++	})
+ 
+-	got := scheduler.Schedule(tasks, nodes)
++	tests := []struct {
++		name     string
++		tasks    []types.Task
++		nodes    []types.Node
++		running  []types.Task
++		services map[types.ServiceID]types.Service
++		want     []Assignment
++	}{
++		{
++			name:     "no nodes",
++			tasks:    []types.Task{pendingTask("task-a", "svc")},
++			services: map[types.ServiceID]types.Service{"svc": service},
++		},
++		{
++			name:  "labels mismatch",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": labeledService},
++		},
++		{
++			name:  "insufficient resources",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 250, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++		},
++		{
++			name:  "spread across nodes",
++			tasks: []types.Task{pendingTask("task-b", "svc"), pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++			want: []Assignment{
++				{TaskID: "task-a", NodeID: "node-a"},
++				{TaskID: "task-b", NodeID: "node-b"},
++			},
++		},
++		{
++			name:  "deterministic tie breaking",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++			want:     []Assignment{{TaskID: "task-a", NodeID: "node-a"}},
++		},
++		{
++			name:  "node draining",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeDraining, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++		},
++		{
++			name:  "prefer more free memory",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 4096}),
++			},
++			services: map[types.ServiceID]types.Service{"svc": service},
++			want:     []Assignment{{TaskID: "task-a", NodeID: "node-b"}},
++		},
++		{
++			name:  "prefer fewer running tasks for same service",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			running: []types.Task{
++				runningTask("running-a", "svc", "node-a"),
++				runningTask("running-b", "other", "node-b"),
++			},
++			services: map[types.ServiceID]types.Service{
++				"svc":   service,
++				"other": serviceFixture("other", types.Resources{CPU: 500, Memory: 512}, nil),
++			},
++			want: []Assignment{{TaskID: "task-a", NodeID: "node-b"}},
++		},
++		{
++			name:  "prefer fewer total running tasks",
++			tasks: []types.Task{pendingTask("task-a", "svc")},
++			nodes: []types.Node{
++				nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++				nodeFixture("node-b", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++			},
++			running: []types.Task{runningTask("running-a", "other", "node-a")},
++			services: map[types.ServiceID]types.Service{
++				"svc":   service,
++				"other": serviceFixture("other", types.Resources{}, nil),
++			},
++			want: []Assignment{{TaskID: "task-a", NodeID: "node-b"}},
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			got := Plan(PlanInput{
++				PendingTasks: tt.tasks,
++				Nodes:        tt.nodes,
++				RunningTasks: tt.running,
++				Services:     tt.services,
++			})
++			if !assignmentsEqual(got, tt.want) {
++				t.Fatalf("expected assignments %#v, got %#v", tt.want, got)
++			}
++		})
++	}
++}
++
++func TestRunOnceAssignsTasksAndEmitsEvents(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	store := &fakeStore{
++		pending: []types.Task{task},
++		nodes: []types.Node{
++			nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		},
++		services: map[types.ServiceID]types.Service{
++			"svc": serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
++		},
++	}
++	scheduler := New(store)
++	scheduler.now = func() time.Time { return time.Date(2026, 6, 11, 11, 0, 0, 0, time.UTC) }
++
++	assignments, err := scheduler.RunOnce(context.Background())
++	if err != nil {
++		t.Fatalf("run scheduler: %v", err)
++	}
++	if !assignmentsEqual(assignments, []Assignment{{TaskID: "task-a", NodeID: "node-a"}}) {
++		t.Fatalf("unexpected assignments %#v", assignments)
++	}
++	if len(store.assigned) != 1 || store.assigned[0] != assignments[0] {
++		t.Fatalf("expected assignment persisted, got %#v", store.assigned)
++	}
++	if len(store.events) != 1 {
++		t.Fatalf("expected one event, got %d", len(store.events))
++	}
++	if store.events[0].Type != "task.assigned" || store.events[0].RelatedObjectID != "task-a" {
++		t.Fatalf("unexpected event %#v", store.events[0])
++	}
++}
++
++type fakeStore struct {
++	pending  []types.Task
++	nodes    []types.Node
++	byNode   map[types.NodeID][]types.Task
++	services map[types.ServiceID]types.Service
++	assigned []Assignment
++	events   []types.Event
++}
++
++func (s *fakeStore) ListTasksByStatus(_ context.Context, status types.TaskStatus) ([]types.Task, error) {
++	if status == types.TaskPending {
++		return s.pending, nil
++	}
++	return nil, nil
++}
++
++func (s *fakeStore) ListNodesByStatus(_ context.Context, status types.NodeStatus) ([]types.Node, error) {
++	var nodes []types.Node
++	for _, node := range s.nodes {
++		if node.Status == status {
++			nodes = append(nodes, node)
++		}
++	}
++	return nodes, nil
++}
++
++func (s *fakeStore) ListTasksByNode(_ context.Context, nodeID types.NodeID) ([]types.Task, error) {
++	return s.byNode[nodeID], nil
++}
++
++func (s *fakeStore) GetService(_ context.Context, id types.ServiceID) (types.Service, error) {
++	return s.services[id], nil
++}
++
++func (s *fakeStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, _ time.Time) (types.Task, error) {
++	s.assigned = append(s.assigned, Assignment{TaskID: id, NodeID: nodeID})
++	return types.Task{ID: id, NodeID: nodeID, ActualStatus: types.TaskAssigned}, nil
++}
++
++func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
++	s.events = append(s.events, event)
++	return event, nil
++}
++
++func pendingTask(id types.TaskID, serviceID types.ServiceID) types.Task {
++	return types.Task{
++		ID:            id,
++		ServiceID:     serviceID,
++		DesiredStatus: types.TaskRunning,
++		ActualStatus:  types.TaskPending,
++		Image:         "nginx:1.27",
++		Version:       1,
++	}
++}
++
++func runningTask(id types.TaskID, serviceID types.ServiceID, nodeID types.NodeID) types.Task {
++	task := pendingTask(id, serviceID)
++	task.NodeID = nodeID
++	task.ActualStatus = types.TaskRunning
++	return task
++}
++
++func nodeFixture(id types.NodeID, status types.NodeStatus, labels map[string]string, allocatable types.Resources) types.Node {
++	return types.Node{
++		ID:          id,
++		Labels:      labels,
++		Capacity:    allocatable,
++		Allocatable: allocatable,
++		Status:      status,
++	}
++}
++
++func serviceFixture(id types.ServiceID, requests types.Resources, constraints []types.PlacementConstraint) types.Service {
++	return types.Service{
++		ID: id,
++		Spec: types.ServiceSpec{
++			Name:                 string(id),
++			Image:                "nginx:1.27",
++			Replicas:             1,
++			ResourceRequirements: types.ResourceRequirements{Requests: requests},
++			PlacementConstraints: constraints,
++		},
++		DeploymentVersion: 1,
++	}
++}
+ 
+-	if len(got) != 2 {
+-		t.Fatalf("expected 2 assignments, got %d", len(got))
++func assignmentsEqual(left, right []Assignment) bool {
++	if len(left) != len(right) {
++		return false
+ 	}
+-	if got[0].TaskID != "task-a" || got[0].NodeID != "node-a" {
+-		t.Fatalf("unexpected first assignment: %#v", got[0])
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
+ 	}
++	return true
+ }
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index ae98dd1..c24d7c0 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -264,6 +264,31 @@ func (s *PostgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ 	return task, nil
+ }
+ 
++func (s *PostgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++	row := s.pool.QueryRow(ctx, `
++		UPDATE tasks
++		SET node_id = $2,
++			actual_status = $3,
++			updated_at = timezone('utc', now()),
++			row_version = row_version + 1
++		WHERE id = $1 AND updated_at = $4 AND actual_status = 'pending'
++		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++		string(id),
++		string(nodeID),
++		string(types.TaskAssigned),
++		expectedUpdatedAt.UTC(),
++	)
++	task, err := scanTask(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Task{}, ErrConflict
++		}
++		return types.Task{}, mapPostgresError(err)
++	}
++	return task, nil
++}
++
+ func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	row := s.pool.QueryRow(ctx, `
+ 		UPDATE tasks
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 9d52bbc..4a126c4 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -23,6 +23,7 @@ type ServiceStore interface {
+ type TaskStore interface {
+ 	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
+ 	GetTask(ctx context.Context, id types.TaskID) (types.Task, error)
++	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error)
+ 	UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error)
+ 	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
+ 	ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)

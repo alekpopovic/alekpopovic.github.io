@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/package_release.py", line 153, in <module>
+    main()
+    ~~~~^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/package_release.py", line 92, in main
+    add_tree(reader, 'inside-orch/', BOOK / directory)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/package_release.py", line 56, in add_tree
+    add_file(entries, prefix + rel, path)
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/package_release.py", line 37, in add_file
+    raise ValueError('Credential-like content; inspect without printing value: ' + name)
+ValueError: Credential-like content; inspect without printing value: inside-orch/examples/source-excerpts/ch40-source-anchor.md

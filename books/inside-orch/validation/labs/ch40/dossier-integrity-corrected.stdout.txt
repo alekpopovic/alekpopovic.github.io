@@ -1,0 +1,88 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed",
+  "meaning": "Evidence inventory exists and matched selected observed success records; not production certification.",
+  "entries": [
+    {
+      "topic": "build",
+      "path": "validation/intake/orch-build-isolated-root.json",
+      "sha256": "81a2ce1b02a25ee2555c67fe07a6d5639b25ab4005c2fc3afe57bccad4c2ec98",
+      "observed_status": "passed",
+      "scope": "Built binaries from locked disposable source, not deployment."
+    },
+    {
+      "topic": "baseline-tests",
+      "path": "validation/intake/orch-baseline-tests.json",
+      "sha256": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b",
+      "observed_status": "passed",
+      "scope": "Ungated suite, with explicit Docker/PostgreSQL skips."
+    },
+    {
+      "topic": "race",
+      "path": "validation/intake/orch-race-tests.json",
+      "sha256": "cd2f6848150c7d5cd59d741f50fe00b56318fc4a3611be9497b21fee33495d42",
+      "observed_status": "passed",
+      "scope": "Reached race-detector paths only; same gated integrations absent."
+    },
+    {
+      "topic": "real-docker-flow",
+      "path": "validation/intake/docker-complete-flow-log-guard.json",
+      "sha256": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+      "observed_status": "passed",
+      "scope": "Guarded handler/Runner/engine flow, not upstream Compose deployment."
+    },
+    {
+      "topic": "resource-boundary",
+      "path": "validation/intake/docker-resource-boundary-corrected.json",
+      "sha256": "7348193d6cb6ba8170ada97f12fad3d02f23d6650f7db08db65321430ba42f20",
+      "observed_status": "passed",
+      "scope": "Normal-path zero limits versus supplied direct-adapter limits."
+    },
+    {
+      "topic": "fresh-server",
+      "path": "validation/labs/ch06/combined-restart.json",
+      "sha256": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075",
+      "observed_status": "passed",
+      "scope": "Actual process restart loses memory records; manually associated container survives."
+    },
+    {
+      "topic": "database-restore",
+      "path": "validation/intake/full-schema-recovery-corrected.json",
+      "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+      "observed_status": "passed",
+      "scope": "Full-schema owned store/backup restore, not default server persistence."
+    },
+    {
+      "topic": "upgrade-preflight",
+      "path": "validation/labs/ch35/controlled-preflight-corrected.json",
+      "sha256": "7b08c9b3f68187f2331e67c20a5d4a4670825397ed8a4924da82b02a0014bb16",
+      "observed_status": "passed",
+      "scope": "Real Cobra command, controlled node inputs, no live cluster."
+    },
+    {
+      "topic": "retention-maintenance",
+      "path": "validation/labs/ch35/operations-tests.json",
+      "sha256": "5b04320dd4a7d3737c703bda1bdfab5eda123dc613ab25003f20f98ae363487d",
+      "observed_status": "passed",
+      "scope": "Deterministic memory fixtures and migration helper tests."
+    },
+    {
+      "topic": "bounded-performance",
+      "path": "validation/labs/ch39/bounded-benchmarks.json",
+      "sha256": "ec2356a2e562e5ce0a6b95a479b284cb0d6e95e5fbde01492fd249fa8a647ae4",
+      "observed_status": "passed",
+      "scope": "Short shared-host samples; no capacity promise."
+    }
+  ],
+  "production_decision": "not approved",
+  "unresolved": [
+    "Default active state is MemoryService",
+    "PostgreSQL composition and transactional parity incomplete",
+    "Leadership not wired; cancellation can retain advisory session lock",
+    "Ordinary agent task path drops runtime resource limits",
+    "Autoscaler provider/controller not composed",
+    "No complete node mTLS or cluster fencing",
+    "No complete cross-node networking/stateful recovery",
+    "Live alert evaluation and production-shaped capacity not demonstrated"
+  ]
+}

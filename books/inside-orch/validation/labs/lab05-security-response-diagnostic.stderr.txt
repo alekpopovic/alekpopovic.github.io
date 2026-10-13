@@ -1,0 +1,9 @@
+panic: scoped-operator-create: {"error":{"code":"invalid_argument","message":"invalid state: invalid JSON body: invalid CPU value 0","request_id":"a5373480-6f4a-4c60-ac20-125c604237f6"}}
+	
+
+goroutine 1 [running]:
+main.main.func2({0x8c88be, 0x16}, {0x8bf299, 0x8}, {0x8bd04b, 0x6}, {0x8bbcea, 0x4}, {0x8c1c1b, 0xc}, ...)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:46 +0x919
+main.main()
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:54 +0xa7e
+exit status 2

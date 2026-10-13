@@ -1,0 +1,22 @@
+{
+  "id": "lab01-evidence-verification",
+  "command": [
+    "python3",
+    "books/inside-orch/scripts/verify_lab_records.py",
+    "--lab",
+    "01",
+    "--mode",
+    "recorded"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:57:48.829622+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:57:48.888445+00:00",
+  "duration_seconds": 0.059,
+  "stdout": "validation/labs/lab01-evidence-verification.stdout.txt",
+  "stderr": "validation/labs/lab01-evidence-verification.stderr.txt"
+}

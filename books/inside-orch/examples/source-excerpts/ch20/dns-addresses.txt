@@ -1,0 +1,25 @@
+	out := []net.IP{}
+	seen := map[string]struct{}{}
+	for _, t := range tasks {
+		if t.ActualStatus != types.TaskHealthy && t.ActualStatus != types.TaskRunning {
+			continue
+		}
+		host, _, err := net.SplitHostPort(addresses[t.NodeID])
+		if err != nil {
+			host = addresses[t.NodeID]
+		}
+		ip := net.ParseIP(host).To4()
+		if ip == nil {
+			continue
+		}
+		if _, ok := seen[ip.String()]; !ok {
+			seen[ip.String()] = struct{}{}
+			out = append(out, ip)
+		}
+	}
+	return out, nil
+}
+func parseName(name, defaultNS string) (string, string, bool) {
+	parts := strings.Split(strings.TrimSuffix(strings.ToLower(strings.TrimSpace(name)), "."), ".")
+	if len(parts) == 4 && parts[1] == "svc" && parts[2] == "orch" {
+		return "", "", false

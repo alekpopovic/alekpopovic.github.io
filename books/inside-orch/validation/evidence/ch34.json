@@ -1,0 +1,106 @@
+{
+  "chapter": "34",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch34.lease",
+      "statement": "LeaderElector and Lease expose acquisition, notification and explicit release without fencing tokens.",
+      "classification": "implemented package",
+      "source_path": "internal/leadership/leadership.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 15,
+      "line_end": 23,
+      "associated_commits": [
+        "eb3a07c20c550a533afaf36f414ede1ba6c00f78"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    },
+    {
+      "claim_id": "ch34.wrapper",
+      "statement": "RunWithLeadership acquires once and cooperatively cancels its callback on parent or lease loss.",
+      "classification": "implemented package",
+      "source_path": "internal/leadership/leadership.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 48,
+      "line_end": 73,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch34/leadership-tests.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    },
+    {
+      "claim_id": "ch34.key",
+      "statement": "Lock keys hash orch plus controller name without cluster identity.",
+      "classification": "implemented package",
+      "source_path": "internal/leadership/leadership.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 76,
+      "line_end": 80,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    },
+    {
+      "claim_id": "ch34.session",
+      "statement": "Monitor cancellation returns the connection to the pool without an explicit SQL unlock; Release skips unlock after Done closes.",
+      "classification": "partial integration",
+      "source_path": "internal/leadership/postgres.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 67,
+      "line_end": 109,
+      "associated_commits": [],
+      "validation": "executed",
+      "evidence_log": "validation/intake/full-schema-recovery-corrected.json",
+      "limitations": [
+        "Only the matching fixture, package assertion or explicitly scoped existing observation was executed; other described procedures remain inspected.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    },
+    {
+      "claim_id": "ch34.default",
+      "statement": "Default server composes MemoryService and does not wrap its loops with the elector.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 142,
+      "line_end": 148,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    },
+    {
+      "claim_id": "ch34.design",
+      "statement": "Replicated APIs with per-controller leaders are design intent requiring durable state.",
+      "classification": "design only",
+      "source_path": "docs/HA_CONTROL_PLANE_DESIGN.md",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 19,
+      "line_end": 39,
+      "associated_commits": [
+        "b29a6fe91e90f74721e5175e43bf12aed6410f19"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual deterministic lease tests passed; separate existing PostgreSQL record observed lock retention after cancellation. No replicated default servers launched."
+      ]
+    }
+  ]
+}

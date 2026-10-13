@@ -1,0 +1,18 @@
+List events
+
+Usage:
+  orch events [flags]
+
+Flags:
+  -f, --follow            follow events
+  -h, --help              help for events
+      --service string    filter by service name or ID
+      --severity string   filter by severity: info, warning, error
+      --type string       filter by event type
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

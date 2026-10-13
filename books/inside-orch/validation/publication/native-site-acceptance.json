@@ -1,0 +1,90 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T03:57:08.019682+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "sections": [
+    "/books/inside-orch/00-preface.html",
+    "/books/inside-orch/01-why-build-a-container-orchestrator.html",
+    "/books/inside-orch/02-a-repository-built-for-reasoning.html",
+    "/books/inside-orch/03-boot-the-lab-and-deploy-the-first-service.html",
+    "/books/inside-orch/04-domain-models-and-state-machines.html",
+    "/books/inside-orch/05-service-specifications-resources-and-ports.html",
+    "/books/inside-orch/06-follow-one-request-through-the-control-plane.html",
+    "/books/inside-orch/07-http-contracts-and-compatible-apis.html",
+    "/books/inside-orch/08-a-cli-that-operators-can-automate.html",
+    "/books/inside-orch/09-persistence-transactions-and-optimistic-concurrency.html",
+    "/books/inside-orch/10-a-deterministic-scheduler.html",
+    "/books/inside-orch/11-reconciliation-as-repeated-convergence.html",
+    "/books/inside-orch/12-idempotent-docker-operations-and-drift.html",
+    "/books/inside-orch/13-agents-heartbeats-and-task-reports.html",
+    "/books/inside-orch/14-health-checks-that-respect-trust-boundaries.html",
+    "/books/inside-orch/15-events-audits-and-notification-boundaries.html",
+    "/books/inside-orch/16-log-streaming-without-losing-control.html",
+    "/books/inside-orch/17-rolling-updates-and-rollback-invariants.html",
+    "/books/inside-orch/18-safe-deletion-and-resource-cleanup.html",
+    "/books/inside-orch/19-offline-nodes-draining-and-rescheduling.html",
+    "/books/inside-orch/20-endpoint-discovery-and-internal-dns.html",
+    "/books/inside-orch/21-ingress-host-networking-and-the-overlay-roadmap.html",
+    "/books/inside-orch/22-autoscaling-decisions-and-missing-integration.html",
+    "/books/inside-orch/23-authentication-authorization-and-node-trust.html",
+    "/books/inside-orch/24-encrypted-secrets-and-configuration-redaction.html",
+    "/books/inside-orch/25-registry-credentials-and-immutable-image-identity.html",
+    "/books/inside-orch/26-security-contexts-admission-and-policy.html",
+    "/books/inside-orch/27-namespaces-and-the-limits-of-multi-tenancy.html",
+    "/books/inside-orch/28-quotas-and-usage-accounting.html",
+    "/books/inside-orch/29-supply-chain-designs-without-false-guarantees.html",
+    "/books/inside-orch/30-gitops-drift-and-controlled-reconciliation.html",
+    "/books/inside-orch/31-finite-jobs-and-time-based-work.html",
+    "/books/inside-orch/32-local-volumes-claims-and-workload-topology.html",
+    "/books/inside-orch/33-extension-interfaces-and-a-plugin-roadmap.html",
+    "/books/inside-orch/34-leader-election-and-the-durable-ha-boundary.html",
+    "/books/inside-orch/35-upgrades-migrations-maintenance-and-retention.html",
+    "/books/inside-orch/36-fakes-property-tests-fuzzing-and-contracts.html",
+    "/books/inside-orch/37-failure-injection-and-recovery-evidence.html",
+    "/books/inside-orch/38-metrics-dashboards-and-actionable-signals.html",
+    "/books/inside-orch/39-performance-and-scale-tests-that-say-what-they-measure.html",
+    "/books/inside-orch/40-release-a-system-you-can-honestly-operate.html",
+    "/books/inside-orch/a-cli-api-config.html",
+    "/books/inside-orch/b-lifecycle-invariants.html",
+    "/books/inside-orch/c-annotated-history.html",
+    "/books/inside-orch/d-exercises-solutions.html",
+    "/books/inside-orch/e-ops-measurement.html",
+    "/books/inside-orch/f-glossary-bibliography.html"
+  ],
+  "original_posts": [
+    "/posts/a-ready-server-may-have-forgotten-your-cluster/",
+    "/posts/an-offline-node-is-not-proof-that-its-workload-stopped/",
+    "/posts/follow-a-resource-limit-all-the-way-to-docker/"
+  ],
+  "downloads": {
+    "pdf": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b"
+  },
+  "canonical_book_metadata": {
+    "@type": "Book",
+    "@id": "https://www.alekpopovic.com/books/inside-orch/#book",
+    "name": "Inside orch",
+    "description": "A source-based engineering study of orch: Go control planes, Docker workers, state ownership, scheduling, failure recovery, and the limits of executable integration.",
+    "author": {
+      "@id": "https://www.alekpopovic.com/about/#person"
+    },
+    "inLanguage": "en",
+    "bookEdition": "1.0",
+    "url": "https://www.alekpopovic.com/books/inside-orch/",
+    "image": "https://www.alekpopovic.com/assets/social/book-inside-orch.png",
+    "isAccessibleForFree": true,
+    "encoding": [
+      {
+        "@type": "MediaObject",
+        "encodingFormat": "application/pdf",
+        "contentUrl": "https://www.alekpopovic.com/assets/books/inside-orch/downloads/inside-orch.pdf"
+      },
+      {
+        "@type": "MediaObject",
+        "encodingFormat": "application/epub+zip",
+        "contentUrl": "https://www.alekpopovic.com/assets/books/inside-orch/downloads/inside-orch.epub"
+      }
+    ]
+  },
+  "scope": "Actual built pages: metadata, complete full-text/sitemap discovery, feed posts, reciprocal links, shared tag, exact downloads and private-corpus path exclusion. Browser, full local-link and offline gates are separate."
+}

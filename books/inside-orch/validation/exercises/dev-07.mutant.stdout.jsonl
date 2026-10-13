@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:54.412185543+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/gitops"}
+{"Time":"2026-10-13T03:38:54.415731622+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/gitops","Test":"TestControllerSyncsLocalFixtureRepositoryAndPrunes"}
+{"Time":"2026-10-13T03:38:54.415744473+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/gitops","Test":"TestControllerSyncsLocalFixtureRepositoryAndPrunes","Output":"=== RUN   TestControllerSyncsLocalFixtureRepositoryAndPrunes\n"}
+{"Time":"2026-10-13T03:38:54.463185818+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/gitops","Test":"TestControllerSyncsLocalFixtureRepositoryAndPrunes","Output":"    gitops_test.go:82: expected pruned service to be deleted, got active\n"}
+{"Time":"2026-10-13T03:38:54.463676187+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/gitops","Test":"TestControllerSyncsLocalFixtureRepositoryAndPrunes","Output":"--- FAIL: TestControllerSyncsLocalFixtureRepositoryAndPrunes (0.05s)\n"}
+{"Time":"2026-10-13T03:38:54.463682753+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/gitops","Test":"TestControllerSyncsLocalFixtureRepositoryAndPrunes","Elapsed":0.05}
+{"Time":"2026-10-13T03:38:54.463699445+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/gitops","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:54.464486578+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/gitops","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/gitops\t0.052s\n"}
+{"Time":"2026-10-13T03:38:54.464501455+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/gitops","Elapsed":0.052}

@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:46.830505358+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/scheduler"}
+{"Time":"2026-10-13T03:38:46.833645718+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce"}
+{"Time":"2026-10-13T03:38:46.833680011+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Output":"=== RUN   TestConcurrentSchedulerAttemptsAssignTaskOnce\n"}
+{"Time":"2026-10-13T03:38:46.833806287+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Output":"    scheduler_test.go:449: expected exactly one assignment success, got 2\n"}
+{"Time":"2026-10-13T03:38:46.83382291+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Output":"--- FAIL: TestConcurrentSchedulerAttemptsAssignTaskOnce (0.00s)\n"}
+{"Time":"2026-10-13T03:38:46.833832129+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/scheduler","Test":"TestConcurrentSchedulerAttemptsAssignTaskOnce","Elapsed":0}
+{"Time":"2026-10-13T03:38:46.8338454+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:46.833995493+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/scheduler","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/scheduler\t0.003s\n"}
+{"Time":"2026-10-13T03:38:46.834013303+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/scheduler","Elapsed":0.004}

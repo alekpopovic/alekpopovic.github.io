@@ -1,0 +1,6 @@
+func (r *Runner) Run(ctx context.Context) error {
+	if err := r.cfg.Validate(); err != nil {
+		return err
+	}
+	if r.client == nil {
+		client, err := NewHTTPClient(r.cfg.ServerURL, r.cfg.BootstrapToken)

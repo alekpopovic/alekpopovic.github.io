@@ -1,0 +1,311 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T02:24:52.593634+00:00",
+  "command": "python3 books/inside-orch/scripts/check_exercises.py",
+  "unique_ids": 24,
+  "audience_counts": {
+    "developer": 8,
+    "devops": 8,
+    "architect": 8
+  },
+  "executable_entries": 8,
+  "actual_tests": "validation/exercises/offline-runs.json",
+  "actual_mutant_rejection": "validation/exercises/mutation-runs.json",
+  "grading_checks": [
+    {
+      "id": "DEV-01",
+      "expected_artifact": {
+        "successful_claims": 1,
+        "assignment_events": 1,
+        "physical_fencing_proven": false
+      },
+      "specified_incorrect_artifact": {
+        "successful_claims": 2,
+        "assignment_events": 1,
+        "physical_fencing_proven": false
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-02",
+      "expected_artifact": {
+        "incoming": "unhealthy",
+        "stored": "failed",
+        "resurrect_terminal_task": false
+      },
+      "specified_incorrect_artifact": {
+        "incoming": "specified wrong outcome",
+        "stored": "failed",
+        "resurrect_terminal_task": false
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-03",
+      "expected_artifact": {
+        "running_intent_removed": false,
+        "cleanup_intent_removed": true,
+        "final_state_required": "removed"
+      },
+      "specified_incorrect_artifact": {
+        "running_intent_removed": true,
+        "cleanup_intent_removed": true,
+        "final_state_required": "removed"
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-04",
+      "expected_artifact": {
+        "max_active": 3,
+        "min_available": 1,
+        "new_running_counts_healthy": false
+      },
+      "specified_incorrect_artifact": {
+        "max_active": 4,
+        "min_available": 1,
+        "new_running_counts_healthy": false
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-05",
+      "expected_artifact": {
+        "cross_namespace_error": "not_found",
+        "namespace_from_uuid": false,
+        "all_workload_isolation_proven": false
+      },
+      "specified_incorrect_artifact": {
+        "cross_namespace_error": "specified wrong outcome",
+        "namespace_from_uuid": false,
+        "all_workload_isolation_proven": false
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-06",
+      "expected_artifact": {
+        "successes": 1,
+        "quota_denials": 1,
+        "final_replicas": 3
+      },
+      "specified_incorrect_artifact": {
+        "successes": 2,
+        "quota_denials": 1,
+        "final_replicas": 3
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-07",
+      "expected_artifact": {
+        "unchanged_revision_increments_version": false,
+        "pruned_service": "api",
+        "prune_all_namespace": false
+      },
+      "specified_incorrect_artifact": {
+        "unchanged_revision_increments_version": true,
+        "pruned_service": "api",
+        "prune_all_namespace": false
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    },
+    {
+      "id": "DEV-08",
+      "expected_artifact": {
+        "forbid_jobs": 1,
+        "replace_preserves_old_id": false,
+        "catchup_jobs": 2
+      },
+      "specified_incorrect_artifact": {
+        "forbid_jobs": 2,
+        "replace_preserves_old_id": false,
+        "catchup_jobs": 2
+      },
+      "reference_accepted": true,
+      "incorrect_rejected": true,
+      "scope": "Artifact grading discrimination only; upstream test assertions separately inspected and actually executed."
+    }
+  ],
+  "chapter_answers": [
+    {
+      "chapter_id": "01",
+      "exists": true
+    },
+    {
+      "chapter_id": "02",
+      "exists": true
+    },
+    {
+      "chapter_id": "03",
+      "exists": true
+    },
+    {
+      "chapter_id": "04",
+      "exists": true
+    },
+    {
+      "chapter_id": "05",
+      "exists": true
+    },
+    {
+      "chapter_id": "06",
+      "exists": true
+    },
+    {
+      "chapter_id": "07",
+      "exists": true
+    },
+    {
+      "chapter_id": "08",
+      "exists": true
+    },
+    {
+      "chapter_id": "09",
+      "exists": true
+    },
+    {
+      "chapter_id": "10",
+      "exists": true
+    },
+    {
+      "chapter_id": "11",
+      "exists": true
+    },
+    {
+      "chapter_id": "12",
+      "exists": true
+    },
+    {
+      "chapter_id": "13",
+      "exists": true
+    },
+    {
+      "chapter_id": "14",
+      "exists": true
+    },
+    {
+      "chapter_id": "15",
+      "exists": true
+    },
+    {
+      "chapter_id": "16",
+      "exists": true
+    },
+    {
+      "chapter_id": "17",
+      "exists": true
+    },
+    {
+      "chapter_id": "18",
+      "exists": true
+    },
+    {
+      "chapter_id": "19",
+      "exists": true
+    },
+    {
+      "chapter_id": "20",
+      "exists": true
+    },
+    {
+      "chapter_id": "21",
+      "exists": true
+    },
+    {
+      "chapter_id": "22",
+      "exists": true
+    },
+    {
+      "chapter_id": "23",
+      "exists": true
+    },
+    {
+      "chapter_id": "24",
+      "exists": true
+    },
+    {
+      "chapter_id": "25",
+      "exists": true
+    },
+    {
+      "chapter_id": "26",
+      "exists": true
+    },
+    {
+      "chapter_id": "27",
+      "exists": true
+    },
+    {
+      "chapter_id": "28",
+      "exists": true
+    },
+    {
+      "chapter_id": "29",
+      "exists": true
+    },
+    {
+      "chapter_id": "30",
+      "exists": true
+    },
+    {
+      "chapter_id": "31",
+      "exists": true
+    },
+    {
+      "chapter_id": "32",
+      "exists": true
+    },
+    {
+      "chapter_id": "33",
+      "exists": true
+    },
+    {
+      "chapter_id": "34",
+      "exists": true
+    },
+    {
+      "chapter_id": "35",
+      "exists": true
+    },
+    {
+      "chapter_id": "36",
+      "exists": true
+    },
+    {
+      "chapter_id": "37",
+      "exists": true
+    },
+    {
+      "chapter_id": "38",
+      "exists": true
+    },
+    {
+      "chapter_id": "39",
+      "exists": true
+    },
+    {
+      "chapter_id": "40",
+      "exists": true
+    }
+  ],
+  "questions_second_pass": "Source author reread stated prerequisites and corrected chapter mappings; independent review belongs to prompt084. No independent-review claim here.",
+  "scope": "Catalog/link/serialized-trace checks plus eight actual offline baseline tests and eight specified implementation mutations rejected by those tests; no Docker/DB or exhaustive mutation claim.",
+  "errors": [],
+  "pending_dependencies": [],
+  "status": "passed"
+}

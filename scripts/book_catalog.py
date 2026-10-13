@@ -19,6 +19,9 @@ secret_spec.loader.exec_module(secret_publication)
 tracking_spec = importlib.util.spec_from_file_location('tracking_publication', ROOT / 'books/universal-tracking-technical-book/scripts/site.py')
 tracking_publication = importlib.util.module_from_spec(tracking_spec)
 tracking_spec.loader.exec_module(tracking_publication)
+orch_spec = importlib.util.spec_from_file_location('orch_publication', ROOT / 'books/inside-orch/scripts/build.py')
+orch_publication = importlib.util.module_from_spec(orch_spec)
+orch_spec.loader.exec_module(orch_publication)
 
 
 def catalog():
@@ -91,7 +94,22 @@ def catalog():
                  publication_notes='# Publication and attribution\n\nEngineering a Universal Real-Time Tracking Platform. Aleksandar Popovic, first edition, October 2026.\n\nCopyright (c) 2026 Aleksandar Popovic. All rights reserved. The website preserves the supplied manuscript, cover, diagrams, and complete PDF/EPUB editions. No Creative Commons or MIT grant is added.\n\nThe book describes a reference architecture and implementation guidance. Its examples are educational; the supplied publication is not a deployed tracking service.\n\nSee the [publication guide](companion/README.html) and [original validation report](companion/VALIDATION_REPORT.html) for source layout, build instructions, and recorded publication checks.'),
              paths=tracking_publication.selection(), editions=tracking_source, filename=tracking_publication.NAME,
              epub_chapters=tracking_publication.epub_sections(),
-             chapter_group='Chapters', chapter_label='Chapter', cover='assets/cover.png', licenses=[])
+             chapter_group='Chapters', chapter_label='Chapter', cover='assets/cover.png', licenses=[]),
+        dict(id='inside-orch', source=orch_publication.ROOT,
+             output=ROOT / 'book-pages/inside-orch', files=ROOT / 'assets/books/inside-orch',
+             files_url='/assets/books/inside-orch',
+             metadata=orch_publication.meta() | dict(
+                 language_label='English', edition_label='Edition',
+                 cover_image='/assets/books/inside-orch/publication/cover.png',
+                 license_note='Copyright © 2026 Aleksandar Popovic · All rights reserved',
+                 publication_notes='# Publication and attribution\n\nInside orch: Building and Operating a Docker Orchestrator in Go. Aleksandar Popovic, edition 1.0, October 13, 2026.\n\nCopyright © 2026 Aleksandar Popovic. All rights reserved. No new public license is granted for the original manuscript. Exact source excerpts and third-party materials retain their existing rights and notices; the book does not relicense the Orch repository.\n\nThis source-based engineering edition distinguishes executable behavior, package-level experiments, teaching extensions and proposed improvements. Laboratory results describe their recorded environments, not production certification.\n\nSee the [rights statement](/assets/books/inside-orch/publication/RIGHTS.md) and [attribution notices](/assets/books/inside-orch/publication/NOTICE.md).'),
+             paths=orch_publication.selection(), editions=orch_publication.DIST,
+             filename=orch_publication.NAME, epub_chapters=orch_publication.epub_sections(),
+             chapter_group='Chapters', chapter_label='Chapter', cover='publication/cover.png',
+             licenses=['publication/RIGHTS.md', 'publication/NOTICE.md',
+                       'publication/fonts/dm-sans-OFL.txt', 'publication/fonts/passion-one-OFL.txt',
+                       'publication/fonts/dejavu-sans-mono-LICENSE.txt',
+                       'publication/fonts/noto-color-emoji-OFL.txt'])
     ]
     for book in books:
         book['metadata'].setdefault('language_label', 'English')
@@ -107,6 +125,8 @@ def catalog():
 
 
 def chapter_title(book, path):
+    if book['id'] == 'inside-orch':
+        return orch_publication.title(path)
     return tracking_publication.title(path) if book['id'] == 'universal-tracking' else publication.title(path)
 
 
@@ -124,6 +144,11 @@ def section(book, path, index):
 
 
 def resolve_reference(book, origin, target):
+    if book['id'] == 'inside-orch':
+        path = orch_publication.source_reference(origin, target)
+        if path and path not in book['paths'] and not orch_publication.permitted_companion(path):
+            raise ValueError(f'Unapproved Orch companion: {path}')
+        return path
     url = urlsplit(target)
     if url.scheme or url.netloc or not url.path:
         return None
@@ -163,6 +188,8 @@ def local_references(book, path):
 
 
 def render(book, path):
+    if book['id'] == 'inside-orch':
+        return orch_publication.render(path, 'site', book['paths'])
     if book['id'] == 'agentplane':
         text = agent_publication.LINK_RE.sub(
             lambda m: f'{m[1]}({public_reference(book, path, m[2])})', path.read_text(encoding='utf-8'))

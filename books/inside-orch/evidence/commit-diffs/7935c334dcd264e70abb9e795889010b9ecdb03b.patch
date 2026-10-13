@@ -1,0 +1,1393 @@
+commit 7935c334dcd264e70abb9e795889010b9ecdb03b
+Date: 2026-07-14T16:28:24+02:00
+Subject: Add audit logging
+
+
+---
+ docs/API.md                           |  13 ++
+ docs/EVENTS.md                        |   2 +-
+ docs/OBSERVABILITY.md                 |   2 +-
+ docs/OPERATIONS.md                    |  14 +++
+ docs/SECURITY.md                      |   8 ++
+ internal/api/api.go                   | 228 ++++++++++++++++++++++++++++++++++
+ internal/api/api_test.go              |  51 ++++++++
+ internal/audit/audit.go               | 140 +++++++++++++++++++++
+ internal/cli/client.go                |  42 +++++++
+ internal/cli/output.go                |  15 +++
+ internal/cli/root.go                  |  58 +++++++++
+ internal/cli/root_test.go             |  39 ++++++
+ internal/controlplane/controlplane.go |  61 +++++++++
+ internal/store/postgres.go            | 124 ++++++++++++++++++
+ internal/store/postgres_test.go       |  26 ++++
+ migrations/000008_audit_logs.down.sql |   1 +
+ migrations/000008_audit_logs.up.sql   |  18 +++
+ prompts/EXECUTION_TRACKER.md          |   8 +-
+ 18 files changed, 844 insertions(+), 6 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index 7d0a719..3359aee 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -303,6 +303,19 @@ curl 'http://localhost:8080/v1/events?since=2026-06-11T10:00:00Z'
+ 
+ Events support filtering by service, task, node, event type, severity, and `since`.
+ 
++## Audit Logs
++
++```sh
++curl http://localhost:8080/v1/audit
++curl 'http://localhost:8080/v1/audit?action=service.rollout&outcome=failure'
++curl 'http://localhost:8080/v1/audit?actor_type=user&actor_id=alice'
++curl 'http://localhost:8080/v1/audit?target_type=service&target_id={service_id}'
++```
++
++Audit logs are separate from orchestration events and require the `admin` role when JWT auth is enabled. Records include actor type, actor ID, action, target type, target ID, request ID, source IP, outcome, timestamp, and redacted metadata.
++
++Filters: `actor_type`, `actor_id`, `action`, `target_type`, `target_id`, `outcome`, `since`, and `limit`.
++
+ ## Logs
+ 
+ ```sh
+diff --git a/docs/EVENTS.md b/docs/EVENTS.md
+index 602d08a..f5664a6 100644
+--- a/docs/EVENTS.md
++++ b/docs/EVENTS.md
+@@ -1,6 +1,6 @@
+ # Events
+ 
+-Events are orchestration audit records emitted by the API, scheduler, reconciler, agent status path, health handling, and rollout controller.
++Events are orchestration history records emitted by the API, scheduler, reconciler, agent status path, health handling, and rollout controller. Security audit logs are stored separately and exposed through `GET /v1/audit`.
+ 
+ Current implementation note: the default `orch-server` stores events in memory because it uses the in-memory control plane. The PostgreSQL store can persist events once the server is wired to it.
+ 
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+index 8e83cad..80a93bd 100644
+--- a/docs/OBSERVABILITY.md
++++ b/docs/OBSERVABILITY.md
+@@ -20,7 +20,7 @@ Do not log tokens, credentials, or secret values.
+ 
+ ## Events
+ 
+-Events are operator-facing audit records. They include:
++Events are operator-facing orchestration history records. They include:
+ 
+ - type;
+ - severity: `info`, `warning`, or `error`;
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index 8294e0b..24c1fad 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -188,6 +188,19 @@ Common causes:
+ - healthcheck threshold exceeded;
+ - Docker daemon unavailable.
+ 
++### Review Audit Logs
++
++Audit logs are separate from operator events and capture who attempted mutating actions, what target was affected, request IDs, source IPs, outcomes, and redacted metadata.
++
++```sh
++orch audit
++orch audit --actor-type user --actor-id alice
++orch audit --action service.rollout --outcome failure
++orch audit --target-type service --target-id <service-id> --output json
++```
++
++Use audit request IDs to correlate with API access logs. Secret plaintext, registry passwords, tokens, and credential material should appear only as `[REDACTED]`.
++
+ ### Delete A Service
+ 
+ ```sh
+@@ -228,6 +241,7 @@ For future PostgreSQL-backed production, back up:
+ - `tasks`;
+ - `deployments`;
+ - `events`.
++- `audit_logs`.
+ 
+ Until server state is wired to PostgreSQL, backups do not preserve live orchestrator state.
+ 
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 4a92310..37cf62f 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -75,6 +75,14 @@ Roadmap:
+ - Encrypt sensitive persisted data.
+ - Add server-side redaction for any future secret-bearing fields.
+ 
++## Audit Logging
++
++Mutating user and agent actions are written to a dedicated audit log separate from orchestration events. Audit records include actor type and ID, action, target, request ID, source IP, timestamp, outcome, and redacted metadata.
++
++Captured actions include service create/delete, scale, rollout, rollback, node drain/uncordon, secret and registry credential create/delete, agent registration, and agent token rotation. Secret plaintext, registry passwords, bearer tokens, and credential material must never be stored in audit metadata.
++
++Admin users can search audit records through `GET /v1/audit` or `orch audit`.
++
+ ## Logging
+ 
+ The API access log records request ID, method, path, status, duration, and route. It must not log:
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 9ec664e..df0d41a 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -8,6 +8,7 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"log/slog"
++	"net"
+ 	"net/http"
+ 	"runtime/debug"
+ 	"strconv"
+@@ -15,6 +16,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/apperrors"
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+@@ -36,6 +38,7 @@ type Server struct {
+ 	metrics        RequestMetrics
+ 	controlMetrics ControlMetrics
+ 	metricsHandler http.Handler
++	auditStore     audit.Store
+ 	now            func() time.Time
+ }
+ 
+@@ -104,6 +107,12 @@ func WithMetricsHandler(handler http.Handler) Option {
+ 	}
+ }
+ 
++func WithAuditStore(store audit.Store) Option {
++	return func(server *Server) {
++		server.auditStore = store
++	}
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -117,6 +126,11 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	for _, opt := range opts {
+ 		opt(server)
+ 	}
++	if server.auditStore == nil {
++		if store, ok := controlPlane.(audit.Store); ok {
++			server.auditStore = store
++		}
++	}
+ 	if server.logStreamer == nil {
+ 		server.logStreamer = &AgentHTTPLogStreamer{}
+ 	}
+@@ -163,6 +177,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/discovery/services/{name}", server.discoveryServiceByName)
+ 	mux.HandleFunc("GET /v1/integrations/traefik/config", server.traefikConfig)
+ 	mux.HandleFunc("GET /v1/events", server.listEvents)
++	mux.HandleFunc("GET /v1/audit", server.listAuditLogs)
+ 	mux.HandleFunc("GET /v1/logs", server.streamLogs)
+ 
+ 	return server.middleware(mux)
+@@ -307,6 +322,10 @@ type ListEventsResponse struct {
+ 	Events []types.Event `json:"events"`
+ }
+ 
++type ListAuditLogsResponse struct {
++	AuditLogs []audit.Log `json:"audit_logs"`
++}
++
+ type requestIDKey struct{}
+ 
+ func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
+@@ -341,14 +360,25 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+ 		Allocatable:      req.Allocatable,
+ 	})
+ 	if err != nil {
++		s.recordAuditAs(r, audit.ActorAgent, req.NodeName, "agent.register", "node", req.NodeName, audit.OutcomeFailure, map[string]string{
++			"node_name": req.NodeName,
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
+ 	credential, err := s.issueAgentCredential(r.Context(), command.Node.ID)
+ 	if err != nil {
++		s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.token.rotate", "node", string(command.Node.ID), audit.OutcomeFailure, nil)
++		s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.register", "node", string(command.Node.ID), audit.OutcomeFailure, map[string]string{
++			"node_name": req.NodeName,
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.register", "node", string(command.Node.ID), audit.OutcomeSuccess, map[string]string{
++		"node_name": req.NodeName,
++	})
++	s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.token.rotate", "node", string(command.Node.ID), audit.OutcomeSuccess, nil)
+ 	writeJSON(w, http.StatusCreated, AgentResponse{Node: command.Node, Status: command.Node.Status, Credential: &credential, Directives: command.Directives})
+ }
+ 
+@@ -377,9 +407,11 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	credential, err := s.issueAgentCredential(r.Context(), command.Node.ID)
+ 	if err != nil {
++		s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.token.rotate", "node", string(command.Node.ID), audit.OutcomeFailure, nil)
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAuditAs(r, audit.ActorAgent, string(command.Node.ID), "agent.token.rotate", "node", string(command.Node.ID), audit.OutcomeSuccess, nil)
+ 	writeJSON(w, http.StatusOK, AgentResponse{Node: command.Node, Status: command.Node.Status, Credential: &credential, Directives: command.Directives})
+ }
+ 
+@@ -467,9 +499,11 @@ func (s *Server) drainNode(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	node, err := s.controlPlane.DrainNode(r.Context(), id)
+ 	if err != nil {
++		s.recordAudit(r, "node.drain", "node", string(id), audit.OutcomeFailure, nil)
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "node.drain", "node", string(id), audit.OutcomeSuccess, nil)
+ 	writeJSON(w, http.StatusOK, NodeResponse{Node: node})
+ }
+ 
+@@ -480,9 +514,11 @@ func (s *Server) uncordonNode(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	node, err := s.controlPlane.UncordonNode(r.Context(), id)
+ 	if err != nil {
++		s.recordAudit(r, "node.uncordon", "node", string(id), audit.OutcomeFailure, nil)
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "node.uncordon", "node", string(id), audit.OutcomeSuccess, nil)
+ 	writeJSON(w, http.StatusOK, NodeResponse{Node: node})
+ }
+ 
+@@ -510,9 +546,11 @@ func (s *Server) createSecret(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	secret, err := s.controlPlane.CreateSecret(r.Context(), req.Name, req.Value)
+ 	if err != nil {
++		s.recordAudit(r, "secret.create", "secret", req.Name, audit.OutcomeFailure, map[string]string{"name": req.Name})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "secret.create", "secret", secret.Name, audit.OutcomeSuccess, map[string]string{"name": secret.Name})
+ 	writeJSON(w, http.StatusCreated, SecretResponse{Secret: secret})
+ }
+ 
+@@ -546,9 +584,11 @@ func (s *Server) deleteSecret(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	if err := s.controlPlane.DeleteSecret(r.Context(), name); err != nil {
++		s.recordAudit(r, "secret.delete", "secret", name, audit.OutcomeFailure, map[string]string{"name": name})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "secret.delete", "secret", name, audit.OutcomeSuccess, map[string]string{"name": name})
+ 	w.WriteHeader(http.StatusNoContent)
+ }
+ 
+@@ -564,9 +604,17 @@ func (s *Server) createRegistryCredential(w http.ResponseWriter, r *http.Request
+ 		Password: req.Password,
+ 	})
+ 	if err != nil {
++		s.recordAudit(r, "registry_credential.create", "registry_credential", req.ID, audit.OutcomeFailure, map[string]string{
++			"registry": req.Registry,
++			"username": req.Username,
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "registry_credential.create", "registry_credential", credential.ID, audit.OutcomeSuccess, map[string]string{
++		"registry": credential.Registry,
++		"username": credential.Username,
++	})
+ 	writeJSON(w, http.StatusCreated, RegistryCredentialResponse{Credential: credential})
+ }
+ 
+@@ -586,9 +634,11 @@ func (s *Server) deleteRegistryCredential(w http.ResponseWriter, r *http.Request
+ 		return
+ 	}
+ 	if err := s.controlPlane.DeleteRegistryCredential(r.Context(), id); err != nil {
++		s.recordAudit(r, "registry_credential.delete", "registry_credential", id, audit.OutcomeFailure, map[string]string{"id": id})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "registry_credential.delete", "registry_credential", id, audit.OutcomeSuccess, map[string]string{"id": id})
+ 	w.WriteHeader(http.StatusNoContent)
+ }
+ 
+@@ -609,9 +659,17 @@ func (s *Server) createService(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	service, err := s.controlPlane.CreateService(r.Context(), req.Spec)
+ 	if err != nil {
++		s.recordAudit(r, "service.create", "service", req.Spec.Name, audit.OutcomeFailure, map[string]string{
++			"image": req.Spec.Image,
++			"name":  req.Spec.Name,
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "service.create", "service", string(service.ID), audit.OutcomeSuccess, map[string]string{
++		"image": service.Spec.Image,
++		"name":  service.Spec.Name,
++	})
+ 	writeJSON(w, http.StatusCreated, ServiceResponse{Service: service})
+ }
+ 
+@@ -667,9 +725,11 @@ func (s *Server) deleteService(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	if err := s.controlPlane.DeleteService(r.Context(), id); err != nil {
++		s.recordAudit(r, "service.delete", "service", string(id), audit.OutcomeFailure, nil)
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "service.delete", "service", string(id), audit.OutcomeSuccess, nil)
+ 	w.WriteHeader(http.StatusNoContent)
+ }
+ 
+@@ -688,9 +748,15 @@ func (s *Server) scaleService(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	service, err := s.controlPlane.ScaleService(r.Context(), id, req.Replicas)
+ 	if err != nil {
++		s.recordAudit(r, "service.scale", "service", string(id), audit.OutcomeFailure, map[string]string{
++			"replicas": strconv.Itoa(req.Replicas),
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "service.scale", "service", string(id), audit.OutcomeSuccess, map[string]string{
++		"replicas": strconv.Itoa(service.Spec.Replicas),
++	})
+ 	writeJSON(w, http.StatusOK, ServiceResponse{Service: service})
+ }
+ 
+@@ -726,9 +792,21 @@ func (s *Server) rolloutService(w http.ResponseWriter, r *http.Request) {
+ 		MaxSurge:       req.MaxSurge,
+ 	})
+ 	if err != nil {
++		s.recordAudit(r, "service.rollout", "service", string(id), audit.OutcomeFailure, map[string]string{
++			"image":           req.Image,
++			"max_surge":       strconv.Itoa(req.MaxSurge),
++			"max_unavailable": strconv.Itoa(req.MaxUnavailable),
++		})
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "service.rollout", "service", string(id), audit.OutcomeSuccess, map[string]string{
++		"deployment_id":   string(deployment.ID),
++		"image":           req.Image,
++		"max_surge":       strconv.Itoa(req.MaxSurge),
++		"max_unavailable": strconv.Itoa(req.MaxUnavailable),
++		"target_version":  strconv.FormatInt(deployment.ToVersion, 10),
++	})
+ 	if s.controlMetrics != nil {
+ 		s.controlMetrics.IncRollouts()
+ 	}
+@@ -769,9 +847,14 @@ func (s *Server) rollbackService(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	deployment, err := s.controlPlane.RollbackService(r.Context(), id)
+ 	if err != nil {
++		s.recordAudit(r, "service.rollback", "service", string(id), audit.OutcomeFailure, nil)
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
++	s.recordAudit(r, "service.rollback", "service", string(id), audit.OutcomeSuccess, map[string]string{
++		"deployment_id":  string(deployment.ID),
++		"target_version": strconv.FormatInt(deployment.ToVersion, 10),
++	})
+ 	if s.controlMetrics != nil {
+ 		s.controlMetrics.IncRollouts()
+ 	}
+@@ -881,6 +964,23 @@ func (s *Server) listEvents(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusOK, ListEventsResponse{Events: events})
+ }
+ 
++func (s *Server) listAuditLogs(w http.ResponseWriter, r *http.Request) {
++	if s.auditStore == nil {
++		s.writeError(w, r, apperrors.New(apperrors.CodeUnavailable, "audit store is not configured"))
++		return
++	}
++	filter, ok := s.auditFilter(w, r)
++	if !ok {
++		return
++	}
++	logs, err := s.auditStore.ListAuditLogs(r.Context(), filter)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, ListAuditLogsResponse{AuditLogs: logs})
++}
++
+ func (s *Server) streamLogs(w http.ResponseWriter, r *http.Request) {
+ 	task, err := s.logTask(r)
+ 	if err != nil {
+@@ -980,6 +1080,8 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/events":
+ 			return auth.RoleViewer, true
++		case path == "/v1/audit":
++			return auth.RoleAdmin, true
+ 		case path == "/v1/logs":
+ 			return auth.RoleViewer, true
+ 		case strings.HasPrefix(path, "/v1/rollouts/"):
+@@ -1127,6 +1229,8 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/integrations/traefik/config", true
+ 	case path == "/v1/events":
+ 		return "/v1/events", true
++	case path == "/v1/audit":
++		return "/v1/audit", true
+ 	case path == "/v1/logs":
+ 		return "/v1/logs", true
+ 	case strings.HasPrefix(path, "/v1/rollouts/"):
+@@ -1330,6 +1434,49 @@ func (s *Server) eventFilter(w http.ResponseWriter, r *http.Request) (events.Fil
+ 	return filter, true
+ }
+ 
++func (s *Server) auditFilter(w http.ResponseWriter, r *http.Request) (audit.Filter, bool) {
++	query := r.URL.Query()
++	limit := 100
++	if rawLimit := strings.TrimSpace(query.Get("limit")); rawLimit != "" {
++		parsed, err := strconv.Atoi(rawLimit)
++		if err != nil || parsed < 1 || parsed > 500 {
++			s.writeError(w, r, fmt.Errorf("%w: limit must be between 1 and 500", store.ErrInvalidState))
++			return audit.Filter{}, false
++		}
++		limit = parsed
++	}
++	filter := audit.Filter{
++		ActorID:    strings.TrimSpace(query.Get("actor_id")),
++		Action:     strings.TrimSpace(query.Get("action")),
++		TargetType: strings.TrimSpace(query.Get("target_type")),
++		TargetID:   strings.TrimSpace(query.Get("target_id")),
++		Limit:      limit,
++	}
++	if actorType := strings.TrimSpace(query.Get("actor_type")); actorType != "" {
++		if !validAuditActorType(audit.ActorType(actorType)) {
++			s.writeError(w, r, fmt.Errorf("%w: actor_type is invalid", store.ErrInvalidState))
++			return audit.Filter{}, false
++		}
++		filter.ActorType = audit.ActorType(actorType)
++	}
++	if outcome := strings.TrimSpace(query.Get("outcome")); outcome != "" {
++		if !validAuditOutcome(audit.Outcome(outcome)) {
++			s.writeError(w, r, fmt.Errorf("%w: outcome is invalid", store.ErrInvalidState))
++			return audit.Filter{}, false
++		}
++		filter.Outcome = audit.Outcome(outcome)
++	}
++	if since := strings.TrimSpace(query.Get("since")); since != "" {
++		parsed, err := time.Parse(time.RFC3339, since)
++		if err != nil {
++			s.writeError(w, r, fmt.Errorf("%w: since must be RFC3339", store.ErrInvalidState))
++			return audit.Filter{}, false
++		}
++		filter.Since = parsed.UTC()
++	}
++	return filter, true
++}
++
+ func (s *Server) logTask(r *http.Request) (types.Task, error) {
+ 	query := r.URL.Query()
+ 	taskID := strings.TrimSpace(query.Get("task_id"))
+@@ -1374,6 +1521,69 @@ func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
+ 	})
+ }
+ 
++func (s *Server) recordAudit(r *http.Request, action string, targetType string, targetID string, outcome audit.Outcome, metadata map[string]string) {
++	actorType, actorID := auditActor(r)
++	s.recordAuditAs(r, actorType, actorID, action, targetType, targetID, outcome, metadata)
++}
++
++func (s *Server) recordAuditAs(r *http.Request, actorType audit.ActorType, actorID string, action string, targetType string, targetID string, outcome audit.Outcome, metadata map[string]string) {
++	if s.auditStore == nil {
++		return
++	}
++	log := audit.Log{
++		ActorType:  actorType,
++		ActorID:    actorID,
++		Action:     action,
++		TargetType: targetType,
++		TargetID:   targetID,
++		RequestID:  requestID(r.Context()),
++		SourceIP:   sourceIP(r),
++		Outcome:    outcome,
++		Metadata:   audit.RedactMetadata(metadata),
++		Timestamp:  s.now(),
++	}
++	if _, err := s.auditStore.AppendAuditLog(r.Context(), log); err != nil && s.logger != nil {
++		s.logger.Warn("audit log append failed",
++			"request_id", requestID(r.Context()),
++			"action", action,
++			"target_type", targetType,
++			"target_id", targetID,
++			"outcome", string(outcome),
++			"error", err,
++		)
++	}
++}
++
++func auditActor(r *http.Request) (audit.ActorType, string) {
++	if principal, ok := auth.PrincipalFromContext(r.Context()); ok && strings.TrimSpace(principal.Subject) != "" {
++		return audit.ActorUser, principal.Subject
++	}
++	if strings.HasPrefix(r.URL.Path, "/v1/agent/") {
++		if nodeID := strings.TrimSpace(r.URL.Query().Get("node_id")); nodeID != "" {
++			return audit.ActorAgent, nodeID
++		}
++		return audit.ActorAgent, "unknown"
++	}
++	return audit.ActorUser, "anonymous"
++}
++
++func sourceIP(r *http.Request) string {
++	if forwarded := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); forwarded != "" {
++		parts := strings.Split(forwarded, ",")
++		if first := strings.TrimSpace(parts[0]); first != "" {
++			return first
++		}
++	}
++	if realIP := strings.TrimSpace(r.Header.Get("X-Real-IP")); realIP != "" {
++		return realIP
++	}
++	host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
++	if err == nil {
++		return host
++	}
++	return strings.TrimSpace(r.RemoteAddr)
++}
++
+ func errorStatus(err error) (int, string) {
+ 	status, code, _, _ := errorAttributes(err)
+ 	return status, string(code)
+@@ -1499,6 +1709,24 @@ func validEventSeverity(severity types.EventSeverity) bool {
+ 	}
+ }
+ 
++func validAuditActorType(actorType audit.ActorType) bool {
++	switch actorType {
++	case audit.ActorUser, audit.ActorAgent, audit.ActorSystem:
++		return true
++	default:
++		return false
++	}
++}
++
++func validAuditOutcome(outcome audit.Outcome) bool {
++	switch outcome {
++	case audit.OutcomeSuccess, audit.OutcomeFailure:
++		return true
++	default:
++		return false
++	}
++}
++
+ func newRequestID() string {
+ 	var b [16]byte
+ 	if _, err := rand.Read(b[:]); err != nil {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 5de5455..8d0af1e 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -4,6 +4,7 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"encoding/json"
++	"fmt"
+ 	"io"
+ 	"log/slog"
+ 	"net/http"
+@@ -852,6 +853,56 @@ func TestListEventsInvalidFilters(t *testing.T) {
+ 	}
+ }
+ 
++func TestAuditLogCapturedAndRedacted(t *testing.T) {
++	handler := newTestHandler()
++	create := requestWithHeaders(t, handler, http.MethodPost, "/v1/secrets", CreateSecretRequest{
++		Name:  "prod/database-url",
++		Value: "postgres://user:super-secret@db/app",
++	}, map[string]string{
++		"X-Forwarded-For": "203.0.113.10",
++		"X-Request-ID":    "audit-request-id",
++	})
++	if create.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
++	}
++
++	rec := doRequest(t, handler, http.MethodGet, "/v1/audit?action=secret.create&target_type=secret", nil)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
++	}
++
++	var body ListAuditLogsResponse
++	decodeResponse(t, rec, &body)
++	if len(body.AuditLogs) != 1 {
++		t.Fatalf("expected one audit log, got %#v", body.AuditLogs)
++	}
++	log := body.AuditLogs[0]
++	if log.Action != "secret.create" || log.TargetID != "prod/database-url" || log.Outcome != "success" {
++		t.Fatalf("unexpected audit log %#v", log)
++	}
++	if log.RequestID != "audit-request-id" || log.SourceIP != "203.0.113.10" {
++		t.Fatalf("unexpected request metadata %#v", log)
++	}
++	if strings.Contains(fmt.Sprint(log.Metadata), "super-secret") {
++		t.Fatalf("audit metadata leaked secret plaintext: %#v", log.Metadata)
++	}
++}
++
++func TestAuditRequiresAdminRole(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithUserJWT("test-secret"))
++	viewer := userToken(t, auth.RoleViewer)
++	rec := doAuthenticatedRequest(t, handler, http.MethodGet, "/v1/audit", nil, viewer)
++	if rec.Code != http.StatusForbidden {
++		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
++	}
++
++	admin := userToken(t, auth.RoleAdmin)
++	rec = doAuthenticatedRequest(t, handler, http.MethodGet, "/v1/audit", nil, admin)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
++	}
++}
++
+ func newTestHandler() http.Handler {
+ 	return NewHandler(slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)), controlplane.NewMemoryService())
+ }
+diff --git a/internal/audit/audit.go b/internal/audit/audit.go
+new file mode 100644
+index 0000000..c21d6cd
+--- /dev/null
++++ b/internal/audit/audit.go
+@@ -0,0 +1,140 @@
++package audit
++
++import (
++	"context"
++	"net/url"
++	"strings"
++	"time"
++)
++
++type ActorType string
++
++const (
++	ActorUser   ActorType = "user"
++	ActorAgent  ActorType = "agent"
++	ActorSystem ActorType = "system"
++)
++
++type Outcome string
++
++const (
++	OutcomeSuccess Outcome = "success"
++	OutcomeFailure Outcome = "failure"
++)
++
++type Log struct {
++	ID         string            `json:"id"`
++	ActorType  ActorType         `json:"actor_type"`
++	ActorID    string            `json:"actor_id"`
++	Action     string            `json:"action"`
++	TargetType string            `json:"target_type"`
++	TargetID   string            `json:"target_id"`
++	RequestID  string            `json:"request_id,omitempty"`
++	SourceIP   string            `json:"source_ip,omitempty"`
++	Outcome    Outcome           `json:"outcome"`
++	Metadata   map[string]string `json:"metadata,omitempty"`
++	Timestamp  time.Time         `json:"timestamp"`
++}
++
++type Filter struct {
++	ActorType  ActorType
++	ActorID    string
++	Action     string
++	TargetType string
++	TargetID   string
++	Outcome    Outcome
++	Since      time.Time
++	Limit      int
++}
++
++type Store interface {
++	AppendAuditLog(ctx context.Context, log Log) (Log, error)
++	ListAuditLogs(ctx context.Context, filter Filter) ([]Log, error)
++}
++
++func Normalize(log Log, now time.Time) Log {
++	log.ActorType = normalizeActorType(log.ActorType)
++	log.ActorID = strings.TrimSpace(log.ActorID)
++	if log.ActorID == "" {
++		log.ActorID = "unknown"
++	}
++	log.Action = strings.TrimSpace(log.Action)
++	log.TargetType = strings.TrimSpace(log.TargetType)
++	log.TargetID = strings.TrimSpace(log.TargetID)
++	if log.TargetID == "" {
++		log.TargetID = "unknown"
++	}
++	log.RequestID = strings.TrimSpace(log.RequestID)
++	log.SourceIP = strings.TrimSpace(log.SourceIP)
++	log.Outcome = normalizeOutcome(log.Outcome)
++	log.Metadata = RedactMetadata(log.Metadata)
++	if log.Timestamp.IsZero() {
++		log.Timestamp = now.UTC()
++	} else {
++		log.Timestamp = log.Timestamp.UTC()
++	}
++	return log
++}
++
++func RedactMetadata(metadata map[string]string) map[string]string {
++	if len(metadata) == 0 {
++		return nil
++	}
++	redacted := make(map[string]string, len(metadata))
++	for key, value := range metadata {
++		redacted[key] = redactMetadataValue(key, value)
++	}
++	return redacted
++}
++
++func redactMetadataValue(key string, value string) string {
++	if isSensitiveMetadataKey(key) {
++		return "[REDACTED]"
++	}
++	if strings.Contains(strings.ToLower(key), "url") {
++		parsed, err := url.Parse(value)
++		if err == nil && parsed.Scheme != "" && parsed.Host != "" && parsed.User != nil {
++			parsed.User = url.User("[REDACTED]")
++			return parsed.String()
++		}
++	}
++	return value
++}
++
++func isSensitiveMetadataKey(key string) bool {
++	normalized := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(key), "-", "_"))
++	for _, marker := range []string{
++		"authorization",
++		"cookie",
++		"credential",
++		"database_url",
++		"dsn",
++		"key",
++		"password",
++		"secret",
++		"token",
++	} {
++		if strings.Contains(normalized, marker) {
++			return true
++		}
++	}
++	return false
++}
++
++func normalizeActorType(actorType ActorType) ActorType {
++	switch actorType {
++	case ActorUser, ActorAgent, ActorSystem:
++		return actorType
++	default:
++		return ActorSystem
++	}
++}
++
++func normalizeOutcome(outcome Outcome) Outcome {
++	switch outcome {
++	case OutcomeSuccess, OutcomeFailure:
++		return outcome
++	default:
++		return OutcomeFailure
++	}
++}
+diff --git a/internal/cli/client.go b/internal/cli/client.go
+index 42e671e..29bbe3a 100644
+--- a/internal/cli/client.go
++++ b/internal/cli/client.go
+@@ -15,6 +15,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/apperrors"
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+@@ -227,6 +228,18 @@ func (c *APIClient) ListEvents(ctx context.Context, filter events.Filter) ([]typ
+ 	return out.Events, nil
+ }
+ 
++func (c *APIClient) ListAuditLogs(ctx context.Context, filter audit.Filter) ([]audit.Log, error) {
++	var out api.ListAuditLogsResponse
++	path := "/v1/audit"
++	if query := auditQuery(filter).Encode(); query != "" {
++		path += "?" + query
++	}
++	if err := c.do(ctx, http.MethodGet, path, nil, &out); err != nil {
++		return nil, err
++	}
++	return out.AuditLogs, nil
++}
++
+ func eventQuery(filter events.Filter) url.Values {
+ 	values := url.Values{}
+ 	if filter.ServiceID != "" {
+@@ -253,6 +266,35 @@ func eventQuery(filter events.Filter) url.Values {
+ 	return values
+ }
+ 
++func auditQuery(filter audit.Filter) url.Values {
++	values := url.Values{}
++	if filter.ActorType != "" {
++		values.Set("actor_type", string(filter.ActorType))
++	}
++	if filter.ActorID != "" {
++		values.Set("actor_id", filter.ActorID)
++	}
++	if filter.Action != "" {
++		values.Set("action", filter.Action)
++	}
++	if filter.TargetType != "" {
++		values.Set("target_type", filter.TargetType)
++	}
++	if filter.TargetID != "" {
++		values.Set("target_id", filter.TargetID)
++	}
++	if filter.Outcome != "" {
++		values.Set("outcome", string(filter.Outcome))
++	}
++	if !filter.Since.IsZero() {
++		values.Set("since", filter.Since.UTC().Format(time.RFC3339Nano))
++	}
++	if filter.Limit > 0 {
++		values.Set("limit", strconv.Itoa(filter.Limit))
++	}
++	return values
++}
++
+ func (c *APIClient) StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error {
+ 	values := url.Values{}
+ 	if strings.TrimSpace(taskID) != "" {
+diff --git a/internal/cli/output.go b/internal/cli/output.go
+index c97e60d..62dd3ab 100644
+--- a/internal/cli/output.go
++++ b/internal/cli/output.go
+@@ -7,6 +7,7 @@ import (
+ 	"strings"
+ 	"text/tabwriter"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -133,3 +134,17 @@ func writeEvents(w io.Writer, output string, events []types.Event) error {
+ 	}
+ 	return tw.Flush()
+ }
++
++func writeAuditLogs(w io.Writer, output string, logs []audit.Log) error {
++	if output == "json" {
++		return writeValue(w, output, logs)
++	}
++	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
++	fmt.Fprintln(tw, "TIME\tOUTCOME\tACTOR\tACTION\tTARGET\tREQUEST_ID")
++	for _, log := range logs {
++		actor := strings.Trim(string(log.ActorType)+"/"+log.ActorID, "/")
++		target := strings.Trim(log.TargetType+"/"+log.TargetID, "/")
++		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\t%s\n", log.Timestamp.Format("2006-01-02T15:04:05Z07:00"), log.Outcome, actor, log.Action, target, log.RequestID)
++	}
++	return tw.Flush()
++}
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index f39e2a2..c48d8be 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -10,6 +10,7 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+@@ -38,6 +39,7 @@ type Client interface {
+ 	ListTasks(ctx context.Context, query url.Values) ([]types.Task, error)
+ 	GetTask(ctx context.Context, id string) (types.Task, error)
+ 	ListEvents(ctx context.Context, filter events.Filter) ([]types.Event, error)
++	ListAuditLogs(ctx context.Context, filter audit.Filter) ([]audit.Log, error)
+ 	StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error
+ }
+ 
+@@ -115,6 +117,7 @@ func NewRootCommand(opts Options) *cobra.Command {
+ 	root.AddCommand(a.deleteCommand())
+ 	root.AddCommand(a.endpointsCommand())
+ 	root.AddCommand(a.eventsCommand())
++	root.AddCommand(a.auditCommand())
+ 	root.AddCommand(a.logsCommand())
+ 	return root
+ }
+@@ -513,6 +516,61 @@ func (a *app) writeEventStream(ctx context.Context, client Client, filter events
+ 	}
+ }
+ 
++func (a *app) auditCommand() *cobra.Command {
++	var actorType string
++	var actorID string
++	var action string
++	var targetType string
++	var targetID string
++	var outcome string
++	var since string
++	var limit int
++	cmd := &cobra.Command{
++		Use:   "audit",
++		Short: "List audit logs",
++		RunE: func(cmd *cobra.Command, _ []string) error {
++			client, err := a.client()
++			if err != nil {
++				return err
++			}
++			filter := audit.Filter{
++				ActorID:    strings.TrimSpace(actorID),
++				Action:     strings.TrimSpace(action),
++				TargetType: strings.TrimSpace(targetType),
++				TargetID:   strings.TrimSpace(targetID),
++				Limit:      limit,
++			}
++			if actorType != "" {
++				filter.ActorType = audit.ActorType(strings.TrimSpace(actorType))
++			}
++			if outcome != "" {
++				filter.Outcome = audit.Outcome(strings.TrimSpace(outcome))
++			}
++			if strings.TrimSpace(since) != "" {
++				parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(since))
++				if err != nil {
++					return fmt.Errorf("--since must be RFC3339: %w", err)
++				}
++				filter.Since = parsed.UTC()
++			}
++			logs, err := client.ListAuditLogs(cmd.Context(), filter)
++			if err != nil {
++				return err
++			}
++			return writeAuditLogs(a.out, a.output, logs)
++		},
++	}
++	cmd.Flags().StringVar(&actorType, "actor-type", "", "filter by actor type: user, agent, system")
++	cmd.Flags().StringVar(&actorID, "actor-id", "", "filter by actor ID")
++	cmd.Flags().StringVar(&action, "action", "", "filter by action")
++	cmd.Flags().StringVar(&targetType, "target-type", "", "filter by target type")
++	cmd.Flags().StringVar(&targetID, "target-id", "", "filter by target ID")
++	cmd.Flags().StringVar(&outcome, "outcome", "", "filter by outcome: success, failure")
++	cmd.Flags().StringVar(&since, "since", "", "filter since RFC3339 timestamp")
++	cmd.Flags().IntVar(&limit, "limit", 100, "maximum audit records to return")
++	return cmd
++}
++
+ func (a *app) logsCommand() *cobra.Command {
+ 	var follow bool
+ 	var taskID string
+diff --git a/internal/cli/root_test.go b/internal/cli/root_test.go
+index cd5dd0d..6417c1f 100644
+--- a/internal/cli/root_test.go
++++ b/internal/cli/root_test.go
+@@ -11,6 +11,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+@@ -39,6 +40,7 @@ func TestRootCommandConstruction(t *testing.T) {
+ 		"delete",
+ 		"endpoints",
+ 		"events",
++		"audit",
+ 		"logs",
+ 	} {
+ 		if _, _, err := root.Find(strings.Fields(path)); err != nil {
+@@ -291,6 +293,29 @@ func TestEventsCommandFiltersByServiceName(t *testing.T) {
+ 	}
+ }
+ 
++func TestAuditCommandAppliesFilters(t *testing.T) {
++	client := &fakeClient{}
++	var out bytes.Buffer
++	cmd := NewRootCommand(Options{
++		Out: &out,
++		Err: &bytes.Buffer{},
++		NewClient: func(string) (Client, error) {
++			return client, nil
++		},
++	})
++	cmd.SetArgs([]string{"--server", "http://server.example", "audit", "--actor-type", "user", "--actor-id", "admin", "--action", "service.create", "--target-type", "service", "--outcome", "success", "--limit", "10"})
++
++	if err := cmd.ExecuteContext(context.Background()); err != nil {
++		t.Fatalf("execute audit: %v", err)
++	}
++	if client.auditFilter.ActorType != audit.ActorUser || client.auditFilter.ActorID != "admin" || client.auditFilter.Action != "service.create" || client.auditFilter.TargetType != "service" || client.auditFilter.Outcome != audit.OutcomeSuccess || client.auditFilter.Limit != 10 {
++		t.Fatalf("unexpected audit filter %#v", client.auditFilter)
++	}
++	if !strings.Contains(out.String(), "service.create") {
++		t.Fatalf("expected audit output, got %q", out.String())
++	}
++}
++
+ func TestRolloutCommandSendsStrategyLimits(t *testing.T) {
+ 	client := &fakeClient{
+ 		services: []types.Service{{
+@@ -359,6 +384,7 @@ type fakeClient struct {
+ 	logFollow                bool
+ 	logTail                  string
+ 	eventFilter              events.Filter
++	auditFilter              audit.Filter
+ 	endpointServiceID        string
+ 	endpointIncludeUnhealthy bool
+ 	endpoints                discovery.ServiceEndpoints
+@@ -460,6 +486,19 @@ func (f *fakeClient) ListEvents(_ context.Context, filter events.Filter) ([]type
+ 	return nil, nil
+ }
+ 
++func (f *fakeClient) ListAuditLogs(_ context.Context, filter audit.Filter) ([]audit.Log, error) {
++	f.auditFilter = filter
++	return []audit.Log{{
++		ActorType:  audit.ActorUser,
++		ActorID:    "admin",
++		Action:     "service.create",
++		TargetType: "service",
++		TargetID:   "00000000-0000-4000-8000-000000000010",
++		Outcome:    audit.OutcomeSuccess,
++		Timestamp:  time.Now().UTC(),
++	}}, nil
++}
++
+ func (f *fakeClient) StreamLogs(_ context.Context, serviceID string, taskID string, follow bool, tail string, _ io.Writer) error {
+ 	f.logServiceID = serviceID
+ 	f.logTaskID = taskID
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index e1d16ad..93cdaf2 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -10,6 +10,7 @@ import (
+ 	"sync"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
+@@ -149,6 +150,7 @@ type MemoryService struct {
+ 	registries  map[string]types.RegistryCredential
+ 	envelope    secrets.Envelope
+ 	events      []types.Event
++	auditLogs   []audit.Log
+ 	now         func() time.Time
+ }
+ 
+@@ -1390,6 +1392,65 @@ func (s *MemoryService) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	return events, nil
+ }
+ 
++func (s *MemoryService) AppendAuditLog(ctx context.Context, log audit.Log) (audit.Log, error) {
++	if err := ctx.Err(); err != nil {
++		return audit.Log{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	log = audit.Normalize(log, s.now())
++	if log.ID == "" {
++		log.ID = newUUID()
++	}
++	s.auditLogs = append(s.auditLogs, log)
++	return log, nil
++}
++
++func (s *MemoryService) ListAuditLogs(ctx context.Context, filter audit.Filter) ([]audit.Log, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	limit := filter.Limit
++	if limit <= 0 || limit > 500 {
++		limit = 100
++	}
++
++	logs := make([]audit.Log, 0, len(s.auditLogs))
++	for i := len(s.auditLogs) - 1; i >= 0; i-- {
++		log := s.auditLogs[i]
++		if filter.ActorType != "" && log.ActorType != filter.ActorType {
++			continue
++		}
++		if filter.ActorID != "" && log.ActorID != filter.ActorID {
++			continue
++		}
++		if filter.Action != "" && log.Action != filter.Action {
++			continue
++		}
++		if filter.TargetType != "" && log.TargetType != filter.TargetType {
++			continue
++		}
++		if filter.TargetID != "" && log.TargetID != filter.TargetID {
++			continue
++		}
++		if filter.Outcome != "" && log.Outcome != filter.Outcome {
++			continue
++		}
++		if !filter.Since.IsZero() && log.Timestamp.Before(filter.Since) {
++			continue
++		}
++		logs = append(logs, log)
++		if len(logs) == limit {
++			break
++		}
++	}
++	return logs, nil
++}
++
+ func (s *MemoryService) setNodeStatus(ctx context.Context, id types.NodeID, status types.NodeStatus) (types.Node, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return types.Node{}, err
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 0326c03..24d0a6d 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -9,6 +9,7 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/jackc/pgx/v5"
+@@ -901,6 +902,94 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	return events, nil
+ }
+ 
++func (s *postgresStore) AppendAuditLog(ctx context.Context, log audit.Log) (audit.Log, error) {
++	log = audit.Normalize(log, time.Now().UTC())
++	row := s.db.QueryRow(ctx, `
++		INSERT INTO audit_logs (
++			actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
++		)
++		VALUES ($1, $2, $3, $4, $5, nullif($6, ''), nullif($7, ''), $8, $9, COALESCE($10, timezone('utc', now())))
++		RETURNING id, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at`,
++		string(log.ActorType),
++		log.ActorID,
++		log.Action,
++		log.TargetType,
++		log.TargetID,
++		log.RequestID,
++		log.SourceIP,
++		string(log.Outcome),
++		defaultMap(log.Metadata),
++		nilTime(log.Timestamp),
++	)
++	created, err := scanAuditLog(row)
++	if err != nil {
++		return audit.Log{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter) ([]audit.Log, error) {
++	limit := filter.Limit
++	if limit <= 0 || limit > 500 {
++		limit = 100
++	}
++
++	sql := `
++		SELECT id, actor_type, actor_id, action, target_type, target_id, request_id, source_ip, outcome, metadata, created_at
++		FROM audit_logs`
++	args := make([]any, 0, 8)
++	conditions := make([]string, 0, 8)
++	add := func(condition string, value any) {
++		args = append(args, value)
++		conditions = append(conditions, fmt.Sprintf(condition, len(args)))
++	}
++	if filter.ActorType != "" {
++		add("actor_type = $%d", string(filter.ActorType))
++	}
++	if filter.ActorID != "" {
++		add("actor_id = $%d", filter.ActorID)
++	}
++	if filter.Action != "" {
++		add("action = $%d", filter.Action)
++	}
++	if filter.TargetType != "" {
++		add("target_type = $%d", filter.TargetType)
++	}
++	if filter.TargetID != "" {
++		add("target_id = $%d", filter.TargetID)
++	}
++	if filter.Outcome != "" {
++		add("outcome = $%d", string(filter.Outcome))
++	}
++	if !filter.Since.IsZero() {
++		add("created_at >= $%d", filter.Since.UTC())
++	}
++	if len(conditions) > 0 {
++		sql += " WHERE " + strings.Join(conditions, " AND ")
++	}
++	args = append(args, limit)
++	sql += fmt.Sprintf(" ORDER BY created_at DESC, id DESC LIMIT $%d", len(args))
++
++	rows, err := s.db.Query(ctx, sql, args...)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	logs := make([]audit.Log, 0)
++	for rows.Next() {
++		log, err := scanAuditLog(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		logs = append(logs, log)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return logs, nil
++}
++
+ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
+ 	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+@@ -1272,6 +1361,41 @@ func scanEvent(row pgx.Row) (types.Event, error) {
+ 	return event, nil
+ }
+ 
++func scanAuditLog(row pgx.Row) (audit.Log, error) {
++	var log audit.Log
++	var requestID, sourceIP *string
++	var metadata []byte
++	err := row.Scan(
++		&log.ID,
++		&log.ActorType,
++		&log.ActorID,
++		&log.Action,
++		&log.TargetType,
++		&log.TargetID,
++		&requestID,
++		&sourceIP,
++		&log.Outcome,
++		&metadata,
++		&log.Timestamp,
++	)
++	if err != nil {
++		return audit.Log{}, err
++	}
++	if requestID != nil {
++		log.RequestID = *requestID
++	}
++	if sourceIP != nil {
++		log.SourceIP = *sourceIP
++	}
++	if len(metadata) > 0 {
++		if err := json.Unmarshal(metadata, &log.Metadata); err != nil {
++			return audit.Log{}, fmt.Errorf("decode audit metadata: %w", err)
++		}
++	}
++	log.Timestamp = log.Timestamp.UTC()
++	return log, nil
++}
++
+ func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
+ 	env, err := jsonBytes(defaultMap(spec.Env))
+ 	if err != nil {
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 44c1ad7..00ad56e 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"testing"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/jackc/pgx/v5/pgconn"
+@@ -202,6 +203,31 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	if listedEvents[0].Details["error_code"] != "unavailable" {
+ 		t.Fatalf("unexpected event details %#v", listedEvents[0].Details)
+ 	}
++
++	if _, err := store.AppendAuditLog(ctx, audit.Log{
++		ActorType:  audit.ActorUser,
++		ActorID:    "admin",
++		Action:     "service.create",
++		TargetType: "service",
++		TargetID:   string(service.ID),
++		RequestID:  "req-1",
++		SourceIP:   "203.0.113.10",
++		Outcome:    audit.OutcomeSuccess,
++		Metadata:   map[string]string{"password": "secret", "name": service.Spec.Name},
++		Timestamp:  time.Now().UTC(),
++	}); err != nil {
++		t.Fatalf("append audit log: %v", err)
++	}
++	auditLogs, err := store.ListAuditLogs(ctx, audit.Filter{Action: "service.create", TargetID: string(service.ID)})
++	if err != nil {
++		t.Fatalf("list audit logs: %v", err)
++	}
++	if len(auditLogs) != 1 {
++		t.Fatalf("expected one audit log, got %#v", auditLogs)
++	}
++	if auditLogs[0].Metadata["password"] != "[REDACTED]" || auditLogs[0].Metadata["name"] != service.Spec.Name {
++		t.Fatalf("unexpected audit metadata %#v", auditLogs[0].Metadata)
++	}
+ }
+ 
+ func TestPostgresStoreWithTxRollsBackOnError(t *testing.T) {
+diff --git a/migrations/000008_audit_logs.down.sql b/migrations/000008_audit_logs.down.sql
+new file mode 100644
+index 0000000..acb2224
+--- /dev/null
++++ b/migrations/000008_audit_logs.down.sql
+@@ -0,0 +1 @@
++DROP TABLE IF EXISTS audit_logs;
+diff --git a/migrations/000008_audit_logs.up.sql b/migrations/000008_audit_logs.up.sql
+new file mode 100644
+index 0000000..ba63b2c
+--- /dev/null
++++ b/migrations/000008_audit_logs.up.sql
+@@ -0,0 +1,18 @@
++CREATE TABLE audit_logs (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    actor_type TEXT NOT NULL CHECK (actor_type IN ('user', 'agent', 'system')),
++    actor_id TEXT NOT NULL,
++    action TEXT NOT NULL,
++    target_type TEXT NOT NULL,
++    target_id TEXT NOT NULL,
++    request_id TEXT,
++    source_ip TEXT,
++    outcome TEXT NOT NULL CHECK (outcome IN ('success', 'failure')),
++    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
++
++CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at DESC);
++CREATE INDEX idx_audit_logs_actor_created_at ON audit_logs (actor_type, actor_id, created_at DESC);
++CREATE INDEX idx_audit_logs_target_created_at ON audit_logs (target_type, target_id, created_at DESC);
++CREATE INDEX idx_audit_logs_action_created_at ON audit_logs (action, created_at DESC);
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 0b7dfdb..c33bd46 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `45-structured-error-model.md`
+-- Last matching commit: `same commit: Add structured error model`
+-- Completed prompt range: `00` through `45`
+-- Next prompt to execute: `46-audit-logging.md`
++- Last executed prompt: `46-audit-logging.md`
++- Last matching commit: `same commit: Add audit logging`
++- Completed prompt range: `00` through `46`
++- Next prompt to execute: `47-prometheus-alert-rules.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

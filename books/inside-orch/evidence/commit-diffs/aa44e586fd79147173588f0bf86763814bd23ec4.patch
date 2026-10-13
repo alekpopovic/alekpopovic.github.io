@@ -1,0 +1,242 @@
+commit aa44e586fd79147173588f0bf86763814bd23ec4
+Date: 2026-07-14T18:11:58+02:00
+Subject: Add Grafana dashboard
+
+
+---
+ .../monitoring/grafana/orchestrator-dashboard.json | 182 +++++++++++++++++++++
+ docs/OBSERVABILITY.md                              |  13 ++
+ prompts/EXECUTION_TRACKER.md                       |   8 +-
+ 3 files changed, 199 insertions(+), 4 deletions(-)
+
+diff --git a/deploy/monitoring/grafana/orchestrator-dashboard.json b/deploy/monitoring/grafana/orchestrator-dashboard.json
+new file mode 100644
+index 0000000..352d023
+--- /dev/null
++++ b/deploy/monitoring/grafana/orchestrator-dashboard.json
+@@ -0,0 +1,182 @@
++{
++  "annotations": {
++    "list": []
++  },
++  "editable": true,
++  "fiscalYearStartMonth": 0,
++  "graphTooltip": 1,
++  "id": null,
++  "links": [],
++  "liveNow": false,
++  "panels": [
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
++      "id": 1,
++      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum(rate(api_requests_total[5m])) by (method, route)", "legendFormat": "{{method}} {{route}}", "refId": "A"}
++      ],
++      "title": "API Request Rate",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "percentunit", "min": 0, "max": 1}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
++      "id": 2,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum(rate(api_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(api_requests_total[5m])), 1)", "legendFormat": "5xx error ratio", "refId": "A"}
++      ],
++      "title": "API Error Rate",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
++      "id": 3,
++      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (le, route))", "legendFormat": "p95 {{route}}", "refId": "A"},
++        {"expr": "histogram_quantile(0.50, sum(rate(api_request_duration_seconds_bucket[5m])) by (le, route))", "legendFormat": "p50 {{route}}", "refId": "B"}
++      ],
++      "title": "API Latency",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
++      "id": 4,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "rate(scheduler_runs_total[5m])", "legendFormat": "runs", "refId": "A"},
++        {"expr": "rate(scheduler_errors_total[5m])", "legendFormat": "errors", "refId": "B"},
++        {"expr": "rate(scheduler_scheduling_failures_total[5m])", "legendFormat": "scheduling failures", "refId": "C"}
++      ],
++      "title": "Scheduler Runs / Errors",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
++      "id": 5,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "rate(reconciler_runs_total[5m])", "legendFormat": "runs", "refId": "A"},
++        {"expr": "rate(reconciler_errors_total[5m])", "legendFormat": "errors", "refId": "B"}
++      ],
++      "title": "Reconciler Runs / Errors",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
++      "id": 6,
++      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum by (status) (task_state_changes_total)", "legendFormat": "{{status}}", "refId": "A"}
++      ],
++      "title": "Task State Counts",
++      "description": "Uses cumulative agent task state change counters until current-state gauges are added.",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
++      "id": 7,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "count(up{job=\"orch-agent\"} == 1)", "legendFormat": "ready/scrapeable agents", "refId": "A"},
++        {"expr": "count(up{job=\"orch-agent\"} == 0)", "legendFormat": "offline/unreachable agents", "refId": "B"}
++      ],
++      "title": "Node Status Counts",
++      "description": "Uses Prometheus scrape status as the generic node availability signal.",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
++      "id": 8,
++      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum(rate(heartbeat_failure_total[5m])) by (instance)", "legendFormat": "{{instance}}", "refId": "A"}
++      ],
++      "title": "Agent Heartbeat Failures",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
++      "id": 9,
++      "options": {"legend": {"displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum(rate(docker_operation_errors_total[5m])) by (operation)", "legendFormat": "{{operation}}", "refId": "A"}
++      ],
++      "title": "Docker Operation Errors",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
++      "id": 10,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "increase(rollouts_total[1h]) - increase(rollout_failures_total[1h])", "legendFormat": "accepted without failure", "refId": "A"},
++        {"expr": "increase(rollout_failures_total[1h])", "legendFormat": "failed", "refId": "B"}
++      ],
++      "title": "Rollout Success / Failure Counts",
++      "type": "timeseries"
++    },
++    {
++      "datasource": {"type": "prometheus", "uid": "${datasource}"},
++      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
++      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 40},
++      "id": 11,
++      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi", "sort": "desc"}},
++      "targets": [
++        {"expr": "sum(rate(healthcheck_success_total[5m]))", "legendFormat": "success", "refId": "A"},
++        {"expr": "sum(rate(healthcheck_failure_total[5m]))", "legendFormat": "failure", "refId": "B"}
++      ],
++      "title": "Healthcheck Success / Failure",
++      "type": "timeseries"
++    }
++  ],
++  "refresh": "30s",
++  "schemaVersion": 39,
++  "style": "dark",
++  "tags": ["orch", "orchestrator"],
++  "templating": {
++    "list": [
++      {
++        "current": {"selected": false, "text": "Prometheus", "value": "Prometheus"},
++        "hide": 0,
++        "includeAll": false,
++        "label": "Prometheus datasource",
++        "multi": false,
++        "name": "datasource",
++        "options": [],
++        "query": "prometheus",
++        "refresh": 1,
++        "regex": "",
++        "type": "datasource"
++      }
++    ]
++  },
++  "time": {"from": "now-6h", "to": "now"},
++  "timepicker": {},
++  "timezone": "browser",
++  "title": "orch Orchestrator Overview",
++  "uid": "orch-overview",
++  "version": 1,
++  "weekStart": ""
++}
+diff --git a/docs/OBSERVABILITY.md b/docs/OBSERVABILITY.md
+index 1ee84b2..eb8b5dc 100644
+--- a/docs/OBSERVABILITY.md
++++ b/docs/OBSERVABILITY.md
+@@ -110,6 +110,19 @@ open http://localhost:9090
+ 
+ The local monitoring profile starts Prometheus and a PostgreSQL exporter. It loads `deploy/monitoring/prometheus.yml` and `deploy/monitoring/prometheus-rules.yaml`.
+ 
++## Grafana Dashboard
++
++A starter dashboard is available at `deploy/monitoring/grafana/orchestrator-dashboard.json`.
++
++Import it in Grafana:
++
++1. Create or select a Prometheus datasource that can query the `orch-server`, `orch-agent`, and PostgreSQL exporter metrics.
++2. In Grafana, choose **Dashboards → New → Import**.
++3. Upload `deploy/monitoring/grafana/orchestrator-dashboard.json`.
++4. Select the Prometheus datasource in the dashboard variable prompt.
++
++The dashboard is intentionally generic and uses a datasource variable named `datasource`. It avoids service IDs, task IDs, image names, node labels, and user-controlled labels in PromQL grouping. Current task and node panels use available counters/scrape status as proxies until current-state gauges are added.
++
+ ## Recommended Alerts
+ 
+ Recommended alert rules live in `deploy/monitoring/prometheus-rules.yaml`.
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 7fb3286..d340a50 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `47-prometheus-alert-rules.md`
+-- Last matching commit: `same commit: Add Prometheus alert rules`
+-- Completed prompt range: `00` through `47`
+-- Next prompt to execute: `48-grafana-dashboard-json.md`
++- Last executed prompt: `48-grafana-dashboard-json.md`
++- Last matching commit: `same commit: Add Grafana dashboard`
++- Completed prompt range: `00` through `48`
++- Next prompt to execute: `49-backup-and-restore-runbook.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

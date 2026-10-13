@@ -1,0 +1,85 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "overall_status": "passed_scoped_mandatory_labs",
+  "ordered_labs": [
+    {
+      "lab_id": "01",
+      "status": "passed",
+      "result": "validation/labs/lab-01.json",
+      "started_at_utc": "2026-10-13T01:39:06.250993+00:00",
+      "finished_at_utc": "2026-10-13T01:39:08.247698+00:00",
+      "scope": "Fresh authenticated server processes prove map loss; separate actual agent/Docker adapter full service flow, cached image, no published workload port."
+    },
+    {
+      "lab_id": "02",
+      "status": "passed",
+      "result": "validation/labs/lab-02.json",
+      "started_at_utc": "2026-10-13T01:47:20.175977+00:00",
+      "finished_at_utc": "2026-10-13T01:47:20.543636+00:00",
+      "scope": "Pure planner permutations and actual scheduler concurrent-claim package tests; memory-placement bypass observed; no database reservation experiment in this lane."
+    },
+    {
+      "lab_id": "03",
+      "status": "passed",
+      "result": "validation/labs/lab-03.json",
+      "started_at_utc": "2026-10-13T01:57:38.284217+00:00",
+      "finished_at_utc": "2026-10-13T01:57:38.915385+00:00",
+      "scope": "FakeRuntime agent drift and separate store-backed reconciler test doubles; fifteen asserted cases, no Docker/network/database."
+    },
+    {
+      "lab_id": "04",
+      "status": "passed",
+      "result": "validation/labs/lab-04.json",
+      "started_at_utc": "2026-10-13T01:57:47.768451+00:00",
+      "finished_at_utc": "2026-10-13T01:57:48.095720+00:00",
+      "scope": "In-process rollout cohorts and injected health/status; seven checkpoints, failed history, conflicts, rollback; no live traffic measurement."
+    },
+    {
+      "lab_id": "05",
+      "status": "passed",
+      "result": "validation/labs/lab-05.json",
+      "started_at_utc": "2026-10-13T01:58:04.970105+00:00",
+      "finished_at_utc": "2026-10-13T01:58:05.447379+00:00",
+      "scope": "Actual API/issuer/envelope and owned loopback HTTP/TCP checker; thirty cases, redaction scans; no daemon or public network."
+    },
+    {
+      "lab_id": "06",
+      "status": "passed",
+      "result": "validation/labs/lab-06.json",
+      "started_at_utc": "2026-10-13T01:58:13.381748+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.453933+00:00",
+      "scope": "Actual in-process tenant API and MemoryService; twenty-eight cases including concurrent quota admission and independently constructed server-state isolation; no database quota/hostile runtime isolation claim."
+    },
+    {
+      "lab_id": "07",
+      "status": "passed",
+      "result": "validation/labs/lab-07.json",
+      "started_at_utc": "2026-10-13T01:58:13.499570+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.639929+00:00",
+      "scope": "Real temporary local Git and actual CLI parsing/control-plane calls; twenty-six cases, injected Job reports/log transport and Cron clock/store including Belgrade DST; no containers/remote hosts."
+    },
+    {
+      "lab_id": "08",
+      "status": "passed",
+      "result": "validation/labs/lab-08.json",
+      "started_at_utc": "2026-10-13T01:58:47.784188+00:00",
+      "finished_at_utc": "2026-10-13T01:58:56.837275+00:00",
+      "scope": "Actual dedicated PostgreSQL all-sixteen-schema extension, assignment CAS, pooled-session lease/canary dump/restore; separate fixed-seed fake scheduler/reconciler load, not default runtime durability or cluster throughput."
+    }
+  ],
+  "source_files_rechecked": 361,
+  "source_mismatches": [],
+  "state_continuity": "Atlas is the connected teaching scenario. Each lane explicitly reconstructs supported state instead of assuming live objects survived; no shared implicit mutable state or default persistence invented.",
+  "environment": "validation/labs/review076/environment.json",
+  "limitations": [
+    "Fresh authenticated server processes prove map loss; separate actual agent/Docker adapter full service flow, cached image, no published workload port.",
+    "Pure planner permutations and actual scheduler concurrent-claim package tests; memory-placement bypass observed; no database reservation experiment in this lane.",
+    "FakeRuntime agent drift and separate store-backed reconciler test doubles; fifteen asserted cases, no Docker/network/database.",
+    "In-process rollout cohorts and injected health/status; seven checkpoints, failed history, conflicts, rollback; no live traffic measurement.",
+    "Actual API/issuer/envelope and owned loopback HTTP/TCP checker; thirty cases, redaction scans; no daemon or public network.",
+    "Actual in-process tenant API and MemoryService; twenty-eight cases including concurrent quota admission and independently constructed server-state isolation; no database quota/hostile runtime isolation claim.",
+    "Real temporary local Git and actual CLI parsing/control-plane calls; twenty-six cases, injected Job reports/log transport and Cron clock/store including Belgrade DST; no containers/remote hosts.",
+    "Actual dedicated PostgreSQL all-sixteen-schema extension, assignment CAS, pooled-session lease/canary dump/restore; separate fixed-seed fake scheduler/reconciler load, not default runtime durability or cluster throughput."
+  ]
+}

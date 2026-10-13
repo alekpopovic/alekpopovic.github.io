@@ -1,0 +1,8 @@
+{"Time":"2026-10-13T03:18:46.428099094+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/controlplane"}
+{"Time":"2026-10-13T03:18:46.431284712+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota"}
+{"Time":"2026-10-13T03:18:46.431300567+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Output":"=== RUN   TestConcurrentScaleCannotExceedQuota\n"}
+{"Time":"2026-10-13T03:18:46.431462742+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Output":"--- PASS: TestConcurrentScaleCannotExceedQuota (0.00s)\n"}
+{"Time":"2026-10-13T03:18:46.431470844+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Elapsed":0}
+{"Time":"2026-10-13T03:18:46.431485232+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"PASS\n"}
+{"Time":"2026-10-13T03:18:46.43163756+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"ok  \tgithub.com/alekpopovic/orch/internal/controlplane\t0.003s\n"}
+{"Time":"2026-10-13T03:18:46.431652437+02:00","Action":"pass","Package":"github.com/alekpopovic/orch/internal/controlplane","Elapsed":0.004}

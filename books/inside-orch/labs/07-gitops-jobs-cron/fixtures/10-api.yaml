@@ -1,0 +1,8 @@
+name: atlas-api
+image: nginx:1.27
+replicas: 0
+env:
+  LAB_OWNER: book-workloads
+resources:
+  cpu: 100m
+  memory: 64Mi

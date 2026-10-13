@@ -1,0 +1,9 @@
+		if task.ActualStatus == types.TaskFailed {
+			state.newFailed++
+		}
+		if isActive(task) {
+			state.newActive++
+			if task.ActualStatus == types.TaskHealthy {
+				state.newHealthy++
+				state.available++
+			}

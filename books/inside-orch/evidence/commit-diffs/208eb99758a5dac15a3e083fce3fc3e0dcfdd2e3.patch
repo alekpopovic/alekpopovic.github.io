@@ -1,0 +1,864 @@
+commit 208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3
+Date: 2026-06-11T16:11:04+02:00
+Subject: Implement service reconciler
+
+
+---
+ internal/reconciler/reconciler.go      | 430 +++++++++++++++++++++++++++++++--
+ internal/reconciler/reconciler_test.go | 295 ++++++++++++++++++++--
+ internal/store/postgres.go             |  44 ++++
+ internal/store/store.go                |   2 +
+ 4 files changed, 738 insertions(+), 33 deletions(-)
+
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 84236ac..94963da 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -1,36 +1,434 @@
+ package reconciler
+ 
+-import "context"
++import (
++	"context"
++	"errors"
++	"fmt"
++	"log/slog"
++	"sort"
++	"time"
+ 
+-type DesiredState struct {
+-	Tasks []TaskIntent
++	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Store interface {
++	ListServices(ctx context.Context) ([]types.Service, error)
++	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
++	ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error)
++	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
++	StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)
++	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
++}
++
++type LeaderLock interface {
++	Acquire(ctx context.Context) (Lease, error)
+ }
+ 
+-type TaskIntent struct {
+-	ID    string
+-	Image string
++type Lease interface {
++	Release(ctx context.Context) error
+ }
+ 
+-type Runtime interface {
+-	EnsureTask(ctx context.Context, task TaskIntent) error
++type Metrics interface {
++	ObserveReconciliationDuration(duration time.Duration)
++	IncReconciliationErrors()
++	AddCreatedTasks(count int)
++	AddStoppedTasks(count int)
+ }
+ 
++type Config struct {
++	Interval time.Duration
++}
++
++type Option func(*Reconciler)
++
+ type Reconciler struct {
+-	runtime Runtime
++	store   Store
++	lock    LeaderLock
++	metrics Metrics
++	logger  *slog.Logger
++	now     func() time.Time
++	config  Config
++}
++
++func New(store Store, opts ...Option) *Reconciler {
++	r := &Reconciler{
++		store:   store,
++		lock:    NoopLeaderLock{},
++		metrics: NoopMetrics{},
++		logger:  slog.Default(),
++		now:     func() time.Time { return time.Now().UTC() },
++		config:  Config{Interval: 15 * time.Second},
++	}
++	for _, opt := range opts {
++		opt(r)
++	}
++	if r.config.Interval <= 0 {
++		r.config.Interval = 15 * time.Second
++	}
++	return r
++}
++
++func WithInterval(interval time.Duration) Option {
++	return func(r *Reconciler) {
++		r.config.Interval = interval
++	}
++}
++
++func WithLeaderLock(lock LeaderLock) Option {
++	return func(r *Reconciler) {
++		if lock != nil {
++			r.lock = lock
++		}
++	}
++}
++
++func WithMetrics(metrics Metrics) Option {
++	return func(r *Reconciler) {
++		if metrics != nil {
++			r.metrics = metrics
++		}
++	}
++}
++
++func WithLogger(logger *slog.Logger) Option {
++	return func(r *Reconciler) {
++		if logger != nil {
++			r.logger = logger
++		}
++	}
++}
++
++func (r *Reconciler) Run(ctx context.Context) error {
++	if err := r.ReconcileOnce(ctx); err != nil {
++		return err
++	}
++
++	ticker := time.NewTicker(r.config.Interval)
++	defer ticker.Stop()
++	for {
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++			if err := r.ReconcileOnce(ctx); err != nil {
++				r.logger.Warn("service reconciliation failed", "error", err)
++			}
++		}
++	}
+ }
+ 
+-func New(runtime Runtime) *Reconciler {
+-	return &Reconciler{runtime: runtime}
++func (r *Reconciler) ReconcileOnce(ctx context.Context) error {
++	if r.store == nil {
++		return fmt.Errorf("reconciler store is required")
++	}
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++
++	started := r.now()
++	lease, err := r.lock.Acquire(ctx)
++	if err != nil {
++		r.metrics.IncReconciliationErrors()
++		return fmt.Errorf("acquire leader lock: %w", err)
++	}
++	defer func() {
++		if lease != nil {
++			if err := lease.Release(context.Background()); err != nil {
++				r.logger.Warn("release reconciler leader lock failed", "error", err)
++			}
++		}
++	}()
++
++	result, err := r.reconcile(ctx)
++	r.metrics.ObserveReconciliationDuration(r.now().Sub(started))
++	if err != nil {
++		r.metrics.IncReconciliationErrors()
++		return err
++	}
++	r.metrics.AddCreatedTasks(result.CreatedTasks)
++	r.metrics.AddStoppedTasks(result.StoppedTasks)
++	return nil
+ }
+ 
+-func (r *Reconciler) Reconcile(ctx context.Context, desired DesiredState) error {
+-	for _, task := range desired.Tasks {
++type Result struct {
++	CreatedTasks int
++	StoppedTasks int
++}
++
++func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {
++	services, err := r.store.ListServices(ctx)
++	if err != nil {
++		return Result{}, fmt.Errorf("list services: %w", err)
++	}
++	sort.Slice(services, func(i, j int) bool {
++		return services[i].ID < services[j].ID
++	})
++
++	activeServices := make(map[types.ServiceID]types.Service, len(services))
++	result := Result{}
++	for _, service := range services {
++		if err := ctx.Err(); err != nil {
++			return result, err
++		}
++		activeServices[service.ID] = service
++		serviceResult, err := r.reconcileService(ctx, service)
++		result.CreatedTasks += serviceResult.CreatedTasks
++		result.StoppedTasks += serviceResult.StoppedTasks
++		if err != nil {
++			return result, err
++		}
++	}
++
++	deletedResult, err := r.reconcileDeletedServices(ctx, activeServices)
++	result.CreatedTasks += deletedResult.CreatedTasks
++	result.StoppedTasks += deletedResult.StoppedTasks
++	if err != nil {
++		return result, err
++	}
++	return result, nil
++}
++
++func (r *Reconciler) reconcileService(ctx context.Context, service types.Service) (Result, error) {
++	tasks, err := r.store.ListTasksByService(ctx, service.ID)
++	if err != nil {
++		return Result{}, fmt.Errorf("list tasks for service %s: %w", service.ID, err)
++	}
++	tasks = sortedTasks(tasks)
++
++	result := Result{}
++	current := make([]types.Task, 0)
++	outdated := make([]types.Task, 0)
++	nonRestartableFailed := 0
++	for _, task := range tasks {
++		if task.Version != service.DeploymentVersion {
++			if isNonTerminal(task) {
++				outdated = append(outdated, task)
++			}
++			continue
++		}
++		if isNonTerminal(task) {
++			current = append(current, task)
++			continue
++		}
++		if task.ActualStatus == types.TaskFailed && !restartAllowed(service.Spec.RestartPolicy) {
++			nonRestartableFailed++
++		}
++	}
++
++	for _, task := range stopOrder(outdated) {
+ 		if err := ctx.Err(); err != nil {
+-			return err
++			return result, err
++		}
++		if err := r.stopTask(ctx, task, "task version is no longer current"); err != nil {
++			return result, err
++		}
++		result.StoppedTasks++
++	}
++
++	effectiveCount := len(current) + nonRestartableFailed
++	if effectiveCount < service.Spec.Replicas {
++		missing := service.Spec.Replicas - effectiveCount
++		for i := 0; i < missing; i++ {
++			if err := ctx.Err(); err != nil {
++				return result, err
++			}
++			if err := r.createTask(ctx, service, "service replicas below desired count"); err != nil {
++				return result, err
++			}
++			result.CreatedTasks++
+ 		}
+-		if err := r.runtime.EnsureTask(ctx, task); err != nil {
+-			return err
++		return result, nil
++	}
++
++	if len(current) > service.Spec.Replicas {
++		extra := len(current) - service.Spec.Replicas
++		for _, task := range stopOrder(current)[:extra] {
++			if err := ctx.Err(); err != nil {
++				return result, err
++			}
++			if err := r.stopTask(ctx, task, "service replicas above desired count"); err != nil {
++				return result, err
++			}
++			result.StoppedTasks++
++		}
++	}
++	return result, nil
++}
++
++func (r *Reconciler) reconcileDeletedServices(ctx context.Context, activeServices map[types.ServiceID]types.Service) (Result, error) {
++	result := Result{}
++	for _, status := range nonTerminalStatuses() {
++		tasks, err := r.store.ListTasksByStatus(ctx, status)
++		if err != nil {
++			return result, fmt.Errorf("list %s tasks: %w", status, err)
++		}
++		for _, task := range sortedTasks(tasks) {
++			if err := ctx.Err(); err != nil {
++				return result, err
++			}
++			if !isNonTerminal(task) {
++				continue
++			}
++			if _, ok := activeServices[task.ServiceID]; ok {
++				continue
++			}
++			if err := r.stopTask(ctx, task, "service no longer exists"); err != nil {
++				if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
++					continue
++				}
++				return result, err
++			}
++			result.StoppedTasks++
++		}
++	}
++	return result, nil
++}
++
++func (r *Reconciler) createTask(ctx context.Context, service types.Service, reason string) error {
++	task := types.Task{
++		ServiceID:     service.ID,
++		DesiredStatus: types.TaskRunning,
++		ActualStatus:  types.TaskPending,
++		Image:         service.Spec.Image,
++		Version:       service.DeploymentVersion,
++	}
++	created, err := r.store.CreateTask(ctx, task)
++	if err != nil {
++		return fmt.Errorf("create task for service %s: %w", service.ID, err)
++	}
++	if _, err := r.store.AppendEvent(ctx, types.Event{
++		Type:              "reconciler.task.created",
++		Severity:          types.EventInfo,
++		Source:            "reconciler",
++		Message:           reason,
++		RelatedObjectType: "task",
++		RelatedObjectID:   string(created.ID),
++		Timestamp:         r.now(),
++	}); err != nil {
++		return fmt.Errorf("append task created event: %w", err)
++	}
++	return nil
++}
++
++func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason string) error {
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return nil
++	}
++	stopped, err := r.store.StopTask(ctx, task.ID, task.UpdatedAt)
++	if err != nil {
++		return fmt.Errorf("stop task %s: %w", task.ID, err)
++	}
++	if _, err := r.store.AppendEvent(ctx, types.Event{
++		Type:              "reconciler.task.stopped",
++		Severity:          types.EventInfo,
++		Source:            "reconciler",
++		Message:           reason,
++		RelatedObjectType: "task",
++		RelatedObjectID:   string(stopped.ID),
++		Timestamp:         r.now(),
++	}); err != nil {
++		return fmt.Errorf("append task stopped event: %w", err)
++	}
++	return nil
++}
++
++func isNonTerminal(task types.Task) bool {
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return false
++	}
++	switch task.ActualStatus {
++	case types.TaskPending,
++		types.TaskAssigned,
++		types.TaskPulling,
++		types.TaskCreated,
++		types.TaskStarting,
++		types.TaskRunning,
++		types.TaskUnhealthy,
++		types.TaskStopping:
++		return true
++	default:
++		return false
++	}
++}
++
++func nonTerminalStatuses() []types.TaskStatus {
++	return []types.TaskStatus{
++		types.TaskPending,
++		types.TaskAssigned,
++		types.TaskPulling,
++		types.TaskCreated,
++		types.TaskStarting,
++		types.TaskRunning,
++		types.TaskUnhealthy,
++		types.TaskStopping,
++	}
++}
++
++func restartAllowed(policy types.RestartPolicy) bool {
++	switch policy.Condition {
++	case "", types.RestartAlways, types.RestartOnFailure:
++		return true
++	default:
++		return false
++	}
++}
++
++func stopOrder(tasks []types.Task) []types.Task {
++	ordered := sortedTasks(tasks)
++	sort.SliceStable(ordered, func(i, j int) bool {
++		leftPriority := stopPriority(ordered[i])
++		rightPriority := stopPriority(ordered[j])
++		if leftPriority != rightPriority {
++			return leftPriority < rightPriority
+ 		}
++		return ordered[i].ID > ordered[j].ID
++	})
++	return ordered
++}
++
++func stopPriority(task types.Task) int {
++	switch task.ActualStatus {
++	case types.TaskPending:
++		return 0
++	case types.TaskAssigned:
++		return 1
++	case types.TaskPulling, types.TaskCreated, types.TaskStarting:
++		return 2
++	case types.TaskUnhealthy:
++		return 3
++	case types.TaskRunning:
++		return 4
++	case types.TaskStopping:
++		return 5
++	default:
++		return 6
+ 	}
++}
++
++func sortedTasks(tasks []types.Task) []types.Task {
++	ordered := append([]types.Task(nil), tasks...)
++	sort.Slice(ordered, func(i, j int) bool {
++		return ordered[i].ID < ordered[j].ID
++	})
++	return ordered
++}
++
++type NoopLeaderLock struct{}
++
++func (NoopLeaderLock) Acquire(context.Context) (Lease, error) {
++	return noopLease{}, nil
++}
++
++type noopLease struct{}
++
++func (noopLease) Release(context.Context) error {
+ 	return nil
+ }
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) ObserveReconciliationDuration(time.Duration) {}
++func (NoopMetrics) IncReconciliationErrors()                    {}
++func (NoopMetrics) AddCreatedTasks(int)                         {}
++func (NoopMetrics) AddStoppedTasks(int)                         {}
+diff --git a/internal/reconciler/reconciler_test.go b/internal/reconciler/reconciler_test.go
+index a186773..46d1058 100644
+--- a/internal/reconciler/reconciler_test.go
++++ b/internal/reconciler/reconciler_test.go
+@@ -2,32 +2,293 @@ package reconciler
+ 
+ import (
+ 	"context"
++	"fmt"
+ 	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+-type fakeRuntime struct {
+-	seen []TaskIntent
++func TestReconcileOnceServiceReplicas(t *testing.T) {
++	tests := []struct {
++		name        string
++		services    []types.Service
++		tasks       []types.Task
++		wantCreated int
++		wantStopped []types.TaskID
++		wantEvents  int
++	}{
++		{
++			name: "scale up",
++			services: []types.Service{
++				serviceFixture("svc", 3, 1, types.RestartPolicy{}),
++			},
++			tasks: []types.Task{
++				taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning),
++			},
++			wantCreated: 2,
++			wantEvents:  2,
++		},
++		{
++			name: "scale down",
++			services: []types.Service{
++				serviceFixture("svc", 1, 1, types.RestartPolicy{}),
++			},
++			tasks: []types.Task{
++				taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning),
++				taskFixture("task-b", "svc", 1, types.TaskRunning, types.TaskRunning),
++				taskFixture("task-c", "svc", 1, types.TaskRunning, types.TaskRunning),
++			},
++			wantStopped: []types.TaskID{"task-c", "task-b"},
++			wantEvents:  2,
++		},
++		{
++			name: "failed task replacement",
++			services: []types.Service{
++				serviceFixture("svc", 2, 1, types.RestartPolicy{Condition: types.RestartOnFailure}),
++			},
++			tasks: []types.Task{
++				taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning),
++				taskFixture("task-b", "svc", 1, types.TaskRunning, types.TaskFailed),
++			},
++			wantCreated: 1,
++			wantEvents:  1,
++		},
++		{
++			name: "no-op when desired equals actual",
++			services: []types.Service{
++				serviceFixture("svc", 2, 1, types.RestartPolicy{}),
++			},
++			tasks: []types.Task{
++				taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning),
++				taskFixture("task-b", "svc", 1, types.TaskRunning, types.TaskPending),
++			},
++		},
++		{
++			name: "service deletion",
++			tasks: []types.Task{
++				taskFixture("task-a", "deleted-svc", 1, types.TaskRunning, types.TaskRunning),
++			},
++			wantStopped: []types.TaskID{"task-a"},
++			wantEvents:  1,
++		},
++		{
++			name: "version mismatch",
++			services: []types.Service{
++				serviceFixture("svc", 1, 2, types.RestartPolicy{}),
++			},
++			tasks: []types.Task{
++				taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning),
++			},
++			wantCreated: 1,
++			wantStopped: []types.TaskID{"task-a"},
++			wantEvents:  2,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			store := newFakeStore(tt.services, tt.tasks)
++			metrics := &fakeMetrics{}
++			r := New(store, WithMetrics(metrics))
++			r.now = func() time.Time { return time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC) }
++
++			if err := r.ReconcileOnce(context.Background()); err != nil {
++				t.Fatalf("reconcile once: %v", err)
++			}
++			if got := len(store.created); got != tt.wantCreated {
++				t.Fatalf("expected %d created tasks, got %d", tt.wantCreated, got)
++			}
++			if !taskIDsEqual(store.stopped, tt.wantStopped) {
++				t.Fatalf("expected stopped tasks %#v, got %#v", tt.wantStopped, store.stopped)
++			}
++			if got := len(store.events); got != tt.wantEvents {
++				t.Fatalf("expected %d events, got %d", tt.wantEvents, got)
++			}
++			if metrics.created != tt.wantCreated {
++				t.Fatalf("expected created metric %d, got %d", tt.wantCreated, metrics.created)
++			}
++			if metrics.stopped != len(tt.wantStopped) {
++				t.Fatalf("expected stopped metric %d, got %d", len(tt.wantStopped), metrics.stopped)
++			}
++			if metrics.durations != 1 {
++				t.Fatalf("expected duration metric once, got %d", metrics.durations)
++			}
++		})
++	}
+ }
+ 
+-func (f *fakeRuntime) EnsureTask(_ context.Context, task TaskIntent) error {
+-	f.seen = append(f.seen, task)
+-	return nil
++func TestReconcileOnceIsIdempotent(t *testing.T) {
++	store := newFakeStore(
++		[]types.Service{serviceFixture("svc", 2, 1, types.RestartPolicy{})},
++		nil,
++	)
++	r := New(store)
++
++	if err := r.ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("first reconcile: %v", err)
++	}
++	if err := r.ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("second reconcile: %v", err)
++	}
++	if got := len(store.created); got != 2 {
++		t.Fatalf("expected exactly 2 created tasks after two runs, got %d", got)
++	}
++}
++
++func TestReconcileOnceUsesLeaderLock(t *testing.T) {
++	lock := &fakeLeaderLock{}
++	store := newFakeStore(nil, nil)
++	r := New(store, WithLeaderLock(lock))
++
++	if err := r.ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("reconcile once: %v", err)
++	}
++	if lock.acquired != 1 || lock.released != 1 {
++		t.Fatalf("expected lock acquire/release once, got acquired=%d released=%d", lock.acquired, lock.released)
++	}
++}
++
++type fakeStore struct {
++	services map[types.ServiceID]types.Service
++	tasks    map[types.TaskID]types.Task
++	created  []types.Task
++	stopped  []types.TaskID
++	events   []types.Event
++	nextID   int
++}
++
++func newFakeStore(services []types.Service, tasks []types.Task) *fakeStore {
++	store := &fakeStore{
++		services: make(map[types.ServiceID]types.Service),
++		tasks:    make(map[types.TaskID]types.Task),
++		nextID:   1,
++	}
++	for _, service := range services {
++		store.services[service.ID] = service
++	}
++	for _, task := range tasks {
++		store.tasks[task.ID] = task
++	}
++	return store
++}
++
++func (s *fakeStore) ListServices(context.Context) ([]types.Service, error) {
++	services := make([]types.Service, 0, len(s.services))
++	for _, service := range s.services {
++		services = append(services, service)
++	}
++	return services, nil
++}
++
++func (s *fakeStore) ListTasksByService(_ context.Context, serviceID types.ServiceID) ([]types.Task, error) {
++	tasks := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.ServiceID == serviceID {
++			tasks = append(tasks, task)
++		}
++	}
++	return tasks, nil
++}
++
++func (s *fakeStore) ListTasksByStatus(_ context.Context, status types.TaskStatus) ([]types.Task, error) {
++	tasks := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.ActualStatus == status {
++			tasks = append(tasks, task)
++		}
++	}
++	return tasks, nil
++}
++
++func (s *fakeStore) CreateTask(_ context.Context, task types.Task) (types.Task, error) {
++	task.ID = types.TaskID(fmt.Sprintf("created-task-%d", s.nextID))
++	s.nextID++
++	task.CreatedAt = time.Now().UTC()
++	task.UpdatedAt = task.CreatedAt
++	s.tasks[task.ID] = task
++	s.created = append(s.created, task)
++	return task, nil
++}
++
++func (s *fakeStore) StopTask(_ context.Context, id types.TaskID, _ time.Time) (types.Task, error) {
++	task := s.tasks[id]
++	task.DesiredStatus = types.TaskStopped
++	task.UpdatedAt = time.Now().UTC()
++	s.tasks[id] = task
++	s.stopped = append(s.stopped, id)
++	return task, nil
++}
++
++func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
++	s.events = append(s.events, event)
++	return event, nil
++}
++
++type fakeMetrics struct {
++	durations int
++	errors    int
++	created   int
++	stopped   int
+ }
+ 
+-func TestReconcileEnsuresTasksInOrder(t *testing.T) {
+-	runtime := &fakeRuntime{}
+-	reconciler := New(runtime)
++func (m *fakeMetrics) ObserveReconciliationDuration(time.Duration) { m.durations++ }
++func (m *fakeMetrics) IncReconciliationErrors()                    { m.errors++ }
++func (m *fakeMetrics) AddCreatedTasks(count int)                   { m.created += count }
++func (m *fakeMetrics) AddStoppedTasks(count int)                   { m.stopped += count }
+ 
+-	err := reconciler.Reconcile(context.Background(), DesiredState{
+-		Tasks: []TaskIntent{
+-			{ID: "task-1", Image: "nginx:latest"},
+-			{ID: "task-2", Image: "redis:latest"},
++type fakeLeaderLock struct {
++	acquired int
++	released int
++}
++
++func (l *fakeLeaderLock) Acquire(context.Context) (Lease, error) {
++	l.acquired++
++	return fakeLease{lock: l}, nil
++}
++
++type fakeLease struct {
++	lock *fakeLeaderLock
++}
++
++func (l fakeLease) Release(context.Context) error {
++	l.lock.released++
++	return nil
++}
++
++func serviceFixture(id types.ServiceID, replicas int, version int64, policy types.RestartPolicy) types.Service {
++	return types.Service{
++		ID: id,
++		Spec: types.ServiceSpec{
++			Name:          string(id),
++			Image:         "nginx:1.27",
++			Replicas:      replicas,
++			RestartPolicy: policy,
+ 		},
+-	})
+-	if err != nil {
+-		t.Fatalf("reconcile returned error: %v", err)
++		DeploymentVersion: version,
++	}
++}
++
++func taskFixture(id types.TaskID, serviceID types.ServiceID, version int64, desired types.TaskStatus, actual types.TaskStatus) types.Task {
++	return types.Task{
++		ID:            id,
++		ServiceID:     serviceID,
++		DesiredStatus: desired,
++		ActualStatus:  actual,
++		Image:         "nginx:1.27",
++		Version:       version,
++		UpdatedAt:     time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC),
++	}
++}
++
++func taskIDsEqual(left, right []types.TaskID) bool {
++	if len(left) != len(right) {
++		return false
+ 	}
+-	if len(runtime.seen) != 2 {
+-		t.Fatalf("expected 2 reconciled tasks, got %d", len(runtime.seen))
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
+ 	}
++	return true
+ }
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index c24d7c0..8496a02 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -203,6 +203,27 @@ func (s *PostgresStore) GetService(ctx context.Context, id types.ServiceID) (typ
+ 	return service, nil
+ }
+ 
++func (s *PostgresStore) ListServices(ctx context.Context) ([]types.Service, error) {
++	rows, err := s.pool.Query(ctx, serviceSelectSQL()+` ORDER BY name, id`)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	var services []types.Service
++	for rows.Next() {
++		service, err := scanService(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		services = append(services, service)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return services, nil
++}
++
+ func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+@@ -289,6 +310,29 @@ func (s *PostgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 	return task, nil
+ }
+ 
++func (s *PostgresStore) StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error) {
++	row := s.pool.QueryRow(ctx, `
++		UPDATE tasks
++		SET desired_status = $2,
++			updated_at = timezone('utc', now()),
++			row_version = row_version + 1
++		WHERE id = $1 AND updated_at = $3 AND desired_status <> $2
++		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++		string(id),
++		string(types.TaskStopped),
++		expectedUpdatedAt.UTC(),
++	)
++	task, err := scanTask(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Task{}, ErrConflict
++		}
++		return types.Task{}, mapPostgresError(err)
++	}
++	return task, nil
++}
++
+ func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	row := s.pool.QueryRow(ctx, `
+ 		UPDATE tasks
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 4a126c4..54d91d4 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -17,6 +17,7 @@ type NodeStore interface {
+ type ServiceStore interface {
+ 	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
++	ListServices(ctx context.Context) ([]types.Service, error)
+ 	UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error)
+ }
+ 
+@@ -24,6 +25,7 @@ type TaskStore interface {
+ 	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
+ 	GetTask(ctx context.Context, id types.TaskID) (types.Task, error)
+ 	AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error)
++	StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)
+ 	UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error)
+ 	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
+ 	ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)

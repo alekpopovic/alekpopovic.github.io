@@ -1,0 +1,305 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T03:29:08.664211+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "artifacts": {
+    "pdf": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b"
+  },
+  "command_records": [
+    "validation/publication/invariant-table-site-build.json",
+    "validation/publication/invariant-table-jekyll-build.json",
+    "validation/publication/invariant-table-books-check.json",
+    "validation/publication/invariant-table-site-check.json",
+    "validation/publication/final-content-check.json",
+    "validation/publication/workspace-six-books-ui.json",
+    "validation/publication/final-performance.json",
+    "validation/publication/native-site-complete-edition.json",
+    "validation/publication/invariant-table-publisher-tests.json"
+  ],
+  "full_ui_run": {
+    "record": "validation/publication/final-all-ui.json",
+    "passed": 151,
+    "failed": 1,
+    "resolution": "Only failure expected five workspace books; sixth catalog book correctly visible. Updated expectation to six and actual affected test passed in workspace-six-books-ui.json. No failing test suppressed. Overall coverage152distincttests, fullsuitewasnotrepeated after assertion-only change."
+  },
+  "performance_routes": [
+    {
+      "url": "http://127.0.0.1:4174/",
+      "scores": {
+        "performance": 93,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3003.300300000001,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/ai/",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3155.2339000000006,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/ai/workshops/",
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3005.7428999999997,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/reading/",
+      "scores": {
+        "performance": 91,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3302.3533500000003,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/learn/workspace/",
+      "scores": {
+        "performance": 91,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3302.5308000000005,
+      "cls": 0.003839180589513461,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/learn/start/",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3152.6385,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/videos/cloudivision-delivery/",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2852.82495,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/learn/ai-workflows/",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2854.76415,
+      "cls": 0.001247733691591875,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/learn/secret-contracts/",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2853.05805,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/learn/universal-tracking/",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2702.7951000000003,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/newsletter/",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2851.5562499999996,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/projects/container-desk/",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3229.3993499999997,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/posts/codex-slash-commands/",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2701.5406000000003,
+      "cls": 0.0009597951473783652,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/cv/",
+      "scores": {
+        "performance": 93,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3156.25065,
+      "cls": 0.01401206311708066,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/codepop/",
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3002.0595,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/books/inside-orch/",
+      "scores": {
+        "performance": 93,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3151.2520499999996,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/books/inside-orch/06-follow-one-request-through-the-control-plane.html",
+      "scores": {
+        "performance": 95,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2850.755500000001,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/books/logbranik/",
+      "scores": {
+        "performance": 93,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3151.3761,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/books/universal-tracking/16-realtime.html",
+      "scores": {
+        "performance": 91,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 3450.9628000000002,
+      "cls": 0,
+      "tbt": 0
+    },
+    {
+      "url": "http://127.0.0.1:4174/posts/a-timeout-is-not-a-stopped-deployment/",
+      "scores": {
+        "performance": 94,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "lcp": 2852.03445,
+      "cls": 0.00524688013900173,
+      "tbt": 0
+    }
+  ],
+  "browser": "Google Chrome155.0.8059.39 / Linux; installed /opt/google/chrome/chrome",
+  "viewports": [
+    "1440x1000 default",
+    "390x844 newbookmobile",
+    "320x800 and720x500 existinglayouts",
+    "noJavaScript browsercontext",
+    "storageget/setSecurityError context"
+  ],
+  "discovery_record": "validation/publication/native-site-acceptance.json",
+  "checks": [
+    "All47canonical readingsections present in contents/search/sitemap; fulltext nonempty",
+    "Three original standalone posts discoverableinsearch/feed/sitemap, reciprocal numberedchapterlinks",
+    "Sixbooks204sections preserved bypublicationchecker",
+    "PublicPDF/EPUBbyte-exact withfinalcanonicalfiles",
+    "Configured shared Googletag exactlyonce acrossallgeneratedHTML fromcheck:site",
+    "Originalsource/prompts/state notraw-copied into_site",
+    "Keyboardnotecontrol, mobilePNGalttext/axecriticalseriouszero, noJavaScriptfullreading/answers/404, blockedstorageexport",
+    "Existingopt-inserviceworker/analyticsprivacy tests passed withinfullsuite; no globalprecachechange",
+    "All20Lighthouse routes pass repo budgets; newbooklanding93/chapter95, access/bestpractices/SEO100, CLS0,TBT0"
+  ],
+  "limitations": [
+    "Local synthetic browser audits are not field Core Web Vitals or proof of production analyticscollection.",
+    "No Safari/Firefox/Kindle/Apple Books hardware or live deployment check claimed.",
+    "Final PDF-only tablelayout correction didnotchange siteHTML/sharedbrowserassets; relevantformat/sitechecks rerun; UI/performance preserved.",
+    "Earlier defaultPlaywright missingbinary and checkerdependency/assertion setup failures are retained alongside corrected successful runs."
+  ],
+  "final_notice_rebuild": {
+    "records": [
+      "final-notice-site-build.json",
+      "final-notice-jekyll-build.json",
+      "notice-rebuild-books-check.json",
+      "notice-rebuild-site-check.json",
+      "notice-rebuild-native-site-check.json"
+    ],
+    "visual_equivalence": "validation/publication/pdf-rebuild-equivalence.json",
+    "scope": "FinalNOTICEcopiedthroughordinarybuild; siteHTML/sharedbrowsercodeunchanged; PDFpubliccopiesexactcurrentbytes."
+  }
+}

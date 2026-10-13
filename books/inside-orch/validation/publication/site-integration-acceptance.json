@@ -1,0 +1,205 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T04:07:31.275222+00:00",
+  "pdf_sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "publication_status": "Local candidate; no push or deployment",
+  "canonical_prose_changed": false,
+  "prompt": "093",
+  "status": "passed_with_explicit_browser_history",
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "posts": [
+    "_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md",
+    "_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md",
+    "_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md"
+  ],
+  "post_review": "validation/publication/post-editorial-review.json",
+  "post_topics": [
+    "Chapter 05: requested resources versus delivered Docker limits",
+    "Chapter 06: ready process versus durable state",
+    "Chapter 19: offline node versus proof of stopped workload"
+  ],
+  "glossary": [
+    {
+      "term": "Active state owner",
+      "definition": "The concrete implementation selected by the executable to hold live intent and observations. The default Orch server uses process-local MemoryService even when database configuration is present.",
+      "chapter": "06-follow-one-request-through-the-control-plane"
+    },
+    {
+      "term": "Resource propagation",
+      "definition": "Preserving requested fields through parsing, assignment, transport and runtime conversion. A Docker adapter supporting limits does not prove the ordinary agent forwards them.",
+      "chapter": "05-service-specifications-resources-and-ports"
+    },
+    {
+      "term": "Physical fencing",
+      "definition": "Preventing an obsolete worker from performing protected effects at the receiving authority. Heartbeat expiry and node-offline status alone do not stop an unreachable container.",
+      "chapter": "19-offline-nodes-draining-and-rescheduling"
+    }
+  ],
+  "checks": [
+    {
+      "record": "validation/publication/final-notice-site-build.json",
+      "record_sha256": "23115b924bfde296d085127706d3ec141a27b24326710c3d081c2aef4a43dca7",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:48:28.836367+00:00",
+      "finished_at_utc": "2026-10-13T03:49:09.213179+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/final-notice-site-build.stdout.txt",
+      "stderr": "validation/publication/final-notice-site-build.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/final-notice-jekyll-build.json",
+      "record_sha256": "3de27b57419560c9247aa29f603b9fe01c29e3f50a7d4a9fa6e86b5ccc4be679",
+      "command": [
+        "bundle",
+        "exec",
+        "jekyll",
+        "build"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:50:42.391969+00:00",
+      "finished_at_utc": "2026-10-13T03:50:46.661120+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/final-notice-jekyll-build.stdout.txt",
+      "stderr": "validation/publication/final-notice-jekyll-build.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/notice-rebuild-books-check.json",
+      "record_sha256": "4315f617980db873677a22ec90fdd2e8ff12480d43a98e3de0e9bf25705fd5f7",
+      "command": [
+        ".venv/bin/python",
+        "scripts/check-books.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:57:07.488980+00:00",
+      "finished_at_utc": "2026-10-13T03:57:37.628725+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/notice-rebuild-books-check.stdout.txt",
+      "stderr": "validation/publication/notice-rebuild-books-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/notice-rebuild-site-check.json",
+      "record_sha256": "7c06eada7b42e443112a8fe6bf677e7639e3857e82ff7da9496dbf09060f49ba",
+      "command": [
+        "npm",
+        "run",
+        "check:site"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:57:07.489122+00:00",
+      "finished_at_utc": "2026-10-13T03:57:11.939281+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/notice-rebuild-site-check.stdout.txt",
+      "stderr": "validation/publication/notice-rebuild-site-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/final-content-check.json",
+      "record_sha256": "d8990f825332edb9a18640773be4626d24376ecb61eebbf698081a352cb31ec1",
+      "command": [
+        "npm",
+        "run",
+        "check:content"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:48:30.490504+00:00",
+      "finished_at_utc": "2026-10-13T02:48:30.864812+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/final-content-check.stdout.txt",
+      "stderr": "validation/publication/final-content-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/final-performance.json",
+      "record_sha256": "6d804fd4b497a43cebd36cfcd38ca16b30adbbd4641c14e929e62e979c171153",
+      "command": [
+        "npm",
+        "run",
+        "check:performance"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:47:11.742419+00:00",
+      "finished_at_utc": "2026-10-13T02:49:37.043879+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/final-performance.stdout.txt",
+      "stderr": "validation/publication/final-performance.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/inside-orch-reader-ui-system-browser.json",
+      "record_sha256": "c33127dc071dd1ec952439aeabaee5c87915ac323e569819112b24b4f273009a",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "tests/inside-orch.spec.js",
+        "--grep",
+        "connects|mobile|without JavaScript|storage"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:09:13.460680+00:00",
+      "finished_at_utc": "2026-10-13T02:09:19.302220+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/inside-orch-reader-ui-system-browser.stdout.txt",
+      "stderr": "validation/publication/inside-orch-reader-ui-system-browser.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/workspace-six-books-ui.json",
+      "record_sha256": "b3afe4ed68384ba0985489fdfa0cb1ea02f79f562628e6500fce6ee61c247580",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "tests/workspace-editor.spec.js",
+        "-g",
+        "workspace and newsletter archive",
+        "--workers=1"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:58:03.143699+00:00",
+      "finished_at_utc": "2026-10-13T02:58:05.235411+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/workspace-six-books-ui.stdout.txt",
+      "stderr": "validation/publication/workspace-six-books-ui.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "browser_suite_history": {
+    "initial_full_suite": "validation/publication/final-all-ui.json",
+    "initial_result": "151 passed, 1 failed: workspace test expected five catalog books after the sixth book was added.",
+    "correction": "Expected count updated to six; no acceptance rule removed.",
+    "corrected_actual_test": "validation/publication/workspace-six-books-ui.json",
+    "corrected_result": "1 passed; the other 151 full-suite tests had already passed. Full-suite success is not falsely claimed for the retained failed run."
+  },
+  "patch": "publication/site-adapter/changes.patch",
+  "source_generated_manifest": "publication/site-adapter/source-generated-manifest.json",
+  "checks_performed_directly_here": [
+    "Canonical metadata equality and every measured manuscript input hash",
+    "Both generated asset and _site download bytes equal exact canonical PDF/EPUB",
+    "All three public generated paths ignored by Git",
+    "No raw prompt/evidence/state subtree exposed at the native book path",
+    "Glossary book IDs exactly equal all six catalog IDs"
+  ],
+  "limitations": [
+    "Live canonical URL, analytics delivery and public download response checks await a separately authorized deployment.",
+    "Final raw-workflow exclusion uses explicit bounded companion traversal, not a claim that no technical evidence is public; intentionally referenced sanitized companions remain available."
+  ],
+  "notice_rebuild_rebind": {
+    "prior_pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+    "prior_record": "validation/publication/prior-notice-rebuild/validation/publication/site-integration-acceptance.json",
+    "equivalence_record": "validation/publication/pdf-rebuild-equivalence.json",
+    "equivalence_record_sha256": "78a2ba8b1729fba3499f14fa9fe2282072e9b5f03a678563b207dc41bc4e1169",
+    "scope": "All 546 text/content streams and raster images equal the reviewed prior edition. Fresh build/check records retained; no new visual views or format builds claimed."
+  }
+}

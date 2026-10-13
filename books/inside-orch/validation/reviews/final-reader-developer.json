@@ -1,0 +1,1417 @@
+{
+  "prompt": "097",
+  "lens": "skeptical developer",
+  "reviewer": "source_foundation",
+  "reviewed_at_utc": "2026-10-13T04:35:35.883977+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed",
+  "overall_status": "accepted_local_reviewable_edition_with_explicit_limits",
+  "prerequisite_gate": "validation/RELEASE_GATE.md",
+  "artifact_hashes": {
+    "pdf": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+    "sources_zip": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06"
+  },
+  "scope_and_independence": {
+    "authored_chapters": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
+    ],
+    "prior_independent_full_narrative_and_answer_review": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "fresh_deep_cross_author_reading": [
+      9,
+      10,
+      27,
+      30
+    ],
+    "fresh_direct_passages_also_rechecked": [
+      19,
+      34,
+      37
+    ],
+    "complete_edition_structural_claim_listing_coverage": [
+      {
+        "chapter": 1,
+        "path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+        "sha256": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+        "claim_ids": [
+          "ch01.state-owner",
+          "ch01.memory-maps",
+          "ch01.optional-schema",
+          "ch01.active-loops",
+          "ch01.immediate-placement",
+          "ch01.runtime-bridge",
+          "ch01.readiness-boundary"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## A Small Cluster Is Still a Distributed System",
+          "## Who Owns Desired and Observed State?",
+          "## What the Default Binary Actually Runs",
+          "## The First Capability Boundary",
+          "## Atlas Lab: draw the actual boundary",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 2,
+        "path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+        "sha256": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+        "claim_ids": [
+          "ch02.runtime-interface",
+          "ch02.injection",
+          "ch02.fake-idempotency",
+          "ch02.planner-fixtures",
+          "ch02.lint-fallback",
+          "ch02.go-directive"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## The Actual Tree Versus the Intended Layout",
+          "## Interfaces at the Side-Effect Boundary",
+          "## Cancellation and Time as Dependencies",
+          "## The First Focused Test",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 3,
+        "path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+        "sha256": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+        "claim_ids": [
+          "ch03.startup",
+          "ch03.shutdown",
+          "ch03.fixture",
+          "ch03.memory",
+          "ch03.agent-create"
+        ],
+        "source_fences": 6,
+        "headings": [
+          "## Pinned Prerequisites and Installation",
+          "## One Local Server and One Worker",
+          "## The First Deployment Timeline",
+          "## Cleanup and the Limits of the Demo",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 4,
+        "path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+        "sha256": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+        "claim_ids": [
+          "ch04.identity",
+          "ch04.service-transition",
+          "ch04.task-transition",
+          "ch04.agent-gate",
+          "ch04.versions",
+          "ch04.deployment"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Service Intent and Per-Replica Tasks",
+          "## Desired Status Versus Actual Status",
+          "## Deployment Versions and Transition Owners",
+          "## Rejecting an Impossible Transition",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 5,
+        "path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+        "sha256": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+        "claim_ids": [
+          "ch05.strict-parser",
+          "ch05.quantities",
+          "ch05.defaults",
+          "ch05.planner-ports",
+          "ch05.memory-ports",
+          "ch05.resource-gap"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## From YAML to a Validated Service",
+          "## CPU and Memory in Exact Units",
+          "## Labels, Replicas, and Finite Host Ports",
+          "## When Admission Is Not Runtime Enforcement",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 6,
+        "path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+        "sha256": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+        "claim_ids": [
+          "ch06.active-memory",
+          "ch06.loops",
+          "ch06.mutation",
+          "ch06.immediate",
+          "ch06.envelope",
+          "ch06.restart"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Server Assembly and Active State Ownership",
+          "## Mutation Paths and Controller Loops",
+          "## The MemoryService Restart Experiment",
+          "## Integration Gaps as Architectural Evidence",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 7,
+        "path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+        "sha256": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+        "claim_ids": [
+          "ch07.middleware",
+          "ch07.errors",
+          "ch07.client",
+          "ch07.version",
+          "ch07.openapi-gaps",
+          "ch07.schema-test",
+          "ch07.raw-zero-vs-client"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Request Boundaries and Middleware Order",
+          "## Domain Errors as Public JSON Contracts",
+          "## The v1 Compatibility Surface",
+          "## OpenAPI and the Client Agree—or Differ",
+          "## Atlas Contract Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 8,
+        "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+        "sha256": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+        "claim_ids": [
+          "ch08.composition",
+          "ch08.precedence",
+          "ch08.server-required",
+          "ch08.json",
+          "ch08.local",
+          "ch08.status-extension"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Cobra Composition and Local Validation",
+          "## Configuration Precedence You Can Predict",
+          "## JSON Output for Operator Automation",
+          "## Failures That Belong in Exit Status",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 9,
+        "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+        "sha256": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+        "claim_ids": [
+          "ch09.contract",
+          "ch09.transaction",
+          "ch09.assignment",
+          "ch09.composition",
+          "ch09.fixture-schema"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## The Store Contract and PostgreSQL Schema",
+          "## Transactional Boundaries and Conflict Errors",
+          "## Optimistic Writes Under Contention",
+          "## Atlas Lab: Database Evidence Without a Silent Fixture Repair",
+          "## Why the Default Server Is Still Not Durable",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 10,
+        "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+        "sha256": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+        "claim_ids": [
+          "ch10.plan",
+          "ch10.hand-plan",
+          "ch10.claim",
+          "ch10.active-path"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Candidate Ordering and Deterministic Choice",
+          "## Ready Nodes, Labels, Capacity, and Ports",
+          "## One Assignment Under Concurrent Work",
+          "## Planner Guarantees Versus Live Placement",
+          "## Development History and Atlas Experiment",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 11,
+        "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+        "sha256": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+        "claim_ids": [
+          "ch11.composition",
+          "ch11.counting",
+          "ch11.repeated",
+          "ch11.stop"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Replica Convergence Without Docker Calls",
+          "## Repeated Iterations and Restart Idempotency",
+          "## Failed Tasks, Restart Policy, and Scale-Down",
+          "## How This Controller Is Invoked",
+          "## Atlas Lab: Observe Reads Before Counting Success",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 12,
+        "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+        "sha256": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+        "claim_ids": [
+          "ch12.runtime",
+          "ch12.create",
+          "ch12.operations",
+          "ch12.cleanup"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## A Typed Runtime Boundary",
+          "## Managed Labels as Resource Identity",
+          "## Repeated Create, Start, Stop, and Remove",
+          "## Drift From Manual Docker Changes",
+          "## History and Atlas Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 13,
+        "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+        "sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+        "claim_ids": [
+          "ch13.enrollment",
+          "ch13.retry",
+          "ch13.reports"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Enrollment and Agent Credentials",
+          "## Heartbeat, Polling, and Assigned Tasks",
+          "## Local Container Convergence and Reports",
+          "## Dropped Reports and Cancellation",
+          "## Development History and Atlas Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 14,
+        "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+        "sha256": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+        "claim_ids": [
+          "ch14.health-state",
+          "ch14.target",
+          "ch14.threshold",
+          "ch14.redirect"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Running Is Not Healthy",
+          "## HTTP and TCP Probe Decisions",
+          "## Timeouts and Repeated Health Reports",
+          "## SSRF Protection With Explicit Limits",
+          "## History and Atlas Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 15,
+        "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+        "sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+        "claim_ids": [
+          "ch15.record-types",
+          "ch15.timeline",
+          "ch15.redaction",
+          "ch15.delivery",
+          "ch15.durability"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Events, Diagnostic Logs, and Audits",
+          "## Attribution, Redaction, and History",
+          "## Notification Delivery as an External Effect",
+          "## When History Is Not Durable",
+          "## Atlas Lab: Capture a Timeline and Test a Sink",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 16,
+        "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+        "sha256": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+        "claim_ids": [
+          "ch16.proxy",
+          "ch16.frames",
+          "ch16.options",
+          "ch16.cancellation"
+        ],
+        "source_fences": 4,
+        "headings": [
+          "## The Client-to-Server-to-Agent Stream",
+          "## Docker Frames and Application Output",
+          "## Tail, Follow, Disconnect, and Cancellation",
+          "## Boundaries of Log Retention",
+          "## History and Atlas Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 17,
+        "path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+        "sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+        "claim_ids": [
+          "ch17.target-health",
+          "ch17.stop-limits",
+          "ch17.rollback",
+          "ch17.operation-order"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Service Versions and Deployment Ownership",
+          "## Max Surge and Max Unavailable Arithmetic",
+          "## Failed Targets and Previous Successful Versions",
+          "## Locks Against Conflicting User Actions",
+          "## Atlas Lab: Separate Count Invariants from Traffic",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 18,
+        "path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+        "sha256": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+        "claim_ids": [
+          "ch18.soft-delete",
+          "ch18.guarded-remove",
+          "ch18.finalization",
+          "ch18.retry"
+        ],
+        "source_fences": 4,
+        "headings": [
+          "## Soft Deletion Is a State Machine",
+          "## Stop and Remove Ownership",
+          "## Retries After Partial Cleanup",
+          "## When Finalization Is Safe",
+          "## Atlas Lab: Preserve an Unrelated Container",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 19,
+        "path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+        "sha256": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+        "claim_ids": [
+          "ch19.monitor-wired",
+          "ch19.cutoff",
+          "ch19.drain-complete",
+          "ch19.stateful"
+        ],
+        "source_fences": 4,
+        "headings": [
+          "## Heartbeat Expiry and Offline Status",
+          "## Drain Versus Node Disappearance",
+          "## Replacement Tasks and Rescheduling",
+          "## Partitions Without a Fencing Promise",
+          "## Atlas Lab: Pause One Owned Agent",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 20,
+        "path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+        "sha256": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+        "claim_ids": [
+          "ch20.endpoint-filter",
+          "ch20.assigned-port",
+          "ch20.dns-v4",
+          "ch20.dns-optional"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Endpoint Sets and Health Filtering",
+          "## Namespace Names and DNS Records",
+          "## Node Addresses Still Need Ports",
+          "## Rescheduling, TTL, and Stale Clients",
+          "## Atlas Lab: Compare Two Selection Functions",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 21,
+        "path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+        "sha256": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+        "claim_ids": [
+          "ch21.host-url",
+          "ch21.fields",
+          "ch21.selection",
+          "ch21.overlay"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## The Current Host-Port Packet Path",
+          "## Traefik Routers and Services",
+          "## Failures at Node and Gateway Boundaries",
+          "## An Overlay or CNI Design Is a Separate Step",
+          "## Atlas Lab: Inspect Configuration Before Starting a Gateway",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 22,
+        "path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+        "sha256": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+        "claim_ids": [
+          "ch22.equation",
+          "ch22.cooldown",
+          "ch22.stabilization",
+          "ch22.wiring"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## The CPU Recommendation Equation",
+          "## Bounds, Cooldown, and Rollout Exclusion",
+          "## Fake Metrics and Package Tests",
+          "## The Provider and Server Wiring Gaps",
+          "## Atlas Lab: Change Samples, Not Host Load",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 23,
+        "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+        "sha256": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+        "claim_ids": [
+          "ch23.conditional-user-auth",
+          "ch23.static-users",
+          "ch23.node-token",
+          "ch23.agent-ownership",
+          "ch23.tls-boundary"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## User JWTs and Role Checks",
+          "## Agent Bootstrap Is a Different Trust Path",
+          "## Which Routes Require Which Identity",
+          "## Docker Access and Missing Mutual TLS",
+          "## Atlas Lab: Prove Rejection Without Publishing Tokens",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 24,
+        "path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+        "sha256": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+        "claim_ids": [
+          "ch24.references",
+          "ch24.envelope",
+          "ch24.precedence",
+          "ch24.redaction",
+          "ch24.metadata"
+        ],
+        "source_fences": 4,
+        "headings": [
+          "## Secret References and Namespace Resolution",
+          "## The Local Encryption Envelope",
+          "## Configuration Precedence and Redaction",
+          "## Key Custody and Rotation Boundaries",
+          "## Atlas Lab: A Canary Without a Real Credential",
+          "## Exercises",
+          "## Development history and source references"
+        ]
+      },
+      {
+        "chapter": 25,
+        "path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+        "sha256": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+        "claim_ids": [
+          "ch25.credentials",
+          "ch25.parser",
+          "ch25.pinning",
+          "ch25.resolver"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Registry Authentication Without Plaintext History",
+          "## Image References, Tags, and Digests",
+          "## Immutable Policy Checks and Rollout Identity",
+          "## Supplied Digests Versus Registry Resolution",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 26,
+        "path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+        "sha256": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+        "claim_ids": [
+          "ch26.fields",
+          "ch26.admission",
+          "ch26.entry-points"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Container Security Fields That Reach Docker",
+          "## Admission Order and Policy Decisions",
+          "## The Same Checks Across Entry Points",
+          "## What Admission Does Not Isolate",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 27,
+        "path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+        "sha256": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+        "claim_ids": [
+          "ch27.context",
+          "ch27.visibility",
+          "ch27.roles",
+          "ch27.rollback"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Namespace Context and Local Names",
+          "## Cross-Namespace IDs and Secret References",
+          "## Namespace Roles and Cluster Administration",
+          "## Logical Isolation on Shared Workers",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 28,
+        "path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+        "sha256": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+        "claim_ids": [
+          "ch28.arithmetic",
+          "ch28.concurrent-memory",
+          "ch28.concurrent-store",
+          "ch28.snapshots"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Requested Resource Arithmetic",
+          "## Atomic Quotas Under Concurrent Changes",
+          "## Usage Snapshots and CSV Units",
+          "## An Export Boundary, Not a Billing System",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 29,
+        "path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+        "sha256": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+        "claim_ids": [
+          "ch29.baseline",
+          "ch29.placement",
+          "ch29.scanning",
+          "ch29.contract"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Digest Identity and Signature Authenticity",
+          "## Trust Policy and Verification Placement",
+          "## SBOM, Vulnerability Freshness, and Fail Modes",
+          "## What the Repository Proposes Rather Than Runs",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 30,
+        "path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+        "sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+        "claim_ids": [
+          "ch30.source",
+          "ch30.apply",
+          "ch30.drift",
+          "ch30.prune"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## A Source Revision You Can Trace",
+          "## Fetch, Parse, Admission, and Apply",
+          "## Warn Versus Auto-Revert Drift",
+          "## Prune Only What This Source Owns",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 31,
+        "path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+        "sha256": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+        "claim_ids": [
+          "ch31.attempt",
+          "ch31.retry",
+          "ch31.schedule",
+          "ch31.concurrency"
+        ],
+        "source_fences": 4,
+        "headings": [
+          "## Finite Attempts and Exit Codes",
+          "## Retry Limits and Terminal Outcomes",
+          "## Cron Expressions and Explicit Timezones",
+          "## Allow, Forbid, Replace, and Missed Runs",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 32,
+        "path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+        "sha256": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+        "claim_ids": [
+          "ch32.binding",
+          "ch32.physical-name",
+          "ch32.attachments",
+          "ch32.scheduler",
+          "ch32.live-path",
+          "ch32.design-boundary"
+        ],
+        "source_fences": 3,
+        "headings": [
+          "## Local Volumes and Claim Binding",
+          "## Attachments and Active Writer Rules",
+          "## Topology Constraints During Placement",
+          "## The Storage Guarantees That Are Absent",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 33,
+        "path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+        "sha256": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+        "claim_ids": [
+          "ch33.runtime",
+          "ch33.envelope",
+          "ch33.notifications",
+          "ch33.rpc-proposal",
+          "ch33.provider"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Interfaces Already Present in the Code",
+          "## A Versioned External Plugin Handshake",
+          "## Supervisor Lifecycle and Failure Containment",
+          "## Contract Testing a Proposed Adapter",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 34,
+        "path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+        "sha256": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+        "claim_ids": [
+          "ch34.lease",
+          "ch34.wrapper",
+          "ch34.key",
+          "ch34.session",
+          "ch34.default",
+          "ch34.design"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## API Availability and Controller Leadership",
+          "## PostgreSQL Advisory Locks and Connections",
+          "## Lease Loss Must Cancel Controller Work",
+          "## The Durable State and Server Composition Prerequisites",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 35,
+        "path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+        "sha256": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+        "claim_ids": [
+          "ch35.versions",
+          "ch35.preflight",
+          "ch35.migrations",
+          "ch35.down",
+          "ch35.maintenance",
+          "ch35.retention",
+          "ch35.schema-gate"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Version Ranges and Upgrade Preflight",
+          "## Migration Locks and Guarded Down Paths",
+          "## Maintenance Windows and Bounded Retention",
+          "## A Schema Check Must Be Enabled to Run",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 36,
+        "path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+        "sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+        "claim_ids": [
+          "ch36.fake",
+          "ch36.seeds",
+          "ch36.port-fuzz",
+          "ch36.fake-e2e",
+          "ch36.reconcile"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Fakes as Executable Specifications",
+          "## Seeded Scheduler Properties",
+          "## Fuzz Inputs and Minimal Reproductions",
+          "## Contracts Across Boundaries",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 37,
+        "path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+        "sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+        "claim_ids": [
+          "ch37.report",
+          "ch37.controller",
+          "ch37.runtime-unknown",
+          "ch37.return-cleanup",
+          "ch37.write-failure",
+          "ch37.memory-restart"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Define the Invariant Before the Fault",
+          "## Runtime Failure, Node Loss, and Partitions",
+          "## Recovery Timelines and Residual Work",
+          "## The Scope of Fake Chaos",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 38,
+        "path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+        "sha256": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+        "claim_ids": [
+          "ch38.wrapper",
+          "ch38.failure-reports",
+          "ch38.scrape",
+          "ch38.alert",
+          "ch38.cardinality",
+          "ch38.proxies"
+        ],
+        "source_fences": 2,
+        "headings": [
+          "## Metric Emission and Meaning",
+          "## Labels, Cardinality, Counters, and Gauges",
+          "## Alert Expressions and Dashboard Proxies",
+          "## Operator Action and the Atlas Signal Lab",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 39,
+        "path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+        "sha256": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+        "claim_ids": [
+          "ch39.simulation",
+          "ch39.benchmark",
+          "ch39.scale",
+          "ch39.debug",
+          "ch39.debug-default"
+        ],
+        "source_fences": 1,
+        "headings": [
+          "## Fake-Agent Load and Real Runtime Capacity",
+          "## Benchmark Inputs and Repeatable Results",
+          "## Profiles and the Debug Boundary",
+          "## Interpreting a Thousand-Service Test",
+          "## Exercises"
+        ]
+      },
+      {
+        "chapter": 40,
+        "path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+        "sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+        "claim_ids": [
+          "ch40.ci",
+          "ch40.fallback",
+          "ch40.docker-authority",
+          "ch40.restore-guard",
+          "ch40.backup-boundary",
+          "ch40.release-boundary"
+        ],
+        "source_fences": 1,
+        "headings": [
+          "## Release Checks With Honest Coverage",
+          "## Deployment Manifests and Runtime Prerequisites",
+          "## A Backup Drill With the Correct State Boundary",
+          "## The Final Readiness Decision and Backlog",
+          "## Exercises"
+        ]
+      }
+    ],
+    "compilation_coverage": "Reviewed global29-entry manifest:28 actual executed targets plus one inspected non-executable HA ADR. Earlier074/075/082 checks are retained, not relabeled as new execution.",
+    "honest_boundary": "A distinct skeptical developer lens, not an external human endorsement or an assertion of independent authorship for own 16 chapters. Prior substantive reading/authoring and independent reviews are retained; this final pass does not claim a fresh line-by-line prose reread of every chapter."
+  },
+  "input_sha256": {
+    "validation/RELEASE_GATE.md": "0968a32056684dd5a9838c37fa708cdbd62f1416fd638b1ab3c69f909e433f95",
+    "validation/release-gate.json": "d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278",
+    "editorial/CAPABILITIES.md": "faeab96e112ee65832953d5e7c13b33bfff730e6f0513869ad7a3063bc9f2616",
+    "examples/README.md": "a5b4c5f107d4470d183fdd1cc499b4d1e3ec26cfccdcd323b3d596283a7b0e0c",
+    "examples/manifest.json": "61b7a327089c11b094c87bc35cb22aef34680d2fe118c72e6b80777304b2383f",
+    "validation/examples/manifest.json": "8b74d42a653efa9e8a2b7fb1ae4386aa1d1d2e2990aa7884132808ca4955b92f",
+    "validation/reviews/code-compilation.json": "da649ca31d2f685057bdb52cc8e8805c31bfb3bbdd7827568a5a3c86ef10658c",
+    "validation/reviews/command-api-fidelity.json": "6867683e2cbc2a603d6ae186637ddcd5f2d7982221c21685afdd4d9d10e75a7b",
+    "publication/REPRODUCE.md": "8389095b12020604b202a3c24ceabbcdbf6956df0f7b5a0e86fb0a540d9957ed",
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78",
+    "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78",
+    "manuscript/chapters/26-security-contexts-admission-and-policy.md": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9",
+    "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab",
+    "manuscript/chapters/28-quotas-and-usage-accounting.md": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7",
+    "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b",
+    "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d",
+    "manuscript/chapters/31-finite-jobs-and-time-based-work.md": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6",
+    "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c",
+    "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a",
+    "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8",
+    "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36",
+    "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6",
+    "manuscript/chapters/37-failure-injection-and-recovery-evidence.md": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944",
+    "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462",
+    "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143",
+    "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5",
+    "manuscript/appendices/a-cli-api-config.md": "36077d9631361ab46b881011e6d4622374ee526fc2ea775155987705723de36c",
+    "manuscript/appendices/b-lifecycle-invariants.md": "c9a04d773f4ac4e8ff76d1b828daa460829a6dcdfa611ff97b557d7b128cbced",
+    "manuscript/appendices/c-annotated-history.md": "3fc5d10c55bd7a4b622098ada7a9efc00d4516485d678e35d7316a99e1ede227",
+    "manuscript/appendices/d-exercises-solutions.md": "bf903c344ad490fd329cc794019151ba03c542223de5c1f64e1db2e58627b493",
+    "manuscript/appendices/e-ops-measurement.md": "a2b1cdae1d551ba44d58d49c041cf0d8116093fef69856137c16d30faf65ce16",
+    "manuscript/appendices/f-glossary-bibliography.md": "cdecf81711ad0914d052b1de460d4c373a7e81eb744134eeda5be77b81a377c6",
+    "manuscript/solutions/appendix-d.md": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5",
+    "manuscript/solutions/ch01.md": "7bbb0e70a9f0aa84d4fcf29552ce511550476ee34e1fcd3974c04455f8019167",
+    "manuscript/solutions/ch02.md": "d9cabcf2182c9ab1be9e59c16ba124b15da28b2751b410b4d5117cc5f5443502",
+    "manuscript/solutions/ch03.md": "c6748fcef3e669801cdeca9c2cefcc30d86ca99e83f6bbe2aadf114533d35d9c",
+    "manuscript/solutions/ch04.md": "b246b143e40dd47369a70a913fe2e7c98763677bbd39d5bc0d51e39fb1568c38",
+    "manuscript/solutions/ch05.md": "863720e99500bdc250ce2a1b26befe4668a46b70aeb0eebdccdfe7826a023c9a",
+    "manuscript/solutions/ch06.md": "5fee2393dcb98714b004ac6341b66838bb87d77e8ee6aa1d88a422d78936d8f1",
+    "manuscript/solutions/ch07.md": "3b6922262ec8d4d139e7816742d3ec61f2ac0a405b10e9a0848f8c10be9a65ac",
+    "manuscript/solutions/ch08.md": "9b5e2b6cfed139ea1ed9b8e5c52775f1f46ea3e43199de603492cad2a77f28a8",
+    "manuscript/solutions/ch09.md": "e4c3401a4c6c27c2515df8ee41576cb37653ff14008e7f2e70fd9178434f8e6c",
+    "manuscript/solutions/ch10.md": "95122f8bc6cb1c203d08b2121d58367b7a9635b3e587ae225cdea6878075100c",
+    "manuscript/solutions/ch11.md": "76c0913a0e084af393848e310b3ee59fdc38d1e676f7e28b2706fb5c16af38d3",
+    "manuscript/solutions/ch12.md": "56b2fabdd3c804da4d3f1a8b955dd9299408732c5984cc9250067b2c11d3e0c2",
+    "manuscript/solutions/ch13.md": "b520d820f0fe33c01b03a8a088ee5adf3b402115b501906d50996a420c742a5d",
+    "manuscript/solutions/ch14.md": "2f696b944bd77a416e109522d77b4e8d307c3fd092909c95599a1be49dd055f2",
+    "manuscript/solutions/ch15.md": "e050b4657456bf2f607365b9c3506af8fe2363395543532e2976ba42c9457685",
+    "manuscript/solutions/ch16.md": "2d6b88593d07354a6a6f249b0aaf33d1b10582666d1c552cd06c05ddcd9bdcae",
+    "manuscript/solutions/ch17.md": "b4add5a7bc435be8e889a14c87a0577b25e949712cdeb260c1de0f83e4443845",
+    "manuscript/solutions/ch18.md": "86290e17a033fcc709b05fe305b5e6dd255ee2b65518acd4c6089909665526a4",
+    "manuscript/solutions/ch19.md": "78acaf96bd9daeed912509af7675dbad0c4db7de8dfff96589e81c2843aa4a7f",
+    "manuscript/solutions/ch20.md": "7ecc54fe7518741f203420ab6a322e10d9cd7b21cd83449f06c637851a11082b",
+    "manuscript/solutions/ch21.md": "7d5d2ff6433872ff3865904162a209dc21b79d62fada7229471fccbc6c34fe36",
+    "manuscript/solutions/ch22.md": "310da6dd6bc659629b421fdee3565e644800d6ddadcbc54774b7b00917a38674",
+    "manuscript/solutions/ch23.md": "9d89f4362ec38b7c9aa5de96ddeb42f745591fa9f9fcb4fd94ffdd91df28a03e",
+    "manuscript/solutions/ch24.md": "27347a0d00a077438d6c19928f7ef84fcca4ec1c6059d427df2a596c97cab2ea",
+    "manuscript/solutions/ch25.md": "a88d6b16dd377c88afdcdffd760d3d224b199ede0d151fb5811da9ee680462b9",
+    "manuscript/solutions/ch26.md": "92d16378694540f21d3a70618b2af9f9ef6cc197b95a28c57a9e7438ef750266",
+    "manuscript/solutions/ch27.md": "c4f83b83f719872d02942eab9bae809e603200c719cb58eaaab2491b4e3bc029",
+    "manuscript/solutions/ch28.md": "9f5ef7a15232de197399d574a3d887d103799b70ea65100470e690cff299328b",
+    "manuscript/solutions/ch29.md": "23a5e437c855674bbb89bd3c2a6410f1c8a245845cf47cba786c388e931339cd",
+    "manuscript/solutions/ch30.md": "ede55d529ecf7f6f9b82e42e66f6480c9388d889a767c5767db0013bab323fd2",
+    "manuscript/solutions/ch31.md": "4bf4f11f562895a716f7f5163470b32a8bb39965cf5de45793643c575441f962",
+    "manuscript/solutions/ch32.md": "db9cac75a455e185666074cc29d5c9f5cd9219b3c96e087b803ab13f0038b658",
+    "manuscript/solutions/ch33.md": "54a262e2de95c59930a23f18b7061ed20cf6a921db05cb9d2dd2b6a5e50384c2",
+    "manuscript/solutions/ch34.md": "979bf1195f2fdd41ff245c42bec9cfc134447d74fb2ccebce6d04050a432d520",
+    "manuscript/solutions/ch35.md": "14df32640f1b1884858d5205f0f13736db6ce083dd3eda1b757bc9d88e973079",
+    "manuscript/solutions/ch36.md": "db65f04914e1fb9160702d880809427fe08fb45e367235bb2c41b3c367b2e5e3",
+    "manuscript/solutions/ch37.md": "939612628fd5afb1ee78ac5e2ac3ff60e5b75424eb2573a32885143e18d32ecc",
+    "manuscript/solutions/ch38.md": "367bf0a4af850366457b0159bc03720e4e9ad9a7dc53558a0fa5df94cc5ece9d",
+    "manuscript/solutions/ch39.md": "de438215e3bd562d2c3e751452f906c9dd0fb2797eb996eb042d469a04278a88",
+    "manuscript/solutions/ch40.md": "407ab7a7dc62845867f88b2314979a8b340df533ae85aa39ff11174efb8f8e31",
+    "validation/evidence/ch01.json": "24707b565ce509050d4bc6ed514ebac0fb39331fc2bc3f86b3702dfb2aafc16c",
+    "validation/evidence/ch02.json": "4a780d980c7309a2f171a6895850e9053a20f700966b77f4900c51cd25310ba9",
+    "validation/evidence/ch03.json": "8363ebb5ed14c509617cbddbb6c3db0d5daa99e4ddcd383141dc22715ed580ab",
+    "validation/evidence/ch04.json": "ac83011e621dde63dc5f4a8559ae0004e56dbd3ecc4eb4e6d818fb356d1c7643",
+    "validation/evidence/ch05.json": "e1a7abd97346ca44d48375312ed878aa5d6165a6205d558ed6eb2df1bc5b8ac2",
+    "validation/evidence/ch06.json": "2f8008da81b01fefa29de85f9cdbbb3d41643e658d9918c2b7ca2f94bc54926c",
+    "validation/evidence/ch07.json": "046564f208406701f37eed4123025c9b30f0e42b9b38e43d633ae662ae690949",
+    "validation/evidence/ch08.json": "89ba6bd90910eaf54fb6cfc7be8842c887a9a0d48d2c95689ea8c981bc295f39",
+    "validation/evidence/ch09.json": "82988a78dee1b613536679b769752ea75bfe03680e162f60debb6950644fc665",
+    "validation/evidence/ch10.json": "46881465eb9d3b2af8e5586891b745a74d5c044c320b1831ab64908916671338",
+    "validation/evidence/ch11.json": "4507d31f04215130307c87c0407813dfc79a2ca6211ffadfe0a036b6246ce21a",
+    "validation/evidence/ch12.json": "fd365c86d02970c4761bcb5965bf76082bb54c7835a1e8fb0dd099c2c94675f9",
+    "validation/evidence/ch13.json": "719a594424bfa43af62f45a5c64ead84f083f78d8cf0e7802112fb1a052178d9",
+    "validation/evidence/ch14.json": "26e3ade83113e0eaab3368d8cc2bf4b4e2029e3b3e65301d17540e33b6ace472",
+    "validation/evidence/ch15.json": "a2d50697e041f9929b4371b36da55dfec8fdb2bbcbf2f45d8afdc6ac7acbc90a",
+    "validation/evidence/ch16.json": "6e09eca59269159a06a19037e532801d1d14f1fd3f79a85e5733b179a0934723",
+    "validation/evidence/ch17.json": "4fafe1c144ea7270197733c48668d1f59968686d4bf2a2853dc3386cc6059c94",
+    "validation/evidence/ch18.json": "3e0b899a0fbde4e9f9cec59c2256cb54690454619496dfc5edeb93a91863ca23",
+    "validation/evidence/ch19.json": "4f15389f2fa8fc488d923646b643451e111e90f8dbe17b285b76537490dd4f79",
+    "validation/evidence/ch20.json": "7cfa2c4553810106796b31b77eb6a77dd320e78b30c770fe28c6800302c2a96f",
+    "validation/evidence/ch21.json": "e13976cf381cea5877b4629913698000a1135f6b03703f3d1aa7d1709564e6ff",
+    "validation/evidence/ch22.json": "3e9f3a6e6f7365ce0681f23826783c44e3f0a4e6d60f7ad1ede599d29091f2ef",
+    "validation/evidence/ch23.json": "e5c64113221ed6e4124e02267a525373dab02957ee78a1bfb5ec8de7a587432b",
+    "validation/evidence/ch24.json": "bb4727e274af66018b729bcd3bccc8feb10de7bae7c373fcbbd8ba314c2c8055",
+    "validation/evidence/ch25.json": "3bcea5d666c1154a8cd7a846a3d5878affde80b8096c3c410849192dbc955f8d",
+    "validation/evidence/ch26.json": "17c4819f1d226b9813cb3b2e2f8f44b1784b28a8e028ce24709c94b5503923e6",
+    "validation/evidence/ch27.json": "a52148ee1b5f7d177a6a0282f90e7072dad114011d78d16720aae54138ab2677",
+    "validation/evidence/ch28.json": "5fbd890b0fc7676838c2d820f7cda417bbcbb5f93eadb2c9d13846240bb1569e",
+    "validation/evidence/ch29.json": "abbb33f72afde808b71145f736181801f1f5c6b6e50dbdc47ee7464798b05c85",
+    "validation/evidence/ch30.json": "bcbe824264ee817a692cda805fb6851f95a63c79991b09d7d5ab6bd3918bff28",
+    "validation/evidence/ch31.json": "c4545649f114ec8c00d719a4565fbdc52cc983bf8f5a013b5f4e9bd4950fecfe",
+    "validation/evidence/ch32.json": "e37c9d67fb7d162906c4db93aa244c0124f3e92197b68fc080fa66d9489e3620",
+    "validation/evidence/ch33.json": "e3c4c4278b68ab8ca5903ad29f8d98c9f4a8d6ecc43fd76346d81670431a399e",
+    "validation/evidence/ch34.json": "22fda59330f19a881c39b30f772da4bdc38f46ba4e1bb4ad2da827bcfa1316dc",
+    "validation/evidence/ch35.json": "b220154cdae8098bbf2678b03d047c3ad322963eb45f3fd0b1cdc8ea03e94ee3",
+    "validation/evidence/ch36.json": "58dc38382e6e0a89594eaa040d33e087f82387ce5b1cb50285175564123905ad",
+    "validation/evidence/ch37.json": "f46e543a795b95b70a6a8be06fc4eb3d4e5bd775c1cabc6dba9fbfe6f3f39764",
+    "validation/evidence/ch38.json": "c0c0711a565b04d6320b6b6c45c9c4e7435b2cae8d901e818de18497e2117051",
+    "validation/evidence/ch39.json": "3f67b9b70c8815da2a7f64f6dc265635e5dfea3fc142eb0a52e4f7f424d7e37d",
+    "validation/evidence/ch40.json": "c833d804732c751aca7f735185f36b2329b9078e06a8a3567a99d766d778639a"
+  },
+  "adversarial_scenarios": [
+    {
+      "id": "DEV97-01",
+      "scenario": "Put two default servers behind one load balancer and interpret readiness as shared durable state.",
+      "chapters": [
+        6,
+        9,
+        34
+      ],
+      "claim_ids": [
+        "ch06.active-memory",
+        "ch06.restart",
+        "ch09.composition",
+        "ch34.default"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/cmd/orch-server/main.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 142,
+          "line_end": 148,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L142-L148"
+        },
+        {
+          "path": "evidence/orch/internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 279,
+          "line_end": 307,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L279-L307"
+        }
+      ],
+      "records": [
+        "validation/labs/ch06/combined-restart.json"
+      ],
+      "observed": "The actual fresh-process record loses service/task/node/custom-namespace records while the same manually associated owned container remains running. A separate ready process is not a shared state owner.",
+      "review_result": "accepted",
+      "reason": "Chapter34 explicitly rejects two memory servers as HA; Chapter09 requires a new durable composition, not a constructor substitution.",
+      "scope": "Two simultaneously load-balanced servers were not executed. Their independent maps follow inspected constructors; the actual restart experiment is deliberately manual container association, not agent adoption.",
+      "record_hashes": {
+        "validation/labs/ch06/combined-restart.json": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075"
+      }
+    },
+    {
+      "id": "DEV97-02",
+      "scenario": "Use one successful task CAS to claim that two schedulers cannot overcommit different tasks or host ports.",
+      "chapters": [
+        9,
+        10
+      ],
+      "claim_ids": [
+        "ch09.assignment",
+        "ch09.transaction",
+        "ch10.claim",
+        "ch10.active-path"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/store/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 892,
+          "line_end": 936,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L936"
+        },
+        {
+          "path": "evidence/orch/internal/scheduler/scheduler.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 170,
+          "line_end": 218,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L170-L218"
+        }
+      ],
+      "records": [
+        "validation/intake/full-schema-recovery-corrected.json",
+        "validation/labs/lab02-concurrent-claims.json"
+      ],
+      "observed": "The separate full sixteen-schema fixture has exactly one winner and one conflict for one pending task. SQL predicates task ID/UpdatedAt/pending state; row_version is incremented but not the compared guard.",
+      "review_result": "accepted",
+      "reason": "Both chapters explicitly distinguish per-task ownership from cross-row CPU/port reservation and warn that ordinary immediate placement bypasses Plan. Worked answers identify the same predicates and limitation.",
+      "scope": "No global reservation implementation or live two-planner overcommit experiment was invented; the broader race is source-derived analysis.",
+      "record_hashes": {
+        "validation/intake/full-schema-recovery-corrected.json": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+        "validation/labs/lab02-concurrent-claims.json": "aefabbc1054793621884b951493d39a1fef6a2448118584ca33d29a519b0490f"
+      }
+    },
+    {
+      "id": "DEV97-03",
+      "scenario": "Partition a worker, reschedule its stateless task, and infer that the old container has stopped.",
+      "chapters": [
+        19,
+        32,
+        37
+      ],
+      "claim_ids": [
+        "ch19.cutoff",
+        "ch19.drain-complete",
+        "ch37.return-cleanup"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 681,
+          "line_end": 699,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L681-L699"
+        },
+        {
+          "path": "evidence/orch/pkg/types/lifecycle.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 269,
+          "line_end": 275,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L269-L275"
+        },
+        {
+          "path": "evidence/orch/internal/agent/agent_test.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 446,
+          "line_end": 472,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent_test.go#L446-L472"
+        }
+      ],
+      "records": [
+        "validation/labs/ch37/fault-tests.json",
+        "validation/labs/03-check.json"
+      ],
+      "observed": "Returned-node deterministic tests exercise owned cleanup. Desired-stopped/removed objects leave active accounting before a physical daemon acknowledgement.",
+      "review_result": "accepted",
+      "reason": "Chapter19/37 distinguish server authority from host reality and eventual cleanup from fencing; stateful work and local volumes are kept separate.",
+      "scope": "No real network partition or simultaneous request-serving overlap was executed by this review. Fake cleanup is not network or disk fencing.",
+      "record_hashes": {
+        "validation/labs/ch37/fault-tests.json": "2faef0c686b11be980f183b2d74de9481e11921369e1c91450252e76dab25b24",
+        "validation/labs/03-check.json": "58af4a3bbcd54a7deb2b4c3c73214101de94901ba64951b3209f76c05424bc65"
+      }
+    },
+    {
+      "id": "DEV97-04",
+      "scenario": "Accept 250m/128Mi and cite direct Docker adapter support as proof that the ordinary agent enforces limits.",
+      "chapters": [
+        5,
+        6,
+        12,
+        28
+      ],
+      "claim_ids": [
+        "ch05.resource-gap",
+        "ch06.envelope"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 130,
+          "line_end": 137,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L130-L137"
+        },
+        {
+          "path": "evidence/orch/internal/agent/agent.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 253,
+          "line_end": 265,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253-L265"
+        },
+        {
+          "path": "evidence/orch/internal/docker/docker.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 430,
+          "line_end": 442,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L430-L442"
+        }
+      ],
+      "records": [
+        "validation/intake/docker-resource-boundary-corrected.json",
+        "validation/intake/docker-resource-boundary-corrected.stdout.txt"
+      ],
+      "observed": "Actual ordinary handler→Runner→Docker HostConfig was Memory=0/NanoCPUs=0; the direct adapter received Memory=134217728/NanoCPUs=250000000.",
+      "review_result": "accepted",
+      "reason": "The book traces both missing data boundaries rather than assigning planner or direct-adapter guarantees to ordinary deployment. Requested accounting is distinguished from runtime measurement.",
+      "scope": "Cached-image/owned-ID teaching guards and no host-published workload ports are recorded; no production-kernel isolation certification.",
+      "record_hashes": {
+        "validation/intake/docker-resource-boundary-corrected.json": "7348193d6cb6ba8170ada97f12fad3d02f23d6650f7db08db65321430ba42f20",
+        "validation/intake/docker-resource-boundary-corrected.stdout.txt": "5ccf6526651969e40953219f8db1734c3eb10679803238a42295044e63a6fa6a"
+      }
+    },
+    {
+      "id": "DEV97-05",
+      "scenario": "Restart during rollout or report deployment success and infer fresh-process persistence and physical stop completion.",
+      "chapters": [
+        17,
+        37
+      ],
+      "claim_ids": [
+        "ch17.stop-limits",
+        "ch37.controller"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/e2e/chaos_test.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 41,
+          "line_end": 61,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/chaos_test.go#L41-L61"
+        },
+        {
+          "path": "evidence/orch/pkg/types/lifecycle.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 269,
+          "line_end": 275,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L269-L275"
+        }
+      ],
+      "records": [
+        "validation/labs/lab04-rollout-observed.stdout.txt",
+        "validation/reviews/ch17-independent-stop-accounting.json"
+      ],
+      "observed": "The chaos case constructs a new controller over the same retained MemoryService. Actual bounded rollout reaches succeeded with pending_stops=1.",
+      "review_result": "accepted_after_prior_correction",
+      "reason": "Final Chapter 17 now explicitly says the next pass uses desired/store accounting before physical acknowledgement. Chapter37 names the retained-store test and separate fresh-process experiment.",
+      "scope": "The earlier overstatement was corrected before final formats and is independently visible in current text. No restart-during-real-production-rollout experiment claimed.",
+      "record_hashes": {
+        "validation/labs/lab04-rollout-observed.stdout.txt": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+        "validation/reviews/ch17-independent-stop-accounting.json": "e415a6e791f04b541ecaf09929cf4f8eb899362b41183b920d1ad478bcfbc01e"
+      }
+    },
+    {
+      "id": "DEV97-06",
+      "scenario": "Make the second sorted GitOps manifest invalid and assume a failed sync means the first service is unchanged.",
+      "chapters": [
+        30
+      ],
+      "claim_ids": [
+        "ch30.apply",
+        "ch30.drift",
+        "ch30.prune"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/gitops/gitops.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 218,
+          "line_end": 280,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L218-L280"
+        },
+        {
+          "path": "evidence/orch/internal/gitops/gitops.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 284,
+          "line_end": 289,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L284-L289"
+        }
+      ],
+      "records": [
+        "validation/labs/review076/07-command.stdout.txt",
+        "validation/labs/07-check.json"
+      ],
+      "observed": {
+        "failed_checkout_commit": "dd4cea49a25125f4674901b40c4790451de15676",
+        "first_replicas": 1,
+        "last_revision": "38cb95b94692deb21343eb125cd78dcb822eeafc",
+        "worker_status": "active"
+      },
+      "review_result": "accepted",
+      "reason": "Chapter30 walks exactly this failure: first mutation remains, LastError changes and LastRevision can still be the prior successful revision. The actual fresh Lab07 partial-apply assertion passed. Prune is explicitly a previous-name set, not a current stable ownership predicate.",
+      "scope": "Real local Git/in-process application methods; no external repository, daemon workload or repository-wide transaction.",
+      "record_hashes": {
+        "validation/labs/review076/07-command.stdout.txt": "8ad7b753a4e8d200bb575675cdf20e8f137d797f2ba4ea482fbc392d3519291c",
+        "validation/labs/07-check.json": "16c88557f4faf77040fdce68a23a37f58c5a0dd81c30fecdb72b11e9f9f2c620"
+      }
+    },
+    {
+      "id": "DEV97-07",
+      "scenario": "Cancel an advisory-lock lease, observe Done closed, and immediately allow a successor to assume the database lock and all old effects are gone.",
+      "chapters": [
+        34
+      ],
+      "claim_ids": [
+        "ch34.session",
+        "ch34.wrapper",
+        "ch34.default"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/leadership/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 67,
+          "line_end": 109,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L67-L109"
+        }
+      ],
+      "records": [
+        "validation/intake/full-schema-recovery-corrected.json",
+        "validation/labs/ch34/leadership-tests.json"
+      ],
+      "observed": {
+        "done_closed_after_cancel": true,
+        "lock_retained_after_cancel_and_release": true,
+        "other_pool_acquires_after_original_pool_close": true,
+        "other_pool_initially_blocked": true,
+        "scope": "package cancellation path with healthy pooled session, not running server HA"
+      },
+      "review_result": "accepted",
+      "reason": "Chapter34 explains pooled connection release versus session unlock and the Done-closed fast path. Cooperative callback cancellation, in-flight effects and absent default leadership wiring remain separate.",
+      "scope": "Observed package behavior on the owned PostgreSQL fixture; not a running replicated server or physical workload fencing demonstration.",
+      "record_hashes": {
+        "validation/intake/full-schema-recovery-corrected.json": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+        "validation/labs/ch34/leadership-tests.json": "d730963e594c9fb83cb508fef304cc85e7e37de9eab6fe265200b75d7af2b6a2"
+      }
+    },
+    {
+      "id": "DEV97-08",
+      "scenario": "Treat the baseline 447 passes as evidence that the guarded database suite passed, then silently repair its fixture to get green results.",
+      "chapters": [
+        9,
+        36,
+        40
+      ],
+      "claim_ids": [
+        "ch09.fixture-schema",
+        "ch36.fake-e2e",
+        "ch40.ci"
+      ],
+      "source": [
+        {
+          "path": "evidence/orch/internal/store/postgres_test.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 556,
+          "line_end": 590,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres_test.go#L556-L590"
+        },
+        {
+          "path": "evidence/orch/migrations/000016_operations_safety.up.sql",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 1,
+          "line_end": 8,
+          "immutable_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/migrations/000016_operations_safety.up.sql#L1-L8"
+        }
+      ],
+      "records": [
+        "validation/intake/orch-baseline-tests.stdout.txt",
+        "validation/intake/postgres-store-owned.json",
+        "validation/intake/full-schema-recovery-corrected.json"
+      ],
+      "observed": {
+        "named_pass_events": 447,
+        "explicit_external_skips": [
+          "TestDockerRuntimeIntegration",
+          "TestOrchestratorMVPE2EWithRealDocker",
+          "TestPostgresMigrationsE2E",
+          "TestPostgresStoreIntegration",
+          "TestPostgresStoreWithTxRollsBackOnError",
+          "TestPostgresStoreConcurrentAssignTaskOnce"
+        ],
+        "original_postgres_fixture": "Two failures SQLSTATE42703, one rollback test passes; fixture applies1–14, agent_version added16.",
+        "separate_full_schema": {
+          "conflicts": 1,
+          "winners": 1
+        }
+      },
+      "review_result": "accepted",
+      "reason": "The final narrative and gate retain all skips and original database failures; separate full-schema teaching execution never overwrites that baseline.",
+      "scope": "This final review inspected existing raw records; it did not rerun destructive database tests or relabel their outcomes.",
+      "record_hashes": {
+        "validation/intake/orch-baseline-tests.stdout.txt": "94691bf9e6fb476e00bfa009b1727557c542b926cff8a594bf3fa91795ef61fa",
+        "validation/intake/postgres-store-owned.json": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7",
+        "validation/intake/full-schema-recovery-corrected.json": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e"
+      }
+    }
+  ],
+  "new_blocking_findings": [],
+  "new_findings": [],
+  "resolved_prior_findings": [
+    {
+      "id": "DEV97-PRIOR-01",
+      "severity": "major_before_correction",
+      "chapter": 17,
+      "claim_id": "ch17.stop-limits",
+      "evidence": "validation/reviews/ch17-independent-stop-accounting.json",
+      "status": "resolved_in_final_canonical_text_and_reviewed_formats",
+      "finding": "An earlier sentence implied physical-stop acknowledgement before capacity reuse. Final text explicitly describes desired/store accounting; actual rollout has succeeded with pending_stops=1.",
+      "revalidation": "Final canonical chapter inspected; source IsActiveTask and actual rollout timeline agree. Root final export/text/raster gates bind the corrected content to final artifacts."
+    }
+  ],
+  "reader_usability": {
+    "assessment": "The source-guided explanations and worked answers identify concrete state owners, predicates, failure windows and observable outcomes. Exact listings have pinned context; original extensions retain module-relative setup. The reader can distinguish expected procedures from actual output.",
+    "practical_followability": "examples/README.md explains fragments versus complete programs and internal-package module placement. REPRODUCE.md states that sourceZIP excludes the application/site snapshots, requires retrieving the pinned application separately, and is not a standalone Jekyll checkout.",
+    "remaining_limits": [
+      "Short code fragments are not individually compilable empty-module examples; full containing packages/registered overlays provide setup.",
+      "Some optional Docker/Compose/network procedures remain expected-only; precise actual harness modes are stated.",
+      "The final PDF is content/raster equivalent across routine rebuilds, not promised byte-deterministic.",
+      "GitOps filesystem path checking is lexical; hostile symlink sandboxing remains a source-derived unresolved threat-model question in CAP-019, not an executed exploit or guaranteed filesystem confinement."
+    ]
+  },
+  "validation_during_this_final_review": {
+    "new_application_or_database_experiments": false,
+    "new_format_builds": false,
+    "performed": "Read final text/source/records; recomputed current artifact/input hashes, checked every 40 chapter ledger reference and source span bounds, and independently asserted the specific retained resource/CAS/partial-apply/restart/rollout/skip observations.",
+    "unchanged": "Canonical manuscript, formats,095source package and earlier source-generated snapshot."
+  },
+  "recommendation": "Accept the local edition for the reviewable publishing handoff. No new developer blocker found; do not interpret acceptance as production fitness, a source license grant, actual deployment or external endorsement.",
+  "next_prompt": "Root aggregates the developer/DevOps/architect097 lenses, then098/099 local archives and owner-reviewable handoff."
+}

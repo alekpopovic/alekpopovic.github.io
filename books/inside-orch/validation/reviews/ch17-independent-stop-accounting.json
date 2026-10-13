@@ -1,0 +1,16 @@
+{
+  "reviewer": "source_foundation, independent of chapter17 author",
+  "reviewed_at_utc": "2026-10-13T01:41:42.525822+00:00",
+  "chapter": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+  "before_sha256": "5540b3c170f7c1d46e7e8a6c9273381286a5ce808b974b2357848b3c34ef9937",
+  "after_sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "finding": "Rollout accounting excludes desired stopped/removed and decrements pass-local counts before physical stop acknowledgement.",
+  "source_anchors": [
+    "pkg/types/lifecycle.go:269-275",
+    "internal/rollout/rollout.go:165-180",
+    "internal/rollout/rollout.go:358-399"
+  ],
+  "actual_observation": "validation/labs/lab04-rollout-observed.stdout.txt retains succeeded with pending_stops=1",
+  "changes": "Two prose sentences and one source-derived table row corrected; no fences or immutable source changed."
+}

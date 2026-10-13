@@ -1,0 +1,18 @@
+{
+  "id": "095-offline-browser",
+  "command": [
+    "node",
+    "books/inside-orch/scripts/validate_offline_reader.cjs"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T03:47:52.129163+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T03:47:52.491699+00:00",
+  "duration_seconds": 0.363,
+  "stdout": "validation/publication/095-offline-browser-command.stdout.txt",
+  "stderr": "validation/publication/095-offline-browser-command.stderr.txt"
+}

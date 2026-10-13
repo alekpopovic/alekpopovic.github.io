@@ -1,0 +1,15 @@
+		if availableTaskCount(offNodeActive) < service.Spec.Replicas {
+			continue
+		}
+		for _, task := range drainingTasks {
+			if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
+				continue
+			}
+			if err := types.ValidateTaskDesiredTransition(task.DesiredStatus, types.TaskStopped); err != nil {
+				continue
+			}
+			task.DesiredStatus = types.TaskStopped
+			task.UpdatedAt = timestamp
+			s.tasks[task.ID] = task
+		}
+	}

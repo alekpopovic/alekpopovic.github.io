@@ -1,0 +1,42 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T04:55:09.903361+00:00",
+  "branch": "book/inside-orch-000",
+  "website_baseline_sha": "80801c8d3d97a4d8ff78e0fe69f3f902beda00c0",
+  "head_main_origin_main_unchanged": true,
+  "staged_files": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "tracked_changed_paths": [
+    "_config.yml",
+    "_data/glossary.yml",
+    "_data/updates.yml",
+    "scripts/book_catalog.py",
+    "scripts/build-books.py",
+    "scripts/check-performance.mjs",
+    "tests/workspace-editor.spec.js"
+  ],
+  "additional_site_paths": [
+    "_posts/2026-10-13-a-ready-server-may-have-forgotten-your-cluster.md",
+    "_posts/2026-10-13-an-offline-node-is-not-proof-that-its-workload-stopped.md",
+    "_posts/2026-10-13-follow-a-resource-limit-all-the-way-to-docker.md",
+    "tests/inside-orch.spec.js"
+  ],
+  "generated_ignored_and_untracked": [
+    "book-pages/inside-orch/index.html",
+    "assets/books/inside-orch/downloads/inside-orch.pdf",
+    "_data/books.json"
+  ],
+  "private_database_dumps_excluded_by_gitignore": true,
+  "existing_095_adapter_patch_reverse_check": "passed; reads current integrated files without applying changes",
+  "snapshot_exclusions": [
+    "books/inside-orch/state/execution-tracker.csv",
+    "books/inside-orch/publication/site-adapter/final-source-inventory.json",
+    "books/inside-orch/validation/publication/099-final-local-git-inventory-command.json",
+    "books/inside-orch/validation/publication/099-final-local-git-inventory-command.stdout.txt",
+    "books/inside-orch/validation/publication/099-final-local-git-inventory-command.stderr.txt"
+  ],
+  "snapshot_boundary": "Actual Git-eligible scoped working-tree files at this timestamp. Mutable canonical tracker and this self-index excluded. Later final audit/command records are separate completion evidence and are not retroactively included.",
+  "file_count": 2462,
+  "total_bytes": 114644890,
+  "git_mutation": "none: no staging, commit, push, PR, merge or deployment"
+}

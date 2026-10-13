@@ -1,0 +1,32 @@
+{
+  "id": "docker-image-inventory",
+  "command": [
+    "docker",
+    "image",
+    "ls",
+    "--format",
+    "{{.Repository}}:{{.Tag}} {{.ID}}"
+  ],
+  "cwd": "/tmp",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:30:29.232972+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:30:30.671425+00:00",
+  "duration_seconds": 1.438,
+  "stdout": "validation/intake/docker-images.stdout.txt",
+  "stderr": "validation/intake/docker-images.stderr.txt",
+  "output_sanitization": {
+    "reason": "Only public images needed for this book are retained; unrelated local project image names removed.",
+    "original_stdout_sha256": "61313b0816b2af696a51886f2abce2c086167a8977eb539d9327387bf8513bf2",
+    "retained_images": [
+      "alpine:3.20",
+      "busybox:1.36",
+      "docker:28.4.0-dind",
+      "nginx:1.27-alpine",
+      "postgres:16-alpine"
+    ]
+  }
+}

@@ -1,0 +1,876 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "binary_sha256": "f43a8c3d73aca0a6360f29ef510cf385a9ab591485a7d9e77c9a145fc1b517ad",
+  "binary_build_evidence": "validation/intake/orch-build-isolated-root.json",
+  "commands": [
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.638574+00:00",
+      "stdout_path": "validation/reference-help/orch.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "audit",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.642636+00:00",
+      "stdout_path": "validation/reference-help/orch-audit.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cluster",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.646174+00:00",
+      "stdout_path": "validation/reference-help/orch-cluster.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cluster",
+        "check-upgrade",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.649241+00:00",
+      "stdout_path": "validation/reference-help/orch-cluster-check-upgrade.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cronjob",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.652367+00:00",
+      "stdout_path": "validation/reference-help/orch-cronjob.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cronjob",
+        "apply",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.655541+00:00",
+      "stdout_path": "validation/reference-help/orch-cronjob-apply.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cronjob",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.658774+00:00",
+      "stdout_path": "validation/reference-help/orch-cronjob-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cronjob",
+        "resume",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.662114+00:00",
+      "stdout_path": "validation/reference-help/orch-cronjob-resume.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "cronjob",
+        "suspend",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.665291+00:00",
+      "stdout_path": "validation/reference-help/orch-cronjob-suspend.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "delete",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.668446+00:00",
+      "stdout_path": "validation/reference-help/orch-delete.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "deploy",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.671618+00:00",
+      "stdout_path": "validation/reference-help/orch-deploy.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "endpoints",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.674743+00:00",
+      "stdout_path": "validation/reference-help/orch-endpoints.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "events",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.677778+00:00",
+      "stdout_path": "validation/reference-help/orch-events.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.680927+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "add",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.684293+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-add.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "delete",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.687333+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-delete.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "diff",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.690394+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-diff.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.693460+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "status",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.697166+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-status.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "gitops",
+        "sync",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.700425+00:00",
+      "stdout_path": "validation/reference-help/orch-gitops-sync.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "job",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.703538+00:00",
+      "stdout_path": "validation/reference-help/orch-job.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "job",
+        "logs",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.706523+00:00",
+      "stdout_path": "validation/reference-help/orch-job-logs.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "job",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.709599+00:00",
+      "stdout_path": "validation/reference-help/orch-job-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "job",
+        "run",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.712727+00:00",
+      "stdout_path": "validation/reference-help/orch-job-run.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "logs",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.716288+00:00",
+      "stdout_path": "validation/reference-help/orch-logs.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "maintenance",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.719406+00:00",
+      "stdout_path": "validation/reference-help/orch-maintenance.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "maintenance",
+        "create",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.722695+00:00",
+      "stdout_path": "validation/reference-help/orch-maintenance-create.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "maintenance",
+        "delete",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.726399+00:00",
+      "stdout_path": "validation/reference-help/orch-maintenance-delete.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "maintenance",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.729982+00:00",
+      "stdout_path": "validation/reference-help/orch-maintenance-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "namespace",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.733436+00:00",
+      "stdout_path": "validation/reference-help/orch-namespace.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "namespace",
+        "create",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.736470+00:00",
+      "stdout_path": "validation/reference-help/orch-namespace-create.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "namespace",
+        "delete",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.739648+00:00",
+      "stdout_path": "validation/reference-help/orch-namespace-delete.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "namespace",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.742900+00:00",
+      "stdout_path": "validation/reference-help/orch-namespace-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.745990+00:00",
+      "stdout_path": "validation/reference-help/orch-node.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "drain",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.749369+00:00",
+      "stdout_path": "validation/reference-help/orch-node-drain.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "drain-status",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.752627+00:00",
+      "stdout_path": "validation/reference-help/orch-node-drain-status.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "inspect",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.755945+00:00",
+      "stdout_path": "validation/reference-help/orch-node-inspect.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.759234+00:00",
+      "stdout_path": "validation/reference-help/orch-node-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "node",
+        "uncordon",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.762721+00:00",
+      "stdout_path": "validation/reference-help/orch-node-uncordon.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "quota",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.765987+00:00",
+      "stdout_path": "validation/reference-help/orch-quota.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "quota",
+        "get",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.769444+00:00",
+      "stdout_path": "validation/reference-help/orch-quota-get.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "quota",
+        "set",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.772932+00:00",
+      "stdout_path": "validation/reference-help/orch-quota-set.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "retention",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.776485+00:00",
+      "stdout_path": "validation/reference-help/orch-retention.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "retention",
+        "prune",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.779767+00:00",
+      "stdout_path": "validation/reference-help/orch-retention-prune.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "retention",
+        "status",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.783057+00:00",
+      "stdout_path": "validation/reference-help/orch-retention-status.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "rollback",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.786121+00:00",
+      "stdout_path": "validation/reference-help/orch-rollback.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "rollout",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.789218+00:00",
+      "stdout_path": "validation/reference-help/orch-rollout.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "rollout",
+        "status",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.792383+00:00",
+      "stdout_path": "validation/reference-help/orch-rollout-status.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "scale",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.795929+00:00",
+      "stdout_path": "validation/reference-help/orch-scale.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "service",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.799502+00:00",
+      "stdout_path": "validation/reference-help/orch-service.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "service",
+        "inspect",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.802815+00:00",
+      "stdout_path": "validation/reference-help/orch-service-inspect.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "service",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.806213+00:00",
+      "stdout_path": "validation/reference-help/orch-service-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "service",
+        "ps",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.809610+00:00",
+      "stdout_path": "validation/reference-help/orch-service-ps.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "usage",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.813187+00:00",
+      "stdout_path": "validation/reference-help/orch-usage.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "usage",
+        "export",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.816323+00:00",
+      "stdout_path": "validation/reference-help/orch-usage-export.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.819376+00:00",
+      "stdout_path": "validation/reference-help/orch-validate.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "version",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.822492+00:00",
+      "stdout_path": "validation/reference-help/orch-version.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "volume",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.825769+00:00",
+      "stdout_path": "validation/reference-help/orch-volume.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "volume",
+        "create",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.829179+00:00",
+      "stdout_path": "validation/reference-help/orch-volume-create.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "volume",
+        "inspect",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.832616+00:00",
+      "stdout_path": "validation/reference-help/orch-volume-inspect.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "volume",
+        "ls",
+        "--help"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.835968+00:00",
+      "stdout_path": "validation/reference-help/orch-volume-ls.txt",
+      "stderr": "",
+      "scope": "Generated local help only; binary from root isolated build."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "validate",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/reference/atlas-api.yaml"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.842666+00:00",
+      "stdout": "service spec \"atlas-api\" is valid\n",
+      "stderr": "",
+      "scope": "Actual local parser; no deployment."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "config",
+        "print"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.847145+00:00",
+      "stdout_path": "validation/reference-help/orch-server-config-print.txt",
+      "stderr": "",
+      "scope": "Actual redacted print path; process does not start listeners or runtime."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-agent",
+        "config",
+        "print"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "exit_code": 0,
+      "started_at_utc": "2026-10-13T01:07:45.851771+00:00",
+      "stdout_path": "validation/reference-help/orch-agent-config-print.txt",
+      "stderr": "",
+      "scope": "Actual redacted print path; process does not start listeners or runtime."
+    }
+  ],
+  "all_passed": true
+}

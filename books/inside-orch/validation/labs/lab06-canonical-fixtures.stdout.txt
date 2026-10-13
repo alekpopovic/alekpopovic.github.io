@@ -1,0 +1,1059 @@
+{
+  "case_count": 28,
+  "cases": [
+    {
+      "id": "namespace-create-book-payments",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/namespaces",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "namespace": {
+          "created_at": "2026-10-13T01:31:39.540274571Z",
+          "name": "book-payments"
+        }
+      },
+      "expected_response": 201,
+      "observed_response": 201,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "namespace-create-book-observability",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/namespaces",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "namespace": {
+          "created_at": "2026-10-13T01:31:39.540391628Z",
+          "name": "book-observability"
+        }
+      },
+      "expected_response": 201,
+      "observed_response": 201,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "duplicate-local-name",
+      "tenant": "both",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/services",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "distinct IDs",
+      "observed_response": {
+        "observability": "eae079ab-35ab-452e-88b6-319dec8be153",
+        "payments": "987038a2-70ff-46a0-90c8-377c6c913fe6"
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "cross-id-hidden",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/services/{other-ID}",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 404,
+      "observed_response": 404,
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "header-precedes-query",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/services?namespace=book-observability",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "payments only",
+      "observed_response": {
+        "services": [
+          {
+            "created_at": "2026-10-13T01:31:39.540492272Z",
+            "deployment_version": 1,
+            "id": "987038a2-70ff-46a0-90c8-377c6c913fe6",
+            "namespace": "book-payments",
+            "spec": {
+              "autoscaling": {},
+              "env": {
+                "LAB_TEAM": "payments"
+              },
+              "image": "nginx:1.27",
+              "image_metadata": {
+                "name": "library/nginx",
+                "registry": "docker.io",
+                "requested_image": "nginx:1.27",
+                "tag": "1.27"
+              },
+              "name": "api",
+              "ports": [
+                {
+                  "container_port": 80,
+                  "protocol": "tcp",
+                  "published_port": 31080
+                }
+              ],
+              "replicas": 1,
+              "resource_requirements": {
+                "limits": {
+                  "cpu": 100,
+                  "memory": 67108864
+                },
+                "requests": {
+                  "cpu": 100,
+                  "memory": 67108864
+                }
+              },
+              "restart_policy": {
+                "condition": ""
+              },
+              "security_context": {}
+            },
+            "status": "active",
+            "updated_at": "2026-10-13T01:31:39.540492272Z"
+          }
+        ]
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "query-fallback",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/services?namespace=book-observability",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "observability",
+      "observed_response": {
+        "services": [
+          {
+            "created_at": "2026-10-13T01:31:39.540679312Z",
+            "deployment_version": 1,
+            "id": "eae079ab-35ab-452e-88b6-319dec8be153",
+            "namespace": "book-observability",
+            "spec": {
+              "autoscaling": {},
+              "env": {
+                "LAB_TEAM": "observability"
+              },
+              "image": "nginx:1.27",
+              "image_metadata": {
+                "name": "library/nginx",
+                "registry": "docker.io",
+                "requested_image": "nginx:1.27",
+                "tag": "1.27"
+              },
+              "name": "api",
+              "ports": [
+                {
+                  "container_port": 80,
+                  "protocol": "tcp",
+                  "published_port": 31080
+                }
+              ],
+              "replicas": 1,
+              "resource_requirements": {
+                "limits": {
+                  "cpu": 100,
+                  "memory": 67108864
+                },
+                "requests": {
+                  "cpu": 100,
+                  "memory": 67108864
+                }
+              },
+              "restart_policy": {
+                "condition": ""
+              },
+              "security_context": {}
+            },
+            "status": "active",
+            "updated_at": "2026-10-13T01:31:39.540679312Z"
+          }
+        ]
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "default-compatible",
+      "tenant": "default",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/services",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "default only",
+      "observed_response": {
+        "services": [
+          {
+            "created_at": "2026-10-13T01:31:39.54101861Z",
+            "deployment_version": 1,
+            "id": "71e74e69-1656-4bf9-9fb8-04594c84c640",
+            "namespace": "default",
+            "spec": {
+              "autoscaling": {},
+              "env": {
+                "LAB_TEAM": "default"
+              },
+              "image": "nginx:1.27",
+              "image_metadata": {
+                "name": "library/nginx",
+                "registry": "docker.io",
+                "requested_image": "nginx:1.27",
+                "tag": "1.27"
+              },
+              "name": "api",
+              "ports": [
+                {
+                  "container_port": 80,
+                  "protocol": "tcp",
+                  "published_port": 31080
+                }
+              ],
+              "replicas": 0,
+              "resource_requirements": {
+                "limits": {
+                  "cpu": 100,
+                  "memory": 67108864
+                },
+                "requests": {
+                  "cpu": 100,
+                  "memory": 67108864
+                }
+              },
+              "restart_policy": {
+                "condition": ""
+              },
+              "security_context": {}
+            },
+            "status": "active",
+            "updated_at": "2026-10-13T01:31:39.54101861Z"
+          }
+        ]
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 0,
+        "cpu_millicores": 0,
+        "memory_bytes": 0,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "viewer-own-scope",
+      "tenant": "book-payments",
+      "actor": "namespace-viewer",
+      "source_route": "GET /v1/services",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 200,
+      "observed_response": 200,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "viewer-other-scope",
+      "tenant": "book-observability",
+      "actor": "namespace-viewer",
+      "source_route": "GET /v1/services",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 403,
+      "observed_response": 403,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "namespace-admin-not-cluster",
+      "tenant": "book-payments",
+      "actor": "namespace-admin",
+      "source_route": "GET /v1/namespaces",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 403,
+      "observed_response": 403,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "cluster-admin-list",
+      "tenant": "all",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/namespaces",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 200,
+      "observed_response": 200,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "secret-local-book-payments",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "CreateSecret/GetSecret",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "same local name in own namespace",
+      "observed_response": {
+        "name": "shared",
+        "namespace": "book-payments",
+        "key_id": "local:151fd933abfb7e2a",
+        "created_at": "2026-10-13T01:31:39.541413364Z",
+        "updated_at": "2026-10-13T01:31:39.541413364Z"
+      },
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "secret-local-book-observability",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "CreateSecret/GetSecret",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "same local name in own namespace",
+      "observed_response": {
+        "name": "shared",
+        "namespace": "book-observability",
+        "key_id": "local:151fd933abfb7e2a",
+        "created_at": "2026-10-13T01:31:39.541419929Z",
+        "updated_at": "2026-10-13T01:31:39.541419929Z"
+      },
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "secret-reference-isolation",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "CreateService",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "invalid missing local reference",
+      "observed_response": "invalid state: referenced secret \"payments-only\" not found",
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "quota-config-book-payments",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "PUT /v1/quota",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "expected_response": 200,
+      "observed_response": 200,
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "quota-config-book-observability",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "PUT /v1/quota",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "expected_response": 200,
+      "observed_response": 200,
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "arithmetic-one",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "GetResourceQuota",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": {
+        "cpu": 100,
+        "memory": 67108864,
+        "ports": 1,
+        "replicas": 1
+      },
+      "observed_response": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "denied-scale-atomic",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/services/{ID}/scale",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "replicas_delta": 3
+      },
+      "expected_response": "409 quota_exceeded replicas",
+      "observed_response": {
+        "error": {
+          "code": "quota_exceeded",
+          "details": {
+            "limit": 3,
+            "namespace": "book-payments",
+            "requested": 4,
+            "resource": "replicas",
+            "used": 4
+          },
+          "message": "namespace \"book-payments\" quota exceeded for replicas: limit 3, used 4, requested 4",
+          "request_id": "a606bb9a-f9be-4569-a94f-f61a75fe1a44"
+        }
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "concurrent-final-slot",
+      "tenant": "book-payments",
+      "actor": "two-cluster-admin-calls",
+      "source_route": "ScaleService concurrent",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": {
+        "each_replica_delta": 1
+      },
+      "expected_response": {
+        "denials": 1,
+        "wins": 1
+      },
+      "observed_response": {
+        "denials": 1,
+        "wins": 1
+      },
+      "final_usage": {
+        "services": 2,
+        "replicas": 3,
+        "cpu_millicores": 300,
+        "memory_bytes": 201326592,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "secret-quota",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/secrets",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": 1,
+      "expected_response": "409 secrets",
+      "observed_response": {
+        "error": {
+          "code": "quota_exceeded",
+          "details": {
+            "limit": 1,
+            "namespace": "book-payments",
+            "requested": 2,
+            "resource": "secrets",
+            "used": 2
+          },
+          "message": "namespace \"book-payments\" quota exceeded for secrets: limit 1, used 2, requested 2",
+          "request_id": "58f43d2f-960f-4eaf-91be-4ba2f99c9d50"
+        }
+      },
+      "final_usage": {
+        "services": 2,
+        "replicas": 3,
+        "cpu_millicores": 300,
+        "memory_bytes": 201326592,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "registry-quota-robot-one",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/registry-credentials",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": 1,
+      "expected_response": 201,
+      "observed_response": {
+        "credential": {
+          "created_at": "2026-10-13T01:31:39.542162642Z",
+          "id": "robot-one",
+          "key_id": "local:151fd933abfb7e2a",
+          "namespace": "book-payments",
+          "registry": "registry.example.test",
+          "updated_at": "2026-10-13T01:31:39.542162642Z",
+          "username": "fixture-robot"
+        }
+      },
+      "final_usage": {
+        "services": 2,
+        "replicas": 3,
+        "cpu_millicores": 300,
+        "memory_bytes": 201326592,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 1
+      },
+      "passed": true
+    },
+    {
+      "id": "registry-quota-robot-two",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "POST /v1/registry-credentials",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": 1,
+      "expected_response": 409,
+      "observed_response": {
+        "error": {
+          "code": "quota_exceeded",
+          "details": {
+            "limit": 1,
+            "namespace": "book-payments",
+            "requested": 2,
+            "resource": "registry_credentials",
+            "used": 2
+          },
+          "message": "namespace \"book-payments\" quota exceeded for registry_credentials: limit 1, used 2, requested 2",
+          "request_id": "fb94963f-64ef-40f7-8c5e-85f291f4cd7c"
+        }
+      },
+      "final_usage": {
+        "services": 2,
+        "replicas": 3,
+        "cpu_millicores": 300,
+        "memory_bytes": 201326592,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 1
+      },
+      "passed": true
+    },
+    {
+      "id": "zero-is-unlimited",
+      "tenant": "default",
+      "actor": "direct-library",
+      "source_route": "CreateService under all0limits",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": 1000,
+      "expected_response": "1000replicas accepted",
+      "observed_response": {
+        "services": 1,
+        "replicas": 1000,
+        "cpu_millicores": 100000,
+        "memory_bytes": 67108864000,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1000,
+        "cpu_millicores": 100000,
+        "memory_bytes": 67108864000,
+        "public_ports": 1,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "deleted-release",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "DeleteService",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": "deleted service excluded",
+      "observed_response": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 1
+      },
+      "final_usage": {
+        "services": 1,
+        "replicas": 1,
+        "cpu_millicores": 100,
+        "memory_bytes": 67108864,
+        "public_ports": 1,
+        "secrets": 1,
+        "registry_credentials": 1
+      },
+      "passed": true
+    },
+    {
+      "id": "default-undeletable",
+      "tenant": "default",
+      "actor": "cluster-admin",
+      "source_route": "DELETE /v1/namespaces/default",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 400,
+      "observed_response": 400,
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "history-blocks-namespace-delete",
+      "tenant": "book-observability",
+      "actor": "cluster-admin",
+      "source_route": "DELETE /v1/namespaces/book-observability",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 409,
+      "observed_response": {
+        "error": {
+          "code": "conflict",
+          "message": "conflict: namespace \"book-observability\" is not empty",
+          "request_id": "8b2341db-dc18-40f5-9e51-096271d785fa"
+        }
+      },
+      "final_usage": {
+        "services": 0,
+        "replicas": 0,
+        "cpu_millicores": 0,
+        "memory_bytes": 0,
+        "public_ports": 0,
+        "secrets": 0,
+        "registry_credentials": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "usage-query-conflict",
+      "tenant": "book-payments",
+      "actor": "cluster-admin",
+      "source_route": "GET /v1/usage?namespace=book-observability with payments header",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 404,
+      "observed_response": {
+        "error": {
+          "code": "not_found",
+          "message": "not found: namespace usage",
+          "request_id": "d75bab0a-e934-49a3-a766-960291cb1bcf"
+        }
+      },
+      "final_usage": null,
+      "passed": true
+    },
+    {
+      "id": "independent-servers-no-shared-state",
+      "tenant": "book-payments",
+      "actor": "same-cluster-admin-config",
+      "source_route": "second independently constructed handler GET /v1/services/{A-ID}",
+      "initial_quota": {
+        "namespace": "",
+        "max_services": 2,
+        "max_replicas": 3,
+        "max_cpu_millicores": 300,
+        "max_memory_bytes": 201326592,
+        "max_public_ports": 2,
+        "max_secrets": 1,
+        "max_registry_credentials": 1,
+        "updated_at": "0001-01-01T00:00:00Z"
+      },
+      "requested_delta": null,
+      "expected_response": 404,
+      "observed_response": {
+        "error": {
+          "code": "not_found",
+          "message": "not found",
+          "request_id": "8ff826a3-e398-494c-bdf0-92c570d295b0"
+        }
+      },
+      "final_usage": {
+        "server_b_namespaces": [
+          {
+            "name": "default",
+            "created_at": "2026-10-13T01:31:39.542552926Z"
+          }
+        ]
+      },
+      "passed": true
+    }
+  ],
+  "classification": "teaching extension",
+  "cleanup": "process-local state discarded; namespace deletion blocked by retained service/history, no unsafe map/database deletion",
+  "discrepancies": [
+    "API query fallback exists despite documentation wording header/default",
+    "conflicting usage query and selected header returns not-found",
+    "quota Used/Requested are projected totals, not old total/delta"
+  ],
+  "postgresql_quota_test": "not executed; separate transaction-advisory-lock prerequisite",
+  "schema_note": "ServiceSpec has no arbitrary labels field; tenant markers use supported Env and fixture labels",
+  "scope": "real in-process HTTP handlers and MemoryService; no connected network host, daemon or database",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+}

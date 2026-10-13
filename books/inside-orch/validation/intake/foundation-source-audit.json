@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "reviewed_at_utc": "2026-10-13T00:37:52.539177+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "sample_source_links": [
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L103-L259",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146-L148",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/commit/7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d",
+      "known_commit": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87",
+      "known_commit": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2287-L2314",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2292",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253-L265",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L919",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/commit/eb3a07c20c550a533afaf36f414ede1ba6c00f78",
+      "known_commit": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/leadership.go#L35-L74",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L67-L110",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L191-L221",
+      "path_exists": true,
+      "range_valid": true
+    },
+    {
+      "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/chaos_test.go#L41-L62",
+      "path_exists": true,
+      "range_valid": true
+    }
+  ],
+  "sample_excerpt_checks": [
+    {
+      "id": "composition",
+      "path": "cmd/orch-server/main.go",
+      "lines": [
+        146,
+        148
+      ],
+      "matches_after_documented_display_dedent": true,
+      "display_transform": "common leading tab removed for print; source bytes unchanged",
+      "source_sha256": "f3b3c7cb489763d900e1c9712218bb4f5bdbe4f115145b5996f56ee28070c34f"
+    },
+    {
+      "id": "placement",
+      "path": "internal/controlplane/controlplane.go",
+      "lines": [
+        2292,
+        2292
+      ],
+      "matches_after_documented_display_dedent": true,
+      "display_transform": "common leading tab removed for print; source bytes unchanged",
+      "source_sha256": "3605e862c8ec94fc0b0dff9157e487508b5dac0d98a4456afde28c57236b3d96"
+    },
+    {
+      "id": "optimistic-claim",
+      "path": "internal/store/postgres.go",
+      "lines": [
+        919,
+        919
+      ],
+      "matches_after_documented_display_dedent": true,
+      "display_transform": "common leading tab removed for print; source bytes unchanged",
+      "source_sha256": "08f343ebd8bdcdf7f3b54b1a0765d9b82c452bc44705ede635f7eb5bf4178c36"
+    }
+  ],
+  "dashboard_queries": [
+    "sum(rate(api_requests_total[5m])) by (method, route)",
+    "sum(rate(api_requests_total{status=~\"5..\"}[5m])) / clamp_min(sum(rate(api_requests_total[5m])), 1)",
+    "histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (le, route))",
+    "histogram_quantile(0.50, sum(rate(api_request_duration_seconds_bucket[5m])) by (le, route))",
+    "rate(scheduler_runs_total[5m])",
+    "rate(scheduler_errors_total[5m])",
+    "rate(scheduler_scheduling_failures_total[5m])",
+    "rate(reconciler_runs_total[5m])",
+    "rate(reconciler_errors_total[5m])",
+    "sum by (status) (task_state_changes_total)",
+    "count(up{job=\"orch-agent\"} == 1)",
+    "count(up{job=\"orch-agent\"} == 0)",
+    "sum(rate(heartbeat_failure_total[5m])) by (instance)",
+    "sum(rate(docker_operation_errors_total[5m])) by (operation)",
+    "increase(rollouts_total[1h]) - increase(rollout_failures_total[1h])",
+    "increase(rollout_failures_total[1h])",
+    "sum(rate(healthcheck_success_total[5m]))",
+    "sum(rate(healthcheck_failure_total[5m]))"
+  ],
+  "dashboard_metric_names": [
+    "api_request_duration_seconds_bucket",
+    "api_requests_total",
+    "docker_operation_errors_total",
+    "healthcheck_failure_total",
+    "healthcheck_success_total",
+    "heartbeat_failure_total",
+    "reconciler_errors_total",
+    "reconciler_runs_total",
+    "rollout_failures_total",
+    "rollouts_total",
+    "scheduler_errors_total",
+    "scheduler_runs_total",
+    "scheduler_scheduling_failures_total",
+    "task_state_changes_total"
+  ],
+  "dashboard_unknown_metric_names": [],
+  "issues": [],
+  "scope": "Local source/commit/line/field review only; no HTTP reachability or lab execution inferred."
+}

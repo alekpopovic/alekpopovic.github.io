@@ -1,0 +1,23 @@
+{
+  "id": "085-candidate-export-check-corrected",
+  "command": [
+    ".venv/bin/python",
+    "books/inside-orch/scripts/lock_book_links.py",
+    "--git-dir",
+    "/tmp/inside-orch-reference-history.git",
+    "--final",
+    "--output",
+    "validation/reviews/link-lock-candidate-exports.json"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:56:18.517999+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T01:56:20.367159+00:00",
+  "duration_seconds": 1.849,
+  "stdout": "validation/reviews/085-candidate-export-check-corrected.stdout.txt",
+  "stderr": "validation/reviews/085-candidate-export-check-corrected.stderr.txt"
+}

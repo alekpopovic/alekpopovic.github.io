@@ -7,7 +7,7 @@ import { chromium } from '@playwright/test';
 
 const external = process.argv[2]?.startsWith('https://') ? process.argv[2] : null;
 const origin = 'http://127.0.0.1:4174';
-const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/workspace/', '/learn/start/', '/videos/cloudivision-delivery/', '/learn/ai-workflows/', '/learn/secret-contracts/', '/learn/universal-tracking/', '/newsletter/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
+const routes = external ? [external] : ['/', '/ai/', '/ai/workshops/', '/reading/', '/learn/workspace/', '/learn/start/', '/videos/cloudivision-delivery/', '/learn/ai-workflows/', '/learn/secret-contracts/', '/learn/universal-tracking/', '/newsletter/', '/projects/container-desk/', '/posts/codex-slash-commands/', '/cv/', '/codepop/', '/books/inside-orch/', '/books/inside-orch/06-follow-one-request-through-the-control-plane.html', '/books/logbranik/', '/books/universal-tracking/16-realtime.html', '/posts/a-timeout-is-not-a-stopped-deployment/'];
 let server, chrome;
 fs.mkdirSync('reports', { recursive: true });
 try {

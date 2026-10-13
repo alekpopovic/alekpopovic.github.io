@@ -1,0 +1,1433 @@
+commit 7eba6544ffe2eba41b81faa811e899faf28b77a2
+Date: 2026-06-11T15:14:24+02:00
+Subject: Add PostgreSQL persistence layer
+
+
+---
+ README.md                                 |   6 +
+ deployments/examples/Dockerfile           |   2 +-
+ docs/DEVELOPMENT.md                       |  30 +-
+ go.mod                                    |  12 +-
+ go.sum                                    |  26 +
+ internal/store/errors.go                  |  10 +
+ internal/store/postgres.go                | 849 ++++++++++++++++++++++++++++++
+ internal/store/postgres_test.go           | 225 ++++++++
+ internal/store/store.go                   |  41 +-
+ migrations/.gitkeep                       |   1 -
+ migrations/000001_initial_schema.down.sql |   7 +
+ migrations/000001_initial_schema.up.sql   | 104 ++++
+ 12 files changed, 1306 insertions(+), 7 deletions(-)
+
+diff --git a/README.md b/README.md
+index 7af33a8..ca91d6f 100644
+--- a/README.md
++++ b/README.md
+@@ -30,6 +30,12 @@ Start local PostgreSQL:
+ docker compose up postgres
+ ```
+ 
++Apply the initial schema:
++
++```sh
++psql "postgres://orch:orch@localhost:5432/orch?sslmode=disable" -f migrations/000001_initial_schema.up.sql
++```
++
+ Start PostgreSQL plus optional local orchestrator services:
+ 
+ ```sh
+diff --git a/deployments/examples/Dockerfile b/deployments/examples/Dockerfile
+index 0e25b73..ce50113 100644
+--- a/deployments/examples/Dockerfile
++++ b/deployments/examples/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM golang:1.23-alpine AS build
++FROM golang:1.25-alpine AS build
+ 
+ ARG TARGET=orch-server
+ WORKDIR /src
+diff --git a/docs/DEVELOPMENT.md b/docs/DEVELOPMENT.md
+index 505d8e5..9f80930 100644
+--- a/docs/DEVELOPMENT.md
++++ b/docs/DEVELOPMENT.md
+@@ -2,7 +2,7 @@
+ 
+ ## Prerequisites
+ 
+-- Go 1.23 or newer
++- Go 1.25 or newer
+ - Docker Engine
+ - Docker Compose
+ - PostgreSQL for integration work
+@@ -40,7 +40,33 @@ Fast unit tests must run with:
+ go test ./...
+ ```
+ 
+-Integration tests that require Docker or PostgreSQL should document prerequisites and be separable from fast unit tests.
++Integration tests that require PostgreSQL are skipped unless `ORCH_INTEGRATION_DATABASE_URL` is set:
++
++```sh
++docker compose up -d postgres
++ORCH_INTEGRATION_DATABASE_URL="postgres://orch:orch@localhost:5432/orch?sslmode=disable" go test ./internal/store -run Integration
++```
++
++The store integration test reapplies the down and up migrations before running. Use a disposable local database.
++
++## Migrations
++
++Migrations live in `migrations/` as paired `*.up.sql` and `*.down.sql` files.
++
++For local development with `psql`:
++
++```sh
++docker compose up -d postgres
++psql "postgres://orch:orch@localhost:5432/orch?sslmode=disable" -f migrations/000001_initial_schema.up.sql
++```
++
++To roll back the initial schema:
++
++```sh
++psql "postgres://orch:orch@localhost:5432/orch?sslmode=disable" -f migrations/000001_initial_schema.down.sql
++```
++
++Apply migrations in order. Do not edit committed migrations; add a new migration instead.
+ 
+ ## Coding Notes
+ 
+diff --git a/go.mod b/go.mod
+index 80e94ab..411a315 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,3 +1,13 @@
+ module github.com/alekpopovic/orch
+ 
+-go 1.23
++go 1.25.0
++
++require github.com/jackc/pgx/v5 v5.10.0
++
++require (
++	github.com/jackc/pgpassfile v1.0.0 // indirect
++	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
++	github.com/jackc/puddle/v2 v2.2.2 // indirect
++	golang.org/x/sync v0.17.0 // indirect
++	golang.org/x/text v0.29.0 // indirect
++)
+diff --git a/go.sum b/go.sum
+new file mode 100644
+index 0000000..c0e505b
+--- /dev/null
++++ b/go.sum
+@@ -0,0 +1,26 @@
++github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
++github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
++github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
++github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
++github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
++github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
++github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
++github.com/jackc/pgx/v5 v5.10.0 h1:VhSvgU2jSli8o3AqIEOTJr7rZwAEUVo4E4XhR94Zfr0=
++github.com/jackc/pgx/v5 v5.10.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
++github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
++github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
++github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
++github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
++github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
++github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
++github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
++github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
++github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
++golang.org/x/sync v0.17.0 h1:l60nONMj9l5drqw6jlhIELNv9I0A4OFgRsG9k2oT9Ug=
++golang.org/x/sync v0.17.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
++golang.org/x/text v0.29.0 h1:1neNs90w9YzJ9BocxfsQNHKuAT4pkghyXc4nhZ6sJvk=
++golang.org/x/text v0.29.0/go.mod h1:7MhJOA9CD2qZyOKYazxdYMF85OwPdEr9jTtBpO7ydH4=
++gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
++gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
++gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
++gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+diff --git a/internal/store/errors.go b/internal/store/errors.go
+new file mode 100644
+index 0000000..dc61f85
+--- /dev/null
++++ b/internal/store/errors.go
+@@ -0,0 +1,10 @@
++package store
++
++import "errors"
++
++var (
++	ErrNotFound     = errors.New("not found")
++	ErrConflict     = errors.New("conflict")
++	ErrInvalidState = errors.New("invalid state")
++	ErrDuplicate    = errors.New("duplicate")
++)
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+new file mode 100644
+index 0000000..ae98dd1
+--- /dev/null
++++ b/internal/store/postgres.go
+@@ -0,0 +1,849 @@
++package store
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/jackc/pgx/v5"
++	"github.com/jackc/pgx/v5/pgconn"
++	"github.com/jackc/pgx/v5/pgxpool"
++)
++
++type PostgresStore struct {
++	pool *pgxpool.Pool
++}
++
++func NewPostgresStore(pool *pgxpool.Pool) *PostgresStore {
++	return &PostgresStore{pool: pool}
++}
++
++func ConnectPostgres(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
++	pool, err := pgxpool.New(ctx, databaseURL)
++	if err != nil {
++		return nil, fmt.Errorf("create postgres pool: %w", err)
++	}
++	if err := pool.Ping(ctx); err != nil {
++		pool.Close()
++		return nil, fmt.Errorf("ping postgres: %w", err)
++	}
++	return pool, nil
++}
++
++func (s *PostgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (types.Node, error) {
++	if err := spec.Validate(); err != nil {
++		return types.Node{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++
++	labels, err := jsonBytes(defaultMap(spec.Labels))
++	if err != nil {
++		return types.Node{}, err
++	}
++
++	row := s.pool.QueryRow(ctx, `
++		INSERT INTO nodes (
++			hostname, advertise_address, labels,
++			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
++			status, last_heartbeat_at
++		)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, timezone('utc', now()))
++		RETURNING id, hostname, advertise_address, labels,
++			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
++			status, last_heartbeat_at, created_at, updated_at`,
++		spec.Hostname,
++		spec.AdvertiseAddress,
++		labels,
++		spec.Capacity.CPU,
++		spec.Capacity.Memory,
++		spec.Allocatable.CPU,
++		spec.Allocatable.Memory,
++		string(types.NodeUnknown),
++	)
++	node, err := scanNode(row)
++	if err != nil {
++		return types.Node{}, mapPostgresError(err)
++	}
++	return node, nil
++}
++
++func (s *PostgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Node, error) {
++	row := s.pool.QueryRow(ctx, `
++		SELECT id, hostname, advertise_address, labels,
++			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
++			status, last_heartbeat_at, created_at, updated_at
++		FROM nodes
++		WHERE id = $1`,
++		string(id),
++	)
++	node, err := scanNode(row)
++	if err != nil {
++		return types.Node{}, mapPostgresError(err)
++	}
++	return node, nil
++}
++
++func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expectedUpdatedAt time.Time) (types.Node, error) {
++	spec := types.NodeSpec{
++		Hostname:         node.Hostname,
++		AdvertiseAddress: node.AdvertiseAddress,
++		Labels:           node.Labels,
++		Capacity:         node.Capacity,
++		Allocatable:      node.Allocatable,
++	}
++	if err := spec.Validate(); err != nil {
++		return types.Node{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++
++	labels, err := jsonBytes(defaultMap(node.Labels))
++	if err != nil {
++		return types.Node{}, err
++	}
++
++	row := s.pool.QueryRow(ctx, `
++		UPDATE nodes
++		SET hostname = $2,
++			advertise_address = $3,
++			labels = $4,
++			capacity_cpu = $5,
++			capacity_memory = $6,
++			allocatable_cpu = $7,
++			allocatable_memory = $8,
++			status = $9,
++			last_heartbeat_at = $10,
++			updated_at = timezone('utc', now()),
++			version = version + 1
++		WHERE id = $1 AND updated_at = $11
++		RETURNING id, hostname, advertise_address, labels,
++			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
++			status, last_heartbeat_at, created_at, updated_at`,
++		string(node.ID),
++		node.Hostname,
++		node.AdvertiseAddress,
++		labels,
++		node.Capacity.CPU,
++		node.Capacity.Memory,
++		node.Allocatable.CPU,
++		node.Allocatable.Memory,
++		string(node.Status),
++		utcOrNow(node.LastHeartbeatAt),
++		expectedUpdatedAt.UTC(),
++	)
++	updated, err := scanNode(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Node{}, ErrConflict
++		}
++		return types.Node{}, mapPostgresError(err)
++	}
++	return updated, nil
++}
++
++func (s *PostgresStore) ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error) {
++	rows, err := s.pool.Query(ctx, `
++		SELECT id, hostname, advertise_address, labels,
++			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
++			status, last_heartbeat_at, created_at, updated_at
++		FROM nodes
++		WHERE status = $1
++		ORDER BY hostname, id`,
++		string(status),
++	)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	var nodes []types.Node
++	for rows.Next() {
++		node, err := scanNode(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		nodes = append(nodes, node)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return nodes, nil
++}
++
++func (s *PostgresStore) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
++	if err := spec.Validate(); err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++
++	tx, err := s.pool.Begin(ctx)
++	if err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	defer rollback(ctx, tx)
++
++	service, err := insertService(ctx, tx, spec)
++	if err != nil {
++		return types.Service{}, err
++	}
++	if err := insertServiceVersion(ctx, tx, service.ID, service.DeploymentVersion, spec); err != nil {
++		return types.Service{}, err
++	}
++	if err := tx.Commit(ctx); err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
++func (s *PostgresStore) GetService(ctx context.Context, id types.ServiceID) (types.Service, error) {
++	row := s.pool.QueryRow(ctx, serviceSelectSQL()+` WHERE id = $1`, string(id))
++	service, err := scanService(row)
++	if err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
++func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++	if err := spec.Validate(); err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
++	}
++
++	tx, err := s.pool.Begin(ctx)
++	if err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	defer rollback(ctx, tx)
++
++	service, err := updateService(ctx, tx, id, spec, expectedUpdatedAt)
++	if err != nil {
++		return types.Service{}, err
++	}
++	if err := insertServiceVersion(ctx, tx, service.ID, service.DeploymentVersion, spec); err != nil {
++		return types.Service{}, err
++	}
++	if err := tx.Commit(ctx); err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
++func (s *PostgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
++	row := s.pool.QueryRow(ctx, `
++		INSERT INTO tasks (
++			service_id, node_id, container_id, desired_status, actual_status,
++			image, version, restart_count, failure_reason, started_at, finished_at
++		)
++		VALUES ($1, nullif($2, '')::uuid, nullif($3, ''), $4, $5, $6, $7, $8, nullif($9, ''), $10, $11)
++		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++		string(task.ServiceID),
++		string(task.NodeID),
++		task.ContainerID,
++		string(task.DesiredStatus),
++		string(task.ActualStatus),
++		task.Image,
++		task.Version,
++		task.RestartCount,
++		task.FailureReason,
++		nilTime(task.StartedAt),
++		nilTime(task.FinishedAt),
++	)
++	created, err := scanTask(row)
++	if err != nil {
++		return types.Task{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *PostgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Task, error) {
++	row := s.pool.QueryRow(ctx, taskSelectSQL()+` WHERE id = $1`, string(id))
++	task, err := scanTask(row)
++	if err != nil {
++		return types.Task{}, mapPostgresError(err)
++	}
++	return task, nil
++}
++
++func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error) {
++	row := s.pool.QueryRow(ctx, `
++		UPDATE tasks
++		SET desired_status = $2,
++			actual_status = $3,
++			container_id = nullif($4, ''),
++			failure_reason = nullif($5, ''),
++			updated_at = timezone('utc', now()),
++			row_version = row_version + 1
++		WHERE id = $1 AND updated_at = $6
++		RETURNING id, service_id, node_id, container_id, desired_status, actual_status,
++			image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at`,
++		string(id),
++		string(desired),
++		string(actual),
++		containerID,
++		failureReason,
++		expectedUpdatedAt.UTC(),
++	)
++	task, err := scanTask(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Task{}, ErrConflict
++		}
++		return types.Task{}, mapPostgresError(err)
++	}
++	return task, nil
++}
++
++func (s *PostgresStore) ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error) {
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE service_id = $1 ORDER BY created_at, id`, string(serviceID))
++}
++
++func (s *PostgresStore) ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE node_id = $1 ORDER BY created_at, id`, string(nodeID))
++}
++
++func (s *PostgresStore) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
++	return s.listTasks(ctx, taskSelectSQL()+` WHERE actual_status = $1 ORDER BY created_at, id`, string(status))
++}
++
++func (s *PostgresStore) listTasks(ctx context.Context, sql string, arg any) ([]types.Task, error) {
++	rows, err := s.pool.Query(ctx, sql, arg)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	var tasks []types.Task
++	for rows.Next() {
++		task, err := scanTask(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		tasks = append(tasks, task)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return tasks, nil
++}
++
++func (s *PostgresStore) CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error) {
++	row := s.pool.QueryRow(ctx, `
++		INSERT INTO deployments (
++			service_id, from_version, to_version, strategy, status,
++			max_unavailable, max_surge, started_at, completed_at
++		)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
++		RETURNING id, service_id, from_version, to_version, strategy, status,
++			max_unavailable, max_surge, created_at, updated_at, started_at, completed_at`,
++		string(deployment.ServiceID),
++		deployment.FromVersion,
++		deployment.ToVersion,
++		string(deployment.Strategy),
++		string(deployment.Status),
++		deployment.MaxUnavailable,
++		deployment.MaxSurge,
++		nilTime(deployment.StartedAt),
++		nilTime(deployment.CompletedAt),
++	)
++	created, err := scanDeployment(row)
++	if err != nil {
++		return types.Deployment{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *PostgresStore) GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error) {
++	row := s.pool.QueryRow(ctx, deploymentSelectSQL()+` WHERE id = $1`, string(id))
++	deployment, err := scanDeployment(row)
++	if err != nil {
++		return types.Deployment{}, mapPostgresError(err)
++	}
++	return deployment, nil
++}
++
++func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
++	row := s.pool.QueryRow(ctx, `
++		UPDATE deployments
++		SET status = $2,
++			updated_at = timezone('utc', now()),
++			row_version = row_version + 1
++		WHERE id = $1 AND updated_at = $3
++		RETURNING id, service_id, from_version, to_version, strategy, status,
++			max_unavailable, max_surge, created_at, updated_at, started_at, completed_at`,
++		string(id),
++		string(status),
++		expectedUpdatedAt.UTC(),
++	)
++	deployment, err := scanDeployment(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Deployment{}, ErrConflict
++		}
++		return types.Deployment{}, mapPostgresError(err)
++	}
++	return deployment, nil
++}
++
++func (s *PostgresStore) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
++	row := s.pool.QueryRow(ctx, `
++		INSERT INTO events (
++			type, severity, source, message, related_object_type, related_object_id, created_at
++		)
++		VALUES ($1, $2, $3, $4, nullif($5, ''), nullif($6, '')::uuid, COALESCE($7, timezone('utc', now())))
++		RETURNING id, type, severity, source, message, related_object_type, related_object_id, created_at`,
++		event.Type,
++		string(event.Severity),
++		event.Source,
++		event.Message,
++		event.RelatedObjectType,
++		event.RelatedObjectID,
++		nilTime(event.Timestamp),
++	)
++	created, err := scanEvent(row)
++	if err != nil {
++		return types.Event{}, mapPostgresError(err)
++	}
++	return created, nil
++}
++
++func (s *PostgresStore) ListEventsForObject(ctx context.Context, objectType string, objectID string, limit int) ([]types.Event, error) {
++	if limit <= 0 {
++		limit = 100
++	}
++	rows, err := s.pool.Query(ctx, `
++		SELECT id, type, severity, source, message, related_object_type, related_object_id, created_at
++		FROM events
++		WHERE related_object_type = $1 AND related_object_id = $2
++		ORDER BY created_at DESC
++		LIMIT $3`,
++		objectType,
++		objectID,
++		limit,
++	)
++	if err != nil {
++		return nil, mapPostgresError(err)
++	}
++	defer rows.Close()
++
++	var events []types.Event
++	for rows.Next() {
++		event, err := scanEvent(rows)
++		if err != nil {
++			return nil, mapPostgresError(err)
++		}
++		events = append(events, event)
++	}
++	if err := rows.Err(); err != nil {
++		return nil, mapPostgresError(err)
++	}
++	return events, nil
++}
++
++func insertService(ctx context.Context, tx pgx.Tx, spec types.ServiceSpec) (types.Service, error) {
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	if err != nil {
++		return types.Service{}, err
++	}
++	row := tx.QueryRow(ctx, `
++		INSERT INTO services (
++			name, image, replicas, env, secret_refs, ports,
++			resource_requirements, healthcheck, restart_policy, placement_constraints
++		)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
++		RETURNING id, name, image, replicas, env, secret_refs, ports,
++			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			deployment_version, created_at, updated_at`,
++		spec.Name,
++		spec.Image,
++		spec.Replicas,
++		env,
++		secretRefs,
++		ports,
++		requirements,
++		healthcheck,
++		restartPolicy,
++		constraints,
++	)
++	service, err := scanService(row)
++	if err != nil {
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
++func updateService(ctx context.Context, tx pgx.Tx, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	if err != nil {
++		return types.Service{}, err
++	}
++	row := tx.QueryRow(ctx, `
++		UPDATE services
++		SET name = $2,
++			image = $3,
++			replicas = $4,
++			env = $5,
++			secret_refs = $6,
++			ports = $7,
++			resource_requirements = $8,
++			healthcheck = $9,
++			restart_policy = $10,
++			placement_constraints = $11,
++			deployment_version = deployment_version + 1,
++			updated_at = timezone('utc', now()),
++			version = version + 1
++		WHERE id = $1 AND updated_at = $12
++		RETURNING id, name, image, replicas, env, secret_refs, ports,
++			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			deployment_version, created_at, updated_at`,
++		string(id),
++		spec.Name,
++		spec.Image,
++		spec.Replicas,
++		env,
++		secretRefs,
++		ports,
++		requirements,
++		healthcheck,
++		restartPolicy,
++		constraints,
++		expectedUpdatedAt.UTC(),
++	)
++	service, err := scanService(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Service{}, ErrConflict
++		}
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
++func insertServiceVersion(ctx context.Context, tx pgx.Tx, serviceID types.ServiceID, version int64, spec types.ServiceSpec) error {
++	specJSON, err := jsonBytes(spec)
++	if err != nil {
++		return err
++	}
++	_, err = tx.Exec(ctx, `
++		INSERT INTO service_versions (service_id, version, spec)
++		VALUES ($1, $2, $3)`,
++		string(serviceID),
++		version,
++		specJSON,
++	)
++	return mapPostgresError(err)
++}
++
++func serviceSelectSQL() string {
++	return `SELECT id, name, image, replicas, env, secret_refs, ports,
++		resource_requirements, healthcheck, restart_policy, placement_constraints,
++		deployment_version, created_at, updated_at FROM services`
++}
++
++func taskSelectSQL() string {
++	return `SELECT id, service_id, node_id, container_id, desired_status, actual_status,
++		image, version, restart_count, failure_reason, created_at, updated_at, started_at, finished_at FROM tasks`
++}
++
++func deploymentSelectSQL() string {
++	return `SELECT id, service_id, from_version, to_version, strategy, status,
++		max_unavailable, max_surge, created_at, updated_at, started_at, completed_at FROM deployments`
++}
++
++func scanNode(row pgx.Row) (types.Node, error) {
++	var node types.Node
++	var id string
++	var labels []byte
++	err := row.Scan(
++		&id,
++		&node.Hostname,
++		&node.AdvertiseAddress,
++		&labels,
++		&node.Capacity.CPU,
++		&node.Capacity.Memory,
++		&node.Allocatable.CPU,
++		&node.Allocatable.Memory,
++		&node.Status,
++		&node.LastHeartbeatAt,
++		&node.CreatedAt,
++		&node.UpdatedAt,
++	)
++	if err != nil {
++		return types.Node{}, err
++	}
++	node.ID = types.NodeID(id)
++	if err := json.Unmarshal(labels, &node.Labels); err != nil {
++		return types.Node{}, fmt.Errorf("decode node labels: %w", err)
++	}
++	node.LastHeartbeatAt = node.LastHeartbeatAt.UTC()
++	node.CreatedAt = node.CreatedAt.UTC()
++	node.UpdatedAt = node.UpdatedAt.UTC()
++	return node, nil
++}
++
++func scanService(row pgx.Row) (types.Service, error) {
++	var service types.Service
++	var id string
++	var env, secretRefs, ports, requirements, restartPolicy, constraints []byte
++	var healthcheck []byte
++	err := row.Scan(
++		&id,
++		&service.Spec.Name,
++		&service.Spec.Image,
++		&service.Spec.Replicas,
++		&env,
++		&secretRefs,
++		&ports,
++		&requirements,
++		&healthcheck,
++		&restartPolicy,
++		&constraints,
++		&service.DeploymentVersion,
++		&service.CreatedAt,
++		&service.UpdatedAt,
++	)
++	if err != nil {
++		return types.Service{}, err
++	}
++	service.ID = types.ServiceID(id)
++	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints); err != nil {
++		return types.Service{}, err
++	}
++	service.CreatedAt = service.CreatedAt.UTC()
++	service.UpdatedAt = service.UpdatedAt.UTC()
++	return service, nil
++}
++
++func scanTask(row pgx.Row) (types.Task, error) {
++	var task types.Task
++	var id, serviceID string
++	var nodeID, containerID, failureReason *string
++	var startedAt, finishedAt *time.Time
++	err := row.Scan(
++		&id,
++		&serviceID,
++		&nodeID,
++		&containerID,
++		&task.DesiredStatus,
++		&task.ActualStatus,
++		&task.Image,
++		&task.Version,
++		&task.RestartCount,
++		&failureReason,
++		&task.CreatedAt,
++		&task.UpdatedAt,
++		&startedAt,
++		&finishedAt,
++	)
++	if err != nil {
++		return types.Task{}, err
++	}
++	task.ID = types.TaskID(id)
++	task.ServiceID = types.ServiceID(serviceID)
++	if nodeID != nil {
++		task.NodeID = types.NodeID(*nodeID)
++	}
++	if containerID != nil {
++		task.ContainerID = *containerID
++	}
++	if failureReason != nil {
++		task.FailureReason = *failureReason
++	}
++	task.CreatedAt = task.CreatedAt.UTC()
++	task.UpdatedAt = task.UpdatedAt.UTC()
++	if startedAt != nil {
++		task.StartedAt = startedAt.UTC()
++	}
++	if finishedAt != nil {
++		task.FinishedAt = finishedAt.UTC()
++	}
++	return task, nil
++}
++
++func scanDeployment(row pgx.Row) (types.Deployment, error) {
++	var deployment types.Deployment
++	var id, serviceID string
++	var startedAt, completedAt *time.Time
++	err := row.Scan(
++		&id,
++		&serviceID,
++		&deployment.FromVersion,
++		&deployment.ToVersion,
++		&deployment.Strategy,
++		&deployment.Status,
++		&deployment.MaxUnavailable,
++		&deployment.MaxSurge,
++		&deployment.CreatedAt,
++		&deployment.UpdatedAt,
++		&startedAt,
++		&completedAt,
++	)
++	if err != nil {
++		return types.Deployment{}, err
++	}
++	deployment.ID = types.DeploymentID(id)
++	deployment.ServiceID = types.ServiceID(serviceID)
++	deployment.CreatedAt = deployment.CreatedAt.UTC()
++	deployment.UpdatedAt = deployment.UpdatedAt.UTC()
++	if startedAt != nil {
++		deployment.StartedAt = startedAt.UTC()
++	}
++	if completedAt != nil {
++		deployment.CompletedAt = completedAt.UTC()
++	}
++	return deployment, nil
++}
++
++func scanEvent(row pgx.Row) (types.Event, error) {
++	var event types.Event
++	var id string
++	var relatedType, relatedID *string
++	err := row.Scan(
++		&id,
++		&event.Type,
++		&event.Severity,
++		&event.Source,
++		&event.Message,
++		&relatedType,
++		&relatedID,
++		&event.Timestamp,
++	)
++	if err != nil {
++		return types.Event{}, err
++	}
++	event.ID = types.EventID(id)
++	if relatedType != nil {
++		event.RelatedObjectType = *relatedType
++	}
++	if relatedID != nil {
++		event.RelatedObjectID = *relatedID
++	}
++	event.Timestamp = event.Timestamp.UTC()
++	return event, nil
++}
++
++func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
++	env, err := jsonBytes(defaultMap(spec.Env))
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	secretRefs, err := jsonBytes(defaultSlice(spec.SecretRefs))
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	ports, err := jsonBytes(defaultSlice(spec.Ports))
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	requirements, err := jsonBytes(spec.ResourceRequirements)
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	var healthcheck []byte
++	if spec.Healthcheck != nil {
++		healthcheck, err = jsonBytes(spec.Healthcheck)
++		if err != nil {
++			return nil, nil, nil, nil, nil, nil, nil, err
++		}
++	}
++	restartPolicy, err := jsonBytes(spec.RestartPolicy)
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	constraints, err := jsonBytes(defaultSlice(spec.PlacementConstraints))
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, err
++	}
++	return env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, nil
++}
++
++func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, healthcheck []byte, restartPolicy []byte, constraints []byte) error {
++	if err := json.Unmarshal(env, &spec.Env); err != nil {
++		return fmt.Errorf("decode service env: %w", err)
++	}
++	if err := json.Unmarshal(secretRefs, &spec.SecretRefs); err != nil {
++		return fmt.Errorf("decode service secret refs: %w", err)
++	}
++	if err := json.Unmarshal(ports, &spec.Ports); err != nil {
++		return fmt.Errorf("decode service ports: %w", err)
++	}
++	if err := json.Unmarshal(requirements, &spec.ResourceRequirements); err != nil {
++		return fmt.Errorf("decode service resource requirements: %w", err)
++	}
++	if len(healthcheck) > 0 {
++		var check types.Healthcheck
++		if err := json.Unmarshal(healthcheck, &check); err != nil {
++			return fmt.Errorf("decode service healthcheck: %w", err)
++		}
++		spec.Healthcheck = &check
++	}
++	if err := json.Unmarshal(restartPolicy, &spec.RestartPolicy); err != nil {
++		return fmt.Errorf("decode service restart policy: %w", err)
++	}
++	if err := json.Unmarshal(constraints, &spec.PlacementConstraints); err != nil {
++		return fmt.Errorf("decode service placement constraints: %w", err)
++	}
++	return nil
++}
++
++func jsonBytes(value any) ([]byte, error) {
++	data, err := json.Marshal(value)
++	if err != nil {
++		return nil, fmt.Errorf("encode json: %w", err)
++	}
++	return data, nil
++}
++
++func defaultMap(value map[string]string) map[string]string {
++	if value == nil {
++		return map[string]string{}
++	}
++	return value
++}
++
++func defaultSlice[T any](value []T) []T {
++	if value == nil {
++		return []T{}
++	}
++	return value
++}
++
++func nilTime(value time.Time) *time.Time {
++	if value.IsZero() {
++		return nil
++	}
++	utc := value.UTC()
++	return &utc
++}
++
++func utcOrNow(value time.Time) time.Time {
++	if value.IsZero() {
++		return time.Now().UTC()
++	}
++	return value.UTC()
++}
++
++func rollback(ctx context.Context, tx pgx.Tx) {
++	_ = tx.Rollback(ctx)
++}
++
++func mapPostgresError(err error) error {
++	if err == nil {
++		return nil
++	}
++	if errors.Is(err, pgx.ErrNoRows) {
++		return ErrNotFound
++	}
++
++	var pgErr *pgconn.PgError
++	if errors.As(err, &pgErr) {
++		switch pgErr.Code {
++		case "23505":
++			return fmt.Errorf("%w: %s", ErrDuplicate, pgErr.ConstraintName)
++		case "23503", "23514", "22P02":
++			return fmt.Errorf("%w: %s", ErrInvalidState, pgErr.Message)
++		case "40001", "40P01":
++			return fmt.Errorf("%w: %s", ErrConflict, pgErr.Message)
++		}
++	}
++	return err
++}
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+new file mode 100644
+index 0000000..c76096c
+--- /dev/null
++++ b/internal/store/postgres_test.go
+@@ -0,0 +1,225 @@
++package store
++
++import (
++	"context"
++	"errors"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/pkg/types"
++	"github.com/jackc/pgx/v5/pgconn"
++)
++
++func TestMapPostgresError(t *testing.T) {
++	tests := []struct {
++		name string
++		err  error
++		want error
++	}{
++		{
++			name: "duplicate",
++			err:  &pgconn.PgError{Code: "23505", ConstraintName: "services_name_key"},
++			want: ErrDuplicate,
++		},
++		{
++			name: "foreign key invalid state",
++			err:  &pgconn.PgError{Code: "23503", Message: "violates foreign key constraint"},
++			want: ErrInvalidState,
++		},
++		{
++			name: "check invalid state",
++			err:  &pgconn.PgError{Code: "23514", Message: "violates check constraint"},
++			want: ErrInvalidState,
++		},
++		{
++			name: "serialization conflict",
++			err:  &pgconn.PgError{Code: "40001", Message: "could not serialize access"},
++			want: ErrConflict,
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			if got := mapPostgresError(tt.err); !errors.Is(got, tt.want) {
++				t.Fatalf("expected %v, got %v", tt.want, got)
++			}
++		})
++	}
++}
++
++func TestServiceJSONRoundTrip(t *testing.T) {
++	spec := serviceSpecFixture()
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	if err != nil {
++		t.Fatalf("encode service json: %v", err)
++	}
++
++	var got types.ServiceSpec
++	got.Name = spec.Name
++	got.Image = spec.Image
++	got.Replicas = spec.Replicas
++	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints); err != nil {
++		t.Fatalf("decode service json: %v", err)
++	}
++
++	if got.Env["APP_ENV"] != "test" {
++		t.Fatalf("expected env to round trip, got %#v", got.Env)
++	}
++	if got.Healthcheck == nil || got.Healthcheck.Path != "/healthz" {
++		t.Fatalf("expected healthcheck to round trip, got %#v", got.Healthcheck)
++	}
++	if len(got.Ports) != 1 || got.Ports[0].ContainerPort != 8080 {
++		t.Fatalf("expected ports to round trip, got %#v", got.Ports)
++	}
++}
++
++func TestPostgresStoreIntegration(t *testing.T) {
++	databaseURL := os.Getenv("ORCH_INTEGRATION_DATABASE_URL")
++	if databaseURL == "" {
++		t.Skip("set ORCH_INTEGRATION_DATABASE_URL to run PostgreSQL integration tests")
++	}
++
++	ctx := context.Background()
++	pool, err := ConnectPostgres(ctx, databaseURL)
++	if err != nil {
++		t.Fatalf("connect postgres: %v", err)
++	}
++	defer pool.Close()
++
++	migrate(t, ctx, pool)
++	store := NewPostgresStore(pool)
++
++	node, err := store.CreateNode(ctx, types.NodeSpec{
++		Hostname:         "node-1",
++		AdvertiseAddress: "10.0.0.10",
++		Labels:           map[string]string{"region": "test"},
++		Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++		Allocatable:      types.Resources{CPU: 3500, Memory: 7 * 1024 * 1024 * 1024},
++	})
++	if err != nil {
++		t.Fatalf("create node: %v", err)
++	}
++	node.Status = types.NodeReady
++	updatedNode, err := store.UpdateNode(ctx, node, node.UpdatedAt)
++	if err != nil {
++		t.Fatalf("update node: %v", err)
++	}
++	if _, err := store.UpdateNode(ctx, updatedNode, node.UpdatedAt); !errors.Is(err, ErrConflict) {
++		t.Fatalf("expected stale node update to conflict, got %v", err)
++	}
++
++	service, err := store.CreateService(ctx, serviceSpecFixture())
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	if _, err := store.CreateService(ctx, serviceSpecFixture()); !errors.Is(err, ErrDuplicate) {
++		t.Fatalf("expected duplicate service name, got %v", err)
++	}
++
++	task, err := store.CreateTask(ctx, types.Task{
++		ServiceID:     service.ID,
++		NodeID:        updatedNode.ID,
++		DesiredStatus: types.TaskRunning,
++		ActualStatus:  types.TaskPending,
++		Image:         service.Spec.Image,
++		Version:       service.DeploymentVersion,
++	})
++	if err != nil {
++		t.Fatalf("create task: %v", err)
++	}
++	if _, err := store.UpdateTaskStatus(ctx, task.ID, types.TaskRunning, types.TaskRunning, "container-1", "", task.UpdatedAt); err != nil {
++		t.Fatalf("update task status: %v", err)
++	}
++
++	deployment, err := store.CreateDeployment(ctx, types.Deployment{
++		ServiceID:      service.ID,
++		FromVersion:    1,
++		ToVersion:      2,
++		Strategy:       types.RolloutRollingUpdate,
++		Status:         types.DeploymentPending,
++		MaxUnavailable: 1,
++		MaxSurge:       1,
++	})
++	if err != nil {
++		t.Fatalf("create deployment: %v", err)
++	}
++	if _, err := store.UpdateDeploymentStatus(ctx, deployment.ID, types.DeploymentRunning, deployment.UpdatedAt); err != nil {
++		t.Fatalf("update deployment: %v", err)
++	}
++
++	if _, err := store.AppendEvent(ctx, types.Event{
++		Type:              "task.started",
++		Severity:          types.EventInfo,
++		Source:            "integration-test",
++		Message:           "task started",
++		RelatedObjectType: "task",
++		RelatedObjectID:   string(task.ID),
++		Timestamp:         time.Now().UTC(),
++	}); err != nil {
++		t.Fatalf("append event: %v", err)
++	}
++	events, err := store.ListEventsForObject(ctx, "task", string(task.ID), 10)
++	if err != nil {
++		t.Fatalf("list events: %v", err)
++	}
++	if len(events) != 1 {
++		t.Fatalf("expected one event, got %d", len(events))
++	}
++}
++
++func serviceSpecFixture() types.ServiceSpec {
++	return types.ServiceSpec{
++		Name:     "web",
++		Image:    "nginx:1.27",
++		Replicas: 2,
++		Env: map[string]string{
++			"APP_ENV": "test",
++		},
++		SecretRefs: []types.SecretRef{
++			{Name: "registry", Key: "password"},
++		},
++		Ports: []types.Port{
++			{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080},
++		},
++		ResourceRequirements: types.ResourceRequirements{
++			Requests: types.Resources{CPU: 100, Memory: 128 * 1024 * 1024},
++			Limits:   types.Resources{CPU: 500, Memory: 512 * 1024 * 1024},
++		},
++		Healthcheck: &types.Healthcheck{
++			Type:               types.HealthcheckHTTP,
++			Path:               "/healthz",
++			Port:               8080,
++			Interval:           10 * time.Second,
++			Timeout:            2 * time.Second,
++			HealthyThreshold:   1,
++			UnhealthyThreshold: 3,
++		},
++		RestartPolicy: types.RestartPolicy{Condition: types.RestartOnFailure, MaxAttempts: 3},
++		PlacementConstraints: []types.PlacementConstraint{
++			{Key: "region", Operator: types.ConstraintEquals, Value: "test"},
++		},
++	}
++}
++
++func migrate(t *testing.T, ctx context.Context, pool execer) {
++	t.Helper()
++
++	for _, file := range []string{
++		"000001_initial_schema.down.sql",
++		"000001_initial_schema.up.sql",
++	} {
++		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
++		if err != nil {
++			t.Fatalf("read migration %s: %v", file, err)
++		}
++		if _, err := pool.Exec(ctx, string(sql)); err != nil {
++			t.Fatalf("apply migration %s: %v", file, err)
++		}
++	}
++}
++
++type execer interface {
++	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
++}
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 95c6848..9d52bbc 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -2,11 +2,48 @@ package store
+ 
+ import (
+ 	"context"
++	"time"
+ 
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
++type NodeStore interface {
++	CreateNode(ctx context.Context, spec types.NodeSpec) (types.Node, error)
++	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
++	UpdateNode(ctx context.Context, node types.Node, expectedUpdatedAt time.Time) (types.Node, error)
++	ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error)
++}
++
++type ServiceStore interface {
++	CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error)
++	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
++	UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error)
++}
++
++type TaskStore interface {
++	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
++	GetTask(ctx context.Context, id types.TaskID) (types.Task, error)
++	UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error)
++	ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error)
++	ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error)
++}
++
++type DeploymentStore interface {
++	CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error)
++	GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error)
++	UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error)
++}
++
++type EventStore interface {
++	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
++	ListEventsForObject(ctx context.Context, objectType string, objectID string, limit int) ([]types.Event, error)
++}
++
+ type Store interface {
+-	SaveNode(ctx context.Context, node types.Node) error
+-	SaveTask(ctx context.Context, task types.Task) error
++	NodeStore
++	ServiceStore
++	TaskStore
++	DeploymentStore
++	EventStore
+ }
+diff --git a/migrations/.gitkeep b/migrations/.gitkeep
+deleted file mode 100644
+index 8b13789..0000000
+--- a/migrations/.gitkeep
++++ /dev/null
+@@ -1 +0,0 @@
+-
+diff --git a/migrations/000001_initial_schema.down.sql b/migrations/000001_initial_schema.down.sql
+new file mode 100644
+index 0000000..ddce59f
+--- /dev/null
++++ b/migrations/000001_initial_schema.down.sql
+@@ -0,0 +1,7 @@
++DROP TABLE IF EXISTS events;
++DROP TABLE IF EXISTS deployments;
++DROP TABLE IF EXISTS tasks;
++DROP TABLE IF EXISTS service_versions;
++DROP TABLE IF EXISTS services;
++DROP TABLE IF EXISTS nodes;
++DROP EXTENSION IF EXISTS pgcrypto;
+diff --git a/migrations/000001_initial_schema.up.sql b/migrations/000001_initial_schema.up.sql
+new file mode 100644
+index 0000000..a81a9d8
+--- /dev/null
++++ b/migrations/000001_initial_schema.up.sql
+@@ -0,0 +1,104 @@
++CREATE EXTENSION IF NOT EXISTS pgcrypto;
++
++CREATE TABLE nodes (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    hostname TEXT NOT NULL,
++    advertise_address TEXT NOT NULL,
++    labels JSONB NOT NULL DEFAULT '{}'::jsonb,
++    capacity_cpu BIGINT NOT NULL CHECK (capacity_cpu >= 0),
++    capacity_memory BIGINT NOT NULL CHECK (capacity_memory >= 0),
++    allocatable_cpu BIGINT NOT NULL CHECK (allocatable_cpu >= 0),
++    allocatable_memory BIGINT NOT NULL CHECK (allocatable_memory >= 0),
++    status TEXT NOT NULL,
++    last_heartbeat_at TIMESTAMPTZ NOT NULL,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    version BIGINT NOT NULL DEFAULT 1,
++    CHECK (allocatable_cpu <= capacity_cpu),
++    CHECK (allocatable_memory <= capacity_memory)
++);
++
++CREATE INDEX idx_nodes_status ON nodes (status);
++
++CREATE TABLE services (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    name TEXT NOT NULL UNIQUE,
++    image TEXT NOT NULL,
++    replicas INTEGER NOT NULL CHECK (replicas >= 0),
++    env JSONB NOT NULL DEFAULT '{}'::jsonb,
++    secret_refs JSONB NOT NULL DEFAULT '[]'::jsonb,
++    ports JSONB NOT NULL DEFAULT '[]'::jsonb,
++    resource_requirements JSONB NOT NULL DEFAULT '{}'::jsonb,
++    healthcheck JSONB,
++    restart_policy JSONB NOT NULL DEFAULT '{}'::jsonb,
++    placement_constraints JSONB NOT NULL DEFAULT '[]'::jsonb,
++    deployment_version BIGINT NOT NULL DEFAULT 1,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    version BIGINT NOT NULL DEFAULT 1
++);
++
++CREATE TABLE service_versions (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    service_id UUID NOT NULL REFERENCES services (id) ON DELETE CASCADE,
++    version BIGINT NOT NULL,
++    spec JSONB NOT NULL,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    UNIQUE (service_id, version)
++);
++
++CREATE INDEX idx_service_versions_service_id ON service_versions (service_id);
++
++CREATE TABLE tasks (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    service_id UUID NOT NULL REFERENCES services (id) ON DELETE CASCADE,
++    node_id UUID REFERENCES nodes (id) ON DELETE SET NULL,
++    container_id TEXT,
++    desired_status TEXT NOT NULL,
++    actual_status TEXT NOT NULL,
++    image TEXT NOT NULL,
++    version BIGINT NOT NULL,
++    restart_count INTEGER NOT NULL DEFAULT 0 CHECK (restart_count >= 0),
++    failure_reason TEXT,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    started_at TIMESTAMPTZ,
++    finished_at TIMESTAMPTZ,
++    row_version BIGINT NOT NULL DEFAULT 1
++);
++
++CREATE INDEX idx_tasks_service_id ON tasks (service_id);
++CREATE INDEX idx_tasks_node_id ON tasks (node_id);
++CREATE INDEX idx_tasks_status ON tasks (actual_status, desired_status);
++
++CREATE TABLE deployments (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    service_id UUID NOT NULL REFERENCES services (id) ON DELETE CASCADE,
++    from_version BIGINT NOT NULL,
++    to_version BIGINT NOT NULL,
++    strategy TEXT NOT NULL,
++    status TEXT NOT NULL,
++    max_unavailable INTEGER NOT NULL CHECK (max_unavailable >= 0),
++    max_surge INTEGER NOT NULL CHECK (max_surge >= 0),
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
++    started_at TIMESTAMPTZ,
++    completed_at TIMESTAMPTZ,
++    row_version BIGINT NOT NULL DEFAULT 1
++);
++
++CREATE INDEX idx_deployments_service_id ON deployments (service_id);
++
++CREATE TABLE events (
++    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
++    type TEXT NOT NULL,
++    severity TEXT NOT NULL,
++    source TEXT NOT NULL,
++    message TEXT NOT NULL,
++    related_object_type TEXT,
++    related_object_id UUID,
++    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now())
++);
++
++CREATE INDEX idx_events_related_object_created_at
++    ON events (related_object_type, related_object_id, created_at DESC);

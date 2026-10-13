@@ -1,0 +1,13 @@
+=== RUN   TestAtlasPublicContract
+    contract_test.go:32: public client rejection: status=400 code=invalid_argument request_id_present=true
+--- PASS: TestAtlasPublicContract (0.00s)
+=== RUN   TestAtlasAdditiveResponseCompatibility
+=== RUN   TestAtlasAdditiveResponseCompatibility/additive
+    contract_test.go:55: {"decoded_name":"atlas-api","fixture":"additive"}
+=== RUN   TestAtlasAdditiveResponseCompatibility/renamed
+    contract_test.go:55: {"decoded_name":"","fixture":"renamed"}
+--- PASS: TestAtlasAdditiveResponseCompatibility (0.00s)
+    --- PASS: TestAtlasAdditiveResponseCompatibility/additive (0.00s)
+    --- PASS: TestAtlasAdditiveResponseCompatibility/renamed (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/ch07	0.008s

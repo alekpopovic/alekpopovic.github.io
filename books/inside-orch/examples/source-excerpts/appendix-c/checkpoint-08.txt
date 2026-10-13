@@ -1,0 +1,6 @@
+func NewTokenAgentCredentialIssuer(ttl time.Duration) *TokenAgentCredentialIssuer {
+	if ttl <= 0 {
+		ttl = 15 * time.Minute
+	}
+	return &TokenAgentCredentialIssuer{ttl: func() time.Duration { return ttl }}
+}

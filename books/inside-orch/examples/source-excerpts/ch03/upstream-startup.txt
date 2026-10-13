@@ -1,0 +1,8 @@
+if [[ ! -f .env ]]; then
+  cp .env.example .env
+  echo "Created .env from .env.example"
+fi
+
+docker compose --profile local-orch up --build -d postgres orch-server orch-agent
+
+echo "Waiting for orch-server..."

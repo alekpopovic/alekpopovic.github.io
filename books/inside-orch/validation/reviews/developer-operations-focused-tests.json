@@ -1,0 +1,38 @@
+{
+  "id": "developer-operations-focused-review",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "-count=1",
+    "-json",
+    "./pkg/types",
+    "./internal/discovery",
+    "./internal/scheduler",
+    "./internal/reconciler",
+    "./internal/rollout",
+    "./internal/node",
+    "./internal/leadership",
+    "./internal/secrets",
+    "./internal/config",
+    "./internal/cronjobs"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOFLAGS",
+    "GOENV",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:41:29.538798+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:41:29.939766+00:00",
+  "duration_seconds": 0.401,
+  "stdout": "validation/reviews/developer-operations-focused-tests.stdout.txt",
+  "stderr": "validation/reviews/developer-operations-focused-tests.stderr.txt"
+}

@@ -1,0 +1,80 @@
+{
+  "title": "Inside orch",
+  "subtitle": "Building and Operating a Docker Orchestrator in Go",
+  "author": "Aleksandar Popovic",
+  "author_url": "https://www.alekpopovic.com",
+  "language": "en",
+  "edition": "1.0",
+  "edition_date": "2026-10-13",
+  "description": "A source-based engineering study of orch: Go control planes, Docker workers, state ownership, scheduling, failure recovery, and the limits of executable integration.",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "rights": "All rights reserved",
+  "copyright": "Copyright © 2026 Aleksandar Popovic. All rights reserved. No new public license is granted for the original manuscript. Source excerpts and third-party materials retain their existing rights and notices.",
+  "status": "local_review_candidate",
+  "id": "inside-orch",
+  "measured_at_utc": "2026-10-13T03:33:08.685561+00:00",
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "worked_chapter_answer_companions": 40,
+  "additional_audience_exercises": 24,
+  "laboratories": 8,
+  "lab_status": "All eight laboratories independently rerun; scope and actual command records retained under validation/labs/review076. Fake-runtime, guarded Docker, and full-schema PostgreSQL observations remain distinct.",
+  "meaningful_manuscript_words": 101211,
+  "word_count_method": "Markdown inline text and technical identifiers; no fenced code/output, URL destinations, build metadata or duplicated unified export. Separate lab guides reported but excluded from the editorial target.",
+  "pdf_pages": 546,
+  "public_url": "https://www.alekpopovic.com/books/inside-orch/",
+  "publication_state": "Prepared and verified locally; no push, deployment, ISBN, endorsement, or production certification claimed.",
+  "cover": {
+    "svg": "publication/cover.svg",
+    "png": "publication/cover.png",
+    "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+    "width": 1700,
+    "height": 2400,
+    "alt": "Inside orch: Building and Operating a Docker Orchestrator in Go, by Aleksandar Popovic. Navy cover with cyan title and the Orch vector mark."
+  },
+  "formats": {
+    "pdf": {
+      "canonical": "dist/inside-orch.pdf",
+      "public_url": "/assets/books/inside-orch/downloads/inside-orch.pdf",
+      "sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c"
+    },
+    "epub": {
+      "canonical": "dist/inside-orch.epub",
+      "public_url": "/assets/books/inside-orch/downloads/inside-orch.epub",
+      "sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b"
+    }
+  },
+  "audience": [
+    "Go and API developers tracing concrete state transitions and contracts",
+    "Operators investigating task, agent, rollout, secret and recovery evidence",
+    "Architects comparing state ownership, consistency, leadership and integration boundaries"
+  ],
+  "prerequisites": [
+    "Ability to read Go and command-line procedures; disposable source copy at the pinned revision",
+    "Go 1.25.0 and cached module dependencies for source-based experiments",
+    "Docker or PostgreSQL only for the specifically guarded laboratories that require them; never reset shared services"
+  ],
+  "learning_outcomes": [
+    "Trace accepted service intent through task assignment, reports and Docker operations",
+    "Distinguish deterministic placement and per-task claims from global capacity reservation",
+    "Measure recovery, rollout and admission behavior with bounded actual evidence",
+    "Identify memory-only default state, omitted resource propagation and unwired packages before making reliability claims"
+  ],
+  "reader_paths": {
+    "developer": "Domain models → HTTP/CLI → scheduling/reconciliation → jobs → executable contracts",
+    "operator": "Process restart → agents → rollout/drain → secret custody → bounded database recovery",
+    "architect": "State ownership → assignment races → namespaces → leadership → composition gaps"
+  },
+  "social": {
+    "title": "Inside orch — engineering a Go/Docker orchestrator",
+    "description": "Forty source-based chapters, six appendices, worked answers and eight bounded laboratories. Read the implementation and its failure limits."
+  },
+  "source_license_note": "No root license file or repository license metadata observed in the pinned Orch snapshot. Public availability does not grant a new source license.",
+  "evidence": [
+    "validation/publication/manuscript-measurement.json",
+    "validation/labs/review076/",
+    "validation/publication/format-structure.json",
+    "validation/publication/post-editorial-review.json"
+  ]
+}

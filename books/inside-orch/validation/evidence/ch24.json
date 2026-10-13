@@ -1,0 +1,112 @@
+{
+  "chapter_id": "24",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch24.references",
+      "statement": "Secret resolution selects namespace-bound encrypted record then delivers plaintext agent environment.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 821,
+      "line_end": 842,
+      "associated_commits": [
+        "ad738d1867eefb3c92cc4280659ae76943341426",
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Authorized execution boundary necessarily sees plaintext.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch24.envelope",
+      "statement": "Local envelope uses AES-GCM, random nonce prefix and key ID associated data.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/secrets/envelope.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 31,
+      "line_end": 84,
+      "associated_commits": [
+        "ad738d1867eefb3c92cc4280659ae76943341426",
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "No KMS/rotation/durable-store integration inferred.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch24.precedence",
+      "statement": "Configuration loads defaults then file/env/overrides before validation.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 95,
+      "line_end": 107,
+      "associated_commits": [
+        "ad738d1867eefb3c92cc4280659ae76943341426",
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Empty-string clearing and token aliases have explicit helper semantics.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch24.redaction",
+      "statement": "Server Redacted replaces sensitive configured fields with sentinel without revealing values.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/config/config.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 667,
+      "line_end": 684,
+      "associated_commits": [
+        "ad738d1867eefb3c92cc4280659ae76943341426",
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Does not sanitize every arbitrary field/error/output.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch24.metadata",
+      "statement": "Secret API metadata/events fixture asserts no synthetic plaintext; agent fixture asserts intended injection.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 210,
+      "line_end": 299,
+      "associated_commits": [
+        "ad738d1867eefb3c92cc4280659ae76943341426",
+        "a4844c571a0ddf33879556413a62d49a408609e3"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Inspected assertions; runtime confidentiality requires channel-scoped evidence.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestLocalEnvelopeEncryptDecrypt",
+    "TestLocalEnvelopeWrongKeyFails",
+    "TestServerConfigPrecedence",
+    "TestAgentConfigPrecedence",
+    "TestCLIConfigPrecedence",
+    "TestRedactedConfigDoesNotExposeSecrets",
+    "TestSecretsCreateRetrieveMetadataAndRedactPlaintext",
+    "TestSecretInjectedIntoAgentTaskEnv"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

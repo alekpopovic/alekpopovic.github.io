@@ -1,0 +1,293 @@
+{
+  "status": "applied",
+  "at_utc": "2026-10-13T01:23:58.164534+00:00",
+  "scope": "Narrow spacing copyedit only; no semantic or source-listing changes. Final whole-book copyedit remains separate.",
+  "changes": [
+    {
+      "path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+      "line": 92,
+      "before": "The real-handler test creates Atlas, checks its returned identity/name, requests a non-UUID service ID, and verifies a400 invalid_argument APIError with a request ID. It submits an unknown top-level request field and expects 400 with the v1 header. It also verifies absent credentials produce 401 when JWT enforcement is configured, and v2 remains404. The additive/renamed fixtures test a different, explicitly controlled decoding boundary.",
+      "after": "The real-handler test creates Atlas, checks its returned identity/name, requests a non-UUID service ID, and verifies a 400 invalid_argument APIError with a request ID. It submits an unknown top-level request field and expects 400 with the v1 header. It also verifies absent credentials produce 401 when JWT enforcement is configured, and v2 remains404. The additive/renamed fixtures test a different, explicitly controlled decoding boundary."
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "line": 15,
+      "before": "The `validate <file.yaml>` command invokes ParseDeployFile directly, prints a local validity message, and returns its error. It does not construct the API client. Consequently a missing server URL does not prevent local deployment validation. The chapter5 harness actually exercised that property while rejecting invalid fixtures.",
+      "after": "The `validate <file.yaml>` command invokes ParseDeployFile directly, prints a local validity message, and returns its error. It does not construct the API client. Consequently a missing server URL does not prevent local deployment validation. The chapter 5 harness actually exercised that property while rejecting invalid fixtures."
+    },
+    {
+      "path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+      "line": 97,
+      "before": "A three means the script cannot safely interpret the current contract. It must not convert absent replicas or a renamed status field into zero and announce success. Likewise a malformed task row must not be silently skipped. Validating expected values after JSON decoding is the practical counterpart to chapter7's renamed-field example.",
+      "after": "A three means the script cannot safely interpret the current contract. It must not convert absent replicas or a renamed status field into zero and announce success. Likewise a malformed task row must not be silently skipped. Validating expected values after JSON decoding is the practical counterpart to chapter 7's renamed-field example."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 5,
+      "before": "This chapter assumes the executable trace from chapter6 and the resource model from chapter5. You will identify the row and transaction that protect an assignment, distinguish conflict from absence, and evaluate a database test without confusing its fixtures with server wiring. The concrete problem is two schedulers trying to assign one pending Atlas task. A second problem, deliberately kept separate, is restoring the service after a new server process starts.",
+      "after": "This chapter assumes the executable trace from chapter 6 and the resource model from chapter 5. You will identify the row and transaction that protect an assignment, distinguish conflict from absence, and evaluate a database test without confusing its fixtures with server wiring. The concrete problem is two schedulers trying to assign one pending Atlas task. A second problem, deliberately kept separate, is restoring the service after a new server process starts."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 47,
+      "before": "The inspected transaction audit makes this distinction concrete. Commit [72fd9baff0bbfde49574257380bcd8f747cc2070](https://github.com/alekpopovic/orch/commit/72fd9baff0bbfde49574257380bcd8f747cc2070) adds transaction-aware controller operations and strict events, including a rollback test. Earlier commit [7eba6544ffe2eba41b81faa811e899faf28b77a2](https://github.com/alekpopovic/orch/commit/7eba6544ffe2eba41b81faa811e899faf28b77a2) introduced the PostgreSQL layer. Their patches establish code evolution, not a production migration or successful execution of every original development prompt. Prompts03 and24 were added retrospectively; prompt30 describes the later transaction audit.",
+      "after": "The inspected transaction audit makes this distinction concrete. Commit [72fd9baff0bbfde49574257380bcd8f747cc2070](https://github.com/alekpopovic/orch/commit/72fd9baff0bbfde49574257380bcd8f747cc2070) adds transaction-aware controller operations and strict events, including a rollback test. Earlier commit [7eba6544ffe2eba41b81faa811e899faf28b77a2](https://github.com/alekpopovic/orch/commit/7eba6544ffe2eba41b81faa811e899faf28b77a2) introduced the PostgreSQL layer. Their patches establish code evolution, not a production migration or successful execution of every original development prompt. Prompts 03 and 24 were added retrospectively; prompt 30 describes the later transaction audit."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 78,
+      "before": "This protects one task assignment. It does not, by itself, reserve all free CPU and host ports across a set of independently planned tasks. Two schedulers can each read available capacity, plan different pending tasks, and successfully claim both even if their combined plans oversubscribe the snapshot. Chapter10 separates per-task uniqueness from global reservation. Increasing the number of predicates on one row cannot replace a deliberate cross-row allocation protocol.",
+      "after": "This protects one task assignment. It does not, by itself, reserve all free CPU and host ports across a set of independently planned tasks. Two schedulers can each read available capacity, plan different pending tasks, and successfully claim both even if their combined plans oversubscribe the snapshot. Chapter 10 separates per-task uniqueness from global reservation. Increasing the number of predicates on one row cannot replace a deliberate cross-row allocation protocol."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 93,
+      "before": "The actual guarded run is preserved in [database evidence](../../validation/intake/postgres-store-owned.json). WithTxRollsBackOnError passed. Integration and ConcurrentAssignTaskOnce failed with SQLSTATE42703: current node queries require agent_version, while the reset helper applies only migrations000001\u2013000014 and the column arrives in000016. This is an executed fixture/schema mismatch. It is not a passing concurrency experiment, nor a reason to erase the failure and rerun altered upstream code under the same label.",
+      "after": "The actual guarded run is preserved in [database evidence](../../validation/intake/postgres-store-owned.json). WithTxRollsBackOnError passed. Integration and ConcurrentAssignTaskOnce failed with SQLSTATE 42703: current node queries require agent_version, while the reset helper applies only migrations 000001\u2013000014 and the column arrives in000016. This is an executed fixture/schema mismatch. It is not a passing concurrency experiment, nor a reason to erase the failure and rerun altered upstream code under the same label."
+    },
+    {
+      "path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+      "line": 102,
+      "before": "Run that from the website root; only remove --check-only after the scope check succeeds. Keep the designated URL in the environment rather than in copied commands or logs. The separate [full-schema teaching fixture](../../validation/intake/full-schema-recovery-corrected.json) applied all16 migrations and exercised AssignTask with two concurrent writers: one won and one received a conflict. It also preserved a coherent stored task. Its passing result is named separately from the failing untouched suite, and its fixture remains reviewable.",
+      "after": "Run that from the website root; only remove --check-only after the scope check succeeds. Keep the designated URL in the environment rather than in copied commands or logs. The separate [full-schema teaching fixture](../../validation/intake/full-schema-recovery-corrected.json) applied all 16 migrations and exercised AssignTask with two concurrent writers: one won and one received a conflict. It also preserved a coherent stored task. Its passing result is named separately from the failing untouched suite, and its fixture remains reviewable."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 5,
+      "before": "This chapter assumes resource quantities from chapter5, executable composition from chapter6 and guarded assignment from chapter9. You will calculate a three-node placement, identify every eligibility filter and follow a plan into the store's conflict path. The key distinction is between a valid plan, a persisted task claim and enforced resource consumption. Those are three different pieces of evidence.",
+      "after": "This chapter assumes resource quantities from chapter 5, executable composition from chapter 6 and guarded assignment from chapter 9. You will calculate a three-node placement, identify every eligibility filter and follow a plan into the store's conflict path. The key distinction is between a valid plan, a persisted task claim and enforced resource consumption. Those are three different pieces of evidence."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 47,
+      "before": "Free resources equal advertised Allocatable minus resources accounted for by existing tasks. Requests use millicores for CPU and bytes for memory. They are not current utilization measurements. A task requesting400m and128Mi consumes those declared amounts in this accounting model whether its process is idle or busy. Container cgroup limits require a separate field path into Docker HostConfig, which the ordinary agent path does not complete at this baseline.",
+      "after": "Free resources equal advertised Allocatable minus resources accounted for by existing tasks. Requests use millicores for CPU and bytes for memory. They are not current utilization measurements. A task requesting 400m and 128Mi consumes those declared amounts in this accounting model whether its process is idle or busy. Container cgroup limits require a separate field path into Docker HostConfig, which the ordinary agent path does not complete at this baseline."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 51,
+      "before": "The following fixture is calculated before running it. Atlas requests400m CPU,128Mi memory and fixed published port31080. There are two pending tasks, atlas-01 and atlas-02, processed in ID order. Nodeb already runs an unrelated service using100m,64Mi and port31080.",
+      "after": "The following fixture is calculated before running it. Atlas requests 400m CPU,128Mi memory and fixed published port 31080. There are two pending tasks, atlas-01 and atlas-02, processed in ID order. Nodeb already runs an unrelated service using 100m,64Mi and port 31080."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 59,
+      "before": "After atlas-01, nodec has600m and128Mi free. atlas-02 would fit its CPU and memory exactly, but port31080 is now reserved. Nodeb remains port-conflicted and nodea remains offline, so the second task has no assignment. The limiting factor is the published port, not CPU. Changing the request's public port to dynamic would create a different experiment rather than retroactively changing this result.",
+      "after": "After atlas-01, nodec has 600m and 128Mi free. atlas-02 would fit its CPU and memory exactly, but port 31080 is now reserved. Nodeb remains port-conflicted and nodea remains offline, so the second task has no assignment. The limiting factor is the published port, not CPU. Changing the request's public port to dynamic would create a different experiment rather than retroactively changing this result."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 92,
+      "before": "The two-writer store experiment now has two distinct records. The untouched upstream suite failed before reaching assignment because its migration fixture omitted agent_version. The separate [full-schema verification fixture](../../validation/intake/full-schema-recovery-corrected.json) applied all16 migrations and observed one assignment winner and one conflict. Preserve both. The latter supports the tested conditional claim; it does not transform the former into a passing upstream suite.",
+      "after": "The two-writer store experiment now has two distinct records. The untouched upstream suite failed before reaching assignment because its migration fixture omitted agent_version. The separate [full-schema verification fixture](../../validation/intake/full-schema-recovery-corrected.json) applied all 16 migrations and observed one assignment winner and one conflict. Preserve both. The latter supports the tested conditional claim; it does not transform the former into a passing upstream suite."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 102,
+      "before": "Consequently, the pure planner's CPU, memory and label filters do not automatically constrain every ordinary service deployment. A constrained comparison must send the same declared service/node intent through both paths and examine the resulting tasks. Creating a very large lab machine would hide the distinction; advertising a500m/128Mi fake node and requesting600m/256Mi makes it visible without stressing any real host.",
+      "after": "Consequently, the pure planner's CPU, memory and label filters do not automatically constrain every ordinary service deployment. A constrained comparison must send the same declared service/node intent through both paths and examine the resulting tasks. Creating a very large lab machine would hide the distinction; advertising a 500m/128Mi fake node and requesting 600m/256Mi makes it visible without stressing any real host."
+    },
+    {
+      "path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+      "line": 110,
+      "before": "The scheduler began with [fce0a657651c00ffb697bf4a4aba12d0b171f463](https://github.com/alekpopovic/orch/commit/fce0a657651c00ffb697bf4a4aba12d0b171f463). The concurrency audit [1a1c216e8cfb442465f4d3c2c114d20da0342795](https://github.com/alekpopovic/orch/commit/1a1c216e8cfb442465f4d3c2c114d20da0342795) introduced guarded claim handling and related metrics; [3bfcef82a54dec457cf9d4187705fa70cc7215cf](https://github.com/alekpopovic/orch/commit/3bfcef82a54dec457cf9d4187705fa70cc7215cf) added port-awareness changes. Their actual patches, not their titles alone, connect these concepts to implementation. Original prompts09 and17 are retrospective development intent; prompt31 is the later concurrency request.",
+      "after": "The scheduler began with [fce0a657651c00ffb697bf4a4aba12d0b171f463](https://github.com/alekpopovic/orch/commit/fce0a657651c00ffb697bf4a4aba12d0b171f463). The concurrency audit [1a1c216e8cfb442465f4d3c2c114d20da0342795](https://github.com/alekpopovic/orch/commit/1a1c216e8cfb442465f4d3c2c114d20da0342795) introduced guarded claim handling and related metrics; [3bfcef82a54dec457cf9d4187705fa70cc7215cf](https://github.com/alekpopovic/orch/commit/3bfcef82a54dec457cf9d4187705fa70cc7215cf) added port-awareness changes. Their actual patches, not their titles alone, connect these concepts to implementation. Original prompts 09 and 17 are retrospective development intent; prompt 31 is the later concurrency request."
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "line": 11,
+      "before": "ReconcileOnce first checks cancellation and store presence, then acquires its configured LeaderLock and releases the lease when the iteration returns. The default lock is NoopLeaderLock. An interface named LeaderLock does not demonstrate distributed exclusivity, and a fake lease test only proves that the expected call was made. Actual shared leadership, session cleanup and fencing are considered in chapter34.",
+      "after": "ReconcileOnce first checks cancellation and store presence, then acquires its configured LeaderLock and releases the lease when the iteration returns. The default lock is NoopLeaderLock. An interface named LeaderLock does not demonstrate distributed exclusivity, and a fake lease test only proves that the expected call was made. Actual shared leadership, session cleanup and fencing are considered in chapter 34."
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "line": 84,
+      "before": "Deletion extends the same separation. A deleting service remains deleting until its tasks report actual removed state. If the agent is absent, changing intent does not physically remove a container. A safe interface should show the intermediate state rather than claiming deletion completed merely because the HTTP request was accepted. The chapter18 cleanup trace follows that sequence in detail.",
+      "after": "Deletion extends the same separation. A deleting service remains deleting until its tasks report actual removed state. If the agent is absent, changing intent does not physically remove a container. A safe interface should show the intermediate state rather than claiming deletion completed merely because the HTTP request was accepted. The chapter 18 cleanup trace follows that sequence in detail."
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "line": 99,
+      "before": "The history shows why these distinctions matter. [208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3](https://github.com/alekpopovic/orch/commit/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3) introduced the reconciler implementation. [a11cec091a69720c14b9713d8be68f38fe6df332](https://github.com/alekpopovic/orch/commit/a11cec091a69720c14b9713d8be68f38fe6df332) added active-deployment skipping and restart/no-op regression coverage. [316ba80ac1ea7ba465f1b0826b655233a651c043](https://github.com/alekpopovic/orch/commit/316ba80ac1ea7ba465f1b0826b655233a651c043) hardened task-state idempotency in the control plane. These are related improvements, not proof every package shares one invocation path. Original prompts10 and24 are retrospective intent; prompt32 names the later restart audit.",
+      "after": "The history shows why these distinctions matter. [208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3](https://github.com/alekpopovic/orch/commit/208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3) introduced the reconciler implementation. [a 11cec091a69720c14b9713d8be68f38fe6df332](https://github.com/alekpopovic/orch/commit/a11cec091a69720c14b9713d8be68f38fe6df332) added active-deployment skipping and restart/no-op regression coverage. [316ba80ac1ea7ba465f1b0826b655233a651c043](https://github.com/alekpopovic/orch/commit/316ba80ac1ea7ba465f1b0826b655233a651c043) hardened task-state idempotency in the control plane. These are related improvements, not proof every package shares one invocation path. Original prompts 10 and 24 are retrospective intent; prompt 32 names the later restart audit."
+    },
+    {
+      "path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+      "line": 103,
+      "before": "The source-only experiment needs Go1.25 and the disposable pinned source copy. It does not need Docker, a database or an active server. Run the focused upstream fixtures from that copy, with external integration flags unset and the selected GOROOT/cache configuration from the environment contract.",
+      "after": "The source-only experiment needs Go 1.25 and the disposable pinned source copy. It does not need Docker, a database or an active server. Run the focused upstream fixtures from that copy, with external integration flags unset and the selected GOROOT/cache configuration from the environment contract."
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "line": 42,
+      "before": "The ordinary service case uses a nonempty ServiceID. Finite jobs introduce an additional edge: taskWorkloadID labels their workload as job-<JobID>, while the shared matching helper compares the service label with task.ServiceID. That discrepancy needs its own job adoption test; do not extend a service-adoption result to every workload merely because both use the same create function. Chapter31 follows the finite-work path separately.",
+      "after": "The ordinary service case uses a nonempty ServiceID. Finite jobs introduce an additional edge: taskWorkloadID labels their workload as job-<JobID>, while the shared matching helper compares the service label with task.ServiceID. That discrepancy needs its own job adoption test; do not extend a service-adoption result to every workload merely because both use the same create function. Chapter 31 follows the finite-work path separately."
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "line": 113,
+      "before": "The Docker adapter entered the project in [2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41](https://github.com/alekpopovic/orch/commit/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41). The deterministic fake arrived in [c69f9ffa830284692aabf9e65ab9eb1f79d3a114](https://github.com/alekpopovic/orch/commit/c69f9ffa830284692aabf9e65ab9eb1f79d3a114), and [cf9769553d6599d798fafaffe1495d3d739fe993](https://github.com/alekpopovic/orch/commit/cf9769553d6599d798fafaffe1495d3d739fe993) added drift-specific recording and stronger matching. Original prompt06 is retrospective intent; prompts33 and41 relate to the later fake and drift work. The patches show changed code and assertions, not an automatic record of a live Docker experiment.",
+      "after": "The Docker adapter entered the project in [2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41](https://github.com/alekpopovic/orch/commit/2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41). The deterministic fake arrived in [c69f9ffa830284692aabf9e65ab9eb1f79d3a114](https://github.com/alekpopovic/orch/commit/c69f9ffa830284692aabf9e65ab9eb1f79d3a114), and [cf9769553d6599d798fafaffe1495d3d739fe993](https://github.com/alekpopovic/orch/commit/cf9769553d6599d798fafaffe1495d3d739fe993) added drift-specific recording and stronger matching. Original prompt 06 is retrospective intent; prompts 33 and 41 relate to the later fake and drift work. The patches show changed code and assertions, not an automatic record of a live Docker experiment."
+    },
+    {
+      "path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+      "line": 115,
+      "before": "The safe source-only lab runs the adapter-client and FakeRuntime tests together with the agent's missing/stopped/mismatched/nonmanaged cases. Use the disposable source copy with Go1.25 and no external integration flags. The [focused execution record](../../validation/labs/ch12/focused-tests.json) passed and names its exact selection. No daemon or host containers were used by this run.",
+      "after": "The safe source-only lab runs the adapter-client and FakeRuntime tests together with the agent's missing/stopped/mismatched/nonmanaged cases. Use the disposable source copy with Go 1.25 and no external integration flags. The [focused execution record](../../validation/labs/ch12/focused-tests.json) passed and names its exact selection. No daemon or host containers were used by this run."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 84,
+      "before": "A failure after Docker create but before a successful created report leaves an ambiguity: the server may not know the container ID, while Docker already has the side effect. The label-based lookup from chapter12 lets the next pass recover it. A failure after the server accepted running but before the client received the response can lead to another running report. Lifecycle guards and idempotent terminal duplicates determine which repeats are allowed.",
+      "after": "A failure after Docker create but before a successful created report leaves an ambiguity: the server may not know the container ID, while Docker already has the side effect. The label-based lookup from chapter 12 lets the next pass recover it. A failure after the server accepted running but before the client received the response can lead to another running report. Lifecycle guards and idempotent terminal duplicates determine which repeats are allowed."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 104,
+      "before": "A subtle operational implication follows from sequential polling. If an external call ignores cancellation, cancellation of the top-level context alone does not prove every subordinate activity has ended. The supplied HTTP client has a15second timeout and request contexts, and runtime methods accept contexts, but each adapter's behavior still deserves its own test. Chapter16 examines the log stream's additional goroutine and reader boundaries.",
+      "after": "A subtle operational implication follows from sequential polling. If an external call ignores cancellation, cancellation of the top-level context alone does not prove every subordinate activity has ended. The supplied HTTP client has a 15-second timeout and request contexts, and runtime methods accept contexts, but each adapter's behavior still deserves its own test. Chapter 16 examines the log stream's additional goroutine and reader boundaries."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 108,
+      "before": "[5cf9213849164ce1bebc4e042cc37bf5553c2427](https://github.com/alekpopovic/orch/commit/5cf9213849164ce1bebc4e042cc37bf5553c2427) introduced registration/heartbeat flow. [239eb6abab67773e20a18944ac38e2589802946a](https://github.com/alekpopovic/orch/commit/239eb6abab67773e20a18944ac38e2589802946a) connected task assignment reconciliation. [4f25e78c229ba040c07a84801490485b5a0cbb2e](https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e) changed credential reuse and agent authentication. Original prompts07,08 and19 are retrospective requested scope; the actual patches establish implementation history without proving a literal prompt execution transcript.",
+      "after": "[5cf9213849164ce1bebc4e042cc37bf5553c2427](https://github.com/alekpopovic/orch/commit/5cf9213849164ce1bebc4e042cc37bf5553c2427) introduced registration/heartbeat flow. [239eb6abab67773e20a18944ac38e2589802946a](https://github.com/alekpopovic/orch/commit/239eb6abab67773e20a18944ac38e2589802946a) connected task assignment reconciliation. [4f25e78c229ba040c07a84801490485b5a0cbb2e](https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e) changed credential reuse and agent authentication. Original prompts 07,08 and 19 are retrospective requested scope; the actual patches establish implementation history without proving a literal prompt execution transcript."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 118,
+      "before": "Run this from the disposable pinned source with Go1.25, the environment contract's GOROOT/caches and external integration flags unset. Examine the test's retained objects: agent reconstruction keeps the server task and runtime container fixture. Record that scope before explaining its success. A separate lost-response teaching fixture should inject failure after server acceptance, not merely return an error before any mutation; those two cases exercise different ambiguity windows.",
+      "after": "Run this from the disposable pinned source with Go 1.25, the environment contract's GOROOT/caches and external integration flags unset. Examine the test's retained objects: agent reconstruction keeps the server task and runtime container fixture. Record that scope before explaining its success. A separate lost-response teaching fixture should inject failure after server acceptance, not merely return an error before any mutation; those two cases exercise different ambiguity windows."
+    },
+    {
+      "path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+      "line": 120,
+      "before": "For an optional process experiment, use one owned server and agent on loopback, save their PIDs and exact task/container IDs, then terminate only the agent. Observe the returned node and task reports after restart. Do not stop host networking to imitate a partition, and do not share the worker node identity with unrelated containers. Stop the agent before deleting its exact owned runtime objects. A fresh server restart remains the separate state-loss experiment from chapter6.",
+      "after": "For an optional process experiment, use one owned server and agent on loopback, save their PIDs and exact task/container IDs, then terminate only the agent. Observe the returned node and task reports after restart. Do not stop host networking to imitate a partition, and do not share the worker node identity with unrelated containers. Stop the agent before deleting its exact owned runtime objects. A fresh server restart remains the separate state-loss experiment from chapter 6."
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "line": 72,
+      "before": "| t2 | HTTP404 | successes0, failures1 | None at threshold2 |",
+      "after": "| t2 | HTTP404 | successes0, failures1 | None at threshold 2 |"
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "line": 108,
+      "before": "Task probing was introduced in [ee067bd0f02566eb600031a0cb81f25919d52445](https://github.com/alekpopovic/orch/commit/ee067bd0f02566eb600031a0cb81f25919d52445). The later hardening commit [f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081](https://github.com/alekpopovic/orch/commit/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081) changes scheme handling, validation, redirects and body reading. Original prompt11 is retrospective intent; prompt53 requests the SSRF work. The inspected tests and changed hunks define the actual controls, not a blanket claim that the agent cannot make any dangerous network request.",
+      "after": "Task probing was introduced in [ee067bd0f02566eb600031a0cb81f25919d52445](https://github.com/alekpopovic/orch/commit/ee067bd0f02566eb600031a0cb81f25919d52445). The later hardening commit [f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081](https://github.com/alekpopovic/orch/commit/f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081) changes scheme handling, validation, redirects and body reading. Original prompt 11 is retrospective intent; prompt 53 requests the SSRF work. The inspected tests and changed hunks define the actual controls, not a blanket claim that the agent cannot make any dangerous network request."
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "line": 110,
+      "before": "The experiment needs Go1.25 and permission for temporary owned loopback listeners. Docker and PostgreSQL are unnecessary. The first attempt in the restricted environment failed because opening the test listener was denied; that [failure record](../../validation/labs/ch14/focused-tests.json) is preserved. The same pinned tests then ran with the approved loopback capability and [passed](../../validation/labs/ch14/focused-tests-loopback.json). This is an environment restriction followed by an actual successful run, not a source repair.",
+      "after": "The experiment needs Go 1.25 and permission for temporary owned loopback listeners. Docker and PostgreSQL are unnecessary. The first attempt in the restricted environment failed because opening the test listener was denied; that [failure record](../../validation/labs/ch14/focused-tests.json) is preserved. The same pinned tests then ran with the approved loopback capability and [passed](../../validation/labs/ch14/focused-tests-loopback.json). This is an environment restriction followed by an actual successful run, not a source repair."
+    },
+    {
+      "path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+      "line": 128,
+      "before": "1. With threshold two, predict reports for200,404,200,404,404. Explain why total failures are not the deciding count.",
+      "after": "1. With threshold two, predict reports for 200,404,200,404,404. Explain why total failures are not the deciding count."
+    },
+    {
+      "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "line": 108,
+      "before": "History begins with [7ff58cef0f736ac9076942ce3ef1039d1fe72c72](https://github.com/alekpopovic/orch/commit/7ff58cef0f736ac9076942ce3ef1039d1fe72c72), which adds event APIs/helpers and related fields. [7935c334dcd264e70abb9e795889010b9ecdb03b](https://github.com/alekpopovic/orch/commit/7935c334dcd264e70abb9e795889010b9ecdb03b) adds audit attribution/redaction paths. [4d641bbe8913da568d6d9f4697a0144314e10b87](https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87) batches notification work with jobs, storage and DNS. Do not invent a separate commit for every late development prompt. Original13 is retrospective intent;46 and80 identify later audit/notification requests.",
+      "after": "History begins with [7ff58cef0f736ac9076942ce3ef1039d1fe72c72](https://github.com/alekpopovic/orch/commit/7ff58cef0f736ac9076942ce3ef1039d1fe72c72), which adds event APIs/helpers and related fields. [7935c334dcd264e70abb9e795889010b9ecdb03b](https://github.com/alekpopovic/orch/commit/7935c334dcd264e70abb9e795889010b9ecdb03b) adds audit attribution/redaction paths. [4d641bbe8913da568d6d9f4697a0144314e10b87](https://github.com/alekpopovic/orch/commit/4d641bbe8913da568d6d9f4697a0144314e10b87) batches notification work with jobs, storage and DNS. Do not invent a separate commit for every late development prompt. Original13 is retrospective intent;46 and 80 identify later audit/notification requests."
+    },
+    {
+      "path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+      "line": 112,
+      "before": "The safe lab needs Go1.25 and the disposable source copy, with no Docker or database. Copy examples/teaching-extensions/ch15/main.go into book-events beneath that module, then run it using the pinned toolchain and run-owned caches. The fixture asserts that service creation, scaling and task-status events exist and emits the real event fields as JSON.",
+      "after": "The safe lab needs Go 1.25 and the disposable source copy, with no Docker or database. Copy examples/teaching-extensions/ch15/main.go into book-events beneath that module, then run it using the pinned toolchain and run-owned caches. The fixture asserts that service creation, scaling and task-status events exist and emits the real event fields as JSON."
+    },
+    {
+      "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "line": 41,
+      "before": "An advertised agent address is also an outbound destination used by the control plane. Treat worker enrollment and allowed worker endpoints as part of trusted configuration. The health-check target restrictions from chapter14 apply to their own caller path; they do not automatically constrain the server's log proxy. Each outbound facility needs a separate source trace and network policy.",
+      "after": "An advertised agent address is also an outbound destination used by the control plane. Treat worker enrollment and allowed worker endpoints as part of trusted configuration. The health-check target restrictions from chapter 14 apply to their own caller path; they do not automatically constrain the server's log proxy. Each outbound facility needs a separate source trace and network policy."
+    },
+    {
+      "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "line": 123,
+      "before": "[39e2359653e0e8790feda86eb5fbee3eb5ae509f](https://github.com/alekpopovic/orch/commit/39e2359653e0e8790feda86eb5fbee3eb5ae509f) introduced the agent HTTP handler, API proxy and basic streaming integration. Its patch also adds cancellation-related test structure. Original development prompt12 is retrospective intent, not a timestamped claim that the described test ran when that prompt first appeared. Follow the actual internal/agent, internal/api and internal/docker files rather than the planned package tree.",
+      "after": "[39e2359653e0e8790feda86eb5fbee3eb5ae509f](https://github.com/alekpopovic/orch/commit/39e2359653e0e8790feda86eb5fbee3eb5ae509f) introduced the agent HTTP handler, API proxy and basic streaming integration. Its patch also adds cancellation-related test structure. Original development prompt 12 is retrospective intent, not a timestamped claim that the described test ran when that prompt first appeared. Follow the actual internal/agent, internal/api and internal/docker files rather than the planned package tree."
+    },
+    {
+      "path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+      "line": 133,
+      "before": "Run from the disposable pinned source with Go1.25 and the environment contract's GOROOT/cache settings. The fixtures create no host container and require no PostgreSQL or external network. Their cleanup is context cancellation, goroutine completion and process exit. Reading the completion assertion is essential: a test that only calls cancel without waiting would establish almost nothing about cleanup.",
+      "after": "Run from the disposable pinned source with Go 1.25 and the environment contract's GOROOT/cache settings. The fixtures create no host container and require no PostgreSQL or external network. Their cleanup is context cancellation, goroutine completion and process exit. Reading the completion assertion is essential: a test that only calls cancel without waiting would establish almost nothing about cleanup."
+    },
+    {
+      "path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+      "line": 142,
+      "before": "Original development prompts 39, 40 supply the requested scope. The inspected implementation history includes [42d4caa4451f](https://github.com/alekpopovic/orch/commit/42d4caa4451f4dea24113d48eb1e9e47f2cef558), [a5d4bfb37f70](https://github.com/alekpopovic/orch/commit/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran.",
+      "after": "Original development prompts 39, 40 supply the requested scope. The inspected implementation history includes [42d4caa4451f](https://github.com/alekpopovic/orch/commit/42d4caa4451f4dea24113d48eb1e9e47f2cef558), [a 5d4bfb37f70](https://github.com/alekpopovic/orch/commit/a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran."
+    },
+    {
+      "path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+      "line": 116,
+      "before": "Original development prompts 18, 19, 51 supply the requested scope. The inspected implementation history includes [403a9fc9d900](https://github.com/alekpopovic/orch/commit/403a9fc9d9005aca95ade9f5edfbbc77acd1a911), [4f25e78c229b](https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e), [a5cb0c5fb4ca](https://github.com/alekpopovic/orch/commit/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran.",
+      "after": "Original development prompts 18, 19, 51 supply the requested scope. The inspected implementation history includes [403a9fc9d900](https://github.com/alekpopovic/orch/commit/403a9fc9d9005aca95ade9f5edfbbc77acd1a911), [4f25e78c229b](https://github.com/alekpopovic/orch/commit/4f25e78c229ba040c07a84801490485b5a0cbb2e), [a 5cb0c5fb4ca](https://github.com/alekpopovic/orch/commit/a5cb0c5fb4cab92130b1cdfd15df88256267bcb7). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran."
+    },
+    {
+      "path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+      "line": 138,
+      "before": "Original development prompts 37, 44 supply the requested scope. The inspected implementation history includes [ad738d1867ee](https://github.com/alekpopovic/orch/commit/ad738d1867eefb3c92cc4280659ae76943341426), [a4844c571a0d](https://github.com/alekpopovic/orch/commit/a4844c571a0ddf33879556413a62d49a408609e3). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran.",
+      "after": "Original development prompts 37, 44 supply the requested scope. The inspected implementation history includes [ad738d1867ee](https://github.com/alekpopovic/orch/commit/ad738d1867eefb3c92cc4280659ae76943341426), [a 4844c571a0d](https://github.com/alekpopovic/orch/commit/a4844c571a0ddf33879556413a62d49a408609e3). Their exported changed paths were compared with this chapter's implementation. These are topical associations; early prompts were retrospective and later work can share a commit. A tracker entry is not evidence that the described experiment ran."
+    }
+  ],
+  "reviewed_paths": [
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md"
+  ],
+  "final_hashes": {
+    "manuscript/chapters/01-why-build-a-container-orchestrator.md": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a",
+    "manuscript/chapters/02-a-repository-built-for-reasoning.md": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754",
+    "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499",
+    "manuscript/chapters/04-domain-models-and-state-machines.md": "feaab5337c24603ca512e9b9596e0a65886f87f43efd73231279414320f4bcf8",
+    "manuscript/chapters/05-service-specifications-resources-and-ports.md": "ab2e4930251d04fde033ec301efd6a9567699298071027138321df47bea148cb",
+    "manuscript/chapters/06-follow-one-request-through-the-control-plane.md": "fabce9e2fbb8cbc5d3f157c468e6ffe452a3d9d063bf21826aecb1f159443ee2",
+    "manuscript/chapters/07-http-contracts-and-compatible-apis.md": "ff940756e0959d477792821afb37c580f00b2790f5e7ca79611f4930035b5a79",
+    "manuscript/chapters/08-a-cli-that-operators-can-automate.md": "0a7b978a1477045528f9822c98d0ef3bc8ad0858a781b25f2206414719d116b1",
+    "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md": "3b3b6366a7cf7f7e3fe65041f3349ed283e1d12cef043cc6170e0efcd3f09931",
+    "manuscript/chapters/10-a-deterministic-scheduler.md": "7b147a5bf08133bc2901c915763241bb6244534f233cad7c4b8c026365ed7dbe",
+    "manuscript/chapters/11-reconciliation-as-repeated-convergence.md": "9d368fc40bee976c9cbe7a7e6c07a3ab426ee21ce12865cdce431ad70cec3779",
+    "manuscript/chapters/12-idempotent-docker-operations-and-drift.md": "691d657ca19731464ec981ddb44a030bf9208d0239f5d3c21fdb2307c9bd22ec",
+    "manuscript/chapters/13-agents-heartbeats-and-task-reports.md": "7ff34c036b8d01645d73f2e10e354df39f81e23b71f21089f48deedf8f15fdd8",
+    "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md": "756fef9731ed42822eec94a588969feacbb568470b061ca7cdb39346a862197f",
+    "manuscript/chapters/15-events-audits-and-notification-boundaries.md": "ab4ce4c90a62f7142952f4e7fefbfa3558aab8dd87facf94f6df89db8ef6ec6b",
+    "manuscript/chapters/16-log-streaming-without-losing-control.md": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11",
+    "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md": "c6435e873dd06b8521a6a79297c934ba799c4917b302e16ac0e1964f22d9d6a0",
+    "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md": "3c1850bd28d43d706a6bb73176f7471a5f625aceb61ce8211c170898d17f6f72",
+    "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md": "c92eb97d637b5a5c97a3d0da593693d2218e937060f893943e284ee2b870a626",
+    "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md": "de2b90d4e476259b55826be0f2ad1b35d57c74ea4595fd7926c87b18d6d6a929",
+    "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md": "49f514944bbe2f3fb9f489326fca5e80ff4dbd21dc129151940b2fc6717d271b",
+    "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md": "5bf7469bd19acbe022f439b785e730eb30b5755bff73919c4b4b1eb2c65f9da6",
+    "manuscript/chapters/23-authentication-authorization-and-node-trust.md": "32ed549df2b6e941997e2c398f1c18913dc482288e4870531ba9eec5535a2558",
+    "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md": "a90e795421951c4927cdc4ab0ce4ad5f80377ea05629f72ec95ca995121fae90"
+  }
+}

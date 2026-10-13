@@ -1,0 +1,4 @@
+name: atlas-api
+image: nginx:1.27-alpine
+replicas: 1
+unsupportedAtlasField: true

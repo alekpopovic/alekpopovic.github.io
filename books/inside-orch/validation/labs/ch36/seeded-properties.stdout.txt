@@ -1,0 +1,26 @@
+=== RUN   TestSchedulerRandomizedInvariants
+=== RUN   TestSchedulerRandomizedInvariants/seed_1
+=== RUN   TestSchedulerRandomizedInvariants/seed_7
+=== RUN   TestSchedulerRandomizedInvariants/seed_42
+=== RUN   TestSchedulerRandomizedInvariants/seed_99
+=== RUN   TestSchedulerRandomizedInvariants/seed_20260821
+--- PASS: TestSchedulerRandomizedInvariants (0.00s)
+    --- PASS: TestSchedulerRandomizedInvariants/seed_1 (0.00s)
+    --- PASS: TestSchedulerRandomizedInvariants/seed_7 (0.00s)
+    --- PASS: TestSchedulerRandomizedInvariants/seed_42 (0.00s)
+    --- PASS: TestSchedulerRandomizedInvariants/seed_99 (0.00s)
+    --- PASS: TestSchedulerRandomizedInvariants/seed_20260821 (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/scheduler	0.007s
+=== RUN   TestFakeRuntimeRecordsOperationsAndCreatesIdempotently
+--- PASS: TestFakeRuntimeRecordsOperationsAndCreatesIdempotently (0.00s)
+=== RUN   TestFakeRuntimeIsThreadSafeForConcurrentCreates
+--- PASS: TestFakeRuntimeIsThreadSafeForConcurrentCreates (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/docker	0.004s
+=== RUN   TestReconcileOnceIsIdempotent
+--- PASS: TestReconcileOnceIsIdempotent (0.00s)
+=== RUN   TestReconcileRestartBetweenCreationAndSchedulingDoesNotDuplicate
+--- PASS: TestReconcileRestartBetweenCreationAndSchedulingDoesNotDuplicate (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/reconciler	0.004s

@@ -1,0 +1,1438 @@
+commit a140c4190af17969d207b5738cc7527e4ad96075
+Date: 2026-07-14T18:32:03+02:00
+Subject: Add container security policy
+
+
+---
+ cmd/orch-server/main.go                            |   2 +-
+ docs/SECURITY.md                                   |  27 +++++
+ docs/SERVICE_SPEC.md                               |  24 ++++-
+ internal/agent/agent.go                            |  22 +++++
+ internal/agent/agent_test.go                       |  10 +-
+ internal/api/api_test.go                           |  19 ++++
+ internal/cli/deploy.go                             |  64 +++++++++---
+ internal/cli/deploy_test.go                        |   8 ++
+ internal/config/config.go                          | 110 +++++++++++++++++----
+ internal/config/config_test.go                     |  12 +++
+ internal/controlplane/agent_test.go                |  43 ++++++++
+ internal/controlplane/controlplane.go              |  34 +++++--
+ internal/docker/docker.go                          |  58 +++++++++++
+ internal/docker/docker_test.go                     |  37 +++++++
+ internal/docker/fake.go                            |   3 +
+ internal/policy/policy.go                          |  88 +++++++++++++++++
+ internal/policy/policy_test.go                     |  79 +++++++++++++++
+ internal/store/postgres.go                         |  63 +++++++-----
+ internal/store/postgres_test.go                    |  12 ++-
+ .../000009_service_security_context.down.sql       |   2 +
+ migrations/000009_service_security_context.up.sql  |   2 +
+ pkg/types/types.go                                 |  73 ++++++++++++++
+ pkg/types/validation_test.go                       |  26 +++++
+ prompts/EXECUTION_TRACKER.md                       |   8 +-
+ 24 files changed, 750 insertions(+), 76 deletions(-)
+
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index e932fc7..0107c6b 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -87,7 +87,7 @@ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) erro
+ 	if err != nil {
+ 		return err
+ 	}
+-	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope))
++	controlPlane := controlplane.NewMemoryService(controlplane.WithSecretEnvelope(envelope), controlplane.WithClusterPolicy(cfg.ClusterPolicy))
+ 	serverMetrics := metrics.NewServer()
+ 	rolloutController := rollout.NewController(controlPlane, logger, rollout.WithMetrics(serverMetrics))
+ 	go func() {
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index 9e0bba9..ff30507 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -71,6 +71,33 @@ Recommended controls:
+ 
+ Agents run HTTP and TCP healthchecks from the node. To avoid service specs causing arbitrary host-local probes, healthchecks are only performed against published TCP ports assigned to the task. A configured container port is resolved to the assigned published host port before probing. Unassigned, unpublished, or UDP-only ports are skipped.
+ 
++## Container Security Policy
++
++Services may set `security_context` / `securityContext` fields for runtime hardening, including an explicit non-root `user`, read-only root filesystem, Linux capability drops/additions, host network, host PID, and host path mounts.
++
++The default cluster policy is deny-by-default for privilege-escalating options:
++
++- privileged containers are rejected;
++- host network and host PID namespace are rejected;
++- added Linux capabilities are rejected unless explicitly allowlisted;
++- arbitrary host path mounts are rejected unless their host path starts with an allowlisted prefix;
++- containers drop `NET_RAW` by default at the Docker runtime when no custom capability drop list is provided.
++
++Configure allowlists only for trusted clusters:
++
++```yaml
++cluster_policy:
++  allow_privileged: false
++  allow_host_network: false
++  allow_host_pid: false
++  allowed_capabilities:
++    - NET_BIND_SERVICE
++  allowed_host_path_prefixes:
++    - /var/lib/orch-volumes
++```
++
++Equivalent environment variables are `ORCH_POLICY_ALLOW_PRIVILEGED`, `ORCH_POLICY_ALLOW_HOST_NETWORK`, `ORCH_POLICY_ALLOW_HOST_PID`, `ORCH_POLICY_ALLOWED_CAPABILITIES`, and `ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES`.
++
+ ## Secret Handling
+ 
+ Service specs support secret references for environment variables. Secret values are encrypted at rest with the local envelope provider and are returned to agents only in assigned task payloads when needed to start containers. Do not put secret values in service names, labels, route hostnames, logs, or events.
+diff --git a/docs/SERVICE_SPEC.md b/docs/SERVICE_SPEC.md
+index 29a3a37..2530853 100644
+--- a/docs/SERVICE_SPEC.md
++++ b/docs/SERVICE_SPEC.md
+@@ -37,6 +37,28 @@ env:
+ 
+ An env entry cannot specify both `value` and `secretRef`.
+ 
++## Security Context
++
++`securityContext` controls container runtime hardening:
++
++```yaml
++securityContext:
++  user: "1000:1000"
++  readOnlyRootFilesystem: true
++  capDrop:
++    - NET_RAW
++  capAdd:
++    - NET_BIND_SERVICE
++  hostNetwork: false
++  hostPID: false
++  hostPathMounts:
++    - hostPath: /var/lib/orch-volumes/api
++      containerPath: /data
++      readOnly: true
++```
++
++By default, `orch` rejects privileged containers, host networking, host PID, host path mounts outside configured prefixes, and capability additions outside the cluster allowlist. If `capDrop` is omitted, the Docker runtime drops `NET_RAW` by default.
++
+ ## Validation
+ 
+ Validate locally without creating a service:
+@@ -45,4 +67,4 @@ Validate locally without creating a service:
+ orch validate deployments/examples/http-api.yaml
+ ```
+ 
+-The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, and malformed secret references.
++The CLI rejects unknown YAML fields, invalid ports, invalid resources, invalid healthcheck settings, invalid placement labels, invalid routes, invalid security context paths or capabilities, and malformed secret references. The server additionally applies the cluster container security policy before creating a service.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 072ff46..bf5bfcc 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -252,6 +252,7 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 		Version:   task.Version,
+ 		Env:       assigned.Env,
+ 		Ports:     dockerPortBindings(assigned.Ports),
++		Security:  dockerSecurityContext(assigned.SecurityContext),
+ 	})
+ 	if err != nil {
+ 		_, _ = r.reportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: runtimeFailureReason(err)})
+@@ -286,6 +287,27 @@ func dockerPortBindings(ports []types.Port) []orchdocker.PortBinding {
+ 	return bindings
+ }
+ 
++func dockerSecurityContext(context types.SecurityContext) orchdocker.SecurityContext {
++	mounts := make([]orchdocker.HostPathMount, 0, len(context.HostPathMounts))
++	for _, mount := range context.HostPathMounts {
++		mounts = append(mounts, orchdocker.HostPathMount{
++			HostPath:      mount.HostPath,
++			ContainerPath: mount.ContainerPath,
++			ReadOnly:      mount.ReadOnly,
++		})
++	}
++	return orchdocker.SecurityContext{
++		User:                   context.User,
++		ReadOnlyRootFilesystem: context.ReadOnlyRootFilesystem,
++		Privileged:             context.Privileged,
++		CapAdd:                 append([]string(nil), context.CapAdd...),
++		CapDrop:                append([]string(nil), context.CapDrop...),
++		HostNetwork:            context.HostNetwork,
++		HostPID:                context.HostPID,
++		HostPathMounts:         mounts,
++	}
++}
++
+ func dockerRegistryAuth(auth *controlplane.RegistryAuth) *orchdocker.RegistryAuth {
+ 	if auth == nil {
+ 		return nil
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 11509e3..6125f58 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -35,7 +35,12 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 				Image:         "nginx:1.27",
+ 				Version:       1,
+ 			},
+-			Ports:         []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			Ports: []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080}},
++			SecurityContext: types.SecurityContext{
++				User:                   "1000:1000",
++				ReadOnlyRootFilesystem: true,
++				CapDrop:                []string{"ALL"},
++			},
+ 			Env:           map[string]string{"DATABASE_URL": "postgres://secret"},
+ 			ImagePullAuth: &controlplane.RegistryAuth{Username: "robot", Password: "token", ServerAddress: "ghcr.io"},
+ 		}},
+@@ -70,6 +75,9 @@ func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
+ 	if len(created[0].Ports) != 1 || created[0].Ports[0].ContainerPort != 8080 || created[0].Ports[0].HostPort != 18080 {
+ 		t.Fatalf("expected assigned port binding, got %#v", created[0].Ports)
+ 	}
++	if created[0].Security.User != "1000:1000" || !created[0].Security.ReadOnlyRootFilesystem || len(created[0].Security.CapDrop) != 1 || created[0].Security.CapDrop[0] != "ALL" {
++		t.Fatalf("expected security context in container spec, got %#v", created[0].Security)
++	}
+ }
+ 
+ func TestReconcileAssignedTaskRecreatesManuallyDeletedContainer(t *testing.T) {
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 8d0af1e..88272cb 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -638,6 +638,25 @@ func TestCreateServiceValidationError(t *testing.T) {
+ 	}
+ }
+ 
++func TestCreateServiceRejectsDisallowedSecurityContext(t *testing.T) {
++	rec := doRequest(t, newTestHandler(), http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "privileged-web",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"security_context": {"privileged": true},
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++
++	if rec.Code != http.StatusBadRequest {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusBadRequest, rec.Code, rec.Body.String())
++	}
++	if !strings.Contains(rec.Body.String(), "privileged") {
++		t.Fatalf("expected privileged policy error, got %s", rec.Body.String())
++	}
++}
++
+ func TestWriteErrorMapsDomainErrorAndRedactsDetails(t *testing.T) {
+ 	server := &Server{logger: slog.New(slog.NewTextHandler(io.Discard, nil))}
+ 	req := httptest.NewRequest(http.MethodPost, "/v1/services", nil)
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index 952a1ec..1ca5090 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -13,18 +13,19 @@ import (
+ )
+ 
+ type DeployFile struct {
+-	Name            string            `yaml:"name"`
+-	Image           string            `yaml:"image"`
+-	ImagePullSecret string            `yaml:"imagePullSecret"`
+-	Stateful        bool              `yaml:"stateful"`
+-	Replicas        int               `yaml:"replicas"`
+-	Ports           []DeployPort      `yaml:"ports"`
+-	Env             DeployEnv         `yaml:"env"`
+-	Resources       DeployResources   `yaml:"resources"`
+-	Healthcheck     DeployHealthcheck `yaml:"healthcheck"`
+-	Restart         DeployRestart     `yaml:"restart"`
+-	Placement       DeployPlacement   `yaml:"placement"`
+-	Routes          []DeployRoute     `yaml:"routes"`
++	Name            string                `yaml:"name"`
++	Image           string                `yaml:"image"`
++	ImagePullSecret string                `yaml:"imagePullSecret"`
++	Stateful        bool                  `yaml:"stateful"`
++	Replicas        int                   `yaml:"replicas"`
++	Ports           []DeployPort          `yaml:"ports"`
++	Env             DeployEnv             `yaml:"env"`
++	Resources       DeployResources       `yaml:"resources"`
++	SecurityContext DeploySecurityContext `yaml:"securityContext"`
++	Healthcheck     DeployHealthcheck     `yaml:"healthcheck"`
++	Restart         DeployRestart         `yaml:"restart"`
++	Placement       DeployPlacement       `yaml:"placement"`
++	Routes          []DeployRoute         `yaml:"routes"`
+ }
+ 
+ type DeployPort struct {
+@@ -65,6 +66,23 @@ type DeployResources struct {
+ 	Memory string `yaml:"memory"`
+ }
+ 
++type DeploySecurityContext struct {
++	User                   string                `yaml:"user"`
++	ReadOnlyRootFilesystem bool                  `yaml:"readOnlyRootFilesystem"`
++	Privileged             bool                  `yaml:"privileged"`
++	CapAdd                 []string              `yaml:"capAdd"`
++	CapDrop                []string              `yaml:"capDrop"`
++	HostNetwork            bool                  `yaml:"hostNetwork"`
++	HostPID                bool                  `yaml:"hostPID"`
++	HostPathMounts         []DeployHostPathMount `yaml:"hostPathMounts"`
++}
++
++type DeployHostPathMount struct {
++	HostPath      string `yaml:"hostPath"`
++	ContainerPath string `yaml:"containerPath"`
++	ReadOnly      bool   `yaml:"readOnly"`
++}
++
+ type DeployHealthcheck struct {
+ 	Type               string `yaml:"type"`
+ 	Path               string `yaml:"path"`
+@@ -123,6 +141,7 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 			Requests: requests,
+ 			Limits:   requests,
+ 		},
++		SecurityContext:      deploy.SecurityContext.toDomain(),
+ 		RestartPolicy:        restartPolicy(deploy.Restart.Policy),
+ 		PlacementConstraints: placementConstraints(deploy.Placement.Labels),
+ 	}
+@@ -165,6 +184,27 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	return spec, nil
+ }
+ 
++func (context DeploySecurityContext) toDomain() types.SecurityContext {
++	mounts := make([]types.HostPathMount, 0, len(context.HostPathMounts))
++	for _, mount := range context.HostPathMounts {
++		mounts = append(mounts, types.HostPathMount{
++			HostPath:      strings.TrimSpace(mount.HostPath),
++			ContainerPath: strings.TrimSpace(mount.ContainerPath),
++			ReadOnly:      mount.ReadOnly,
++		})
++	}
++	return types.SecurityContext{
++		User:                   strings.TrimSpace(context.User),
++		ReadOnlyRootFilesystem: context.ReadOnlyRootFilesystem,
++		Privileged:             context.Privileged,
++		CapAdd:                 append([]string(nil), context.CapAdd...),
++		CapDrop:                append([]string(nil), context.CapDrop...),
++		HostNetwork:            context.HostNetwork,
++		HostPID:                context.HostPID,
++		HostPathMounts:         mounts,
++	}
++}
++
+ func (deploy DeployFile) Validate() error {
+ 	if strings.TrimSpace(deploy.Name) == "" {
+ 		return fmt.Errorf("name is required")
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index e1fd2c8..f9a45bc 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -28,6 +28,11 @@ env:
+ resources:
+   cpu: 500m
+   memory: 512Mi
++securityContext:
++  user: "1000:1000"
++  readOnlyRootFilesystem: true
++  capDrop:
++    - NET_RAW
+ healthcheck:
+   type: http
+   path: /health
+@@ -66,6 +71,9 @@ placement:
+ 	if spec.ResourceRequirements.Requests.Memory != 512*1024*1024 {
+ 		t.Fatalf("unexpected memory %d", spec.ResourceRequirements.Requests.Memory)
+ 	}
++	if spec.SecurityContext.User != "1000:1000" || !spec.SecurityContext.ReadOnlyRootFilesystem || len(spec.SecurityContext.CapDrop) != 1 {
++		t.Fatalf("unexpected security context %#v", spec.SecurityContext)
++	}
+ 	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" {
+ 		t.Fatalf("unexpected healthcheck %#v", spec.Healthcheck)
+ 	}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index f41fd37..6fc5521 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -7,20 +7,22 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/policy"
+ 	"gopkg.in/yaml.v3"
+ )
+ 
+ type ServerConfig struct {
+-	Addr                string        `json:"addr" yaml:"addr"`
+-	DatabaseURL         string        `json:"database_url" yaml:"database_url"`
+-	LogLevel            string        `json:"log_level" yaml:"log_level"`
+-	BootstrapToken      string        `json:"bootstrap_token" yaml:"bootstrap_token"`
+-	JWTSecret           string        `json:"jwt_secret" yaml:"jwt_secret"`
+-	Users               string        `json:"users" yaml:"users"`
+-	SecretKey           string        `json:"secret_key" yaml:"secret_key"`
+-	GracefulShutdownTTL time.Duration `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
+-	HeartbeatTimeout    time.Duration `json:"heartbeat_timeout" yaml:"heartbeat_timeout"`
+-	NodeMonitorInterval time.Duration `json:"node_monitor_interval" yaml:"node_monitor_interval"`
++	Addr                string               `json:"addr" yaml:"addr"`
++	DatabaseURL         string               `json:"database_url" yaml:"database_url"`
++	LogLevel            string               `json:"log_level" yaml:"log_level"`
++	BootstrapToken      string               `json:"bootstrap_token" yaml:"bootstrap_token"`
++	JWTSecret           string               `json:"jwt_secret" yaml:"jwt_secret"`
++	Users               string               `json:"users" yaml:"users"`
++	SecretKey           string               `json:"secret_key" yaml:"secret_key"`
++	GracefulShutdownTTL time.Duration        `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    time.Duration        `json:"heartbeat_timeout" yaml:"heartbeat_timeout"`
++	NodeMonitorInterval time.Duration        `json:"node_monitor_interval" yaml:"node_monitor_interval"`
++	ClusterPolicy       policy.ClusterPolicy `json:"cluster_policy" yaml:"cluster_policy"`
+ }
+ 
+ type AgentConfig struct {
+@@ -163,16 +165,17 @@ func defaultAgent() AgentConfig {
+ }
+ 
+ type serverFileConfig struct {
+-	Addr                string `yaml:"addr"`
+-	DatabaseURL         string `yaml:"database_url"`
+-	LogLevel            string `yaml:"log_level"`
+-	BootstrapToken      string `yaml:"bootstrap_token"`
+-	JWTSecret           string `yaml:"jwt_secret"`
+-	Users               string `yaml:"users"`
+-	SecretKey           string `yaml:"secret_key"`
+-	GracefulShutdownTTL string `yaml:"graceful_shutdown_ttl"`
+-	HeartbeatTimeout    string `yaml:"heartbeat_timeout"`
+-	NodeMonitorInterval string `yaml:"node_monitor_interval"`
++	Addr                string               `yaml:"addr"`
++	DatabaseURL         string               `yaml:"database_url"`
++	LogLevel            string               `yaml:"log_level"`
++	BootstrapToken      string               `yaml:"bootstrap_token"`
++	JWTSecret           string               `yaml:"jwt_secret"`
++	Users               string               `yaml:"users"`
++	SecretKey           string               `yaml:"secret_key"`
++	GracefulShutdownTTL string               `yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    string               `yaml:"heartbeat_timeout"`
++	NodeMonitorInterval string               `yaml:"node_monitor_interval"`
++	ClusterPolicy       policy.ClusterPolicy `yaml:"cluster_policy"`
+ }
+ 
+ type agentFileConfig struct {
+@@ -212,6 +215,7 @@ func applyServerFile(cfg *ServerConfig, path string) error {
+ 	if err := applyDuration(&cfg.NodeMonitorInterval, file.NodeMonitorInterval); err != nil {
+ 		return fmt.Errorf("node_monitor_interval: %w", err)
+ 	}
++	mergeClusterPolicy(&cfg.ClusterPolicy, file.ClusterPolicy)
+ 	return nil
+ }
+ 
+@@ -263,6 +267,9 @@ func applyServerEnv(cfg *ServerConfig) error {
+ 	if err := applyDuration(&cfg.NodeMonitorInterval, os.Getenv("ORCH_NODE_MONITOR_INTERVAL")); err != nil {
+ 		return fmt.Errorf("ORCH_NODE_MONITOR_INTERVAL: %w", err)
+ 	}
++	if err := applyClusterPolicyEnv(&cfg.ClusterPolicy); err != nil {
++		return err
++	}
+ 	return nil
+ }
+ 
+@@ -340,6 +347,68 @@ func applyString(target *string, value string) {
+ 	}
+ }
+ 
++func applyBool(target *bool, value string) error {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return nil
++	}
++	parsed, err := strconv.ParseBool(value)
++	if err != nil {
++		return err
++	}
++	*target = parsed
++	return nil
++}
++
++func applyCSV(target *[]string, value string) {
++	value = strings.TrimSpace(value)
++	if value == "" {
++		return
++	}
++	parts := strings.Split(value, ",")
++	values := make([]string, 0, len(parts))
++	for _, part := range parts {
++		part = strings.TrimSpace(part)
++		if part != "" {
++			values = append(values, part)
++		}
++	}
++	*target = values
++}
++
++func applyClusterPolicyEnv(clusterPolicy *policy.ClusterPolicy) error {
++	if err := applyBool(&clusterPolicy.AllowPrivileged, os.Getenv("ORCH_POLICY_ALLOW_PRIVILEGED")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_ALLOW_PRIVILEGED: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.AllowHostNetwork, os.Getenv("ORCH_POLICY_ALLOW_HOST_NETWORK")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_ALLOW_HOST_NETWORK: %w", err)
++	}
++	if err := applyBool(&clusterPolicy.AllowHostPID, os.Getenv("ORCH_POLICY_ALLOW_HOST_PID")); err != nil {
++		return fmt.Errorf("ORCH_POLICY_ALLOW_HOST_PID: %w", err)
++	}
++	applyCSV(&clusterPolicy.AllowedHostPathPrefixes, os.Getenv("ORCH_POLICY_ALLOWED_HOST_PATH_PREFIXES"))
++	applyCSV(&clusterPolicy.AllowedCapabilities, os.Getenv("ORCH_POLICY_ALLOWED_CAPABILITIES"))
++	return nil
++}
++
++func mergeClusterPolicy(target *policy.ClusterPolicy, source policy.ClusterPolicy) {
++	if source.AllowPrivileged {
++		target.AllowPrivileged = true
++	}
++	if source.AllowHostNetwork {
++		target.AllowHostNetwork = true
++	}
++	if source.AllowHostPID {
++		target.AllowHostPID = true
++	}
++	if source.AllowedHostPathPrefixes != nil {
++		target.AllowedHostPathPrefixes = append([]string(nil), source.AllowedHostPathPrefixes...)
++	}
++	if source.AllowedCapabilities != nil {
++		target.AllowedCapabilities = append([]string(nil), source.AllowedCapabilities...)
++	}
++}
++
+ func applyDuration(target *time.Duration, value string) error {
+ 	value = strings.TrimSpace(value)
+ 	if value == "" {
+@@ -434,6 +503,7 @@ func (cfg ServerConfig) Redacted() map[string]any {
+ 		"graceful_shutdown_ttl": cfg.GracefulShutdownTTL.String(),
+ 		"heartbeat_timeout":     cfg.HeartbeatTimeout.String(),
+ 		"node_monitor_interval": cfg.NodeMonitorInterval.String(),
++		"cluster_policy":        cfg.ClusterPolicy.Redacted(),
+ 	}
+ }
+ 
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 75fa6a1..53c3457 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -55,9 +55,15 @@ addr: :9000
+ log_level: warn
+ bootstrap_token: file-token
+ graceful_shutdown_ttl: 20s
++cluster_policy:
++  allowed_capabilities:
++    - NET_BIND_SERVICE
++  allowed_host_path_prefixes:
++    - /var/lib/orch
+ `)
+ 	t.Setenv("ORCH_SERVER_ADDR", ":9100")
+ 	t.Setenv("ORCH_LOG_LEVEL", "debug")
++	t.Setenv("ORCH_POLICY_ALLOW_HOST_NETWORK", "true")
+ 
+ 	cfg, err := LoadServerWithFile(path, ServerOverrides{Addr: ":9200"})
+ 	if err != nil {
+@@ -75,6 +81,12 @@ graceful_shutdown_ttl: 20s
+ 	if cfg.GracefulShutdownTTL != 20*time.Second {
+ 		t.Fatalf("expected file duration, got %s", cfg.GracefulShutdownTTL)
+ 	}
++	if !cfg.ClusterPolicy.AllowHostNetwork {
++		t.Fatalf("expected env cluster policy host network allowance")
++	}
++	if len(cfg.ClusterPolicy.AllowedCapabilities) != 1 || cfg.ClusterPolicy.AllowedCapabilities[0] != "NET_BIND_SERVICE" {
++		t.Fatalf("expected file cluster policy capabilities, got %#v", cfg.ClusterPolicy.AllowedCapabilities)
++	}
+ }
+ 
+ func TestAgentConfigPrecedence(t *testing.T) {
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index c894dc5..0e117ff 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -5,6 +5,7 @@ import (
+ 	"testing"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/policy"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -571,6 +572,48 @@ func TestUnhealthyRestartableTaskIsMarkedFailed(t *testing.T) {
+ 	}
+ }
+ 
++func TestClusterPolicyControlsSecurityContext(t *testing.T) {
++	ctx := context.Background()
++	defaultService := NewMemoryService()
++	if _, err := defaultService.CreateService(ctx, types.ServiceSpec{
++		Name:            "privileged",
++		Image:           "nginx:1.27",
++		Replicas:        1,
++		SecurityContext: types.SecurityContext{Privileged: true},
++	}); err == nil {
++		t.Fatalf("expected default cluster policy to reject privileged service")
++	}
++
++	service := NewMemoryService(WithClusterPolicy(policy.ClusterPolicy{AllowedCapabilities: []string{"NET_BIND_SERVICE"}}))
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 4000, Memory: 1024},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	if _, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:     "web",
++		Image:    "nginx:1.27",
++		Replicas: 1,
++		SecurityContext: types.SecurityContext{
++			CapAdd:  []string{"NET_BIND_SERVICE"},
++			CapDrop: []string{"ALL"},
++		},
++	}); err != nil {
++		t.Fatalf("expected allowed capability service: %v", err)
++	}
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if len(tasks) != 1 || len(tasks[0].SecurityContext.CapAdd) != 1 || tasks[0].SecurityContext.CapAdd[0] != "NET_BIND_SERVICE" {
++		t.Fatalf("expected security context in agent task, got %#v", tasks)
++	}
++}
++
+ func createServiceWithAssignedTask(t *testing.T, ctx context.Context, service *MemoryService) (NodeCommand, types.Service) {
+ 	t.Helper()
+ 	return createServiceWithAssignedTaskAndPolicy(t, ctx, service, types.RestartPolicy{})
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 93cdaf2..9ad3132 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -12,6 +12,7 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/audit"
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/policy"
+ 	"github.com/alekpopovic/orch/internal/secrets"
+ 	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+@@ -78,11 +79,12 @@ type AgentDirective struct {
+ }
+ 
+ type AgentTask struct {
+-	Task          types.Task         `json:"task"`
+-	Healthcheck   *types.Healthcheck `json:"healthcheck,omitempty"`
+-	Ports         []types.Port       `json:"ports,omitempty"`
+-	Env           map[string]string  `json:"env,omitempty"`
+-	ImagePullAuth *RegistryAuth      `json:"image_pull_auth,omitempty"`
++	Task            types.Task            `json:"task"`
++	Healthcheck     *types.Healthcheck    `json:"healthcheck,omitempty"`
++	Ports           []types.Port          `json:"ports,omitempty"`
++	SecurityContext types.SecurityContext `json:"security_context,omitempty"`
++	Env             map[string]string     `json:"env,omitempty"`
++	ImagePullAuth   *RegistryAuth         `json:"image_pull_auth,omitempty"`
+ }
+ 
+ type RegistryCredentialSpec struct {
+@@ -149,6 +151,7 @@ type MemoryService struct {
+ 	secrets     map[string]types.Secret
+ 	registries  map[string]types.RegistryCredential
+ 	envelope    secrets.Envelope
++	policy      policy.ClusterPolicy
+ 	events      []types.Event
+ 	auditLogs   []audit.Log
+ 	now         func() time.Time
+@@ -164,6 +167,12 @@ func WithSecretEnvelope(envelope secrets.Envelope) Option {
+ 	}
+ }
+ 
++func WithClusterPolicy(clusterPolicy policy.ClusterPolicy) Option {
++	return func(service *MemoryService) {
++		service.policy = clusterPolicy
++	}
++}
++
+ func NewMemoryService(opts ...Option) *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+ 	envelope, _ := secrets.NewLocalEnvelope("dev-secret-key-change-me")
+@@ -176,6 +185,7 @@ func NewMemoryService(opts ...Option) *MemoryService {
+ 		secrets:     make(map[string]types.Secret),
+ 		registries:  make(map[string]types.RegistryCredential),
+ 		envelope:    envelope,
++		policy:      policy.DefaultClusterPolicy(),
+ 		now:         now,
+ 	}
+ 	for _, opt := range opts {
+@@ -417,11 +427,12 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 			return nil, err
+ 		}
+ 		tasks = append(tasks, AgentTask{
+-			Task:          task,
+-			Healthcheck:   service.Spec.Healthcheck,
+-			Ports:         taskPortsForAgent(task, service),
+-			Env:           env,
+-			ImagePullAuth: auth,
++			Task:            task,
++			Healthcheck:     service.Spec.Healthcheck,
++			Ports:           taskPortsForAgent(task, service),
++			SecurityContext: service.Spec.SecurityContext,
++			Env:             env,
++			ImagePullAuth:   auth,
+ 		})
+ 	}
+ 	slices.SortFunc(tasks, func(a, b AgentTask) int {
+@@ -845,6 +856,9 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+ 	}
++	if err := s.policy.ValidateServiceSpec(spec); err != nil {
++		return types.Service{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
++	}
+ 
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+diff --git a/internal/docker/docker.go b/internal/docker/docker.go
+index 0e387d5..1cef304 100644
+--- a/internal/docker/docker.go
++++ b/internal/docker/docker.go
+@@ -65,6 +65,7 @@ type ContainerSpec struct {
+ 	Env         map[string]string
+ 	Ports       []PortBinding
+ 	Resources   ResourceLimits
++	Security    SecurityContext
+ 	Healthcheck *Healthcheck
+ 	Labels      map[string]string
+ 	Command     []string
+@@ -81,6 +82,23 @@ type ResourceLimits struct {
+ 	Memory   int64
+ }
+ 
++type SecurityContext struct {
++	User                   string
++	ReadOnlyRootFilesystem bool
++	Privileged             bool
++	CapAdd                 []string
++	CapDrop                []string
++	HostNetwork            bool
++	HostPID                bool
++	HostPathMounts         []HostPathMount
++}
++
++type HostPathMount struct {
++	HostPath      string
++	ContainerPath string
++	ReadOnly      bool
++}
++
+ type Healthcheck struct {
+ 	Test        []string
+ 	Interval    time.Duration
+@@ -368,6 +386,14 @@ func (spec ContainerSpec) Validate() error {
+ 			return fmt.Errorf("ports[%d]: host port must be between 0 and 65535", i)
+ 		}
+ 	}
++	for i, mount := range spec.Security.HostPathMounts {
++		if strings.TrimSpace(mount.HostPath) == "" {
++			return fmt.Errorf("security host path mounts[%d]: host path is required", i)
++		}
++		if strings.TrimSpace(mount.ContainerPath) == "" {
++			return fmt.Errorf("security host path mounts[%d]: container path is required", i)
++		}
++	}
+ 	return nil
+ }
+ 
+@@ -386,6 +412,7 @@ func dockerContainerConfig(spec ContainerSpec) (*container.Config, *container.Ho
+ 		ExposedPorts: exposedPorts,
+ 		Cmd:          spec.Command,
+ 		Healthcheck:  dockerHealthcheck(spec.Healthcheck),
++		User:         spec.Security.User,
+ 	}
+ 	hostConfig := &container.HostConfig{
+ 		PortBindings: portBindings,
+@@ -396,10 +423,41 @@ func dockerContainerConfig(spec ContainerSpec) (*container.Config, *container.Ho
+ 			Memory:   spec.Resources.Memory,
+ 			NanoCPUs: spec.Resources.CPUMilli * 1_000_000,
+ 		},
++		Privileged:     spec.Security.Privileged,
++		ReadonlyRootfs: spec.Security.ReadOnlyRootFilesystem,
++		CapAdd:         append([]string(nil), spec.Security.CapAdd...),
++		CapDrop:        dockerCapDrop(spec.Security.CapDrop),
++		Binds:          dockerHostPathMounts(spec.Security.HostPathMounts),
++	}
++	if spec.Security.HostNetwork {
++		hostConfig.NetworkMode = "host"
++	}
++	if spec.Security.HostPID {
++		hostConfig.PidMode = "host"
+ 	}
+ 	return config, hostConfig, nil
+ }
+ 
++func dockerCapDrop(configured []string) []string {
++	if len(configured) > 0 {
++		return append([]string(nil), configured...)
++	}
++	return []string{"NET_RAW"}
++}
++
++func dockerHostPathMounts(mounts []HostPathMount) []string {
++	binds := make([]string, 0, len(mounts))
++	for _, mount := range mounts {
++		mode := "ro"
++		if !mount.ReadOnly {
++			mode = "rw"
++		}
++		binds = append(binds, mount.HostPath+":"+mount.ContainerPath+":"+mode)
++	}
++	sort.Strings(binds)
++	return binds
++}
++
+ func managedLabels(spec ContainerSpec) map[string]string {
+ 	labels := make(map[string]string, len(spec.Labels)+5)
+ 	for key, value := range spec.Labels {
+diff --git a/internal/docker/docker_test.go b/internal/docker/docker_test.go
+index ed0fd45..33c6ffb 100644
+--- a/internal/docker/docker_test.go
++++ b/internal/docker/docker_test.go
+@@ -52,6 +52,43 @@ func TestCreateContainerAddsRequiredLabels(t *testing.T) {
+ 	if len(fake.createdConfig.Env) != 2 || !slices.Contains(fake.createdConfig.Env, "A=1") {
+ 		t.Fatalf("unexpected env %#v", fake.createdConfig.Env)
+ 	}
++	if !slices.Contains(fake.createdHostConfig.CapDrop, "NET_RAW") {
++		t.Fatalf("expected NET_RAW dropped by default, got %#v", fake.createdHostConfig.CapDrop)
++	}
++}
++
++func TestCreateContainerAppliesSecurityContext(t *testing.T) {
++	fake := &fakeDockerClient{createID: "created"}
++	runtime := NewEngineRuntimeWithClient(fake)
++	spec := containerSpecFixture()
++	spec.Security = SecurityContext{
++		User:                   "1000:1000",
++		ReadOnlyRootFilesystem: true,
++		CapDrop:                []string{"ALL"},
++		CapAdd:                 []string{"NET_BIND_SERVICE"},
++		HostPathMounts: []HostPathMount{{
++			HostPath:      "/var/lib/orch/service-a",
++			ContainerPath: "/data",
++			ReadOnly:      true,
++		}},
++	}
++
++	if _, err := runtime.CreateContainer(context.Background(), spec); err != nil {
++		t.Fatalf("create container: %v", err)
++	}
++
++	if fake.createdConfig.User != "1000:1000" {
++		t.Fatalf("expected container user, got %q", fake.createdConfig.User)
++	}
++	if !fake.createdHostConfig.ReadonlyRootfs {
++		t.Fatalf("expected read-only root filesystem")
++	}
++	if !slices.Contains(fake.createdHostConfig.CapDrop, "ALL") || !slices.Contains(fake.createdHostConfig.CapAdd, "NET_BIND_SERVICE") {
++		t.Fatalf("unexpected capabilities drop=%#v add=%#v", fake.createdHostConfig.CapDrop, fake.createdHostConfig.CapAdd)
++	}
++	if len(fake.createdHostConfig.Binds) != 1 || fake.createdHostConfig.Binds[0] != "/var/lib/orch/service-a:/data:ro" {
++		t.Fatalf("unexpected host path binds %#v", fake.createdHostConfig.Binds)
++	}
+ }
+ 
+ func TestCreateContainerExistingTaskIsIdempotent(t *testing.T) {
+diff --git a/internal/docker/fake.go b/internal/docker/fake.go
+index 8087ff7..078aaa8 100644
+--- a/internal/docker/fake.go
++++ b/internal/docker/fake.go
+@@ -457,6 +457,9 @@ func cloneContainerSpec(spec ContainerSpec) ContainerSpec {
+ 	spec.Labels = cloneMap(spec.Labels)
+ 	spec.Ports = append([]PortBinding(nil), spec.Ports...)
+ 	spec.Command = append([]string(nil), spec.Command...)
++	spec.Security.CapAdd = append([]string(nil), spec.Security.CapAdd...)
++	spec.Security.CapDrop = append([]string(nil), spec.Security.CapDrop...)
++	spec.Security.HostPathMounts = append([]HostPathMount(nil), spec.Security.HostPathMounts...)
+ 	return spec
+ }
+ 
+diff --git a/internal/policy/policy.go b/internal/policy/policy.go
+new file mode 100644
+index 0000000..7fb2ab0
+--- /dev/null
++++ b/internal/policy/policy.go
+@@ -0,0 +1,88 @@
++package policy
++
++import (
++	"fmt"
++	"path/filepath"
++	"slices"
++	"strings"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type ClusterPolicy struct {
++	AllowPrivileged         bool     `json:"allow_privileged" yaml:"allow_privileged"`
++	AllowHostNetwork        bool     `json:"allow_host_network" yaml:"allow_host_network"`
++	AllowHostPID            bool     `json:"allow_host_pid" yaml:"allow_host_pid"`
++	AllowedHostPathPrefixes []string `json:"allowed_host_path_prefixes,omitempty" yaml:"allowed_host_path_prefixes"`
++	AllowedCapabilities     []string `json:"allowed_capabilities,omitempty" yaml:"allowed_capabilities"`
++}
++
++func DefaultClusterPolicy() ClusterPolicy {
++	return ClusterPolicy{}
++}
++
++func (policy ClusterPolicy) ValidateServiceSpec(spec types.ServiceSpec) error {
++	context := spec.SecurityContext
++	if context.Privileged && !policy.AllowPrivileged {
++		return fmt.Errorf("security_context.privileged is not allowed by cluster policy")
++	}
++	if context.HostNetwork && !policy.AllowHostNetwork {
++		return fmt.Errorf("security_context.host_network is not allowed by cluster policy")
++	}
++	if context.HostPID && !policy.AllowHostPID {
++		return fmt.Errorf("security_context.host_pid is not allowed by cluster policy")
++	}
++	for _, capability := range context.CapAdd {
++		if !policy.capabilityAllowed(capability) {
++			return fmt.Errorf("security_context.cap_add %q is not allowed by cluster policy", capability)
++		}
++	}
++	for _, mount := range context.HostPathMounts {
++		if !policy.hostPathAllowed(mount.HostPath) {
++			return fmt.Errorf("security_context.host_path_mounts host path %q is not allowed by cluster policy", mount.HostPath)
++		}
++	}
++	return nil
++}
++
++func (policy ClusterPolicy) capabilityAllowed(capability string) bool {
++	capability = normalizeCapability(capability)
++	for _, allowed := range policy.AllowedCapabilities {
++		if normalizeCapability(allowed) == capability {
++			return true
++		}
++	}
++	return false
++}
++
++func normalizeCapability(capability string) string {
++	return strings.TrimPrefix(strings.ToUpper(strings.TrimSpace(capability)), "CAP_")
++}
++
++func (policy ClusterPolicy) hostPathAllowed(path string) bool {
++	path = filepath.Clean(path)
++	for _, prefix := range policy.AllowedHostPathPrefixes {
++		prefix = filepath.Clean(strings.TrimSpace(prefix))
++		if prefix == "." || prefix == "" || !strings.HasPrefix(prefix, "/") {
++			continue
++		}
++		if path == prefix || strings.HasPrefix(path, strings.TrimRight(prefix, "/")+"/") {
++			return true
++		}
++	}
++	return false
++}
++
++func (policy ClusterPolicy) Redacted() map[string]any {
++	prefixes := append([]string(nil), policy.AllowedHostPathPrefixes...)
++	capabilities := append([]string(nil), policy.AllowedCapabilities...)
++	slices.Sort(prefixes)
++	slices.Sort(capabilities)
++	return map[string]any{
++		"allow_privileged":           policy.AllowPrivileged,
++		"allow_host_network":         policy.AllowHostNetwork,
++		"allow_host_pid":             policy.AllowHostPID,
++		"allowed_host_path_prefixes": prefixes,
++		"allowed_capabilities":       capabilities,
++	}
++}
+diff --git a/internal/policy/policy_test.go b/internal/policy/policy_test.go
+new file mode 100644
+index 0000000..1cef0df
+--- /dev/null
++++ b/internal/policy/policy_test.go
+@@ -0,0 +1,79 @@
++package policy
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestDefaultPolicyRejectsUnsafeSecurityContext(t *testing.T) {
++	tests := []struct {
++		name    string
++		context types.SecurityContext
++		want    string
++	}{
++		{
++			name:    "privileged",
++			context: types.SecurityContext{Privileged: true},
++			want:    "privileged",
++		},
++		{
++			name:    "host network",
++			context: types.SecurityContext{HostNetwork: true},
++			want:    "host_network",
++		},
++		{
++			name:    "host pid",
++			context: types.SecurityContext{HostPID: true},
++			want:    "host_pid",
++		},
++		{
++			name:    "capability add",
++			context: types.SecurityContext{CapAdd: []string{"NET_ADMIN"}},
++			want:    "cap_add",
++		},
++		{
++			name:    "host path",
++			context: types.SecurityContext{HostPathMounts: []types.HostPathMount{{HostPath: "/var/lib/data", ContainerPath: "/data"}}},
++			want:    "host_path_mounts",
++		},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			err := DefaultClusterPolicy().ValidateServiceSpec(serviceSpec(tt.context))
++			if err == nil || !strings.Contains(err.Error(), tt.want) {
++				t.Fatalf("expected error containing %q, got %v", tt.want, err)
++			}
++		})
++	}
++}
++
++func TestPolicyAllowsExplicitCapabilitiesAndHostPathPrefixes(t *testing.T) {
++	policy := ClusterPolicy{
++		AllowedCapabilities:     []string{"CAP_NET_ADMIN"},
++		AllowedHostPathPrefixes: []string{"/var/lib/orch-volumes"},
++	}
++	spec := serviceSpec(types.SecurityContext{
++		CapAdd: []string{"NET_ADMIN"},
++		HostPathMounts: []types.HostPathMount{{
++			HostPath:      "/var/lib/orch-volumes/service-a",
++			ContainerPath: "/data",
++			ReadOnly:      true,
++		}},
++	})
++
++	if err := policy.ValidateServiceSpec(spec); err != nil {
++		t.Fatalf("expected policy to allow explicit security context: %v", err)
++	}
++}
++
++func serviceSpec(context types.SecurityContext) types.ServiceSpec {
++	return types.ServiceSpec{
++		Name:            "web",
++		Image:           "nginx:1.27",
++		Replicas:        1,
++		SecurityContext: context,
++	}
++}
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 24d0a6d..821aeac 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -991,18 +991,18 @@ func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ }
+ 
+ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+ 			name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints, routes
++			resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+ 		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints, routes, status,
++			resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
+@@ -1013,6 +1013,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 		secretRefs,
+ 		ports,
+ 		requirements,
++		securityContext,
+ 		healthcheck,
+ 		restartPolicy,
+ 		constraints,
+@@ -1026,7 +1027,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ }
+ 
+ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+@@ -1041,16 +1042,17 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 				secret_refs = $8,
+ 				ports = $9,
+ 				resource_requirements = $10,
+-				healthcheck = $11,
+-				restart_policy = $12,
+-				placement_constraints = $13,
+-				routes = $15,
++				security_context = $11,
++				healthcheck = $12,
++				restart_policy = $13,
++				placement_constraints = $14,
++				routes = $16,
+ 				deployment_version = deployment_version + 1,
+ 				updated_at = timezone('utc', now()),
+ 				version = version + 1
+-			WHERE id = $1 AND updated_at = $14
++			WHERE id = $1 AND updated_at = $15
+ 			RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-				resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
++				resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes,
+ 				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+@@ -1062,6 +1064,7 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 		secretRefs,
+ 		ports,
+ 		requirements,
++		securityContext,
+ 		healthcheck,
+ 		restartPolicy,
+ 		constraints,
+@@ -1095,7 +1098,7 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ 
+ func serviceSelectSQL() string {
+ 	return `SELECT id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-		resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
++		resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+@@ -1158,7 +1161,7 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ func scanService(row pgx.Row) (types.Service, error) {
+ 	var service types.Service
+ 	var id string
+-	var env, secretRefs, ports, requirements, restartPolicy, constraints, routes []byte
++	var env, secretRefs, ports, requirements, securityContext, restartPolicy, constraints, routes []byte
+ 	var healthcheck []byte
+ 	err := row.Scan(
+ 		&id,
+@@ -1171,6 +1174,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&secretRefs,
+ 		&ports,
+ 		&requirements,
++		&securityContext,
+ 		&healthcheck,
+ 		&restartPolicy,
+ 		&constraints,
+@@ -1187,7 +1191,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 	if service.Status == "" {
+ 		service.Status = types.ServiceActive
+ 	}
+-	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes); err != nil {
++	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	service.CreatedAt = service.CreatedAt.UTC()
+@@ -1396,46 +1400,50 @@ func scanAuditLog(row pgx.Row) (audit.Log, error) {
+ 	return log, nil
+ }
+ 
+-func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
++func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
+ 	env, err := jsonBytes(defaultMap(spec.Env))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	secretRefs, err := jsonBytes(defaultSlice(spec.SecretRefs))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	ports, err := jsonBytes(defaultSlice(spec.Ports))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	requirements, err := jsonBytes(spec.ResourceRequirements)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++	}
++	securityContext, err := jsonBytes(spec.SecurityContext)
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	var healthcheck []byte
+ 	if spec.Healthcheck != nil {
+ 		healthcheck, err = jsonBytes(spec.Healthcheck)
+ 		if err != nil {
+-			return nil, nil, nil, nil, nil, nil, nil, nil, err
++			return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 		}
+ 	}
+ 	restartPolicy, err := jsonBytes(spec.RestartPolicy)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	constraints, err := jsonBytes(defaultSlice(spec.PlacementConstraints))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	routes, err := jsonBytes(defaultSlice(spec.Routes))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+-	return env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, nil
++	return env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, nil
+ }
+ 
+-func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, healthcheck []byte, restartPolicy []byte, constraints []byte, routes []byte) error {
++func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, securityContext []byte, healthcheck []byte, restartPolicy []byte, constraints []byte, routes []byte) error {
+ 	if err := json.Unmarshal(env, &spec.Env); err != nil {
+ 		return fmt.Errorf("decode service env: %w", err)
+ 	}
+@@ -1448,6 +1456,11 @@ func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, p
+ 	if err := json.Unmarshal(requirements, &spec.ResourceRequirements); err != nil {
+ 		return fmt.Errorf("decode service resource requirements: %w", err)
+ 	}
++	if len(securityContext) > 0 {
++		if err := json.Unmarshal(securityContext, &spec.SecurityContext); err != nil {
++			return fmt.Errorf("decode service security context: %w", err)
++		}
++	}
+ 	if len(healthcheck) > 0 {
+ 		var check types.Healthcheck
+ 		if err := json.Unmarshal(healthcheck, &check); err != nil {
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 00ad56e..4156d82 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -53,7 +53,7 @@ func TestMapPostgresError(t *testing.T) {
+ 
+ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	spec := serviceSpecFixture()
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		t.Fatalf("encode service json: %v", err)
+ 	}
+@@ -62,7 +62,7 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	got.Name = spec.Name
+ 	got.Image = spec.Image
+ 	got.Replicas = spec.Replicas
+-	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes); err != nil {
++	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		t.Fatalf("decode service json: %v", err)
+ 	}
+ 
+@@ -78,6 +78,9 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	if len(got.Routes) != 1 || got.Routes[0].Host != "api.example.com" {
+ 		t.Fatalf("expected routes to round trip, got %#v", got.Routes)
+ 	}
++	if !got.SecurityContext.ReadOnlyRootFilesystem || got.SecurityContext.User != "1000:1000" {
++		t.Fatalf("expected security context to round trip, got %#v", got.SecurityContext)
++	}
+ }
+ 
+ func TestPostgresStoreIntegration(t *testing.T) {
+@@ -397,6 +400,11 @@ func serviceSpecFixture() types.ServiceSpec {
+ 			Requests: types.Resources{CPU: 100, Memory: 128 * 1024 * 1024},
+ 			Limits:   types.Resources{CPU: 500, Memory: 512 * 1024 * 1024},
+ 		},
++		SecurityContext: types.SecurityContext{
++			User:                   "1000:1000",
++			ReadOnlyRootFilesystem: true,
++			CapDrop:                []string{"NET_RAW"},
++		},
+ 		Healthcheck: &types.Healthcheck{
+ 			Type:               types.HealthcheckHTTP,
+ 			Path:               "/healthz",
+diff --git a/migrations/000009_service_security_context.down.sql b/migrations/000009_service_security_context.down.sql
+new file mode 100644
+index 0000000..8b971fa
+--- /dev/null
++++ b/migrations/000009_service_security_context.down.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE services
++    DROP COLUMN security_context;
+diff --git a/migrations/000009_service_security_context.up.sql b/migrations/000009_service_security_context.up.sql
+new file mode 100644
+index 0000000..5526d3e
+--- /dev/null
++++ b/migrations/000009_service_security_context.up.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE services
++    ADD COLUMN security_context JSONB NOT NULL DEFAULT '{}'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index a074d99..16337f9 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -159,6 +159,7 @@ type ServiceSpec struct {
+ 	SecretRefs           []SecretRef           `json:"secret_refs,omitempty"`
+ 	Ports                []Port                `json:"ports,omitempty"`
+ 	ResourceRequirements ResourceRequirements  `json:"resource_requirements"`
++	SecurityContext      SecurityContext       `json:"security_context,omitempty"`
+ 	Healthcheck          *Healthcheck          `json:"healthcheck,omitempty"`
+ 	RestartPolicy        RestartPolicy         `json:"restart_policy"`
+ 	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+@@ -182,6 +183,9 @@ func (spec ServiceSpec) Validate() error {
+ 	if err := spec.ResourceRequirements.Validate(); err != nil {
+ 		return err
+ 	}
++	if err := spec.SecurityContext.Validate(); err != nil {
++		return err
++	}
+ 	for i, port := range spec.Ports {
+ 		if err := port.Validate(); err != nil {
+ 			return fmt.Errorf("ports[%d]: %w", i, err)
+@@ -361,6 +365,75 @@ func (route Route) Validate() error {
+ 	return nil
+ }
+ 
++type SecurityContext struct {
++	User                   string          `json:"user,omitempty"`
++	ReadOnlyRootFilesystem bool            `json:"read_only_root_filesystem,omitempty"`
++	Privileged             bool            `json:"privileged,omitempty"`
++	CapAdd                 []string        `json:"cap_add,omitempty"`
++	CapDrop                []string        `json:"cap_drop,omitempty"`
++	HostNetwork            bool            `json:"host_network,omitempty"`
++	HostPID                bool            `json:"host_pid,omitempty"`
++	HostPathMounts         []HostPathMount `json:"host_path_mounts,omitempty"`
++}
++
++type HostPathMount struct {
++	HostPath      string `json:"host_path"`
++	ContainerPath string `json:"container_path"`
++	ReadOnly      bool   `json:"read_only,omitempty"`
++}
++
++func (context SecurityContext) Validate() error {
++	if strings.ContainsAny(context.User, "\x00\r\n") {
++		return fmt.Errorf("security context user contains invalid characters")
++	}
++	for i, capability := range context.CapAdd {
++		if err := validateCapabilityName(capability); err != nil {
++			return fmt.Errorf("security_context.cap_add[%d]: %w", i, err)
++		}
++	}
++	for i, capability := range context.CapDrop {
++		if err := validateCapabilityName(capability); err != nil {
++			return fmt.Errorf("security_context.cap_drop[%d]: %w", i, err)
++		}
++	}
++	for i, mount := range context.HostPathMounts {
++		if err := mount.Validate(); err != nil {
++			return fmt.Errorf("security_context.host_path_mounts[%d]: %w", i, err)
++		}
++	}
++	return nil
++}
++
++func (mount HostPathMount) Validate() error {
++	if !strings.HasPrefix(mount.HostPath, "/") {
++		return fmt.Errorf("host_path must be absolute")
++	}
++	if strings.Contains(mount.HostPath, "\x00") || strings.Contains(mount.HostPath, "..") {
++		return fmt.Errorf("host_path contains invalid path segment")
++	}
++	if !strings.HasPrefix(mount.ContainerPath, "/") {
++		return fmt.Errorf("container_path must be absolute")
++	}
++	if strings.Contains(mount.ContainerPath, "\x00") || strings.Contains(mount.ContainerPath, "..") {
++		return fmt.Errorf("container_path contains invalid path segment")
++	}
++	return nil
++}
++
++func validateCapabilityName(capability string) error {
++	capability = strings.TrimSpace(capability)
++	if capability == "" {
++		return fmt.Errorf("capability is required")
++	}
++	capability = strings.TrimPrefix(strings.ToUpper(capability), "CAP_")
++	for _, char := range capability {
++		if (char < 'A' || char > 'Z') && (char < '0' || char > '9') && char != '_' {
++			return fmt.Errorf("capability %q is invalid", capability)
++		}
++	}
++	return nil
++}
++
+ type ResourceRequirements struct {
+ 	Requests Resources `json:"requests"`
+ 	Limits   Resources `json:"limits"`
+diff --git a/pkg/types/validation_test.go b/pkg/types/validation_test.go
+index bbbcb85..0259fa7 100644
+--- a/pkg/types/validation_test.go
++++ b/pkg/types/validation_test.go
+@@ -103,6 +103,11 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			UnhealthyThreshold: 3,
+ 		},
+ 		RestartPolicy: RestartPolicy{Condition: RestartOnFailure, MaxAttempts: 3},
++		SecurityContext: SecurityContext{
++			User:                   "1000:1000",
++			ReadOnlyRootFilesystem: true,
++			CapDrop:                []string{"NET_RAW"},
++		},
+ 		PlacementConstraints: []PlacementConstraint{
+ 			{Key: "region", Operator: ConstraintEquals, Value: "us-east"},
+ 		},
+@@ -189,6 +194,24 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			}(),
+ 			wantErr: "restart policy condition",
+ 		},
++		{
++			name: "invalid capability",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.SecurityContext.CapAdd = []string{"NET_ADMIN;rm"}
++				return spec
++			}(),
++			wantErr: "security_context.cap_add[0]",
++		},
++		{
++			name: "invalid host path",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.SecurityContext.HostPathMounts = []HostPathMount{{HostPath: "../data", ContainerPath: "/data"}}
++				return spec
++			}(),
++			wantErr: "security_context.host_path_mounts[0]",
++		},
+ 		{
+ 			name: "invalid placement constraint",
+ 			spec: func() ServiceSpec {
+@@ -218,6 +241,9 @@ func cloneServiceSpec(spec ServiceSpec) ServiceSpec {
+ 	}
+ 	spec.SecretRefs = append([]SecretRef(nil), spec.SecretRefs...)
+ 	spec.Ports = append([]Port(nil), spec.Ports...)
++	spec.SecurityContext.CapAdd = append([]string(nil), spec.SecurityContext.CapAdd...)
++	spec.SecurityContext.CapDrop = append([]string(nil), spec.SecurityContext.CapDrop...)
++	spec.SecurityContext.HostPathMounts = append([]HostPathMount(nil), spec.SecurityContext.HostPathMounts...)
+ 	spec.PlacementConstraints = append([]PlacementConstraint(nil), spec.PlacementConstraints...)
+ 	if spec.Healthcheck != nil {
+ 		healthcheck := *spec.Healthcheck
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 955c6fc..504152a 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `51-security-review.md`
+-- Last matching commit: `same commit: Add security review and healthcheck hardening`
+-- Completed prompt range: `00` through `51`
+-- Next prompt to execute: `52-container-security-policy.md`
++- Last executed prompt: `52-container-security-policy.md`
++- Last matching commit: `same commit: Add container security policy`
++- Completed prompt range: `00` through `52`
++- Next prompt to execute: `53-healthcheck-ssrf-protection.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

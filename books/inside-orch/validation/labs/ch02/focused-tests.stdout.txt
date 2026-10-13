@@ -1,0 +1,36 @@
+=== RUN   TestPlanAssignments
+=== RUN   TestPlanAssignments/no_nodes
+=== RUN   TestPlanAssignments/labels_mismatch
+=== RUN   TestPlanAssignments/insufficient_resources
+=== RUN   TestPlanAssignments/spread_across_nodes
+=== RUN   TestPlanAssignments/deterministic_tie_breaking
+=== RUN   TestPlanAssignments/node_draining
+=== RUN   TestPlanAssignments/node_offline
+=== RUN   TestPlanAssignments/prefer_more_free_memory
+=== RUN   TestPlanAssignments/prefer_fewer_running_tasks_for_same_service
+=== RUN   TestPlanAssignments/prefer_fewer_total_running_tasks
+=== RUN   TestPlanAssignments/reject_node_with_fixed_host_port_collision
+=== RUN   TestPlanAssignments/allow_same_fixed_host_port_on_different_nodes
+=== RUN   TestPlanAssignments/assign_dynamic_host_ports_deterministically
+=== RUN   TestPlanAssignments/avoid_node_with_previous_port_allocation_failure
+--- PASS: TestPlanAssignments (0.00s)
+    --- PASS: TestPlanAssignments/no_nodes (0.00s)
+    --- PASS: TestPlanAssignments/labels_mismatch (0.00s)
+    --- PASS: TestPlanAssignments/insufficient_resources (0.00s)
+    --- PASS: TestPlanAssignments/spread_across_nodes (0.00s)
+    --- PASS: TestPlanAssignments/deterministic_tie_breaking (0.00s)
+    --- PASS: TestPlanAssignments/node_draining (0.00s)
+    --- PASS: TestPlanAssignments/node_offline (0.00s)
+    --- PASS: TestPlanAssignments/prefer_more_free_memory (0.00s)
+    --- PASS: TestPlanAssignments/prefer_fewer_running_tasks_for_same_service (0.00s)
+    --- PASS: TestPlanAssignments/prefer_fewer_total_running_tasks (0.00s)
+    --- PASS: TestPlanAssignments/reject_node_with_fixed_host_port_collision (0.00s)
+    --- PASS: TestPlanAssignments/allow_same_fixed_host_port_on_different_nodes (0.00s)
+    --- PASS: TestPlanAssignments/assign_dynamic_host_ports_deterministically (0.00s)
+    --- PASS: TestPlanAssignments/avoid_node_with_previous_port_allocation_failure (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/scheduler	0.004s
+=== RUN   TestFakeRuntimeRecordsOperationsAndCreatesIdempotently
+--- PASS: TestFakeRuntimeRecordsOperationsAndCreatesIdempotently (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/docker	0.004s

@@ -1,0 +1,1074 @@
+commit ea0760e8201c842371caf6671a90bcfeb90197bb
+Date: 2026-07-14T15:26:01+02:00
+Subject: Add optional Traefik integration
+
+
+---
+ deployments/examples/traefik-demo.yaml    |  19 +++
+ docker-compose.yml                        |  16 +++
+ docs/API.md                               |  20 +++
+ docs/TRAEFIK.md                           |  75 ++++++++++++
+ internal/api/api.go                       |  24 ++++
+ internal/api/api_test.go                  |  66 ++++++++++
+ internal/cli/deploy.go                    |  16 +++
+ internal/cli/deploy_test.go               |   8 ++
+ internal/store/postgres.go                |  51 +++++---
+ internal/store/postgres_test.go           |  12 +-
+ internal/traefik/config.go                | 197 ++++++++++++++++++++++++++++++
+ internal/traefik/config_test.go           | 147 ++++++++++++++++++++++
+ migrations/000003_service_routes.down.sql |   2 +
+ migrations/000003_service_routes.up.sql   |   2 +
+ pkg/types/types.go                        |  29 +++++
+ 15 files changed, 662 insertions(+), 22 deletions(-)
+
+diff --git a/deployments/examples/traefik-demo.yaml b/deployments/examples/traefik-demo.yaml
+new file mode 100644
+index 0000000..e5be88f
+--- /dev/null
++++ b/deployments/examples/traefik-demo.yaml
+@@ -0,0 +1,19 @@
++name: traefik-demo
++image: nginx:1.27-alpine
++replicas: 2
++ports:
++  - container: 80
++    public: 0
++routes:
++  - host: demo.localhost
++    pathPrefix: /
++    port: 80
++    tls: false
++resources:
++  cpu: 100m
++  memory: 128Mi
++restart:
++  policy: always
++placement:
++  labels:
++    role: worker
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 618ac6a..40da5e0 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -58,6 +58,22 @@ services:
+     depends_on:
+       - orch-server
+ 
++  traefik:
++    image: traefik:v3.1
++    profiles: ["traefik"]
++    command:
++      - --api.insecure=true
++      - --entrypoints.web.address=:80
++      - --entrypoints.websecure.address=:443
++      - --providers.http.endpoint=http://orch-server:8080/v1/integrations/traefik/config
++      - --providers.http.pollInterval=2s
++    ports:
++      - "8088:8080"
++      - "8082:80"
++      - "8443:443"
++    depends_on:
++      - orch-server
++
+   demo-app:
+     image: nginx:1.27-alpine
+     profiles: ["demo"]
+diff --git a/docs/API.md b/docs/API.md
+index 9e65b56..aeeedfe 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -76,6 +76,7 @@ curl -X POST http://localhost:8080/v1/services \
+       "env": {"APP_ENV": "local"},
+       "secret_refs": [{"name": "registry-creds", "key": "password"}],
+       "ports": [{"protocol": "tcp", "container_port": 8080, "published_port": 18080}],
++      "routes": [{"host": "web.localhost", "path_prefix": "/", "port": 8080, "tls": false}],
+       "resource_requirements": {
+         "requests": {"cpu": 100, "memory": 134217728},
+         "limits": {"cpu": 500, "memory": 536870912}
+@@ -132,6 +133,25 @@ curl -X POST http://localhost:8080/v1/services/{service_id}/rollback
+ 
+ Resource values are normalized to CPU millicores and memory bytes. The CLI deploy parser accepts strings such as `500m`, `2.5`, `512Mi`, and `1Gi`.
+ 
++## Service Discovery
++
++```sh
++curl http://localhost:8080/v1/services/{service_id}/endpoints
++curl http://localhost:8080/v1/discovery/services
++curl http://localhost:8080/v1/discovery/services/{service_name}
++curl 'http://localhost:8080/v1/discovery/services/{service_name}?include_unhealthy=true'
++```
++
++Discovery endpoints include active services and assigned task ports. By default, only tasks whose desired state is `running` and whose actual state is `running` or `healthy` are returned.
++
++## Traefik
++
++```sh
++curl http://localhost:8080/v1/integrations/traefik/config
++```
++
++The Traefik endpoint returns optional HTTP-provider dynamic config for services with `routes`. It omits unhealthy, stopped, unassigned, non-TCP, and non-matching-port task endpoints. See [TRAEFIK.md](TRAEFIK.md).
++
+ ## Tasks
+ 
+ ```sh
+diff --git a/docs/TRAEFIK.md b/docs/TRAEFIK.md
+new file mode 100644
+index 0000000..55a5a6a
+--- /dev/null
++++ b/docs/TRAEFIK.md
+@@ -0,0 +1,75 @@
++# Traefik Integration
++
++`orch` can expose an optional Traefik HTTP provider endpoint for services that define HTTP routes. Core scheduling, reconciliation, service discovery, and Docker runtime behavior do not require Traefik.
++
++## Service Routes
++
++Add `routes` to a service YAML file:
++
++```yaml
++name: traefik-demo
++image: nginx:1.27-alpine
++replicas: 2
++ports:
++  - container: 80
++    public: 0
++routes:
++  - host: demo.localhost
++    pathPrefix: /
++    port: 80
++    tls: false
++resources:
++  cpu: 100m
++  memory: 128Mi
++restart:
++  policy: always
++placement:
++  labels:
++    role: worker
++```
++
++Route fields:
++
++- `host`: HTTP host rule for Traefik.
++- `pathPrefix`: path prefix rule, such as `/` or `/api`.
++- `port`: service container port to route to.
++- `tls`: when `true`, the generated router includes Traefik TLS config.
++
++## Dynamic Config Endpoint
++
++Traefik can poll:
++
++```text
++GET /v1/integrations/traefik/config
++```
++
++The response is Traefik dynamic config JSON. It includes only active services with route definitions and only TCP endpoints from tasks whose desired state is running and whose actual state is `running` or `healthy`. Unhealthy, stopped, unassigned, and non-matching-port tasks are omitted, so Traefik sees updates on its next poll after tasks start, stop, or become unhealthy.
++
++## Local Development
++
++Start the local orchestrator and Traefik:
++
++```sh
++docker compose --profile local-orch --profile traefik up --build
++```
++
++Deploy the demo service:
++
++```sh
++go run ./cmd/orch --server http://localhost:8080 deploy deployments/examples/traefik-demo.yaml
++```
++
++Traefik polls the control plane with:
++
++```sh
++--providers.http.endpoint=http://orch-server:8080/v1/integrations/traefik/config
++--providers.http.pollInterval=2s
++```
++
++Then open:
++
++```sh
++curl -H 'Host: demo.localhost' http://localhost:8082/
++```
++
++The Traefik dashboard is available at `http://localhost:8088/` in this local compose profile.
+diff --git a/internal/api/api.go b/internal/api/api.go
+index a8aac08..2e7ca48 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -19,6 +19,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/internal/store"
++	"github.com/alekpopovic/orch/internal/traefik"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -151,6 +152,7 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /v1/tasks/{id}", server.getTask)
+ 	mux.HandleFunc("GET /v1/discovery/services", server.discoveryServices)
+ 	mux.HandleFunc("GET /v1/discovery/services/{name}", server.discoveryServiceByName)
++	mux.HandleFunc("GET /v1/integrations/traefik/config", server.traefikConfig)
+ 	mux.HandleFunc("GET /v1/events", server.listEvents)
+ 	mux.HandleFunc("GET /v1/logs", server.streamLogs)
+ 
+@@ -235,6 +237,8 @@ type DiscoveryServicesResponse struct {
+ 	Services []discovery.ServiceEndpoints `json:"services"`
+ }
+ 
++type TraefikConfigResponse = traefik.Config
++
+ type ScaleServiceRequest struct {
+ 	Replicas int `json:"replicas"`
+ }
+@@ -685,6 +689,16 @@ func (s *Server) discoveryServiceByName(w http.ResponseWriter, r *http.Request)
+ 	s.writeError(w, r, fmt.Errorf("%w: service %q not found", store.ErrNotFound, name))
+ }
+ 
++func (s *Server) traefikConfig(w http.ResponseWriter, r *http.Request) {
++	services, tasks, nodes, err := s.discoverySnapshot(r.Context())
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	endpointSets := discovery.BuildAllServiceEndpoints(services, tasks, nodes, false)
++	writeJSON(w, http.StatusOK, TraefikConfigResponse(traefik.BuildConfig(services, endpointSets)))
++}
++
+ func (s *Server) discoverySnapshot(ctx context.Context) ([]types.Service, []types.Task, []types.Node, error) {
+ 	services, err := s.controlPlane.ListServices(ctx)
+ 	if err != nil {
+@@ -808,6 +822,10 @@ func requiredRole(r *http.Request) (auth.Role, bool) {
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/tasks" || strings.HasPrefix(path, "/v1/tasks/"):
+ 			return auth.RoleViewer, true
++		case strings.HasPrefix(path, "/v1/discovery/"):
++			return auth.RoleViewer, true
++		case path == "/v1/integrations/traefik/config":
++			return auth.RoleViewer, true
+ 		case path == "/v1/events":
+ 			return auth.RoleViewer, true
+ 		case path == "/v1/logs":
+@@ -929,6 +947,12 @@ func metricRoute(method string, path string) (string, bool) {
+ 		return "/v1/tasks", true
+ 	case strings.HasPrefix(path, "/v1/tasks/"):
+ 		return "/v1/tasks/{id}", true
++	case path == "/v1/discovery/services":
++		return "/v1/discovery/services", true
++	case strings.HasPrefix(path, "/v1/discovery/services/"):
++		return "/v1/discovery/services/{name}", true
++	case path == "/v1/integrations/traefik/config":
++		return "/v1/integrations/traefik/config", true
+ 	case path == "/v1/events":
+ 		return "/v1/events", true
+ 	case path == "/v1/logs":
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 18e7f24..d86ef94 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/alekpopovic/orch/internal/auth"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/metrics"
++	"github.com/alekpopovic/orch/internal/traefik"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -344,6 +345,71 @@ func TestServiceDiscoveryEndpointsFilterUnhealthyTasks(t *testing.T) {
+ 	}
+ }
+ 
++func TestTraefikConfigUsesHealthyServiceRouteEndpoints(t *testing.T) {
++	controlPlane := controlplane.NewMemoryService()
++	handler := NewHandler(slog.Default(), controlPlane, WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++	service, err := controlPlane.CreateService(context.Background(), types.ServiceSpec{
++		Name:     "api",
++		Image:    "nginx:1.27",
++		Replicas: 3,
++		Ports:    []types.Port{{Protocol: types.PortTCP, ContainerPort: 8080}},
++		Routes: []types.Route{{
++			Host:       "api.localhost",
++			PathPrefix: "/",
++			Port:       8080,
++			TLS:        true,
++		}},
++		ResourceRequirements: types.ResourceRequirements{
++			Requests: types.Resources{CPU: 100, Memory: 128},
++			Limits:   types.Resources{CPU: 100, Memory: 128},
++		},
++		RestartPolicy: types.RestartPolicy{Condition: types.RestartNever},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	tasks, err := controlPlane.ListTasks(context.Background(), controlplane.TaskFilter{ServiceID: service.ID})
++	if err != nil {
++		t.Fatalf("list tasks: %v", err)
++	}
++	if len(tasks) != 3 {
++		t.Fatalf("expected three assigned tasks, got %#v", tasks)
++	}
++	for taskIndex, status := range []types.TaskStatus{types.TaskRunning, types.TaskHealthy, types.TaskUnhealthy} {
++		if _, err := controlPlane.ReportTaskStatus(context.Background(), controlplane.TaskStatusReport{
++			TaskID:      tasks[taskIndex].ID,
++			NodeID:      registered.Node.ID,
++			Status:      status,
++			ContainerID: "container-" + string(rune('a'+taskIndex)),
++		}); err != nil {
++			t.Fatalf("report task status %s: %v", status, err)
++		}
++	}
++
++	rec := doRequest(t, handler, http.MethodGet, "/v1/integrations/traefik/config", nil)
++	if rec.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
++	}
++	var body traefik.Config
++	decodeResponse(t, rec, &body)
++	if len(body.HTTP.Routers) != 1 {
++		t.Fatalf("expected one Traefik router, got %#v", body.HTTP.Routers)
++	}
++	for _, router := range body.HTTP.Routers {
++		if router.Rule != `Host("api.localhost") && PathPrefix("/")` {
++			t.Fatalf("unexpected router rule %q", router.Rule)
++		}
++		if router.TLS == nil {
++			t.Fatalf("expected TLS router config")
++		}
++		loadBalancer := body.HTTP.Services[router.Service].LoadBalancer
++		if len(loadBalancer.Servers) != 2 {
++			t.Fatalf("expected only healthy running servers, got %#v", loadBalancer.Servers)
++		}
++	}
++}
++
+ func TestCreateServiceValidationError(t *testing.T) {
+ 	rec := doRequest(t, newTestHandler(), http.MethodPost, "/v1/services", `{
+ 		"spec": {
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index 3b07300..855488e 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -20,6 +20,7 @@ type DeployFile struct {
+ 	Healthcheck DeployHealthcheck `yaml:"healthcheck"`
+ 	Restart     DeployRestart     `yaml:"restart"`
+ 	Placement   DeployPlacement   `yaml:"placement"`
++	Routes      []DeployRoute     `yaml:"routes"`
+ }
+ 
+ type DeployPort struct {
+@@ -49,6 +50,13 @@ type DeployPlacement struct {
+ 	Labels map[string]string `yaml:"labels"`
+ }
+ 
++type DeployRoute struct {
++	Host       string `yaml:"host"`
++	PathPrefix string `yaml:"pathPrefix"`
++	Port       int    `yaml:"port"`
++	TLS        bool   `yaml:"tls"`
++}
++
+ func ParseDeployFile(path string) (types.ServiceSpec, error) {
+ 	data, err := os.ReadFile(path)
+ 	if err != nil {
+@@ -88,6 +96,14 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 			PublishedPort: port.Public,
+ 		})
+ 	}
++	for _, route := range deploy.Routes {
++		spec.Routes = append(spec.Routes, types.Route{
++			Host:       strings.TrimSpace(route.Host),
++			PathPrefix: strings.TrimSpace(route.PathPrefix),
++			Port:       route.Port,
++			TLS:        route.TLS,
++		})
++	}
+ 
+ 	if strings.TrimSpace(deploy.Healthcheck.Type) != "" {
+ 		check, err := deploy.Healthcheck.toDomain()
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index 67ba678..5491042 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -14,6 +14,11 @@ replicas: 3
+ ports:
+   - container: 8080
+     public: 80
++routes:
++  - host: api.example.com
++    pathPrefix: /
++    port: 8080
++    tls: true
+ env:
+   NODE_ENV: production
+ resources:
+@@ -63,6 +68,9 @@ placement:
+ 	if len(spec.PlacementConstraints) != 1 || spec.PlacementConstraints[0].Key != "role" {
+ 		t.Fatalf("unexpected constraints %#v", spec.PlacementConstraints)
+ 	}
++	if len(spec.Routes) != 1 || spec.Routes[0].Host != "api.example.com" || !spec.Routes[0].TLS {
++		t.Fatalf("unexpected routes %#v", spec.Routes)
++	}
+ }
+ 
+ func TestParseDeployValidation(t *testing.T) {
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 50c4e69..a540462 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -323,7 +323,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $3
+ 		RETURNING id, name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		string(status),
+@@ -726,18 +726,18 @@ func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ }
+ 
+ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+ 			name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints
++			resource_requirements, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+ 		RETURNING id, name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints, status,
++			resource_requirements, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
+@@ -749,6 +749,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 		healthcheck,
+ 		restartPolicy,
+ 		constraints,
++		routes,
+ 	)
+ 	service, err := scanService(row)
+ 	if err != nil {
+@@ -758,7 +759,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ }
+ 
+ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+@@ -774,12 +775,13 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 			healthcheck = $9,
+ 			restart_policy = $10,
+ 			placement_constraints = $11,
++			routes = $13,
+ 			deployment_version = deployment_version + 1,
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $12
+ 		RETURNING id, name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+@@ -793,6 +795,7 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 		restartPolicy,
+ 		constraints,
+ 		expectedUpdatedAt.UTC(),
++		routes,
+ 	)
+ 	service, err := scanService(row)
+ 	if err != nil {
+@@ -821,7 +824,7 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ 
+ func serviceSelectSQL() string {
+ 	return `SELECT id, name, image, replicas, env, secret_refs, ports,
+-		resource_requirements, healthcheck, restart_policy, placement_constraints,
++		resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+@@ -884,7 +887,7 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ func scanService(row pgx.Row) (types.Service, error) {
+ 	var service types.Service
+ 	var id string
+-	var env, secretRefs, ports, requirements, restartPolicy, constraints []byte
++	var env, secretRefs, ports, requirements, restartPolicy, constraints, routes []byte
+ 	var healthcheck []byte
+ 	err := row.Scan(
+ 		&id,
+@@ -898,6 +901,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&healthcheck,
+ 		&restartPolicy,
+ 		&constraints,
++		&routes,
+ 		&service.Status,
+ 		&service.DeploymentVersion,
+ 		&service.CreatedAt,
+@@ -910,7 +914,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 	if service.Status == "" {
+ 		service.Status = types.ServiceActive
+ 	}
+-	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints); err != nil {
++	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	service.CreatedAt = service.CreatedAt.UTC()
+@@ -1033,42 +1037,46 @@ func scanEvent(row pgx.Row) (types.Event, error) {
+ 	return event, nil
+ }
+ 
+-func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
++func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
+ 	env, err := jsonBytes(defaultMap(spec.Env))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	secretRefs, err := jsonBytes(defaultSlice(spec.SecretRefs))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	ports, err := jsonBytes(defaultSlice(spec.Ports))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	requirements, err := jsonBytes(spec.ResourceRequirements)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	var healthcheck []byte
+ 	if spec.Healthcheck != nil {
+ 		healthcheck, err = jsonBytes(spec.Healthcheck)
+ 		if err != nil {
+-			return nil, nil, nil, nil, nil, nil, nil, err
++			return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 		}
+ 	}
+ 	restartPolicy, err := jsonBytes(spec.RestartPolicy)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	constraints, err := jsonBytes(defaultSlice(spec.PlacementConstraints))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+-	return env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, nil
++	routes, err := jsonBytes(defaultSlice(spec.Routes))
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, nil, err
++	}
++	return env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, nil
+ }
+ 
+-func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, healthcheck []byte, restartPolicy []byte, constraints []byte) error {
++func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, healthcheck []byte, restartPolicy []byte, constraints []byte, routes []byte) error {
+ 	if err := json.Unmarshal(env, &spec.Env); err != nil {
+ 		return fmt.Errorf("decode service env: %w", err)
+ 	}
+@@ -1094,6 +1102,9 @@ func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, p
+ 	if err := json.Unmarshal(constraints, &spec.PlacementConstraints); err != nil {
+ 		return fmt.Errorf("decode service placement constraints: %w", err)
+ 	}
++	if err := json.Unmarshal(routes, &spec.Routes); err != nil {
++		return fmt.Errorf("decode service routes: %w", err)
++	}
+ 	return nil
+ }
+ 
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 6a9238b..3eb49de 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -52,7 +52,7 @@ func TestMapPostgresError(t *testing.T) {
+ 
+ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	spec := serviceSpecFixture()
+-	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		t.Fatalf("encode service json: %v", err)
+ 	}
+@@ -61,7 +61,7 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	got.Name = spec.Name
+ 	got.Image = spec.Image
+ 	got.Replicas = spec.Replicas
+-	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints); err != nil {
++	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		t.Fatalf("decode service json: %v", err)
+ 	}
+ 
+@@ -74,6 +74,9 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	if len(got.Ports) != 1 || got.Ports[0].ContainerPort != 8080 {
+ 		t.Fatalf("expected ports to round trip, got %#v", got.Ports)
+ 	}
++	if len(got.Routes) != 1 || got.Routes[0].Host != "api.example.com" {
++		t.Fatalf("expected routes to round trip, got %#v", got.Routes)
++	}
+ }
+ 
+ func TestPostgresStoreIntegration(t *testing.T) {
+@@ -353,6 +356,9 @@ func serviceSpecFixture() types.ServiceSpec {
+ 		Ports: []types.Port{
+ 			{Protocol: types.PortTCP, ContainerPort: 8080, PublishedPort: 18080},
+ 		},
++		Routes: []types.Route{
++			{Host: "api.example.com", PathPrefix: "/", Port: 8080, TLS: true},
++		},
+ 		ResourceRequirements: types.ResourceRequirements{
+ 			Requests: types.Resources{CPU: 100, Memory: 128 * 1024 * 1024},
+ 			Limits:   types.Resources{CPU: 500, Memory: 512 * 1024 * 1024},
+@@ -377,10 +383,12 @@ func migrate(t *testing.T, ctx context.Context, pool execer) {
+ 	t.Helper()
+ 
+ 	for _, file := range []string{
++		"000003_service_routes.down.sql",
+ 		"000002_task_ports.down.sql",
+ 		"000001_initial_schema.down.sql",
+ 		"000001_initial_schema.up.sql",
+ 		"000002_task_ports.up.sql",
++		"000003_service_routes.up.sql",
+ 	} {
+ 		sql, err := os.ReadFile(filepath.Join("..", "..", "migrations", file))
+ 		if err != nil {
+diff --git a/internal/traefik/config.go b/internal/traefik/config.go
+new file mode 100644
+index 0000000..40da754
+--- /dev/null
++++ b/internal/traefik/config.go
+@@ -0,0 +1,197 @@
++package traefik
++
++import (
++	"fmt"
++	"net"
++	"net/url"
++	"sort"
++	"strconv"
++	"strings"
++	"unicode"
++
++	"github.com/alekpopovic/orch/internal/discovery"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++type Config struct {
++	HTTP HTTPConfig `json:"http"`
++}
++
++type HTTPConfig struct {
++	Routers  map[string]Router  `json:"routers,omitempty"`
++	Services map[string]Service `json:"services,omitempty"`
++}
++
++type Router struct {
++	Rule    string     `json:"rule"`
++	Service string     `json:"service"`
++	TLS     *TLSConfig `json:"tls,omitempty"`
++}
++
++type TLSConfig struct{}
++
++type Service struct {
++	LoadBalancer LoadBalancer `json:"loadBalancer"`
++}
++
++type LoadBalancer struct {
++	Servers        []Server `json:"servers"`
++	PassHostHeader bool     `json:"passHostHeader"`
++}
++
++type Server struct {
++	URL string `json:"url"`
++}
++
++func BuildConfig(services []types.Service, endpointSets []discovery.ServiceEndpoints) Config {
++	config := Config{
++		HTTP: HTTPConfig{
++			Routers:  make(map[string]Router),
++			Services: make(map[string]Service),
++		},
++	}
++	endpointsByServiceID := endpointsByService(endpointSets)
++	orderedServices := append([]types.Service(nil), services...)
++	sortServices(orderedServices)
++
++	for _, service := range orderedServices {
++		if service.Status != "" && service.Status != types.ServiceActive {
++			continue
++		}
++		endpointSet := endpointsByServiceID[service.ID]
++		for routeIndex, route := range service.Spec.Routes {
++			if err := route.Validate(); err != nil {
++				continue
++			}
++			servers := routeServers(endpointSet.Endpoints, route)
++			if len(servers) == 0 {
++				continue
++			}
++			routerName := routeName(service, route, routeIndex)
++			serviceName := routerName + "-service"
++			router := Router{
++				Rule:    routeRule(route),
++				Service: serviceName,
++			}
++			if route.TLS {
++				router.TLS = &TLSConfig{}
++			}
++			config.HTTP.Routers[routerName] = router
++			config.HTTP.Services[serviceName] = Service{
++				LoadBalancer: LoadBalancer{
++					Servers:        servers,
++					PassHostHeader: true,
++				},
++			}
++		}
++	}
++
++	if len(config.HTTP.Routers) == 0 {
++		config.HTTP.Routers = nil
++	}
++	if len(config.HTTP.Services) == 0 {
++		config.HTTP.Services = nil
++	}
++	return config
++}
++
++func endpointsByService(endpointSets []discovery.ServiceEndpoints) map[types.ServiceID]discovery.ServiceEndpoints {
++	endpointsByServiceID := make(map[types.ServiceID]discovery.ServiceEndpoints, len(endpointSets))
++	for _, endpointSet := range endpointSets {
++		endpointsByServiceID[endpointSet.ServiceID] = endpointSet
++	}
++	return endpointsByServiceID
++}
++
++func sortServices(services []types.Service) {
++	sort.Slice(services, func(leftIndex, rightIndex int) bool {
++		if services[leftIndex].Spec.Name == services[rightIndex].Spec.Name {
++			return services[leftIndex].ID < services[rightIndex].ID
++		}
++		return services[leftIndex].Spec.Name < services[rightIndex].Spec.Name
++	})
++}
++
++func routeServers(endpoints []discovery.Endpoint, route types.Route) []Server {
++	servers := make([]Server, 0)
++	for _, endpoint := range endpoints {
++		if endpoint.ContainerPort != route.Port {
++			continue
++		}
++		if endpoint.Protocol != types.PortTCP {
++			continue
++		}
++		if !healthyEndpoint(endpoint.HealthStatus) {
++			continue
++		}
++		serverURL, ok := endpointURL(endpoint)
++		if !ok {
++			continue
++		}
++		servers = append(servers, Server{URL: serverURL})
++	}
++	sort.Slice(servers, func(leftIndex, rightIndex int) bool {
++		return servers[leftIndex].URL < servers[rightIndex].URL
++	})
++	return servers
++}
++
++func healthyEndpoint(status types.TaskStatus) bool {
++	return status == types.TaskRunning || status == types.TaskHealthy
++}
++
++func endpointURL(endpoint discovery.Endpoint) (string, bool) {
++	if endpoint.PublicHostPort <= 0 {
++		return "", false
++	}
++	nodeAddress := strings.TrimSpace(endpoint.NodeAddress)
++	if nodeAddress == "" {
++		return "", false
++	}
++	host := addressHost(nodeAddress)
++	if host == "" {
++		return "", false
++	}
++	return "http://" + net.JoinHostPort(host, strconv.Itoa(endpoint.PublicHostPort)), true
++}
++
++func addressHost(address string) string {
++	parsed, err := url.Parse(address)
++	if err == nil && parsed.Host != "" {
++		return parsed.Hostname()
++	}
++	host, _, err := net.SplitHostPort(address)
++	if err == nil {
++		return host
++	}
++	return strings.Trim(address, "[]")
++}
++
++func routeRule(route types.Route) string {
++	return fmt.Sprintf("Host(%s) && PathPrefix(%s)", strconv.Quote(strings.TrimSpace(route.Host)), strconv.Quote(strings.TrimSpace(route.PathPrefix)))
++}
++
++func routeName(service types.Service, route types.Route, routeIndex int) string {
++	return "orch-" + slug(fmt.Sprintf("%s-%s-%d-%d", service.Spec.Name, route.Host, route.Port, routeIndex))
++}
++
++func slug(value string) string {
++	var builder strings.Builder
++	lastDash := false
++	for _, character := range strings.ToLower(value) {
++		if unicode.IsLetter(character) || unicode.IsDigit(character) {
++			builder.WriteRune(character)
++			lastDash = false
++			continue
++		}
++		if !lastDash {
++			builder.WriteByte('-')
++			lastDash = true
++		}
++	}
++	slugged := strings.Trim(builder.String(), "-")
++	if slugged == "" {
++		return "route"
++	}
++	return slugged
++}
+diff --git a/internal/traefik/config_test.go b/internal/traefik/config_test.go
+new file mode 100644
+index 0000000..bec0bef
+--- /dev/null
++++ b/internal/traefik/config_test.go
+@@ -0,0 +1,147 @@
++package traefik
++
++import (
++	"testing"
++
++	"github.com/alekpopovic/orch/internal/discovery"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestBuildConfigIncludesOnlyHealthyTCPRouteEndpoints(t *testing.T) {
++	service := types.Service{
++		ID:     "service-1",
++		Status: types.ServiceActive,
++		Spec: types.ServiceSpec{
++			Name: "api",
++			Routes: []types.Route{{
++				Host:       "api.example.com",
++				PathPrefix: "/",
++				Port:       8080,
++				TLS:        true,
++			}},
++		},
++	}
++	endpointSets := []discovery.ServiceEndpoints{{
++		ServiceID:   service.ID,
++		ServiceName: service.Spec.Name,
++		Endpoints: []discovery.Endpoint{
++			{
++				ServiceID:      service.ID,
++				ServiceName:    service.Spec.Name,
++				TaskID:         "task-1",
++				NodeID:         "node-1",
++				NodeAddress:    "http://10.0.0.10:8081",
++				PublicHostPort: 30001,
++				ContainerPort:  8080,
++				Protocol:       types.PortTCP,
++				HealthStatus:   types.TaskRunning,
++			},
++			{
++				ServiceID:      service.ID,
++				ServiceName:    service.Spec.Name,
++				TaskID:         "task-2",
++				NodeID:         "node-1",
++				NodeAddress:    "10.0.0.10",
++				PublicHostPort: 30000,
++				ContainerPort:  8080,
++				Protocol:       types.PortTCP,
++				HealthStatus:   types.TaskHealthy,
++			},
++			{
++				ServiceID:      service.ID,
++				ServiceName:    service.Spec.Name,
++				TaskID:         "task-3",
++				NodeID:         "node-1",
++				NodeAddress:    "10.0.0.10",
++				PublicHostPort: 30002,
++				ContainerPort:  8080,
++				Protocol:       types.PortTCP,
++				HealthStatus:   types.TaskUnhealthy,
++			},
++			{
++				ServiceID:      service.ID,
++				ServiceName:    service.Spec.Name,
++				TaskID:         "task-4",
++				NodeID:         "node-1",
++				NodeAddress:    "10.0.0.10",
++				PublicHostPort: 30003,
++				ContainerPort:  9090,
++				Protocol:       types.PortTCP,
++				HealthStatus:   types.TaskHealthy,
++			},
++			{
++				ServiceID:      service.ID,
++				ServiceName:    service.Spec.Name,
++				TaskID:         "task-5",
++				NodeID:         "node-1",
++				NodeAddress:    "10.0.0.10",
++				PublicHostPort: 30004,
++				ContainerPort:  8080,
++				Protocol:       types.PortUDP,
++				HealthStatus:   types.TaskHealthy,
++			},
++		},
++	}}
++
++	config := BuildConfig([]types.Service{service}, endpointSets)
++
++	router, ok := config.HTTP.Routers["orch-api-api-example-com-8080-0"]
++	if !ok {
++		t.Fatalf("expected route router, got %#v", config.HTTP.Routers)
++	}
++	if router.Rule != `Host("api.example.com") && PathPrefix("/")` {
++		t.Fatalf("unexpected router rule %q", router.Rule)
++	}
++	if router.TLS == nil {
++		t.Fatalf("expected TLS router config")
++	}
++	loadBalancer := config.HTTP.Services[router.Service].LoadBalancer
++	if !loadBalancer.PassHostHeader {
++		t.Fatalf("expected pass host header")
++	}
++	if len(loadBalancer.Servers) != 2 {
++		t.Fatalf("expected two healthy TCP servers, got %#v", loadBalancer.Servers)
++	}
++	if loadBalancer.Servers[0].URL != "http://10.0.0.10:30000" || loadBalancer.Servers[1].URL != "http://10.0.0.10:30001" {
++		t.Fatalf("unexpected servers %#v", loadBalancer.Servers)
++	}
++}
++
++func TestBuildConfigSkipsRoutesWithoutHealthyServers(t *testing.T) {
++	service := types.Service{
++		ID:     "service-1",
++		Status: types.ServiceActive,
++		Spec: types.ServiceSpec{
++			Name: "api",
++			Routes: []types.Route{{
++				Host:       "api.example.com",
++				PathPrefix: "/",
++				Port:       8080,
++			}},
++		},
++	}
++	endpointSets := []discovery.ServiceEndpoints{{
++		ServiceID:   service.ID,
++		ServiceName: service.Spec.Name,
++		Endpoints: []discovery.Endpoint{{
++			ServiceID:      service.ID,
++			ServiceName:    service.Spec.Name,
++			TaskID:         "task-1",
++			NodeID:         "node-1",
++			NodeAddress:    "10.0.0.10",
++			PublicHostPort: 30000,
++			ContainerPort:  8080,
++			Protocol:       types.PortTCP,
++			HealthStatus:   types.TaskUnhealthy,
++		}},
++	}}
++
++	config := BuildConfig([]types.Service{service}, endpointSets)
++
++	if len(config.HTTP.Routers) != 0 {
++		t.Fatalf("expected no routers, got %#v", config.HTTP.Routers)
++	}
++	if len(config.HTTP.Services) != 0 {
++		t.Fatalf("expected no services, got %#v", config.HTTP.Services)
++	}
++}
+diff --git a/migrations/000003_service_routes.down.sql b/migrations/000003_service_routes.down.sql
+new file mode 100644
+index 0000000..1946844
+--- /dev/null
++++ b/migrations/000003_service_routes.down.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE IF EXISTS services
++    DROP COLUMN IF EXISTS routes;
+diff --git a/migrations/000003_service_routes.up.sql b/migrations/000003_service_routes.up.sql
+new file mode 100644
+index 0000000..c60c403
+--- /dev/null
++++ b/migrations/000003_service_routes.up.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE services
++    ADD COLUMN routes JSONB NOT NULL DEFAULT '[]'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index d5346f6..3895b0d 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -160,6 +160,7 @@ type ServiceSpec struct {
+ 	Healthcheck          *Healthcheck          `json:"healthcheck,omitempty"`
+ 	RestartPolicy        RestartPolicy         `json:"restart_policy"`
+ 	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
++	Routes               []Route               `json:"routes,omitempty"`
+ }
+ 
+ func (spec ServiceSpec) Validate() error {
+@@ -195,6 +196,11 @@ func (spec ServiceSpec) Validate() error {
+ 			return fmt.Errorf("placement_constraints[%d]: %w", i, err)
+ 		}
+ 	}
++	for i, route := range spec.Routes {
++		if err := route.Validate(); err != nil {
++			return fmt.Errorf("routes[%d]: %w", i, err)
++		}
++	}
+ 	return nil
+ }
+ 
+@@ -233,6 +239,29 @@ const (
+ 	PortUDP PortProtocol = "udp"
+ )
+ 
++type Route struct {
++	Host       string `json:"host"`
++	PathPrefix string `json:"path_prefix"`
++	Port       int    `json:"port"`
++	TLS        bool   `json:"tls,omitempty"`
++}
++
++func (route Route) Validate() error {
++	if strings.TrimSpace(route.Host) == "" {
++		return fmt.Errorf("host is required")
++	}
++	if strings.TrimSpace(route.PathPrefix) == "" {
++		return fmt.Errorf("path_prefix is required")
++	}
++	if !strings.HasPrefix(route.PathPrefix, "/") {
++		return fmt.Errorf("path_prefix must start with /")
++	}
++	if route.Port < 1 || route.Port > 65535 {
++		return fmt.Errorf("port must be between 1 and 65535")
++	}
++	return nil
++}
++
+ type ResourceRequirements struct {
+ 	Requests Resources `json:"requests"`
+ 	Limits   Resources `json:"limits"`

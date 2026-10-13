@@ -1,0 +1,35 @@
+commit 638998e543471c8e43f7091683d527fe7203ea8f
+Date: 2026-07-14T19:05:32+02:00
+Subject: Update Pages actions for Node 24
+
+
+---
+ .github/workflows/pages.yml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/.github/workflows/pages.yml b/.github/workflows/pages.yml
+index 55d91b7..c96f6f9 100644
+--- a/.github/workflows/pages.yml
++++ b/.github/workflows/pages.yml
+@@ -33,7 +33,7 @@ jobs:
+         uses: actions/checkout@v4
+ 
+       - name: Configure Pages
+-        uses: actions/configure-pages@v5
++        uses: actions/configure-pages@v6
+ 
+       - name: Build static docs artifact
+         run: |
+@@ -45,10 +45,10 @@ jobs:
+           touch _site/.nojekyll
+ 
+       - name: Upload Pages artifact
+-        uses: actions/upload-pages-artifact@v3
++        uses: actions/upload-pages-artifact@v5
+         with:
+           path: _site
+ 
+       - name: Deploy to GitHub Pages
+         id: deployment
+-        uses: actions/deploy-pages@v4
++        uses: actions/deploy-pages@v5

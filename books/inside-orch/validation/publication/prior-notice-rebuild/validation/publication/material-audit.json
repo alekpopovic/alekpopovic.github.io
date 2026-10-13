@@ -1,0 +1,1605 @@
+{
+  "status": "passed_for_actual_local_materials",
+  "reviewed_at_utc": "2026-10-13T03:43:06.287968+00:00",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "companion_count": 152,
+  "companions": [
+    {
+      "path": "examples/diagrams/task-lifecycle.png",
+      "bytes": 154443,
+      "sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+      "material_class": "original_source_checked_diagram",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/source-excerpts/ch09/metadata.json",
+      "bytes": 1061,
+      "sha256": "fc97477ee0a5732fe8eae5925b02d7bc8ac5451b73b71395fa4b78995bbd2dce",
+      "material_class": "pinned_source_attribution_metadata",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/ch33/adapter_contract_test.go",
+      "bytes": 3458,
+      "sha256": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/ch34/ADR-durable-composition.md",
+      "bytes": 2269,
+      "sha256": "76c81ebb682191f42a1fc04cc9dabc965adfb99ec52d1b4104f09aae99eff016",
+      "material_class": "original_design_note",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/ch35/preflight_test.go",
+      "bytes": 1858,
+      "sha256": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/ch38/metrics_contract_test.go",
+      "bytes": 1044,
+      "sha256": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/ch40/verify_dossier.py",
+      "bytes": 2698,
+      "sha256": "6d8cb390696c1da0ac3972ce4fbb42156ed80d88125731f7fefb47bcd5399418",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/docker-boundary/main.go",
+      "bytes": 9439,
+      "sha256": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/full-schema/main.go",
+      "bytes": 6498,
+      "sha256": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/lab02/main.go",
+      "bytes": 8596,
+      "sha256": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/rollout/main.go",
+      "bytes": 10067,
+      "sha256": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "examples/teaching-extensions/security/main.go",
+      "bytes": 12671,
+      "sha256": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361",
+      "material_class": "original_or_explicitly_adapted_teaching_code",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "exercises/questions.md",
+      "bytes": 20564,
+      "sha256": "692e63c2e4a363f26c31ec91441c489286ad2a58164f22fc0cadc34b54032d83",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/01-initialization-restart/README.md",
+      "bytes": 9820,
+      "sha256": "25b855d95c42148d9159b3112198b3b00cd0b70531efb6b68c1bbe3f10b45d70",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/01-initialization-restart/book-http.yaml",
+      "bytes": 117,
+      "sha256": "7144fd2129bf5dd26a2b942f8782fa17a7b959122457f8f6c2c2ee900abe3d4b",
+      "material_class": "original_fixture",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/02-scheduler-placement/README.md",
+      "bytes": 10653,
+      "sha256": "895183e9555917140ec16fcbadaa6fb7895859b710a16048ffac8adf5cb9a99f",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/02-scheduler-placement/fixtures/plan.json",
+      "bytes": 10758,
+      "sha256": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740",
+      "material_class": "original_fixture",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/03-reconciler-drift/README.md",
+      "bytes": 9224,
+      "sha256": "066553370074592b6c14d9778a7be69260d39eacdb6ca235ee6f33f42e9e960f",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/03-reconciler-drift/fixtures/cases.json",
+      "bytes": 1002,
+      "sha256": "8c01bf583be742aa24d719f7736cee571788350e83d36b0ceb72abde69aba517",
+      "material_class": "original_fixture",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/04-rollout-rollback/README.md",
+      "bytes": 7975,
+      "sha256": "a77737b827b39fb227637b4ad8293831f578f649a435cd13a556921748268a7a",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/05-security-boundaries/README.md",
+      "bytes": 9816,
+      "sha256": "8d619a045fa83704d12e56319453e07d89aa936580018e1594a4e28ebe324d25",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/06-namespaces-quotas/README.md",
+      "bytes": 8319,
+      "sha256": "917b1666e429ec076b9b5f8f4cceadfab27ceed86d833f3a4865a359366438e7",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/07-gitops-jobs-cron/README.md",
+      "bytes": 8748,
+      "sha256": "3752eed31b6d1b215f21f7d44fe80fcd8634e29b35b7c55b47f981cbcddedadb",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/08-recovery-boundaries/README.md",
+      "bytes": 8809,
+      "sha256": "f3fd9ee847c3488a0cc013e37108790d3ff0a674f51186df9946e91eba62eebd",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "labs/ENVIRONMENT.md",
+      "bytes": 8491,
+      "sha256": "1e00a6b1a39b7b07c3be77231a92da4b59b2678299029444d945ff2b3982c80d",
+      "material_class": "original_lab_and_exercise_guidance",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/appendix-d.md",
+      "bytes": 14983,
+      "sha256": "ac0a85f0112caf36d4b35569d3a62ada32cffc03a885f69b8ab66ec535f837d5",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch01.md",
+      "bytes": 2318,
+      "sha256": "7bbb0e70a9f0aa84d4fcf29552ce511550476ee34e1fcd3974c04455f8019167",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch02.md",
+      "bytes": 2187,
+      "sha256": "d9cabcf2182c9ab1be9e59c16ba124b15da28b2751b410b4d5117cc5f5443502",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch03.md",
+      "bytes": 2371,
+      "sha256": "c6748fcef3e669801cdeca9c2cefcc30d86ca99e83f6bbe2aadf114533d35d9c",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch04.md",
+      "bytes": 2409,
+      "sha256": "b246b143e40dd47369a70a913fe2e7c98763677bbd39d5bc0d51e39fb1568c38",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch05.md",
+      "bytes": 2309,
+      "sha256": "863720e99500bdc250ce2a1b26befe4668a46b70aeb0eebdccdfe7826a023c9a",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch06.md",
+      "bytes": 2399,
+      "sha256": "5fee2393dcb98714b004ac6341b66838bb87d77e8ee6aa1d88a422d78936d8f1",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch07.md",
+      "bytes": 2070,
+      "sha256": "3b6922262ec8d4d139e7816742d3ec61f2ac0a405b10e9a0848f8c10be9a65ac",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch08.md",
+      "bytes": 2262,
+      "sha256": "9b5e2b6cfed139ea1ed9b8e5c52775f1f46ea3e43199de603492cad2a77f28a8",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch09.md",
+      "bytes": 3043,
+      "sha256": "e4c3401a4c6c27c2515df8ee41576cb37653ff14008e7f2e70fd9178434f8e6c",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch10.md",
+      "bytes": 2854,
+      "sha256": "95122f8bc6cb1c203d08b2121d58367b7a9635b3e587ae225cdea6878075100c",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch11.md",
+      "bytes": 2537,
+      "sha256": "76c0913a0e084af393848e310b3ee59fdc38d1e676f7e28b2706fb5c16af38d3",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch12.md",
+      "bytes": 2571,
+      "sha256": "56b2fabdd3c804da4d3f1a8b955dd9299408732c5984cc9250067b2c11d3e0c2",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch13.md",
+      "bytes": 2632,
+      "sha256": "b520d820f0fe33c01b03a8a088ee5adf3b402115b501906d50996a420c742a5d",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch14.md",
+      "bytes": 2428,
+      "sha256": "2f696b944bd77a416e109522d77b4e8d307c3fd092909c95599a1be49dd055f2",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch15.md",
+      "bytes": 2535,
+      "sha256": "e050b4657456bf2f607365b9c3506af8fe2363395543532e2976ba42c9457685",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch16.md",
+      "bytes": 2490,
+      "sha256": "2d6b88593d07354a6a6f249b0aaf33d1b10582666d1c552cd06c05ddcd9bdcae",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch17.md",
+      "bytes": 1775,
+      "sha256": "b4add5a7bc435be8e889a14c87a0577b25e949712cdeb260c1de0f83e4443845",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch18.md",
+      "bytes": 1668,
+      "sha256": "86290e17a033fcc709b05fe305b5e6dd255ee2b65518acd4c6089909665526a4",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch19.md",
+      "bytes": 1608,
+      "sha256": "78acaf96bd9daeed912509af7675dbad0c4db7de8dfff96589e81c2843aa4a7f",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch20.md",
+      "bytes": 1576,
+      "sha256": "7ecc54fe7518741f203420ab6a322e10d9cd7b21cd83449f06c637851a11082b",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch21.md",
+      "bytes": 1592,
+      "sha256": "7d5d2ff6433872ff3865904162a209dc21b79d62fada7229471fccbc6c34fe36",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch22.md",
+      "bytes": 1555,
+      "sha256": "310da6dd6bc659629b421fdee3565e644800d6ddadcbc54774b7b00917a38674",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch23.md",
+      "bytes": 1502,
+      "sha256": "9d89f4362ec38b7c9aa5de96ddeb42f745591fa9f9fcb4fd94ffdd91df28a03e",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch24.md",
+      "bytes": 1629,
+      "sha256": "27347a0d00a077438d6c19928f7ef84fcca4ec1c6059d427df2a596c97cab2ea",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch25.md",
+      "bytes": 2291,
+      "sha256": "a88d6b16dd377c88afdcdffd760d3d224b199ede0d151fb5811da9ee680462b9",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch26.md",
+      "bytes": 2229,
+      "sha256": "92d16378694540f21d3a70618b2af9f9ef6cc197b95a28c57a9e7438ef750266",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch27.md",
+      "bytes": 2196,
+      "sha256": "c4f83b83f719872d02942eab9bae809e603200c719cb58eaaab2491b4e3bc029",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch28.md",
+      "bytes": 2333,
+      "sha256": "9f5ef7a15232de197399d574a3d887d103799b70ea65100470e690cff299328b",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch29.md",
+      "bytes": 2245,
+      "sha256": "23a5e437c855674bbb89bd3c2a6410f1c8a245845cf47cba786c388e931339cd",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch30.md",
+      "bytes": 2252,
+      "sha256": "ede55d529ecf7f6f9b82e42e66f6480c9388d889a767c5767db0013bab323fd2",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch31.md",
+      "bytes": 2142,
+      "sha256": "4bf4f11f562895a716f7f5163470b32a8bb39965cf5de45793643c575441f962",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch32.md",
+      "bytes": 2310,
+      "sha256": "db9cac75a455e185666074cc29d5c9f5cd9219b3c96e087b803ab13f0038b658",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch33.md",
+      "bytes": 2561,
+      "sha256": "54a262e2de95c59930a23f18b7061ed20cf6a921db05cb9d2dd2b6a5e50384c2",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch34.md",
+      "bytes": 2474,
+      "sha256": "979bf1195f2fdd41ff245c42bec9cfc134447d74fb2ccebce6d04050a432d520",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch35.md",
+      "bytes": 2390,
+      "sha256": "14df32640f1b1884858d5205f0f13736db6ce083dd3eda1b757bc9d88e973079",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch36.md",
+      "bytes": 2462,
+      "sha256": "db65f04914e1fb9160702d880809427fe08fb45e367235bb2c41b3c367b2e5e3",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch37.md",
+      "bytes": 2443,
+      "sha256": "939612628fd5afb1ee78ac5e2ac3ff60e5b75424eb2573a32885143e18d32ecc",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch38.md",
+      "bytes": 2504,
+      "sha256": "367bf0a4af850366457b0159bc03720e4e9ad9a7dc53558a0fa5df94cc5ece9d",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch39.md",
+      "bytes": 2593,
+      "sha256": "de438215e3bd562d2c3e751452f906c9dd0fb2797eb996eb042d469a04278a88",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "manuscript/solutions/ch40.md",
+      "bytes": 2801,
+      "sha256": "407ab7a7dc62845867f88b2314979a8b340df533ae85aa39ff11174efb8f8e31",
+      "material_class": "original_worked_answers",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "scripts/observe_database_recovery.py",
+      "bytes": 4606,
+      "sha256": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+      "material_class": "original_book_execution_helper",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "tests/test_recovery_targets.py",
+      "bytes": 838,
+      "sha256": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d",
+      "material_class": "original_book_execution_helper",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/appendices.json",
+      "bytes": 19830,
+      "sha256": "67f63b018e91a604d12cb3245dd7353f43062a1e75697f11d77aebbaf76ad7b4",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch09.json",
+      "bytes": 3944,
+      "sha256": "82988a78dee1b613536679b769752ea75bfe03680e162f60debb6950644fc665",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch10.json",
+      "bytes": 3301,
+      "sha256": "46881465eb9d3b2af8e5586891b745a74d5c044c320b1831ab64908916671338",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch11.json",
+      "bytes": 3225,
+      "sha256": "4507d31f04215130307c87c0407813dfc79a2ca6211ffadfe0a036b6246ce21a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch12.json",
+      "bytes": 3233,
+      "sha256": "fd365c86d02970c4761bcb5965bf76082bb54c7835a1e8fb0dd099c2c94675f9",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch13.json",
+      "bytes": 2510,
+      "sha256": "719a594424bfa43af62f45a5c64ead84f083f78d8cf0e7802112fb1a052178d9",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch14.json",
+      "bytes": 3032,
+      "sha256": "26e3ade83113e0eaab3368d8cc2bf4b4e2029e3b3e65301d17540e33b6ace472",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch15.json",
+      "bytes": 4118,
+      "sha256": "a2d50697e041f9929b4371b36da55dfec8fdb2bbcbf2f45d8afdc6ac7acbc90a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch16.json",
+      "bytes": 2816,
+      "sha256": "6e09eca59269159a06a19037e532801d1d14f1fd3f79a85e5733b179a0934723",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch25.json",
+      "bytes": 3166,
+      "sha256": "3bcea5d666c1154a8cd7a846a3d5878affde80b8096c3c410849192dbc955f8d",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch26.json",
+      "bytes": 2386,
+      "sha256": "17c4819f1d226b9813cb3b2e2f8f44b1784b28a8e028ce24709c94b5503923e6",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch27.json",
+      "bytes": 2857,
+      "sha256": "a52148ee1b5f7d177a6a0282f90e7072dad114011d78d16720aae54138ab2677",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch28.json",
+      "bytes": 3213,
+      "sha256": "5fbd890b0fc7676838c2d820f7cda417bbcbb5f93eadb2c9d13846240bb1569e",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch29.json",
+      "bytes": 2832,
+      "sha256": "abbb33f72afde808b71145f736181801f1f5c6b6e50dbdc47ee7464798b05c85",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch30.json",
+      "bytes": 3170,
+      "sha256": "bcbe824264ee817a692cda805fb6851f95a63c79991b09d7d5ab6bd3918bff28",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch31.json",
+      "bytes": 2926,
+      "sha256": "c4545649f114ec8c00d719a4565fbdc52cc983bf8f5a013b5f4e9bd4950fecfe",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch32.json",
+      "bytes": 4259,
+      "sha256": "e37c9d67fb7d162906c4db93aa244c0124f3e92197b68fc080fa66d9489e3620",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch33.json",
+      "bytes": 3808,
+      "sha256": "e3c4c4278b68ab8ca5903ad29f8d98c9f4a8d6ecc43fd76346d81670431a399e",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch34.json",
+      "bytes": 5014,
+      "sha256": "22fda59330f19a881c39b30f772da4bdc38f46ba4e1bb4ad2da827bcfa1316dc",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch35.json",
+      "bytes": 6217,
+      "sha256": "b220154cdae8098bbf2678b03d047c3ad322963eb45f3fd0b1cdc8ea03e94ee3",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch36.json",
+      "bytes": 4357,
+      "sha256": "58dc38382e6e0a89594eaa040d33e087f82387ce5b1cb50285175564123905ad",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch37.json",
+      "bytes": 5417,
+      "sha256": "f46e543a795b95b70a6a8be06fc4eb3d4e5bd775c1cabc6dba9fbfe6f3f39764",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch38.json",
+      "bytes": 4990,
+      "sha256": "c0c0711a565b04d6320b6b6c45c9c4e7435b2cae8d901e818de18497e2117051",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch39.json",
+      "bytes": 4461,
+      "sha256": "3f67b9b70c8815da2a7f64f6dc265635e5dfea3fc142eb0a52e4f7f424d7e37d",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/evidence/ch40.json",
+      "bytes": 4985,
+      "sha256": "c833d804732c751aca7f735185f36b2329b9078e06a8a3567a99d766d778639a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/exercises/mutation-runs.json",
+      "bytes": 11148,
+      "sha256": "fe04fb74f42c58b2867cc5da99d3909e163406b5e34e1c5579d900715e71fc33",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/docker-complete-flow-cleanup.json",
+      "bytes": 1393,
+      "sha256": "0a453580eb89c717485e595bec5a75a8248d14e4f401e0550a8d481c30bc43f6",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/docker-complete-flow-log-guard.json",
+      "bytes": 920,
+      "sha256": "28a3b14f7a7837b9d80df2e96a8a6386db5628390a9e055f97f8f3f6eea2ae76",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/docker-complete-flow-log-guard.stdout.txt",
+      "bytes": 8385,
+      "sha256": "4ecfc224f795b67942ea7bed175950e2c08fa85a60600a535c826a04a92d1b3e",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/fresh-server-restart-authenticated.json",
+      "bytes": 4424,
+      "sha256": "ad35f2d4b1d3ec597539d8144f0be70d26f5edaf0e9d2995a736320003d2d45c",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/full-schema-recovery-corrected.json",
+      "bytes": 9477,
+      "sha256": "7c22fe9874c7ab87b285c0dc49147aea7243c3c513c7e90886d30befda2cb86e",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/orch-baseline-tests.json",
+      "bytes": 946,
+      "sha256": "7b3832254d3ec01035035b99b171cc57e5080f1948c78d1423546ff3f92a0f9b",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/orch-build-isolated-root.json",
+      "bytes": 953,
+      "sha256": "81a2ce1b02a25ee2555c67fe07a6d5639b25ab4005c2fc3afe57bccad4c2ec98",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/orch-race-tests.json",
+      "bytes": 948,
+      "sha256": "cd2f6848150c7d5cd59d741f50fe00b56318fc4a3611be9497b21fee33495d42",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/intake/postgres-store-owned.json",
+      "bytes": 1056,
+      "sha256": "33bf72fcc0ea5d476075eec646b173da81ef40dbbc33bf30b1aaa56dab6a87c7",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/03-check.json",
+      "bytes": 79691,
+      "sha256": "58af4a3bbcd54a7deb2b4c3c73214101de94901ba64951b3209f76c05424bc65",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/04-check.json",
+      "bytes": 3464,
+      "sha256": "134e282b71c9c7aaa9053057c375ad6bcd8bc79381c271a2ed5c04861f697950",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/04-timeline.csv",
+      "bytes": 938,
+      "sha256": "7be3fcd09e140a860331f1f4bcda7451c43a48d7de6e5a105bd4b3a9a8708eba",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/05-check.json",
+      "bytes": 8112,
+      "sha256": "a70328a87ffddce0d9c0a9675f9419313041e4592da5ad1e990b43f4bc4df4e9",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch06/combined-restart.json",
+      "bytes": 5790,
+      "sha256": "34442691a7b87bf00b2e7ade48d1cfd20446bcad57d2330d429ae25df5cef075",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch10/hand-plan.json",
+      "bytes": 800,
+      "sha256": "f22af2b3e18a0745fe1c485c92ff2615964d3104d3783fd6b27c6bc02a05b960",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch11/focused-tests.json",
+      "bytes": 866,
+      "sha256": "3e5dd647c3e6944e04227e4d619f426c90e96c9f21b08b27818eea4407877618",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch12/focused-tests.json",
+      "bytes": 1069,
+      "sha256": "2070ecfb4531ed80b042d604aac8ea4b58a50f0f1f0b28b12e11db7d38b77b5e",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch13/focused-tests.json",
+      "bytes": 1047,
+      "sha256": "2c47d86c23267cf1ae78af45df44f2754d1cb1516dcf78a87c4e86c65a964ed4",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch14/focused-tests-loopback.json",
+      "bytes": 1013,
+      "sha256": "e23b2367603552a493e97c8a79298ceedf348dc0090ba02dcd4dfceeb3b90855",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch14/focused-tests.json",
+      "bytes": 986,
+      "sha256": "a02c61cd357bde31bb52947dcf2646f5dd22addae582f25fa04d75f673b4dc07",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch15/atlas-events-corrected.json",
+      "bytes": 840,
+      "sha256": "74a29ef1307b2b7e812551fc7e2d3be58f18812470fb3d4ed60ffa6a8ce634c3",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch15/focused-tests.json",
+      "bytes": 901,
+      "sha256": "7c4d561666c2c3161a13438e23d2e7aae05553b48f6ae46a20cbf64c1ebf99dc",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch16/focused-tests.json",
+      "bytes": 964,
+      "sha256": "75980ae84b34fc8ab40afb79d22316f42fb218f7c779483b765e9df266e95e61",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch25/focused-tests.json",
+      "bytes": 960,
+      "sha256": "65f4525dc9a89275d54e0856da576f014dfcf7e6327969a15f3ef04e2f197def",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch26/focused-tests.json",
+      "bytes": 941,
+      "sha256": "466e224b90d7120ad219bf040e359c060b6d2400aba83b4d555b54eb3da7eb16",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch27/focused-tests.json",
+      "bytes": 982,
+      "sha256": "78dba1979277605940b9dcbfc409394d064ec9841a851a1cef314821f12c23dd",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch28/focused-tests.json",
+      "bytes": 1035,
+      "sha256": "1e56ae7eb58164c73319eda16ba5f98cbae370dd41d53a24d57d7a6a776c8c6a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch29/teaching-fixture.json",
+      "bytes": 674,
+      "sha256": "fcaeb94b9b5125104d0c3827f540b52aba325db12c0b4d6347a126788678d8f6",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch30/focused-tests.json",
+      "bytes": 1016,
+      "sha256": "306789250bce246f124104f2027e0b97727e97120b8fc863e93beeaff6582a3b",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch30/teaching-fixture.json",
+      "bytes": 807,
+      "sha256": "ca0190c837d8dbaa82bc49e288c999572af5caaf406c7b035c7712a6bc07b03c",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch31/focused-tests.json",
+      "bytes": 978,
+      "sha256": "116bd803eac9d285fedeb6f18798fc65ae30bc06a60cc638af357512c56e9a78",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch31/teaching-fixture.json",
+      "bytes": 805,
+      "sha256": "d9378dac5608e7cfe3375902d28e7f1c919fca61faf51d096240a5fff9044f88",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch32/focused-tests.json",
+      "bytes": 939,
+      "sha256": "56d8fc1a1fbaa72e7c1d7e46d0bdca69669a21abe22cee432ca8b8a39f709c07",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch33/adapter-contract.json",
+      "bytes": 824,
+      "sha256": "a83a4a1777cd5a3587ed27996c98847453e2213a955c0451e0ab05185515c80a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch34/leadership-tests.json",
+      "bytes": 899,
+      "sha256": "d730963e594c9fb83cb508fef304cc85e7e37de9eab6fe265200b75d7af2b6a2",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch35/controlled-preflight-corrected.json",
+      "bytes": 866,
+      "sha256": "7b08c9b3f68187f2331e67c20a5d4a4670825397ed8a4924da82b02a0014bb16",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch35/operations-tests.json",
+      "bytes": 1194,
+      "sha256": "5b04320dd4a7d3737c703bda1bdfab5eda123dc613ab25003f20f98ae363487d",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch36/bounded-port-fuzz.json",
+      "bytes": 977,
+      "sha256": "d327818ff48f089693daaccf8a0c4d23e5daf288bb607baefa1e9b90246a182c",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch36/seeded-properties.json",
+      "bytes": 1193,
+      "sha256": "50a74510d57c646dad2db3e23a8d0946e60ed4952e77246464be278c4eea97ea",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch37/fault-tests.json",
+      "bytes": 1100,
+      "sha256": "2faef0c686b11be980f183b2d74de9481e11921369e1c91450252e76dab25b24",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch38/failed-pull-emission.json",
+      "bytes": 837,
+      "sha256": "209be9bb58c621974a64288c591bb2b788950d6f37aad6c832641fba17b6817a",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch38/metrics-tests.json",
+      "bytes": 945,
+      "sha256": "2666a00e3bd521d43c2d471da40f2681b37c0a80b321e2c173871bca0c246aa8",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch39/bounded-benchmarks.json",
+      "bytes": 1110,
+      "sha256": "ec2356a2e562e5ce0a6b95a479b284cb0d6e95e5fbde01492fd249fa8a647ae4",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch39/bounded-fake-load.json",
+      "bytes": 808,
+      "sha256": "7aa9c25ea95a575f20ce6af7033ebc4f6b2016aaf5a55b493b3593d319bc4ded",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch39/scheduler-profile-absolute.json",
+      "bytes": 1139,
+      "sha256": "8ba7a25fc86b56b74edd87eb8835d9322f668c04c526b0ff76ed9fed5dbd68c3",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch39/scheduler-summary.json",
+      "bytes": 1688,
+      "sha256": "e083d9cfb460f8695dbc8385165bed145b8e87579291792ff6d04f3c80c338b2",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch39/thousand-service-scale.json",
+      "bytes": 987,
+      "sha256": "d366c928455749ae536377690273e6c166ba8ae2fe002c62088a110cf5d49fb2",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/ch40/dossier-integrity-corrected.json",
+      "bytes": 698,
+      "sha256": "031e9b901fa4b76954ca847bb824f69cbf6e939765580ff368e83d3b338fa3d5",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab02-concurrent-claims.json",
+      "bytes": 1015,
+      "sha256": "aefabbc1054793621884b951493d39a1fef6a2448118584ca33d29a519b0490f",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab02-model-and-permutations.json",
+      "bytes": 939,
+      "sha256": "fd3583028a96de31678502374e166fb0d9783bfb1fa9cbb6618978d9c2ed43f4",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab04-rollout-observed.json",
+      "bytes": 908,
+      "sha256": "94b8b0f2fc468d0134fba0945ce62b1782cdb0a7e366da6bc0227435bfe6cbe9",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab04-rollout-observed.stdout.txt",
+      "bytes": 34828,
+      "sha256": "0fe9deb20d6e35b1a139877162e394174a16a31da63f147fcf16bc5d56243543",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab05-security-local-probes.json",
+      "bytes": 930,
+      "sha256": "cf3e3920a814189170f32087249d22594fdb54314128cf3280d6692affe0c8d4",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab05-security-local-probes.stdout.txt",
+      "bytes": 13391,
+      "sha256": "aed261c15eceda60945729949f437b4eba9caa4eb82c7d2382dfd831964454d1",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab08-fixed-seed-fake-load.json",
+      "bytes": 825,
+      "sha256": "d9fc3eafbc7789accda0c0c924d9f1562204771dbc308036cb2e262b5fa97447",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/labs/lab08-fixed-seed-fake-load.stdout.txt",
+      "bytes": 209,
+      "sha256": "8a7a658dd6151e5f9246aa47b1998bf87db8d639a4cda8c462de499c3f7964ef",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "bytes": 8851,
+      "sha256": "bac2e64984036447b6446706996c941216d310b152fa5243d72f614e1a54e720",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    },
+    {
+      "path": "validation/reviews/ch17-24-source-tests.json",
+      "bytes": 1067,
+      "sha256": "df6dc04ada213deb77e26d94c9e15702dd1bbb5cebeab282ccb25e711a441d75",
+      "material_class": "bounded_execution_or_claim_record",
+      "origin": "Inside orch canonical book source; pinned Orch API/source associations retained where applicable.",
+      "rights": "Original book material retains the owner’s all-rights-reserved decision. Exact upstream snippets or adapted behavior references preserve their source attribution; no application or dependency relicense.",
+      "published_by": "Explicit source-reference traversal; not an implicit snapshot or module copy."
+    }
+  ],
+  "material_class_counts": {
+    "original_source_checked_diagram": 1,
+    "pinned_source_attribution_metadata": 1,
+    "original_or_explicitly_adapted_teaching_code": 9,
+    "original_design_note": 1,
+    "original_lab_and_exercise_guidance": 10,
+    "original_fixture": 3,
+    "original_worked_answers": 41,
+    "original_book_execution_helper": 2,
+    "bounded_execution_or_claim_record": 84
+  },
+  "fonts": [
+    {
+      "path": "publication/fonts/dm-sans.ttf",
+      "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d",
+      "bytes": 240164,
+      "notice_path": "publication/fonts/dm-sans-OFL.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/passion-one-bold.ttf",
+      "sha256": "3a7249909b2e56e831f8a357a4ee549e9c5945cd003f0e5e3bd8791a76d98b7e",
+      "bytes": 24716,
+      "notice_path": "publication/fonts/passion-one-OFL.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/dejavu-sans-mono.ttf",
+      "sha256": "a54dca07c76d6289e717e75e0a58c0128f6d7269ef3faf76417c9d7d3bba37ab",
+      "bytes": 343140,
+      "notice_path": "publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "scope": "Bundled typesetting dependency; retains original font rights and conditions."
+    },
+    {
+      "path": "publication/fonts/noto-color-emoji.ttf",
+      "sha256": "9fd0a3d0ce84d77e3185dfbae77bd1abf3926aa49a032e354d076c4f17151f10",
+      "bytes": 11020136,
+      "notice_path": "publication/fonts/noto-color-emoji-OFL.txt",
+      "scope": "Bundled installed font, retaining its original font license; used only for exact source symbols and code typography."
+    },
+    {
+      "path": "publication/fonts/dejavu-sans-mono-bold.ttf",
+      "sha256": "2d67eed9b325ee2e69f906ce4f3f6264d5105230a13352c8494daad4f17b12c8",
+      "bytes": 334268,
+      "notice_path": "publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "scope": "Bundled installed font, retaining its original font license; used only for exact source symbols and code typography."
+    }
+  ],
+  "verified_notices": [
+    {
+      "path": "publication/fonts/dm-sans-OFL.txt",
+      "bytes": 4482,
+      "sha256": "9af36190332437f5ecd09974de43c1f7c77a310a996cdd8ceb25628b458840e1",
+      "license": "SIL Open Font License 1.1",
+      "verified_against": "Actual retained notice text, not go.sum or inferred dependency metadata."
+    },
+    {
+      "path": "publication/fonts/passion-one-OFL.txt",
+      "bytes": 4390,
+      "sha256": "36c285c5472c625901d4a13da7e31c5ea6126678d31d56cf95572c49f27c8950",
+      "license": "SIL Open Font License 1.1",
+      "verified_against": "Actual retained notice text, not go.sum or inferred dependency metadata."
+    },
+    {
+      "path": "publication/fonts/dejavu-sans-mono-LICENSE.txt",
+      "bytes": 2734,
+      "sha256": "e180b3d65bf650dffffd71dd21b6180767b469a18dd87e1d8552be69bb9ecdf0",
+      "license": "Retained Bitstream Vera license; DejaVu changes public domain",
+      "verified_against": "Actual retained notice text, not go.sum or inferred dependency metadata."
+    },
+    {
+      "path": "publication/fonts/noto-color-emoji-OFL.txt",
+      "bytes": 4478,
+      "sha256": "7a93e97e1c66391963c255ed6c7759fd73666f06d969051d21e8c6fc1837d27e",
+      "license": "SIL Open Font License 1.1",
+      "verified_against": "Actual retained notice text, not go.sum or inferred dependency metadata."
+    }
+  ],
+  "cover_identity": {
+    "pinned_path": "docs/assets/orch-mark.svg",
+    "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "mark_sha256": "f9983a164d9bcea651b6293aa6393d9e53eab91767e9f41ae93499f35ea2b37b",
+    "unchanged_inner_svg_bytes_present": true,
+    "cover_svg_sha256": "bb8aeda769bd667094c1ddcf879b5f5605358ed4865052690406d8fa241c9e12",
+    "cover_png_sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+    "composition": "Original outlined book typography/orbit composition around the unchanged source mark."
+  },
+  "pdf_embedded_fonts": {
+    "actual_command": "validation/publication/material-pdf-fonts-command.json",
+    "actual_stdout": "validation/publication/material-pdf-fonts-command.stdout.txt",
+    "font_subsets": [
+      {
+        "postscript_subset_name": "GTNDZE+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "TDHKJJ+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "HNXTXP+BookMono",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "RMPVAZ+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "YEPOAG+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "ZOMDCN+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "MQFPRF+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "AHSBZU+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "RECBYJ+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "EOYCZY+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "XOIOXV+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "YELGHU+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "JZUONE+BookEmoji",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "PRLYOR+DM",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "IUSUTG+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "ZJUGKN+BookMono-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      },
+      {
+        "postscript_subset_name": "AAJZVY+DM-Bold",
+        "embedded": true,
+        "subset": true,
+        "unicode_map": true
+      }
+    ],
+    "source_font_notices_checked": true
+  },
+  "epub_media": [
+    {
+      "path": "EPUB/media/cover.png",
+      "bytes": 309024,
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc"
+    },
+    {
+      "path": "EPUB/media/examples/diagrams/task-lifecycle.png",
+      "bytes": 154443,
+      "sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4"
+    }
+  ],
+  "epub_embedded_font_software": false,
+  "distribution_scan": {
+    "scoped_roots": [
+      "assets/books/inside-orch",
+      "books/inside-orch/dist"
+    ],
+    "scanned_file_count": 116,
+    "vendored_modules_or_application_binaries": [],
+    "scope": "File/member paths and executable magic checked; fonts/PDF/images/EPUB are intended non-application binary assets. No claim that omitted dependency code has been audited."
+  },
+  "source_license_files_observed": [],
+  "rights": "Original manuscript All rights reserved by explicit owner selection. No new public license is applied to application, excerpts, contributors or dependencies.",
+  "notice_path": "publication/NOTICE.md",
+  "notice_sha256": "305c8fbbe0e0c628798fb7ffe44c5aaae326d30cd6c903eb905e3a2a5cd2c0e2",
+  "limitations": [
+    "Archives created after this audit must reuse this exact NOTICE and explicitly bounded file selection; packaging agent validates archive members separately.",
+    "Source availability and module hashes do not constitute a dependency permission grant. No transitive vendored license audit is claimed because no modules or application executables are included.",
+    "The completed audit records the local candidate, not a live deployment or legal certification."
+  ]
+}

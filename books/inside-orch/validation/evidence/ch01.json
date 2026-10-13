@@ -1,0 +1,120 @@
+{
+  "chapter": "01",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch01.state-owner",
+      "statement": "Ordinary server startup constructs MemoryService as live state owner.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 142,
+      "line_end": 148,
+      "associated_commits": [
+        "64a0725387b8130be988948b81774aea7051c718"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.memory-maps",
+      "statement": "NewMemoryService allocates process-local maps for services/tasks and other objects.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 279,
+      "line_end": 311,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.optional-schema",
+      "statement": "Schema checking opens migration runner but does not select durable service.",
+      "classification": "partial integration",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 107,
+      "line_end": 119,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.active-loops",
+      "statement": "Startup constructs GitOps,cron,scheduler,rollout and node monitor against same service.",
+      "classification": "runtime-integrated",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 165,
+      "line_end": 230,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.immediate-placement",
+      "statement": "Memory service creates assigned service tasks by ready-node round robin, separate from Plan.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2249,
+      "line_end": 2316,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.runtime-bridge",
+      "statement": "Agent passes task identity and supported fields to Docker container create.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/agent/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 253,
+      "line_end": 265,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    },
+    {
+      "claim_id": "ch01.readiness-boundary",
+      "statement": "Ready endpoint returns fixed success and does not establish state recovery.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 436,
+      "line_end": 442,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "First lab is read-only source mapping; process/runtime observations are separate gates."
+      ]
+    }
+  ]
+}

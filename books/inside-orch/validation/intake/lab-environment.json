@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-13T00:31:27.258520+00:00",
+  "scope": "read-only capability probes, not application test results",
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "capabilities": {
+    "go": {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "version"
+      ],
+      "exit_code": 0,
+      "output": "go version go1.25.0 linux/amd64"
+    },
+    "docker_cli": {
+      "command": [
+        "docker",
+        "--version"
+      ],
+      "exit_code": 0,
+      "output": "Docker version 29.8.2, build 7fc2dff"
+    },
+    "compose": {
+      "command": [
+        "docker",
+        "compose",
+        "version"
+      ],
+      "exit_code": 0,
+      "output": "Docker Compose version v5.6.0"
+    },
+    "psql": {
+      "command": [
+        "psql",
+        "--version"
+      ],
+      "exit_code": null,
+      "error": "[Errno 2] No such file or directory: 'psql'"
+    },
+    "pandoc": {
+      "command": [
+        "pandoc",
+        "--version"
+      ],
+      "exit_code": null,
+      "error": "[Errno 2] No such file or directory: 'pandoc'"
+    },
+    "java": {
+      "command": [
+        "java",
+        "-version"
+      ],
+      "exit_code": 0,
+      "output": "openjdk version \"25.0.4.1\" 2026-08-18\nOpenJDK Runtime Environment (build 25.0.4.1+1-1-26.04.4-Ubuntu)\nOpenJDK 64-Bit Server VM (build 25.0.4.1+1-1-26.04.4-Ubuntu, mixed mode, sharing)"
+    },
+    "docker_daemon": {
+      "status": "not_probed",
+      "reason": "Pass --probe-docker to authorize a read-only daemon request."
+    }
+  },
+  "source_only_ready": true,
+  "database_experiments": {
+    "status": "not_run",
+    "reason": "Require independently provisioned throwaway container and scripts/run_database_tests.py guard."
+  },
+  "missing_tools": [
+    "psql",
+    "pandoc"
+  ]
+}

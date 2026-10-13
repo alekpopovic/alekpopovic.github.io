@@ -1,0 +1,122 @@
+{
+  "reviewed_paths": [
+    "examples/manifest.json",
+    "validation/examples/manifest.json",
+    "validation/excerpts/index.json",
+    "examples/README.md"
+  ],
+  "findings": [],
+  "checks": [
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "books/inside-orch/scripts/build_examples_manifest.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:09:24.040243+00:00",
+      "finished_at_utc": "2026-10-13T02:09:24.090926+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reviews/075-manifest-command.stdout.txt",
+      "record": "validation/reviews/075-manifest-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/compile_registered_examples.py",
+        "--source-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go-root",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:08:40.342948+00:00",
+      "finished_at_utc": "2026-10-13T02:08:42.461971+00:00",
+      "exit_code": 0,
+      "log_path": "validation/examples/075-current-compilation.stdout.txt",
+      "record": "validation/examples/075-current-compilation.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-v",
+        "./.book-labs/review-interfaces"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:02:19.428728+00:00",
+      "finished_at_utc": "2026-10-13T02:02:19.864479+00:00",
+      "exit_code": 0,
+      "log_path": "validation/examples/published-cron-manifest.stdout.txt",
+      "record": "validation/examples/published-cron-manifest.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "books/inside-orch/scripts/check_example_utilities.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:06:06.747804+00:00",
+      "finished_at_utc": "2026-10-13T02:06:07.190247+00:00",
+      "exit_code": 0,
+      "log_path": "validation/examples/075-utilities.stdout.txt",
+      "record": "validation/examples/075-utilities.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "python3",
+        "books/inside-orch/examples/teaching-extensions/ch39/summarize_benchmark.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:04:00.571726+00:00",
+      "finished_at_utc": "2026-10-13T02:04:00.601514+00:00",
+      "exit_code": 0,
+      "log_path": "validation/examples/075-benchmark-summary.stdout.txt",
+      "record": "validation/examples/075-benchmark-summary.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "counts": {
+    "registered_entries": 29,
+    "executed_original_targets": 28,
+    "design_only": 1,
+    "canonical_program_fixture_files": 35,
+    "fenced_blocks": 137
+  },
+  "acceptance": "All original executable additions have actual semantic execution records; current canonical Go files additionally compile in fresh overlays, except privateLab03 whose fresh076actualcompile+run hashes are retained. All35canonicalGo/Python/YAMLadditionfiles registered. Exactfragments use containing package context; optionalprocedures explicitlyexpected-only.",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:11:19.873631+00:00",
+  "reviewer_scope": "Mechanical all-corpus review plus independent semantic17\u201324/AppendixD slice. source_foundation authored01\u201308/33\u201340; own-source checks are self-review, with independent editorial/lab review recorded separately. Source remains immutable; no push/deploy.",
+  "overall_status": "passed",
+  "claim_record_policy": "Byte/source inspection does not upgrade behavior claims to executed. Existing executed claim joins retained only for matching actual records.",
+  "independent_slice": "validation/reviews/ch17-24-appendix-d-independent.json",
+  "limitations": [
+    "Book/source fidelity acceptance, not certification of applicationproductionreadiness.",
+    "FullOpenAPIsemanticconformance, livePrometheus/Grafanaevaluation and production-shapedcapacity remain outside measuredscope.",
+    "Optional readerCompose track is not an observed authorrun; guardedrealDocker and ownedPostgreSQLtracks have their own exact records."
+  ]
+}

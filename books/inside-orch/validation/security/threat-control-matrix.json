@@ -1,0 +1,299 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "rows": [
+    {
+      "id": "SEC-01",
+      "actor": "Unauthenticated network actor",
+      "surface": "Public API :8080",
+      "active_control": "Nonempty JWT enables protected-route bearer/RBAC checks; healthz/readyz/metrics remain exempt. Empty JWT disables user enforcement.",
+      "source": {
+        "path": "internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 1259,
+        "line_end": 1320,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1259-L1320"
+      },
+      "coverage_boundary": "Default bind/exposure and signing-secret configuration belong to operator; green probes do not authenticate writes.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/labs/05-check.json"
+    },
+    {
+      "id": "SEC-02",
+      "actor": "Viewer",
+      "surface": "Scoped service/task/log/secret metadata reads",
+      "active_control": "requiredRole permits selected GETs; metadata omits plaintext; audit listing requires admin.",
+      "source": {
+        "path": "internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 1310,
+        "line_end": 1355,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1310-L1355"
+      },
+      "coverage_boundary": "Workload stdout can contain secrets; readable logs are not universally sanitized.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/labs/05-check.json"
+    },
+    {
+      "id": "SEC-03",
+      "actor": "Operator / authenticated workload author",
+      "surface": "Service create/update, scale and rollout",
+      "active_control": "Ordinary mutations enter built-in admission/reference/quota paths; jobs/newer routes can use admin fallback.",
+      "source": {
+        "path": "internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 1356,
+        "line_end": 1385,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1356-L1385"
+      },
+      "coverage_boundary": "Do not infer all workload types share ServiceSpec admission or resource propagation.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-04",
+      "actor": "Namespace administrator",
+      "surface": "Explicit selected namespace and object IDs",
+      "active_control": "RoleForNamespace and Matches establish logical context; namespace management additionally requires a valid global role.",
+      "source": {
+        "path": "internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 1283,
+        "line_end": 1302,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1283-L1302"
+      },
+      "coverage_boundary": "Namespace admin is an admin role scoped in JWT, not a new independent global role or network boundary.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-05",
+      "actor": "Compromised agent",
+      "surface": "Assigned task polling/reporting",
+      "active_control": "Opaque32-byte-issued bearer token validated against node-bound hashed record, expiry/revocation and task ownership.",
+      "source": {
+        "path": "internal/auth/agent.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 45,
+        "line_end": 77,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go#L45-L77"
+      },
+      "coverage_boundary": "Authorized execution includes decrypted secrets; daemon authority makes host compromise consequential.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/labs/05-check.json"
+    },
+    {
+      "id": "SEC-06",
+      "actor": "Enrollment authority holder",
+      "surface": "Bootstrap registration and re-enrollment",
+      "active_control": "Bootstrap enrollment is separate from15-minute node bearer credentials; new issuance clears revoked record.",
+      "source": {
+        "path": "internal/controlplane/controlplane.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 715,
+        "line_end": 738,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L715-L738"
+      },
+      "coverage_boundary": "Bootstrap custody remains important after revocation; no certificate/mTLS identity is active.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection",
+      "additional_source": {
+        "path": "internal/api/api.go",
+        "line_start": 570,
+        "line_end": 614,
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+      }
+    },
+    {
+      "id": "SEC-07",
+      "actor": "Agent credential holder",
+      "surface": "Rotation",
+      "active_control": "Server replaces credential record before response; lost rotation response can strand old bearer.",
+      "source": {
+        "path": "internal/api/api.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 617,
+        "line_end": 649,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L617-L649"
+      },
+      "coverage_boundary": "Not a seamless recovery guarantee; retain response-loss scenario and separately design dual-token/ack protocol.",
+      "classification": "partial integration",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-08",
+      "actor": "Agent log consumer",
+      "surface": "Agent log listener :8081",
+      "active_control": "Startup bootstrap token protects log route; node-enrolled credential is a different protocol.",
+      "source": {
+        "path": "cmd/orch-agent/main.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 74,
+        "line_end": 90,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-agent/main.go#L74-L90"
+      },
+      "coverage_boundary": "Actual bind is configurable; endpoint is not automatically confined to loopback by its advertised URL.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-09",
+      "actor": "Debug administrator",
+      "surface": "Separate optional pprof listener",
+      "active_control": "Disabled by default, configured loopback default; direct handler has no authentication.",
+      "source": {
+        "path": "internal/api/debug.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 8,
+        "line_end": 20,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/debug.go#L8-L20"
+      },
+      "coverage_boundary": "Changing debug address to public changes exposure; public API JWT does not wrap this separate listener.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-10",
+      "actor": "DNS client",
+      "surface": "Optional ORCH_DNS_ADDR UDP listener",
+      "active_control": "Only started when configured; namespace name selects query records.",
+      "source": {
+        "path": "cmd/orch-server/main.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 150,
+        "line_end": 167,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L150-L167"
+      },
+      "coverage_boundary": "No user JWT/RBAC on DNS; address spelling does not provide confidentiality or tenant network isolation.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-11",
+      "actor": "Probe configuration author",
+      "surface": "HTTP/TCP health egress",
+      "active_control": "Validated path/scheme, assigned published port, agent-generated loopback target, timeout, same-origin redirects and64KiB read cap.",
+      "source": {
+        "path": "internal/agent/agent.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 562,
+        "line_end": 585,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L562-L585"
+      },
+      "coverage_boundary": "Generic checker accepts arbitrary initial Target from another caller; no universal allowlist inferred.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/labs/05-check.json"
+    },
+    {
+      "id": "SEC-12",
+      "actor": "Notification sink author",
+      "surface": "HTTP webhook egress",
+      "active_control": "URL validation, timeout, retry and optional HMAC signature; selected redaction.",
+      "source": {
+        "path": "internal/notifications/notifications.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 77,
+        "line_end": 115,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/notifications/notifications.go#L77-L115"
+      },
+      "coverage_boundary": "No inherited healthcheck destination restrictions; default redirect behavior separate; body drain is time-bounded rather than size-capped.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-13",
+      "actor": "GitOps source author",
+      "surface": "git clone outbound/filesystem path",
+      "active_control": "Reject obvious URL credentials; argument slice and bounded owned checkout; configured path validation.",
+      "source": {
+        "path": "internal/gitops/gitops.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 52,
+        "line_end": 85,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L52-L85"
+      },
+      "coverage_boundary": "No healthcheck egress allowlist; Git transport/configuration and path/symlink behavior need separate controls.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-14",
+      "actor": "Secret metadata reader / authorized task recipient",
+      "surface": "Envelope and Env delivery",
+      "active_control": "AES-GCM nonce-prefixed ciphertext and KeyID authenticated data; decrypt only for relevant task execution.",
+      "source": {
+        "path": "internal/secrets/envelope.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 47,
+        "line_end": 89,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go#L47-L89"
+      },
+      "coverage_boundary": "Plaintext necessarily exists in server/agent/daemon/application; key separate from database dump; no KMS rotation.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/labs/05-check.json"
+    },
+    {
+      "id": "SEC-15",
+      "actor": "Workload author and daemon administrator",
+      "surface": "SecurityContext\u2192Engine",
+      "active_control": "Ordinary service SecurityContext propagated to user/rootfs/capabilities/host options; static policy denies risky defaults.",
+      "source": {
+        "path": "internal/agent/agent.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 313,
+        "line_end": 333,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L313-L333"
+      },
+      "coverage_boundary": "Writable mounts remain separate; Docker socket/host kernel common trust domain; resource limits dropped on ordinary path.",
+      "classification": "partial integration",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-16",
+      "actor": "Image supplier",
+      "surface": "ParserResolver and proposed trust adapters",
+      "active_control": "Supplied digest syntax/pinning implemented; signatures/SBOM/scanning are design-only plus supplied-verdict teaching contract.",
+      "source": {
+        "path": "internal/image/reference.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 16,
+        "line_end": 25,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L16-L25"
+      },
+      "coverage_boundary": "No remote registry resolution, authenticity or vulnerability guarantee; fake-verdict pass is not scanner execution.",
+      "classification": "implemented package",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-17",
+      "actor": "Volume claimant",
+      "surface": "Physical volume naming",
+      "active_control": "Namespace-local metadata resolves VolumeName into Docker bind name.",
+      "source": {
+        "path": "internal/agent/agent.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 286,
+        "line_end": 293,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L286-L293"
+      },
+      "coverage_boundary": "No namespace/UUID suffix added to physical name; metadataRWO cannot fence stale writer or replicate bytes.",
+      "classification": "runtime-integrated",
+      "review_evidence": "source inspection"
+    },
+    {
+      "id": "SEC-18",
+      "actor": "Incident reader",
+      "surface": "Authored and captured artifacts",
+      "active_control": "Static high-signal scan plus manual synthetic fixture/channel inspection.",
+      "source": {
+        "path": "internal/notifications/notifications.go",
+        "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+        "line_start": 118,
+        "line_end": 149,
+        "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/notifications/notifications.go#L118-L149"
+      },
+      "coverage_boundary": "No key/token/private-author-email hits in scanned authored text; pattern scan alone is not a secrecy proof.",
+      "classification": "runtime-integrated",
+      "review_evidence": "validation/security/redaction-scan.json"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "notice-rebuild-books-check",
+  "command": [
+    ".venv/bin/python",
+    "scripts/check-books.py"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T03:57:07.488980+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T03:57:37.628725+00:00",
+  "duration_seconds": 30.14,
+  "stdout": "validation/publication/notice-rebuild-books-check.stdout.txt",
+  "stderr": "validation/publication/notice-rebuild-books-check.stderr.txt"
+}

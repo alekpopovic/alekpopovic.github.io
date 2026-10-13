@@ -1,0 +1,27 @@
+commit 1ea26fa6a2deaa5604b5f7f479604295ba9cdf49
+Date: 2026-08-09T18:07:56+02:00
+Subject: Merge pull request #6 from alekpopovic/dependabot/go_modules/github.com/docker/go-connections-0.8.1
+
+Bump github.com/docker/go-connections from 0.7.0 to 0.8.1
+
+ go.mod | 2 +-
+ go.sum | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --cc go.mod
+index a1f21a8,0b32afe..0744e4d
+--- a/go.mod
++++ b/go.mod
+@@@ -4,10 -4,10 +4,10 @@@ go 1.25.
+  
+  require (
+  	github.com/docker/docker v28.5.2+incompatible
+- 	github.com/docker/go-connections v0.7.0
++ 	github.com/docker/go-connections v0.8.1
+  	github.com/jackc/pgx/v5 v5.10.0
+  	github.com/opencontainers/image-spec v1.1.1
+ -	github.com/prometheus/client_golang v1.24.0
+ +	github.com/prometheus/client_golang v1.24.1
+  	github.com/spf13/cobra v1.10.2
+  	gopkg.in/yaml.v3 v3.0.1
+  )

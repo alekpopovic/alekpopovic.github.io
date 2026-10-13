@@ -1,0 +1,8 @@
+{
+  "pdf_sha256": "7993220375c25c6462b1acaac2dc62f209949957f69e4add87c4efb8ffe8bd20",
+  "severity": "major",
+  "observation": "Four-column Appendix B invariant table accidentally received three-column widths, reducing fourth column to one-character lines across pages362\u2013375.",
+  "screenshot": "/tmp/inside-orch-reviewed-layout-pdf-pages/page-365.png",
+  "screenshot_sha256": "e2bae4e1cbd5224ee07432e6a0e5503017f25e41902ebf161607cd9a53f98998",
+  "resolution": "Root applied width classes conditional on actual header column count and rebuilt. Final visual retest pending separate record."
+}

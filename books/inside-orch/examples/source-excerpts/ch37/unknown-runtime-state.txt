@@ -1,0 +1,10 @@
+	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != errDockerUnavailable {
+		t.Fatalf("expected docker unavailable error, got %v", err)
+	}
+	wantRuntimeCalls := []string{"inspect:container-1", "list", "list"}
+	if !equalStrings(runtime.OperationStrings(), wantRuntimeCalls) {
+		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.OperationStrings())
+	}
+	if len(client.statuses) != 0 {
+		t.Fatalf("expected no status reports while Docker availability is unknown, got %#v", client.statuses)
+	}

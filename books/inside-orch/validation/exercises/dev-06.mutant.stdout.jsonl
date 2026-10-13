@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:51.366045353+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/controlplane"}
+{"Time":"2026-10-13T03:38:51.369723645+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota"}
+{"Time":"2026-10-13T03:38:51.369747601+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Output":"=== RUN   TestConcurrentScaleCannotExceedQuota\n"}
+{"Time":"2026-10-13T03:38:51.36995755+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Output":"    quota_test.go:83: expected one success and one quota denial, got success=2 denied=0\n"}
+{"Time":"2026-10-13T03:38:51.369973265+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Output":"--- FAIL: TestConcurrentScaleCannotExceedQuota (0.00s)\n"}
+{"Time":"2026-10-13T03:38:51.36998423+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Test":"TestConcurrentScaleCannotExceedQuota","Elapsed":0}
+{"Time":"2026-10-13T03:38:51.36999331+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:51.370180839+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/controlplane","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/controlplane\t0.004s\n"}
+{"Time":"2026-10-13T03:38:51.370203608+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/controlplane","Elapsed":0.004}

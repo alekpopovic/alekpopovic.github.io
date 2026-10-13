@@ -1,0 +1,316 @@
+commit f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa
+Date: 2026-06-11T22:05:20+02:00
+Subject: Add local development environment
+
+
+---
+ README.md                          | 66 ++++++++++++++++++++++++++++++--------
+ deployments/examples/http-api.yaml | 14 ++++++++
+ deployments/examples/worker.yaml   | 11 +++++++
+ docker-compose.yml                 | 30 +++++++++++------
+ scripts/demo-deploy.sh             | 27 ++++++++++++++++
+ scripts/dev-down.sh                |  7 ++++
+ scripts/dev-up.sh                  | 22 +++++++++++++
+ scripts/migrate-down.sh            | 11 +++++++
+ scripts/migrate-up.sh              | 11 +++++++
+ 9 files changed, 176 insertions(+), 23 deletions(-)
+
+diff --git a/README.md b/README.md
+index 6b386c6..87d20ec 100644
+--- a/README.md
++++ b/README.md
+@@ -4,42 +4,80 @@
+ 
+ ## Quickstart
+ 
+-Build and test:
++### Prerequisites
++
++- Go 1.25 or newer.
++- Docker Engine with access to `/var/run/docker.sock`.
++- Docker Compose v2, available as `docker compose`.
++- Bash, `curl`, and standard Unix shell tools.
++
++No script requires root directly, but your user must be allowed to use Docker.
++
++### Local Development Environment
++
++Start PostgreSQL, `orch-server`, and one `orch-agent`:
+ 
+ ```sh
+-make build
+-make test
++./scripts/dev-up.sh
+ ```
+ 
+-Run the control plane API server:
++Apply the initial database schema:
+ 
+ ```sh
+-cp .env.example .env
+-make run-server
++./scripts/migrate-up.sh
+ ```
+ 
+-In another shell, run an agent:
++Confirm the agent registered with the control plane:
+ 
+ ```sh
+-make run-agent
++export ORCH_SERVER_URL=http://localhost:8080
++go run ./cmd/orch node ls
+ ```
+ 
+-Start local PostgreSQL:
++Deploy the demo app:
+ 
+ ```sh
+-docker compose up postgres
++./scripts/demo-deploy.sh
+ ```
+ 
+-Apply the initial schema:
++Scale it:
+ 
+ ```sh
+-psql "postgres://orch:orch@localhost:5432/orch?sslmode=disable" -f migrations/000001_initial_schema.up.sql
++go run ./cmd/orch scale http-api --replicas 2
+ ```
+ 
+-Start PostgreSQL plus optional local orchestrator services:
++View tasks, logs, and events:
+ 
+ ```sh
+-docker compose --profile local-orch up --build
++go run ./cmd/orch service ps http-api
++go run ./cmd/orch logs http-api --tail 100
++go run ./cmd/orch events --service http-api
++```
++
++Delete the demo app:
++
++```sh
++go run ./cmd/orch delete http-api
++```
++
++Stop the local environment:
++
++```sh
++./scripts/dev-down.sh
++```
++
++Optional standalone demo container:
++
++```sh
++docker compose --profile demo up -d demo-app
++curl http://localhost:18080
++```
++
++Build and test:
++
++```sh
++make build
++make test
+ ```
+ 
+ ## Binaries
+diff --git a/deployments/examples/http-api.yaml b/deployments/examples/http-api.yaml
+new file mode 100644
+index 0000000..6ec03aa
+--- /dev/null
++++ b/deployments/examples/http-api.yaml
+@@ -0,0 +1,14 @@
++name: http-api
++image: nginx:1.27-alpine
++replicas: 1
++ports:
++  - container: 80
++    public: 0
++resources:
++  cpu: 100m
++  memory: 128Mi
++restart:
++  policy: always
++placement:
++  labels:
++    role: worker
+diff --git a/deployments/examples/worker.yaml b/deployments/examples/worker.yaml
+new file mode 100644
+index 0000000..1d241c1
+--- /dev/null
++++ b/deployments/examples/worker.yaml
+@@ -0,0 +1,11 @@
++name: worker
++image: redis:7-alpine
++replicas: 1
++resources:
++  cpu: 100m
++  memory: 64Mi
++restart:
++  policy: always
++placement:
++  labels:
++    role: worker
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 23b0495..618ac6a 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -22,11 +22,12 @@ services:
+       args:
+         TARGET: orch-server
+     profiles: ["local-orch"]
+-    env_file:
+-      - .env
+     environment:
+       DATABASE_URL: postgres://orch:orch@postgres:5432/orch?sslmode=disable
+       ORCH_SERVER_ADDR: :8080
++      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
++      ORCH_JWT_SECRET: ""
++      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
+     ports:
+       - "8080:8080"
+     depends_on:
+@@ -40,17 +41,28 @@ services:
+       args:
+         TARGET: orch-agent
+     profiles: ["local-orch"]
+-    env_file:
+-      - .env
+     environment:
+       ORCH_SERVER_URL: http://orch-server:8080
+-      ORCH_BOOTSTRAP_TOKEN: dev-bootstrap-token
+-      ORCH_NODE_NAME: local-agent-1
+-      ORCH_ADVERTISE_ADDRESS: local-agent-1
+-      ORCH_NODE_LABELS: role=worker
+-      ORCH_DOCKER_SOCKET: /var/run/docker.sock
++      ORCH_AGENT_REGISTRATION_TOKEN: ${ORCH_AGENT_REGISTRATION_TOKEN:-dev-registration-token}
++      ORCH_NODE_NAME: ${ORCH_NODE_NAME:-local-agent-1}
++      ORCH_AGENT_ADDR: :8081
++      ORCH_ADVERTISE_ADDRESS: http://orch-agent:8081
++      ORCH_NODE_LABELS: ${ORCH_NODE_LABELS:-role=worker}
++      ORCH_DOCKER_SOCKET: ${ORCH_DOCKER_SOCKET:-/var/run/docker.sock}
++      ORCH_LOG_LEVEL: ${ORCH_LOG_LEVEL:-info}
++      ORCH_AGENT_HEARTBEAT_INTERVAL: ${ORCH_AGENT_HEARTBEAT_INTERVAL:-5s}
++    ports:
++      - "8081:8081"
++    volumes:
++      - /var/run/docker.sock:/var/run/docker.sock
+     depends_on:
+       - orch-server
+ 
++  demo-app:
++    image: nginx:1.27-alpine
++    profiles: ["demo"]
++    ports:
++      - "18080:80"
++
+ volumes:
+   postgres-data:
+diff --git a/scripts/demo-deploy.sh b/scripts/demo-deploy.sh
+new file mode 100755
+index 0000000..dfe2c77
+--- /dev/null
++++ b/scripts/demo-deploy.sh
+@@ -0,0 +1,27 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++
++export ORCH_SERVER_URL="${ORCH_SERVER_URL:-http://localhost:8080}"
++
++echo "Waiting for orch-server at ${ORCH_SERVER_URL}..."
++until curl -fsS "${ORCH_SERVER_URL}/readyz" >/dev/null; do
++  sleep 1
++done
++
++if go run ./cmd/orch service inspect http-api >/dev/null 2>&1; then
++  echo "Demo HTTP API already exists."
++else
++  echo "Deploying demo HTTP API..."
++  go run ./cmd/orch deploy deployments/examples/http-api.yaml
++fi
++
++echo
++echo "Current services:"
++go run ./cmd/orch service ls
++
++echo
++echo "Current nodes:"
++go run ./cmd/orch node ls
+diff --git a/scripts/dev-down.sh b/scripts/dev-down.sh
+new file mode 100755
+index 0000000..f0bdf80
+--- /dev/null
++++ b/scripts/dev-down.sh
+@@ -0,0 +1,7 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++
++docker compose --profile local-orch --profile demo down
+diff --git a/scripts/dev-up.sh b/scripts/dev-up.sh
+new file mode 100755
+index 0000000..d8098e6
+--- /dev/null
++++ b/scripts/dev-up.sh
+@@ -0,0 +1,22 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++
++if [[ ! -f .env ]]; then
++  cp .env.example .env
++  echo "Created .env from .env.example"
++fi
++
++docker compose --profile local-orch up --build -d postgres orch-server orch-agent
++
++echo "Waiting for orch-server..."
++until curl -fsS http://localhost:8080/readyz >/dev/null; do
++  sleep 1
++done
++
++echo "Local environment is starting:"
++echo "  orch-server: http://localhost:8080"
++echo "  orch-agent:  http://localhost:8081"
++echo "  metrics:     http://localhost:8080/metrics and http://localhost:8081/metrics"
+diff --git a/scripts/migrate-down.sh b/scripts/migrate-down.sh
+new file mode 100755
+index 0000000..e31edbb
+--- /dev/null
++++ b/scripts/migrate-down.sh
+@@ -0,0 +1,11 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++
++docker compose up -d postgres
++docker compose exec -T postgres sh -c 'until pg_isready -U orch -d orch >/dev/null 2>&1; do sleep 1; done'
++docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < migrations/000001_initial_schema.down.sql
++
++echo "Rolled back migrations."
+diff --git a/scripts/migrate-up.sh b/scripts/migrate-up.sh
+new file mode 100755
+index 0000000..2c3caf0
+--- /dev/null
++++ b/scripts/migrate-up.sh
+@@ -0,0 +1,11 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++cd "$ROOT_DIR"
++
++docker compose up -d postgres
++docker compose exec -T postgres sh -c 'until pg_isready -U orch -d orch >/dev/null 2>&1; do sleep 1; done'
++docker compose exec -T postgres psql -U orch -d orch -v ON_ERROR_STOP=1 < migrations/000001_initial_schema.up.sql
++
++echo "Applied migrations."

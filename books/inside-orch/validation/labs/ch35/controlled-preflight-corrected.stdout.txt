@@ -1,0 +1,13 @@
+=== RUN   TestPreflightStructuredDecision
+=== RUN   TestPreflightStructuredDecision/0.2.0
+    preflight_test.go:49: agent=0.2.0 status=compatible warnings=0 command_error=nil
+=== RUN   TestPreflightStructuredDecision/0.1.0
+    preflight_test.go:49: agent=0.1.0 status=blocked warnings=1 command_error=nil
+=== RUN   TestPreflightStructuredDecision/0.4.0
+    preflight_test.go:49: agent=0.4.0 status=compatible warnings=1 command_error=nil
+--- PASS: TestPreflightStructuredDecision (0.00s)
+    --- PASS: TestPreflightStructuredDecision/0.2.0 (0.00s)
+    --- PASS: TestPreflightStructuredDecision/0.1.0 (0.00s)
+    --- PASS: TestPreflightStructuredDecision/0.4.0 (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/ch35	0.004s

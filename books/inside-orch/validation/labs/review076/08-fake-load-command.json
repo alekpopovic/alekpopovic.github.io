@@ -1,0 +1,29 @@
+{
+  "id": "lab08-fresh076-fake-load",
+  "command": [
+    "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-loadtest",
+    "--nodes",
+    "3",
+    "--services",
+    "30",
+    "--replicas",
+    "2",
+    "--failure-rate",
+    "0.02",
+    "--duration",
+    "2s",
+    "--seed",
+    "20261013"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:58:54.824927+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:58:56.837275+00:00",
+  "duration_seconds": 2.012,
+  "stdout": "validation/labs/review076/08-fake-load-command.stdout.txt",
+  "stderr": "validation/labs/review076/08-fake-load-command.stderr.txt"
+}

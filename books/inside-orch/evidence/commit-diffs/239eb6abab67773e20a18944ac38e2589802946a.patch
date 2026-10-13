@@ -1,0 +1,1277 @@
+commit 239eb6abab67773e20a18944ac38e2589802946a
+Date: 2026-06-11T15:55:45+02:00
+Subject: Add agent task assignment reconciliation
+
+
+---
+ docs/AGENT.md                         |  15 +++
+ docs/API.md                           |  20 +++
+ internal/agent/agent.go               | 158 ++++++++++++++++++++++--
+ internal/agent/agent_test.go          | 189 ++++++++++++++++++++++++++++
+ internal/api/api.go                   |  83 +++++++++++++
+ internal/api/api_test.go              |  92 +++++++++++++-
+ internal/controlplane/agent_test.go   | 171 ++++++++++++++++++++++++++
+ internal/controlplane/controlplane.go | 223 +++++++++++++++++++++++++++++++---
+ pkg/types/types.go                    |  19 +--
+ 9 files changed, 928 insertions(+), 42 deletions(-)
+
+diff --git a/docs/AGENT.md b/docs/AGENT.md
+index 71b2e73..d59c77d 100644
+--- a/docs/AGENT.md
++++ b/docs/AGENT.md
+@@ -27,6 +27,21 @@ After registration, the agent sends `POST /v1/agent/heartbeat` every configured
+ 
+ The agent does not choose to become draining on its own. Draining is controlled by the server response, usually after an operator calls `orch node drain`. The agent records and logs the returned status and directives.
+ 
++## Task Assignment
++
++After each successful heartbeat, the agent calls `GET /v1/agent/tasks?node_id=<id>`. The control plane remains the source of truth and returns the desired tasks currently assigned to that node.
++
++For each assigned task with desired status `running`, the agent reconciles Docker state idempotently:
++
++- report `pulling`, pull the image, and retry safely if the pull fails.
++- create a managed container labeled with service, task, node, and version identity.
++- report `created` once a container ID exists.
++- start the container and report `running`.
++
++The agent may also report `unhealthy`, `failed`, `stopped`, or `removed` through `POST /v1/agent/tasks/{task_id}/status`. Status reports include the node ID so the server can reject updates for tasks assigned elsewhere.
++
++On every poll, the agent lists locally managed Docker containers for its node. Containers whose `orch.task_id` is no longer assigned are stopped and removed. This makes process restarts safe without a local durable cache: Docker labels provide local identity, and the server provides desired state.
++
+ ## Shutdown
+ 
+ On graceful shutdown, the agent sends a final heartbeat with `shutdown=true`. If the notification succeeds, the control plane marks the node offline. If it fails, the agent logs a warning and continues shutdown.
+diff --git a/docs/API.md b/docs/API.md
+index 2557c1a..f1ba8a8 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -96,6 +96,26 @@ curl http://localhost:8080/v1/tasks?status=running
+ curl http://localhost:8080/v1/tasks/{task_id}
+ ```
+ 
++## Agent Tasks
++
++Agent endpoints require `Authorization: Bearer <ORCH_BOOTSTRAP_TOKEN>` when a bootstrap token is configured.
++
++```sh
++curl -H 'Authorization: Bearer local-bootstrap-token' \
++  'http://localhost:8080/v1/agent/tasks?node_id={node_id}'
++
++curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
++  -H 'Authorization: Bearer local-bootstrap-token' \
++  -H 'Content-Type: application/json' \
++  -d '{
++    "node_id": "{node_id}",
++    "status": "running",
++    "container_id": "container-id"
++  }'
++```
++
++Agents may report `pulling`, `created`, `running`, `unhealthy`, `failed`, `stopped`, and `removed`.
++
+ ## Events
+ 
+ ```sh
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index 777aff9..acd76ea 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -8,6 +8,7 @@ import (
+ 	"log/slog"
+ 	"math/rand"
+ 	"net/http"
++	"net/url"
+ 	"os"
+ 	"runtime"
+ 	"strconv"
+@@ -16,19 +17,23 @@ import (
+ 
+ 	"github.com/alekpopovic/orch/internal/api"
+ 	"github.com/alekpopovic/orch/internal/config"
++	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+ type Client interface {
+ 	Register(ctx context.Context, req api.AgentRegisterRequest) (api.AgentResponse, error)
+ 	Heartbeat(ctx context.Context, req api.AgentHeartbeatRequest) (api.AgentResponse, error)
++	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	ReportTaskStatus(ctx context.Context, taskID types.TaskID, req api.AgentTaskStatusRequest) (types.Task, error)
+ }
+ 
+ type Runner struct {
+-	cfg    config.AgentConfig
+-	client Client
+-	logger *slog.Logger
+-	rand   *rand.Rand
++	cfg     config.AgentConfig
++	client  Client
++	runtime orchdocker.Runtime
++	logger  *slog.Logger
++	rand    *rand.Rand
+ }
+ 
+ func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runner {
+@@ -43,6 +48,11 @@ func NewRunner(cfg config.AgentConfig, client Client, logger *slog.Logger) *Runn
+ 	}
+ }
+ 
++func (r *Runner) WithRuntime(runtime orchdocker.Runtime) *Runner {
++	r.runtime = runtime
++	return r
++}
++
+ func (r *Runner) Run(ctx context.Context) error {
+ 	if err := r.cfg.Validate(); err != nil {
+ 		return err
+@@ -54,6 +64,13 @@ func (r *Runner) Run(ctx context.Context) error {
+ 		}
+ 		r.client = client
+ 	}
++	if r.runtime == nil {
++		runtime, err := orchdocker.NewEngineRuntimeFromEnv()
++		if err != nil {
++			return err
++		}
++		r.runtime = runtime
++	}
+ 
+ 	capacity := DetectCapacity()
+ 	registerResp, err := r.registerWithRetry(ctx, capacity)
+@@ -76,12 +93,106 @@ func (r *Runner) Run(ctx context.Context) error {
+ 				return err
+ 			}
+ 			node = resp.Node
++			if err := r.reconcileAssignedTasks(ctx, node.ID); err != nil {
++				r.logger.Warn("task reconciliation failed", "node_id", node.ID, "error", err)
++			}
+ 			r.logger.Info("agent heartbeat acknowledged", "node_id", node.ID, "status", node.Status)
+ 			timer.Reset(r.nextHeartbeatDelay())
+ 		}
+ 	}
+ }
+ 
++func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID) error {
++	tasks, err := r.client.ListAssignedTasks(ctx, nodeID)
++	if err != nil {
++		return err
++	}
++	assigned := make(map[types.TaskID]types.Task, len(tasks))
++	for _, task := range tasks {
++		assigned[task.ID] = task
++		if err := r.ensureTask(ctx, nodeID, task); err != nil {
++			r.logger.Warn("task execution failed", "task_id", task.ID, "error", err)
++		}
++	}
++	return r.cleanupUnassigned(ctx, nodeID, assigned)
++}
++
++func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, task types.Task) error {
++	if task.DesiredStatus != types.TaskRunning {
++		return nil
++	}
++	if task.ContainerID != "" {
++		status, err := r.runtime.InspectContainer(ctx, orchdocker.ContainerID(task.ContainerID))
++		if err == nil && status.Running {
++			return nil
++		}
++		if err == nil {
++			if err := r.runtime.StartContainer(ctx, status.ID); err != nil {
++				_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(status.ID), FailureReason: err.Error()})
++				return err
++			}
++			_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(status.ID)})
++			return err
++		}
++	}
++	if _, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskPulling}); err != nil {
++		return err
++	}
++	if err := r.runtime.PullImage(ctx, task.Image, nil); err != nil {
++		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
++		return err
++	}
++
++	containerID, err := r.runtime.CreateContainer(ctx, orchdocker.ContainerSpec{
++		Name:      "orch-" + string(task.ID),
++		Image:     task.Image,
++		ServiceID: string(task.ServiceID),
++		TaskID:    string(task.ID),
++		NodeID:    string(nodeID),
++		Version:   task.Version,
++	})
++	if err != nil {
++		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, FailureReason: err.Error()})
++		return err
++	}
++	if _, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskCreated, ContainerID: string(containerID)}); err != nil {
++		return err
++	}
++
++	if err := r.runtime.StartContainer(ctx, containerID); err != nil {
++		_, _ = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskFailed, ContainerID: string(containerID), FailureReason: err.Error()})
++		return err
++	}
++	_, err = r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRunning, ContainerID: string(containerID)})
++	return err
++}
++
++func (r *Runner) cleanupUnassigned(ctx context.Context, nodeID types.NodeID, assigned map[types.TaskID]types.Task) error {
++	containers, err := r.runtime.ListManagedContainers(ctx, map[string]string{orchdocker.NodeIDLabel: string(nodeID)})
++	if err != nil {
++		return err
++	}
++	for _, container := range containers {
++		taskID := types.TaskID(container.Labels[orchdocker.TaskIDLabel])
++		if taskID == "" {
++			continue
++		}
++		if _, ok := assigned[taskID]; ok {
++			continue
++		}
++		if err := r.runtime.StopContainer(ctx, container.ID, 10*time.Second); err != nil {
++			r.logger.Warn("failed to stop unassigned container", "container_id", container.ID, "task_id", taskID, "error", err)
++			continue
++		}
++		if err := r.runtime.RemoveContainer(ctx, container.ID, true); err != nil {
++			r.logger.Warn("failed to remove unassigned container", "container_id", container.ID, "task_id", taskID, "error", err)
++			continue
++		}
++		_, _ = r.client.ReportTaskStatus(ctx, taskID, api.AgentTaskStatusRequest{NodeID: nodeID, Status: types.TaskRemoved, ContainerID: string(container.ID)})
++	}
++	return nil
++}
++
+ func (r *Runner) registerWithRetry(ctx context.Context, capacity types.Resources) (api.AgentResponse, error) {
+ 	var response api.AgentResponse
+ 	err := retry(ctx, r.rand, func() error {
+@@ -221,16 +332,45 @@ func (c *HTTPClient) Heartbeat(ctx context.Context, req api.AgentHeartbeatReques
+ 	return out, nil
+ }
+ 
++func (c *HTTPClient) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++	var out api.AgentTasksResponse
++	path := "/v1/agent/tasks?node_id=" + url.QueryEscape(string(nodeID))
++	if err := c.doMethod(ctx, http.MethodGet, path, nil, &out); err != nil {
++		return nil, err
++	}
++	return out.Tasks, nil
++}
++
++func (c *HTTPClient) ReportTaskStatus(ctx context.Context, taskID types.TaskID, req api.AgentTaskStatusRequest) (types.Task, error) {
++	var out api.TaskResponse
++	if err := c.do(ctx, "/v1/agent/tasks/"+string(taskID)+"/status", req, &out); err != nil {
++		return types.Task{}, err
++	}
++	return out.Task, nil
++}
++
+ func (c *HTTPClient) do(ctx context.Context, path string, body any, out any) error {
+-	data, err := json.Marshal(body)
+-	if err != nil {
+-		return fmt.Errorf("encode request: %w", err)
++	return c.doMethod(ctx, http.MethodPost, path, body, out)
++}
++
++func (c *HTTPClient) doMethod(ctx context.Context, method string, path string, body any, out any) error {
++	var reader *bytes.Reader
++	if body == nil {
++		reader = bytes.NewReader(nil)
++	} else {
++		data, err := json.Marshal(body)
++		if err != nil {
++			return fmt.Errorf("encode request: %w", err)
++		}
++		reader = bytes.NewReader(data)
+ 	}
+-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, bytes.NewReader(data))
++	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, reader)
+ 	if err != nil {
+ 		return fmt.Errorf("create request: %w", err)
+ 	}
+-	req.Header.Set("Content-Type", "application/json")
++	if body != nil {
++		req.Header.Set("Content-Type", "application/json")
++	}
+ 	req.Header.Set("Authorization", "Bearer "+c.token)
+ 
+ 	resp, err := c.client.Do(req)
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+new file mode 100644
+index 0000000..28dbed7
+--- /dev/null
++++ b/internal/agent/agent_test.go
+@@ -0,0 +1,189 @@
++package agent
++
++import (
++	"context"
++	"io"
++	"log/slog"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/api"
++	"github.com/alekpopovic/orch/internal/config"
++	orchdocker "github.com/alekpopovic/orch/internal/docker"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestReconcileAssignedTaskExecutesRuntimeSteps(t *testing.T) {
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
++	client := &fakeAgentClient{
++		tasks: []types.Task{{
++			ID:            taskID,
++			ServiceID:     types.ServiceID("00000000-0000-4000-8000-000000000003"),
++			NodeID:        nodeID,
++			DesiredStatus: types.TaskRunning,
++			ActualStatus:  types.TaskAssigned,
++			Image:         "nginx:1.27",
++			Version:       1,
++		}},
++	}
++	runtime := &fakeRuntime{createdID: orchdocker.ContainerID("container-1")}
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
++
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("reconcile assigned tasks: %v", err)
++	}
++
++	wantRuntimeCalls := []string{"pull:nginx:1.27", "create:" + string(taskID), "start:container-1", "list"}
++	if !equalStrings(runtime.calls, wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	}
++	wantStatuses := []types.TaskStatus{types.TaskPulling, types.TaskCreated, types.TaskRunning}
++	if !equalStatuses(client.statuses, wantStatuses) {
++		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
++	}
++}
++
++func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	staleTaskID := types.TaskID("00000000-0000-4000-8000-000000000004")
++	client := &fakeAgentClient{}
++	runtime := &fakeRuntime{
++		managed: []orchdocker.ContainerStatus{{
++			ID: orchdocker.ContainerID("stale-container"),
++			Labels: map[string]string{
++				orchdocker.TaskIDLabel: string(staleTaskID),
++				orchdocker.NodeIDLabel: string(nodeID),
++			},
++		}},
++	}
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
++
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("reconcile assigned tasks: %v", err)
++	}
++
++	wantRuntimeCalls := []string{"list", "stop:stale-container", "remove:stale-container"}
++	if !equalStrings(runtime.calls, wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	}
++	wantStatuses := []types.TaskStatus{types.TaskRemoved}
++	if !equalStatuses(client.statuses, wantStatuses) {
++		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
++	}
++}
++
++type fakeAgentClient struct {
++	tasks    []types.Task
++	statuses []types.TaskStatus
++}
++
++func (c *fakeAgentClient) Register(context.Context, api.AgentRegisterRequest) (api.AgentResponse, error) {
++	return api.AgentResponse{}, nil
++}
++
++func (c *fakeAgentClient) Heartbeat(context.Context, api.AgentHeartbeatRequest) (api.AgentResponse, error) {
++	return api.AgentResponse{}, nil
++}
++
++func (c *fakeAgentClient) ListAssignedTasks(context.Context, types.NodeID) ([]types.Task, error) {
++	return c.tasks, nil
++}
++
++func (c *fakeAgentClient) ReportTaskStatus(_ context.Context, taskID types.TaskID, req api.AgentTaskStatusRequest) (types.Task, error) {
++	c.statuses = append(c.statuses, req.Status)
++	return types.Task{
++		ID:            taskID,
++		NodeID:        req.NodeID,
++		ActualStatus:  req.Status,
++		ContainerID:   req.ContainerID,
++		FailureReason: req.FailureReason,
++	}, nil
++}
++
++type fakeRuntime struct {
++	calls     []string
++	createdID orchdocker.ContainerID
++	managed   []orchdocker.ContainerStatus
++	inspect   map[orchdocker.ContainerID]orchdocker.ContainerStatus
++}
++
++func (r *fakeRuntime) PullImage(_ context.Context, image string, _ *orchdocker.RegistryAuth) error {
++	r.calls = append(r.calls, "pull:"+image)
++	return nil
++}
++
++func (r *fakeRuntime) CreateContainer(_ context.Context, spec orchdocker.ContainerSpec) (orchdocker.ContainerID, error) {
++	r.calls = append(r.calls, "create:"+spec.TaskID)
++	return r.createdID, nil
++}
++
++func (r *fakeRuntime) StartContainer(_ context.Context, id orchdocker.ContainerID) error {
++	r.calls = append(r.calls, "start:"+string(id))
++	return nil
++}
++
++func (r *fakeRuntime) StopContainer(_ context.Context, id orchdocker.ContainerID, _ time.Duration) error {
++	r.calls = append(r.calls, "stop:"+string(id))
++	return nil
++}
++
++func (r *fakeRuntime) RemoveContainer(_ context.Context, id orchdocker.ContainerID, _ bool) error {
++	r.calls = append(r.calls, "remove:"+string(id))
++	return nil
++}
++
++func (r *fakeRuntime) InspectContainer(_ context.Context, id orchdocker.ContainerID) (orchdocker.ContainerStatus, error) {
++	r.calls = append(r.calls, "inspect:"+string(id))
++	if r.inspect == nil {
++		return orchdocker.ContainerStatus{}, errFakeNotFound{}
++	}
++	status, ok := r.inspect[id]
++	if !ok {
++		return orchdocker.ContainerStatus{}, errFakeNotFound{}
++	}
++	return status, nil
++}
++
++func (r *fakeRuntime) ListManagedContainers(_ context.Context, _ map[string]string) ([]orchdocker.ContainerStatus, error) {
++	r.calls = append(r.calls, "list")
++	return r.managed, nil
++}
++
++func (r *fakeRuntime) StreamLogs(context.Context, orchdocker.ContainerID, orchdocker.LogOptions) (<-chan orchdocker.LogLine, <-chan error) {
++	lines := make(chan orchdocker.LogLine)
++	errs := make(chan error)
++	close(lines)
++	close(errs)
++	return lines, errs
++}
++
++type errFakeNotFound struct{}
++
++func (errFakeNotFound) Error() string {
++	return "not found"
++}
++
++func equalStrings(left, right []string) bool {
++	if len(left) != len(right) {
++		return false
++	}
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
++	}
++	return true
++}
++
++func equalStatuses(left, right []types.TaskStatus) bool {
++	if len(left) != len(right) {
++		return false
++	}
++	for i := range left {
++		if left[i] != right[i] {
++			return false
++		}
++	}
++	return true
++}
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 96656ba..29d9a68 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -58,6 +58,8 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	mux.HandleFunc("GET /readyz", server.readyz)
+ 	mux.HandleFunc("POST /v1/agent/register", server.agentRegister)
+ 	mux.HandleFunc("POST /v1/agent/heartbeat", server.agentHeartbeat)
++	mux.HandleFunc("GET /v1/agent/tasks", server.agentListTasks)
++	mux.HandleFunc("POST /v1/agent/tasks/{task_id}/status", server.agentTaskStatus)
+ 	mux.HandleFunc("GET /v1/nodes", server.listNodes)
+ 	mux.HandleFunc("GET /v1/nodes/{id}", server.getNode)
+ 	mux.HandleFunc("POST /v1/nodes/{id}/drain", server.drainNode)
+@@ -118,6 +120,17 @@ type AgentResponse struct {
+ 	Directives []controlplane.AgentDirective `json:"directives,omitempty"`
+ }
+ 
++type AgentTasksResponse struct {
++	Tasks []types.Task `json:"tasks"`
++}
++
++type AgentTaskStatusRequest struct {
++	NodeID        types.NodeID     `json:"node_id"`
++	Status        types.TaskStatus `json:"status"`
++	ContainerID   string           `json:"container_id,omitempty"`
++	FailureReason string           `json:"failure_reason,omitempty"`
++}
++
+ type NodeResponse struct {
+ 	Node types.Node `json:"node"`
+ }
+@@ -224,6 +237,73 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+ 	writeJSON(w, http.StatusOK, AgentResponse{Node: command.Node, Status: command.Node.Status, Directives: command.Directives})
+ }
+ 
++func (s *Server) agentListTasks(w http.ResponseWriter, r *http.Request) {
++	if !s.authorizeAgent(w, r) {
++		return
++	}
++	nodeID := strings.TrimSpace(r.URL.Query().Get("node_id"))
++	if !validUUID(nodeID) {
++		s.writeError(w, r, fmt.Errorf("%w: node_id must be a UUID", store.ErrInvalidState))
++		return
++	}
++	tasks, err := s.controlPlane.ListAssignedTasks(r.Context(), types.NodeID(nodeID))
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, AgentTasksResponse{Tasks: tasks})
++}
++
++func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {
++	if !s.authorizeAgent(w, r) {
++		return
++	}
++	taskID := strings.TrimSpace(r.PathValue("task_id"))
++	if !validUUID(taskID) {
++		s.writeError(w, r, fmt.Errorf("%w: task_id must be a UUID", store.ErrInvalidState))
++		return
++	}
++	var req AgentTaskStatusRequest
++	if !s.decodeJSON(w, r, &req) {
++		return
++	}
++	if req.NodeID == "" {
++		s.writeError(w, r, fmt.Errorf("%w: node_id is required", store.ErrInvalidState))
++		return
++	}
++	if !validAgentTaskStatus(req.Status) {
++		s.writeError(w, r, fmt.Errorf("%w: task status is invalid", store.ErrInvalidState))
++		return
++	}
++	task, err := s.controlPlane.ReportTaskStatus(r.Context(), controlplane.TaskStatusReport{
++		TaskID:        types.TaskID(taskID),
++		NodeID:        req.NodeID,
++		Status:        req.Status,
++		ContainerID:   req.ContainerID,
++		FailureReason: req.FailureReason,
++	})
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, TaskResponse{Task: task})
++}
++
++func validAgentTaskStatus(status types.TaskStatus) bool {
++	switch status {
++	case types.TaskPulling,
++		types.TaskCreated,
++		types.TaskRunning,
++		types.TaskUnhealthy,
++		types.TaskFailed,
++		types.TaskStopped,
++		types.TaskRemoved:
++		return true
++	default:
++		return false
++	}
++}
++
+ func (s *Server) listNodes(w http.ResponseWriter, r *http.Request) {
+ 	nodes, err := s.controlPlane.ListNodes(r.Context())
+ 	if err != nil {
+@@ -671,10 +751,13 @@ func validTaskStatus(status types.TaskStatus) bool {
+ 	case types.TaskPending,
+ 		types.TaskAssigned,
+ 		types.TaskPulling,
++		types.TaskCreated,
+ 		types.TaskStarting,
+ 		types.TaskRunning,
++		types.TaskUnhealthy,
+ 		types.TaskStopping,
+ 		types.TaskStopped,
++		types.TaskRemoved,
+ 		types.TaskFailed:
+ 		return true
+ 	default:
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index 33150ae..f179afc 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -10,6 +10,7 @@ import (
+ 	"testing"
+ 
+ 	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+ func TestHealthz(t *testing.T) {
+@@ -24,7 +25,10 @@ func TestHealthz(t *testing.T) {
+ }
+ 
+ func TestListNodes(t *testing.T) {
+-	rec := doRequest(t, newTestHandler(), http.MethodGet, "/v1/nodes", nil)
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++
++	rec := doRequest(t, handler, http.MethodGet, "/v1/nodes", nil)
+ 
+ 	if rec.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
+@@ -33,7 +37,10 @@ func TestListNodes(t *testing.T) {
+ 	var body ListNodesResponse
+ 	decodeResponse(t, rec, &body)
+ 	if len(body.Nodes) != 1 {
+-		t.Fatalf("expected seeded node, got %d", len(body.Nodes))
++		t.Fatalf("expected registered node, got %d", len(body.Nodes))
++	}
++	if body.Nodes[0].ID != registered.Node.ID {
++		t.Fatalf("expected node %q, got %q", registered.Node.ID, body.Nodes[0].ID)
+ 	}
+ }
+ 
+@@ -85,8 +92,9 @@ func TestAgentRegisterAndHeartbeat(t *testing.T) {
+ }
+ 
+ func TestDrainNode(t *testing.T) {
+-	handler := newTestHandler()
+-	rec := doRequest(t, handler, http.MethodPost, "/v1/nodes/00000000-0000-4000-8000-000000000001/drain", nil)
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++	rec := doRequest(t, handler, http.MethodPost, "/v1/nodes/"+string(registered.Node.ID)+"/drain", nil)
+ 
+ 	if rec.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, rec.Code, rec.Body.String())
+@@ -99,6 +107,50 @@ func TestDrainNode(t *testing.T) {
+ 	}
+ }
+ 
++func TestAgentTaskAssignmentAndStatus(t *testing.T) {
++	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
++	registered := registerTestNode(t, handler)
++
++	create := doRequest(t, handler, http.MethodPost, "/v1/services", `{
++		"spec": {
++			"name": "agent-work",
++			"image": "nginx:1.27",
++			"replicas": 1,
++			"resource_requirements": {"requests": {}, "limits": {}}
++		}
++	}`)
++	if create.Code != http.StatusCreated {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
++	}
++
++	list := doAgentRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil)
++	if list.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
++	}
++	var tasks AgentTasksResponse
++	decodeResponse(t, list, &tasks)
++	if len(tasks.Tasks) != 1 {
++		t.Fatalf("expected one assigned task, got %d", len(tasks.Tasks))
++	}
++
++	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].ID)+"/status", AgentTaskStatusRequest{
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRunning,
++		ContainerID: "container-1",
++	})
++	if report.Code != http.StatusOK {
++		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
++	}
++	var body TaskResponse
++	decodeResponse(t, report, &body)
++	if body.Task.ActualStatus != types.TaskRunning {
++		t.Fatalf("expected running task, got %q", body.Task.ActualStatus)
++	}
++	if body.Task.ContainerID != "container-1" {
++		t.Fatalf("expected container id to be recorded, got %q", body.Task.ContainerID)
++	}
++}
++
+ func TestCreateService(t *testing.T) {
+ 	rec := doRequest(t, newTestHandler(), http.MethodPost, "/v1/services", `{
+ 		"spec": {
+@@ -253,7 +305,20 @@ func doRequest(t *testing.T, handler http.Handler, method string, path string, b
+ 
+ func doAgentRequest(t *testing.T, handler http.Handler, method string, path string, body any) *httptest.ResponseRecorder {
+ 	t.Helper()
+-	req := httptest.NewRequest(method, path, strings.NewReader(body.(string)))
++	var reader *strings.Reader
++	switch value := body.(type) {
++	case nil:
++		reader = strings.NewReader("")
++	case string:
++		reader = strings.NewReader(value)
++	default:
++		data, err := json.Marshal(value)
++		if err != nil {
++			t.Fatalf("marshal body: %v", err)
++		}
++		reader = strings.NewReader(string(data))
++	}
++	req := httptest.NewRequest(method, path, reader)
+ 	req.Header.Set("Content-Type", "application/json")
+ 	req.Header.Set("Authorization", "Bearer secret")
+ 	rec := httptest.NewRecorder()
+@@ -261,6 +326,23 @@ func doAgentRequest(t *testing.T, handler http.Handler, method string, path stri
+ 	return rec
+ }
+ 
++func registerTestNode(t *testing.T, handler http.Handler) AgentResponse {
++	t.Helper()
++	rec := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/register", `{
++		"node_name": "node-a",
++		"advertise_address": "10.0.0.10",
++		"labels": {"role": "app"},
++		"capacity": {"cpu": 4000, "memory": 1024},
++		"allocatable": {"cpu": 3000, "memory": 512}
++	}`)
++	if rec.Code != http.StatusCreated {
++		t.Fatalf("expected register status %d, got %d: %s", http.StatusCreated, rec.Code, rec.Body.String())
++	}
++	var registered AgentResponse
++	decodeResponse(t, rec, &registered)
++	return registered
++}
++
+ func decodeResponse(t *testing.T, rec *httptest.ResponseRecorder, target any) {
+ 	t.Helper()
+ 	if err := json.Unmarshal(rec.Body.Bytes(), target); err != nil {
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index ef1b94c..51ce1ca 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -59,3 +59,174 @@ func TestAgentHeartbeatStateTransitions(t *testing.T) {
+ 		t.Fatalf("expected offline after shutdown heartbeat, got %q", offline.Node.Status)
+ 	}
+ }
++
++func TestAgentTaskStatusTransitions(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
++		Allocatable:      types.Resources{CPU: 3500, Memory: 7 * 1024 * 1024 * 1024},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if len(tasks) != 1 {
++		t.Fatalf("expected one assigned task, got %d", len(tasks))
++	}
++	if tasks[0].ServiceID != created.ID {
++		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].ServiceID)
++	}
++
++	tests := []struct {
++		name          string
++		status        types.TaskStatus
++		containerID   string
++		failureReason string
++		wantFinished  bool
++	}{
++		{name: "pulling", status: types.TaskPulling},
++		{name: "created", status: types.TaskCreated, containerID: "container-1"},
++		{name: "running", status: types.TaskRunning, containerID: "container-1"},
++		{name: "unhealthy", status: types.TaskUnhealthy, containerID: "container-1"},
++		{name: "failed", status: types.TaskFailed, containerID: "container-1", failureReason: "exit 1", wantFinished: true},
++		{name: "stopped", status: types.TaskStopped, containerID: "container-1", wantFinished: true},
++		{name: "removed", status: types.TaskRemoved, containerID: "container-1", wantFinished: true},
++	}
++
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			task, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++				TaskID:        tasks[0].ID,
++				NodeID:        registered.Node.ID,
++				Status:        tt.status,
++				ContainerID:   tt.containerID,
++				FailureReason: tt.failureReason,
++			})
++			if err != nil {
++				t.Fatalf("report task status: %v", err)
++			}
++			if task.ActualStatus != tt.status {
++				t.Fatalf("expected status %q, got %q", tt.status, task.ActualStatus)
++			}
++			if task.ContainerID != tt.containerID {
++				t.Fatalf("expected container id %q, got %q", tt.containerID, task.ContainerID)
++			}
++			if task.FailureReason != tt.failureReason {
++				t.Fatalf("expected failure reason %q, got %q", tt.failureReason, task.FailureReason)
++			}
++			if tt.wantFinished && task.FinishedAt.IsZero() {
++				t.Fatalf("expected finished timestamp")
++			}
++			if tt.status == types.TaskRunning && task.StartedAt.IsZero() {
++				t.Fatalf("expected started timestamp")
++			}
++		})
++	}
++}
++
++func TestTaskAssignmentReconcilesWhenNodeRegistersAfterService(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if len(tasks) != 1 {
++		t.Fatalf("expected one assigned task, got %d", len(tasks))
++	}
++	if tasks[0].ServiceID != created.ID {
++		t.Fatalf("expected task for service %q, got %q", created.ID, tasks[0].ServiceID)
++	}
++}
++
++func TestRolloutCreatesReplacementTasks(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	before, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list tasks before rollout: %v", err)
++	}
++	if len(before) != 1 {
++		t.Fatalf("expected one task before rollout, got %d", len(before))
++	}
++
++	if _, err := service.RolloutService(ctx, created.ID, "ghcr.io/example/api:2.0.0"); err != nil {
++		t.Fatalf("rollout service: %v", err)
++	}
++	after, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list tasks after rollout: %v", err)
++	}
++	if len(after) != 1 {
++		t.Fatalf("expected one active task after rollout, got %d", len(after))
++	}
++	if after[0].ID == before[0].ID {
++		t.Fatalf("expected replacement task id, got same task %q", after[0].ID)
++	}
++	if after[0].Image != "ghcr.io/example/api:2.0.0" {
++		t.Fatalf("expected rollout image, got %q", after[0].Image)
++	}
++
++	allTasks, err := service.ListTasks(ctx, TaskFilter{ServiceID: created.ID})
++	if err != nil {
++		t.Fatalf("list all service tasks: %v", err)
++	}
++	if len(allTasks) != 2 {
++		t.Fatalf("expected old and replacement tasks, got %d", len(allTasks))
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 759e3bd..dbda559 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -16,6 +16,8 @@ import (
+ type Service interface {
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
++	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error)
++	ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error)
+ 	ListNodes(ctx context.Context) ([]types.Node, error)
+ 	GetNode(ctx context.Context, id types.NodeID) (types.Node, error)
+ 	DrainNode(ctx context.Context, id types.NodeID) (types.Node, error)
+@@ -58,6 +60,14 @@ type AgentDirective struct {
+ 	Message string `json:"message,omitempty"`
+ }
+ 
++type TaskStatusReport struct {
++	TaskID        types.TaskID
++	NodeID        types.NodeID
++	Status        types.TaskStatus
++	ContainerID   string
++	FailureReason string
++}
++
+ type TaskFilter struct {
+ 	ServiceID types.ServiceID
+ 	NodeID    types.NodeID
+@@ -83,7 +93,7 @@ type MemoryService struct {
+ func NewMemoryService() *MemoryService {
+ 	now := func() time.Time { return time.Now().UTC() }
+ 	return &MemoryService{
+-		nodes:       seedNodes(now),
++		nodes:       make(map[types.NodeID]types.Node),
+ 		services:    make(map[types.ServiceID]types.Service),
+ 		tasks:       make(map[types.TaskID]types.Task),
+ 		deployments: make(map[types.DeploymentID]types.Deployment),
+@@ -122,6 +132,7 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 			node.LastHeartbeatAt = now
+ 			node.UpdatedAt = now
+ 			s.nodes[id] = node
++			s.reconcileAllServicesLocked(now)
+ 			s.appendEventLocked("node.registered", types.EventInfo, "controlplane", "node registered", "node", string(id), now)
+ 			return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ 		}
+@@ -141,6 +152,7 @@ func (s *MemoryService) RegisterNode(ctx context.Context, registration NodeRegis
+ 		UpdatedAt:        now,
+ 	}
+ 	s.nodes[id] = node
++	s.reconcileAllServicesLocked(now)
+ 	s.appendEventLocked("node.registered", types.EventInfo, "controlplane", "node registered", "node", string(id), now)
+ 	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ }
+@@ -187,6 +199,78 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ }
+ 
++func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	if nodeID == "" {
++		return nil, fmt.Errorf("%w: node id is required", store.ErrInvalidState)
++	}
++
++	s.mu.RLock()
++	defer s.mu.RUnlock()
++
++	tasks := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.NodeID != nodeID {
++			continue
++		}
++		if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
++			continue
++		}
++		tasks = append(tasks, task)
++	}
++	slices.SortFunc(tasks, func(a, b types.Task) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++	return tasks, nil
++}
++
++func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Task{}, err
++	}
++	if report.TaskID == "" {
++		return types.Task{}, fmt.Errorf("%w: task id is required", store.ErrInvalidState)
++	}
++	if report.NodeID == "" {
++		return types.Task{}, fmt.Errorf("%w: node id is required", store.ErrInvalidState)
++	}
++	if !validAgentTaskStatus(report.Status) {
++		return types.Task{}, fmt.Errorf("%w: task status %q is invalid", store.ErrInvalidState, report.Status)
++	}
++
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	task, ok := s.tasks[report.TaskID]
++	if !ok {
++		return types.Task{}, store.ErrNotFound
++	}
++	if task.NodeID != report.NodeID {
++		return types.Task{}, fmt.Errorf("%w: task is not assigned to node", store.ErrInvalidState)
++	}
++	task.ActualStatus = report.Status
++	task.ContainerID = report.ContainerID
++	task.FailureReason = report.FailureReason
++	task.UpdatedAt = s.now()
++	if report.Status == types.TaskRunning && task.StartedAt.IsZero() {
++		task.StartedAt = task.UpdatedAt
++	}
++	if report.Status == types.TaskStopped || report.Status == types.TaskFailed || report.Status == types.TaskRemoved {
++		task.FinishedAt = task.UpdatedAt
++	}
++	s.tasks[task.ID] = task
++	s.appendEventLocked("task.status", types.EventInfo, "agent", "task status reported", "task", string(task.ID), task.UpdatedAt)
++	return task, nil
++}
++
+ func (s *MemoryService) ListNodes(ctx context.Context) ([]types.Node, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+@@ -258,6 +342,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 		UpdatedAt:         now,
+ 	}
+ 	s.services[service.ID] = service
++	s.reconcileServiceTasksLocked(service, now)
+ 	s.appendEventLocked("service.created", types.EventInfo, "controlplane", "service created", "service", string(service.ID), now)
+ 	return service, nil
+ }
+@@ -337,6 +422,7 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 	service.Spec.Replicas = replicas
+ 	service.UpdatedAt = s.now()
+ 	s.services[id] = service
++	s.reconcileServiceTasksLocked(service, service.UpdatedAt)
+ 	s.appendEventLocked("service.scaled", types.EventInfo, "controlplane", "service scaled", "service", string(id), service.UpdatedAt)
+ 	return service, nil
+ }
+@@ -362,6 +448,7 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	service.DeploymentVersion++
+ 	service.UpdatedAt = now
+ 	s.services[id] = service
++	s.reconcileServiceTasksLocked(service, now)
+ 
+ 	deployment := types.Deployment{
+ 		ID:             types.DeploymentID(newUUID()),
+@@ -500,6 +587,9 @@ func (s *MemoryService) setNodeStatus(ctx context.Context, id types.NodeID, stat
+ 	node.Status = status
+ 	node.UpdatedAt = s.now()
+ 	s.nodes[id] = node
++	if status == types.NodeReady {
++		s.reconcileAllServicesLocked(node.UpdatedAt)
++	}
+ 	s.appendEventLocked("node.status.changed", types.EventInfo, "controlplane", "node status changed", "node", string(id), node.UpdatedAt)
+ 	return node, nil
+ }
+@@ -517,25 +607,6 @@ func (s *MemoryService) appendEventLocked(eventType string, severity types.Event
+ 	})
+ }
+ 
+-func seedNodes(now func() time.Time) map[types.NodeID]types.Node {
+-	timestamp := now()
+-	id := types.NodeID("00000000-0000-4000-8000-000000000001")
+-	return map[types.NodeID]types.Node{
+-		id: {
+-			ID:               id,
+-			Hostname:         "local-node",
+-			AdvertiseAddress: "127.0.0.1",
+-			Labels:           map[string]string{"role": "worker"},
+-			Capacity:         types.Resources{CPU: 4000, Memory: 8 * 1024 * 1024 * 1024},
+-			Allocatable:      types.Resources{CPU: 3500, Memory: 7 * 1024 * 1024 * 1024},
+-			Status:           types.NodeReady,
+-			LastHeartbeatAt:  timestamp,
+-			CreatedAt:        timestamp,
+-			UpdatedAt:        timestamp,
+-		},
+-	}
+-}
+-
+ func directivesForNode(node types.Node) []AgentDirective {
+ 	switch node.Status {
+ 	case types.NodeDraining:
+@@ -547,6 +618,118 @@ func directivesForNode(node types.Node) []AgentDirective {
+ 	}
+ }
+ 
++func (s *MemoryService) reconcileAllServicesLocked(timestamp time.Time) {
++	services := make([]types.Service, 0, len(s.services))
++	for _, service := range s.services {
++		services = append(services, service)
++	}
++	slices.SortFunc(services, func(a, b types.Service) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++	for _, service := range services {
++		s.reconcileServiceTasksLocked(service, timestamp)
++	}
++}
++
++func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, timestamp time.Time) {
++	active := make([]types.Task, 0)
++	for _, task := range s.tasks {
++		if task.ServiceID != service.ID {
++			continue
++		}
++		if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
++			continue
++		}
++		if task.Image != service.Spec.Image || task.Version != service.DeploymentVersion {
++			task.DesiredStatus = types.TaskRemoved
++			task.UpdatedAt = timestamp
++			s.tasks[task.ID] = task
++			continue
++		}
++		active = append(active, task)
++	}
++	slices.SortFunc(active, func(a, b types.Task) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++
++	nodes := s.readyNodesLocked()
++	if len(nodes) == 0 {
++		return
++	}
++
++	for len(active) < service.Spec.Replicas {
++		node := nodes[len(active)%len(nodes)]
++		task := types.Task{
++			ID:            types.TaskID(newUUID()),
++			ServiceID:     service.ID,
++			NodeID:        node.ID,
++			DesiredStatus: types.TaskRunning,
++			ActualStatus:  types.TaskAssigned,
++			Image:         service.Spec.Image,
++			Version:       service.DeploymentVersion,
++			CreatedAt:     timestamp,
++			UpdatedAt:     timestamp,
++		}
++		s.tasks[task.ID] = task
++		active = append(active, task)
++	}
++
++	for i, task := range active {
++		if i >= service.Spec.Replicas {
++			task.DesiredStatus = types.TaskRemoved
++			task.UpdatedAt = timestamp
++			s.tasks[task.ID] = task
++			continue
++		}
++	}
++}
++
++func (s *MemoryService) readyNodesLocked() []types.Node {
++	nodes := make([]types.Node, 0, len(s.nodes))
++	for _, node := range s.nodes {
++		if node.Status == types.NodeReady {
++			nodes = append(nodes, node)
++		}
++	}
++	slices.SortFunc(nodes, func(a, b types.Node) int {
++		if a.ID < b.ID {
++			return -1
++		}
++		if a.ID > b.ID {
++			return 1
++		}
++		return 0
++	})
++	return nodes
++}
++
++func validAgentTaskStatus(status types.TaskStatus) bool {
++	switch status {
++	case types.TaskPulling,
++		types.TaskCreated,
++		types.TaskRunning,
++		types.TaskUnhealthy,
++		types.TaskFailed,
++		types.TaskStopped,
++		types.TaskRemoved:
++		return true
++	default:
++		return false
++	}
++}
++
+ func newUUID() string {
+ 	var b [16]byte
+ 	if _, err := rand.Read(b[:]); err != nil {
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 0621b76..e5ed561 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -280,14 +280,17 @@ type Task struct {
+ type TaskStatus string
+ 
+ const (
+-	TaskPending  TaskStatus = "pending"
+-	TaskAssigned TaskStatus = "assigned"
+-	TaskPulling  TaskStatus = "pulling"
+-	TaskStarting TaskStatus = "starting"
+-	TaskRunning  TaskStatus = "running"
+-	TaskStopping TaskStatus = "stopping"
+-	TaskStopped  TaskStatus = "stopped"
+-	TaskFailed   TaskStatus = "failed"
++	TaskPending   TaskStatus = "pending"
++	TaskAssigned  TaskStatus = "assigned"
++	TaskPulling   TaskStatus = "pulling"
++	TaskCreated   TaskStatus = "created"
++	TaskStarting  TaskStatus = "starting"
++	TaskRunning   TaskStatus = "running"
++	TaskUnhealthy TaskStatus = "unhealthy"
++	TaskStopping  TaskStatus = "stopping"
++	TaskStopped   TaskStatus = "stopped"
++	TaskRemoved   TaskStatus = "removed"
++	TaskFailed    TaskStatus = "failed"
+ )
+ 
+ type Deployment struct {

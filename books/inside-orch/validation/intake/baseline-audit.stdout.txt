@@ -1,0 +1,107 @@
+{
+  "status": "passed",
+  "checked_at_utc": "2026-10-13T00:16:56.281143+00:00",
+  "scope": "Intake integrity and site binding only; no orch builds, tests, labs, or book releases executed.",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "locked_tree_sha": "ff43cd85a88ab213c5c4fa76281d4811957b89aa",
+  "reconstructed_tree_sha": "ff43cd85a88ab213c5c4fa76281d4811957b89aa",
+  "tree_method": "Git blob/tree SHA-1 from snapshot bytes; file modes recovered from supplied chronological commit diffs.",
+  "source_files_checked": 361,
+  "source_snapshot_unchanged": true,
+  "original_prompts_available": 91,
+  "commit_records_available": 105,
+  "commit_diffs_available": 105,
+  "migration_pairs": 16,
+  "tags_recorded_from_source_lock": [
+    "0.1.0",
+    "0.3.0"
+  ],
+  "site_sha": "80801c8d3d97a4d8ff78e0fe69f3f902beda00c0",
+  "site_branch": "book/inside-orch-000",
+  "site_contract": [
+    {
+      "path": "AGENTS.md",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "README.md",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_config.yml",
+      "matches_locked_snapshot": false
+    },
+    {
+      "path": ".gitignore",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "package.json",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "requirements-books.txt",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "scripts/book_catalog.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "scripts/build-books.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "scripts/check-books.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "scripts/check-site.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "scripts/check-publication.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_layouts/book.html",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_layouts/book-overview.html",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_plugins/site_features.rb",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_data/glossary.yml",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "_data/updates.yml",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "books/modern-ci-book/book.json",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "books/modern-ci-book/manuscript/Book.txt",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": "books/modern-ci-book/scripts/build.py",
+      "matches_locked_snapshot": true
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "matches_locked_snapshot": true
+    }
+  ],
+  "supplied_pack_changes": [],
+  "source_git_database_present": false,
+  "source_commit_provenance": "Commit SHA is in supplied lock/history records; no local commit object database is available.",
+  "errors": []
+}

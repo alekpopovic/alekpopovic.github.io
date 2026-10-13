@@ -1,0 +1,3 @@
+# Supplied-verdict teaching contract
+
+`contract.py` is original book teaching code, not an Orch adapter. It executes a deterministic acceptance decision over fake supplied verdicts. No crypto verifier, registry, SBOM ingestion or vulnerability scanner is present. The synthetic digest is explicitly non-executing and not an image reference. Run `python3 -B test_contract.py` from this directory. Time is injected; no network or host mutation occurs. The pending-scan exception does not bypass namespace/digest/policy binding, signature trust or signature expiry. An `allow_with_audit` result is a requirement on a future caller, not an actual durable audit append.

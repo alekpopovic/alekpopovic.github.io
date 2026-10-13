@@ -1,0 +1,1136 @@
+{
+  "snapshot_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:42:05.869997+00:00",
+  "scope": "read-only current source and test inspection; experiments explicitly unrun here",
+  "labels": [
+    "runtime-integrated",
+    "implemented package",
+    "partial integration",
+    "design only",
+    "teaching extension",
+    "future work"
+  ],
+  "capabilities": [
+    {
+      "id": "CAP-001",
+      "capability": "Active persistence",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Default server constructs NewMemoryService, whose constructor allocates process-local maps.",
+      "boundary": "DatabaseURL plus migrations/schema check does not persist these maps.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 146,
+          "end_line": 146,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 279,
+          "end_line": 279,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L279"
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 107,
+          "end_line": 107,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L107"
+        }
+      ],
+      "unrun_experiment": "Create namespace on own loopback server, terminate process, restart and compare list; record database configuration independently.",
+      "chapters": [
+        1,
+        2,
+        6,
+        9,
+        10,
+        35
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-002",
+      "capability": "PostgreSQL store",
+      "classification": "implemented package",
+      "source_supported_claim": "pgx-backed core stores and transactions exist; guarded task assignment checks expected timestamp and pending state.",
+      "boundary": "No normal server constructor injects this store; Store excludes additional workload interfaces and task SQL omits JobID/Command/VolumeMounts.",
+      "evidence": [
+        {
+          "path": "internal/store/postgres.go",
+          "start_line": 38,
+          "end_line": 38,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L38"
+        },
+        {
+          "path": "internal/store/postgres.go",
+          "start_line": 892,
+          "end_line": 892,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892"
+        },
+        {
+          "path": "internal/store/postgres.go",
+          "start_line": 1461,
+          "end_line": 1461,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L1461"
+        },
+        {
+          "path": "internal/store/store.go",
+          "start_line": 111,
+          "end_line": 111,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/store.go#L111"
+        }
+      ],
+      "unrun_experiment": "Run store integration tests on isolated resettable PostgreSQL, then design separate durable-service parity/process-restart test.",
+      "chapters": [
+        9,
+        10,
+        11,
+        31,
+        35
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-003",
+      "capability": "Immediate service placement",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "MemoryService immediately chooses ready, volume-eligible nodes by len(active)%len(eligibleNodes) and stores TaskAssigned.",
+      "boundary": "This path bypasses Plan CPU/memory and placement-label filtering; port helper differs from planner. Do not attribute planner guarantees to ordinary service create.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2249,
+          "end_line": 2249,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2249"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2292,
+          "end_line": 2292,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2292"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2299,
+          "end_line": 2299,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2299"
+        }
+      ],
+      "unrun_experiment": "Create service requesting impossible resources/labels against ready fixture node; compare direct Plan output.",
+      "chapters": [
+        5,
+        6,
+        12,
+        13,
+        19
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-004",
+      "capability": "Scheduler planning and claims",
+      "classification": "partial integration",
+      "source_supported_claim": "One-second server scheduler calls RunOnce; pure Plan filters ready nodes, labels, request capacity, volume eligibility and ports, then deterministic scores.",
+      "boundary": "Most ordinary service tasks are already assigned; independent planning snapshots are not a globally serialized capacity/port reservation.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 177,
+          "end_line": 177,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L177"
+        },
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "start_line": 270,
+          "end_line": 270,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270"
+        },
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "start_line": 170,
+          "end_line": 170,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L170"
+        },
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "start_line": 424,
+          "end_line": 424,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L424"
+        }
+      ],
+      "unrun_experiment": "Run pure fixtures/properties and two-claimer PostgreSQL test separately; distinguish algorithm, one-task claim and global reservations.",
+      "chapters": [
+        12,
+        13,
+        14,
+        31
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-005",
+      "capability": "Standalone reconciler",
+      "classification": "implemented package",
+      "source_supported_claim": "Creates pending tasks, handles version/count/delete/restart policy, can wrap write/event mutations in store.WithTx.",
+      "boundary": "Server uses immediate MemoryService reconciliation and never constructs this Reconciler; default LeaderLock is NoopLeaderLock.",
+      "evidence": [
+        {
+          "path": "internal/reconciler/reconciler.go",
+          "start_line": 58,
+          "end_line": 58,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/reconciler/reconciler.go#L58"
+        },
+        {
+          "path": "internal/reconciler/reconciler.go",
+          "start_line": 293,
+          "end_line": 293,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/reconciler/reconciler.go#L293"
+        },
+        {
+          "path": "internal/reconciler/reconciler.go",
+          "start_line": 266,
+          "end_line": 266,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/reconciler/reconciler.go#L266"
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 146,
+          "end_line": 146,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L146"
+        }
+      ],
+      "unrun_experiment": "Run fake-store repeated passes; separately inspect server process call graph.",
+      "chapters": [
+        14,
+        15,
+        16
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-006",
+      "capability": "Resource enforcement",
+      "classification": "partial integration",
+      "source_supported_claim": "Adapter can set Docker HostConfig.Memory and NanoCPUs from ContainerSpec.Resources.",
+      "boundary": "AgentTask lacks resource member and ensureTask omits Resources from its ContainerSpec literal. Admission/normalization/planning are not active cgroup enforcement.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 130,
+          "end_line": 130,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L130"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start_line": 253,
+          "end_line": 253,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253"
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "start_line": 436,
+          "end_line": 436,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L436"
+        }
+      ],
+      "unrun_experiment": "Inspect actual Docker HostConfig for ordinary deployment versus direct adapter fixture; no inferred limits.",
+      "chapters": [
+        5,
+        7,
+        12,
+        24,
+        40
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-007",
+      "capability": "Lifecycle and operation guards",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Shared desired/actual transition checks, terminal-state restrictions and service operation conflicts protect supported mutations.",
+      "boundary": "Guards do not make independent server memories share state or establish remote side-effect fencing.",
+      "evidence": [
+        {
+          "path": "pkg/types/lifecycle.go",
+          "start_line": 136,
+          "end_line": 136,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L136"
+        },
+        {
+          "path": "pkg/types/lifecycle.go",
+          "start_line": 304,
+          "end_line": 304,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/pkg/types/lifecycle.go#L304"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2697,
+          "end_line": 2697,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2697"
+        }
+      ],
+      "unrun_experiment": "Run table-driven lifecycle and concurrent service-operation tests; process topology remains separate.",
+      "chapters": [
+        4,
+        15,
+        16,
+        17,
+        18
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-008",
+      "capability": "Rollouts and rollback",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Startup constructs rollout controller; asynchronous deployment progression waits for target availability and chooses prior successful service spec for rollback.",
+      "boundary": "Memory-preserving controller restart test is not process restart or database recovery; image history is logical desired spec.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 219,
+          "end_line": 219,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L219"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 1659,
+          "end_line": 1659,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L1659"
+        },
+        {
+          "path": "internal/e2e/chaos_test.go",
+          "start_line": 41,
+          "end_line": 41,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/e2e/chaos_test.go#L41"
+        }
+      ],
+      "unrun_experiment": "Record same-instance controller restart and separate real process restart as different experiments.",
+      "chapters": [
+        16,
+        17,
+        18
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-009",
+      "capability": "Heartbeat/offline/drain",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Startup constructs node monitor; MemoryService records node_lost and conservatively replaces stateless workloads; drain waits for replacement availability.",
+      "boundary": "Offline means missing heartbeat, not proof old containers stopped. Stateful-volume tasks stay for manual recovery; no physical fencing.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 225,
+          "end_line": 225,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L225"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 669,
+          "end_line": 669,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L669"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2073,
+          "end_line": 2073,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2073"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2343,
+          "end_line": 2343,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2343"
+        }
+      ],
+      "unrun_experiment": "Isolate own two-node fake/real workload; stop heartbeat while old endpoint keeps responding and record stale-report handling.",
+      "chapters": [
+        7,
+        19,
+        20,
+        40
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-010",
+      "capability": "Agent runtime adoption",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Agent finds managed containers by task/node/version metadata and reuses/adopts them; unassigned managed containers are cleaned.",
+      "boundary": "Adoption metadata is narrower than full spec equivalence; retries lack permanent/transient taxonomy; connectivity retry can hold polling.",
+      "evidence": [
+        {
+          "path": "internal/agent/agent.go",
+          "start_line": 357,
+          "end_line": 357,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L357"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start_line": 604,
+          "end_line": 604,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L604"
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "start_line": 191,
+          "end_line": 191,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L191"
+        }
+      ],
+      "unrun_experiment": "Inject report loss after create with FakeRuntime, then dedicated Docker test; record managed labels and duplicate count.",
+      "chapters": [
+        7,
+        20,
+        32
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-011",
+      "capability": "HA leadership",
+      "classification": "implemented package",
+      "source_supported_claim": "Local/PostgreSQL electors and RunWithLeadership wrapper implement lease/cancellation seams.",
+      "boundary": "No server loop uses wrapper. Two default servers are independent memories. Session lock return-to-pool cleanup requires real PostgreSQL verification.",
+      "evidence": [
+        {
+          "path": "internal/leadership/leadership.go",
+          "start_line": 35,
+          "end_line": 35,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/leadership.go#L35"
+        },
+        {
+          "path": "internal/leadership/postgres.go",
+          "start_line": 81,
+          "end_line": 81,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L81"
+        },
+        {
+          "path": "internal/leadership/postgres.go",
+          "start_line": 105,
+          "end_line": 105,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L105"
+        }
+      ],
+      "unrun_experiment": "Acquire with session A, cancel parent, attempt with session B and inspect pg_locks; test normal release and failed unlock separately.",
+      "chapters": [
+        21,
+        22,
+        36
+      ],
+      "risk_status": "Potential pooled-session advisory-lock cleanup defect is a hypothesis from cancellation\u2192close\u2192pool release; not an observed outage."
+    },
+    {
+      "id": "CAP-012",
+      "capability": "Autoscaling",
+      "classification": "implemented package",
+      "source_supported_claim": "Controller uses MetricsProvider, recommendation/min/max/cooldown and existing ScaleService path; fake provider exists.",
+      "boundary": "Not constructed in server; no production Prometheus provider or enabled runtime autoscaling inferred.",
+      "evidence": [
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start_line": 78,
+          "end_line": 78,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go#L78"
+        },
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start_line": 142,
+          "end_line": 142,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go#L142"
+        },
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "start_line": 230,
+          "end_line": 230,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go#L230"
+        }
+      ],
+      "unrun_experiment": "Run injected-metric clock tests; verify server composition independently.",
+      "chapters": [
+        23,
+        36,
+        40
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-013",
+      "capability": "User auth and namespaces",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "API supports HS256 JWT roles and namespace roles, namespace-scoped service operations and static-user override.",
+      "boundary": "Empty JWT secret disables user authentication; exp is checked only if positive. Logical namespaces do not provide network/kernel tenant isolation.",
+      "evidence": [
+        {
+          "path": "internal/api/api.go",
+          "start_line": 1259,
+          "end_line": 1259,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1259"
+        },
+        {
+          "path": "internal/auth/auth.go",
+          "start_line": 82,
+          "end_line": 82,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/auth.go#L82"
+        },
+        {
+          "path": "internal/auth/auth.go",
+          "start_line": 126,
+          "end_line": 126,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/auth.go#L126"
+        },
+        {
+          "path": "internal/namespace/context.go",
+          "start_line": 32,
+          "end_line": 32,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/namespace/context.go#L32"
+        }
+      ],
+      "unrun_experiment": "Test missing/expired/optional-exp tokens and cross-namespace API permissions; protect all listeners externally.",
+      "chapters": [
+        24,
+        25,
+        26
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-014",
+      "capability": "Agent credentials",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Registration/heartbeat issue short-lived credentials, hash stored token material and support revocation.",
+      "boundary": "Bootstrap auth optional with empty token; server-to-agent logs use bootstrap token; native HTTP is not mTLS.",
+      "evidence": [
+        {
+          "path": "internal/auth/agent.go",
+          "start_line": 36,
+          "end_line": 36,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go#L36"
+        },
+        {
+          "path": "internal/api/api.go",
+          "start_line": 570,
+          "end_line": 570,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L570"
+        },
+        {
+          "path": "internal/api/api.go",
+          "start_line": 1249,
+          "end_line": 1249,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1249"
+        },
+        {
+          "path": "cmd/orch-agent/main.go",
+          "start_line": 90,
+          "end_line": 90,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-agent/main.go#L90"
+        }
+      ],
+      "unrun_experiment": "Run issuance/expiry/revocation and log access tests; do not claim mTLS integration.",
+      "chapters": [
+        7,
+        24
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-015",
+      "capability": "Secrets and registry auth",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Local AES-GCM envelope encrypts stored values; metadata endpoints exclude plaintext; assigned agents receive needed env/pull credentials.",
+      "boundary": "Local key derivation is not KMS rotation. Docker/node admins can read injected env. Default state still vanishes on server restart.",
+      "evidence": [
+        {
+          "path": "internal/secrets/envelope.go",
+          "start_line": 47,
+          "end_line": 47,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go#L47"
+        },
+        {
+          "path": "internal/secrets/envelope.go",
+          "start_line": 99,
+          "end_line": 99,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go#L99"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 821,
+          "end_line": 821,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L821"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 854,
+          "end_line": 854,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L854"
+        }
+      ],
+      "unrun_experiment": "Run wrong-key/tamper and metadata-vs-agent tests; capture only redacted synthetic credentials.",
+      "chapters": [
+        24,
+        27,
+        28
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-016",
+      "capability": "Admission and container security",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Service admission uses cluster policy; propagated security context reaches Docker adapter for user/rootfs/capabilities/host options.",
+      "boundary": "Policy acceptance says nothing about resource-limit propagation. Privileged allowances and host mounts require own threat model; no universal non-root image guarantee.",
+      "evidence": [
+        {
+          "path": "internal/admission/admission.go",
+          "start_line": 71,
+          "end_line": 71,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/admission/admission.go#L71"
+        },
+        {
+          "path": "internal/policy/policy.go",
+          "start_line": 34,
+          "end_line": 34,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/policy/policy.go#L34"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start_line": 314,
+          "end_line": 314,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L314"
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "start_line": 438,
+          "end_line": 438,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L438"
+        }
+      ],
+      "unrun_experiment": "Test denied/allowed policy fields and inspect HostConfig separately.",
+      "chapters": [
+        5,
+        24,
+        25
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-017",
+      "capability": "Namespace quotas",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Memory mutations account requests/replicas/services/ports/secrets/registry entries under one mutex; PostgreSQL path serializes namespace quota checks.",
+      "boundary": "Accounting is requested allocation rather than measured usage; memory-process atomicity differs from shared-DB transactional path and unused durable server composition.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 2153,
+          "end_line": 2153,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2153"
+        },
+        {
+          "path": "internal/store/postgres.go",
+          "start_line": 149,
+          "end_line": 149,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L149"
+        },
+        {
+          "path": "internal/store/postgres.go",
+          "start_line": 154,
+          "end_line": 154,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L154"
+        }
+      ],
+      "unrun_experiment": "Race concurrent memory scales; separately execute DB quota/store transactions with resettable database.",
+      "chapters": [
+        10,
+        11,
+        26,
+        37
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-018",
+      "capability": "Image identity",
+      "classification": "partial integration",
+      "source_supported_claim": "Parser records supplied registry/name/tag/digest; explicit digest reference can be pinned and admission rejects mutable references when policy requires.",
+      "boundary": "ParserResolver performs parsing, not network tag-to-digest resolution. Mutable tag receives no independently fetched digest.",
+      "evidence": [
+        {
+          "path": "internal/image/reference.go",
+          "start_line": 20,
+          "end_line": 20,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L20"
+        },
+        {
+          "path": "internal/image/reference.go",
+          "start_line": 78,
+          "end_line": 78,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L78"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 303,
+          "end_line": 303,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L303"
+        }
+      ],
+      "unrun_experiment": "Compare supplied digest to mutable reference in parser and end-to-end payload; registry-resolution extension requires new tested Resolver.",
+      "chapters": [
+        5,
+        28,
+        29
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-019",
+      "capability": "GitOps sync",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Startup controller clones via exec.CommandContext, parses sorted manifests, applies sequentially, records revision/ownership and optionally prunes.",
+      "boundary": "Not atomic across manifests; no signed commit enforcement or private credential provider. Lexical path checks are not a proven symlink sandbox.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 165,
+          "end_line": 165,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L165"
+        },
+        {
+          "path": "internal/gitops/gitops.go",
+          "start_line": 65,
+          "end_line": 65,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L65"
+        },
+        {
+          "path": "internal/gitops/gitops.go",
+          "start_line": 198,
+          "end_line": 198,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L198"
+        },
+        {
+          "path": "internal/gitops/gitops.go",
+          "start_line": 300,
+          "end_line": 300,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L300"
+        }
+      ],
+      "unrun_experiment": "Temporary local repo with first valid and second bad manifest, prune and adversarial symlink path fixture.",
+      "chapters": [
+        29,
+        30,
+        40
+      ],
+      "risk_status": "Symlink escape is an unresolved filesystem threat-model hypothesis until adversarial fixture executed."
+    },
+    {
+      "id": "CAP-020",
+      "capability": "GitOps drift",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "MemoryService.GitOpsStatus compares live desired specs and can auto-revert while status is read.",
+      "boundary": "Status GET can mutate state; periodic Git sync reapply is a different path. No all-service transaction.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 64,
+          "end_line": 64,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L64"
+        },
+        {
+          "path": "internal/gitops/gitops.go",
+          "start_line": 174,
+          "end_line": 174,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L174"
+        }
+      ],
+      "unrun_experiment": "Manual scale then status under warn/auto-revert and compare mutations/events.",
+      "chapters": [
+        30
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-021",
+      "capability": "Jobs",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "MemoryService creates pending job tasks; scheduler synthesizes service view; agent sends command/exit report; retries use new task IDs.",
+      "boundary": "retryOrFailJobLocked retries immediately, not timed exponential backoff. Additional service env/auth/security envelope is absent on job ListAssignedTasks branch.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 116,
+          "end_line": 116,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L116"
+        },
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 217,
+          "end_line": 217,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L217"
+        },
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "start_line": 340,
+          "end_line": 340,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L340"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 780,
+          "end_line": 780,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L780"
+        }
+      ],
+      "unrun_experiment": "Run success/failure/retry/delete fixtures; record attempts and timestamps; inspect job payload separately.",
+      "chapters": [
+        31
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-022",
+      "capability": "Cron jobs",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Startup cron controller uses clock abstraction, five-field parser, timezone, concurrency policy and missed-run limits.",
+      "boundary": "Day-of-month AND day-of-week, bounded 366-day next search; loop returns on pass error and startup only logs stop. Verify namespace traversal before universal claims.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 171,
+          "end_line": 171,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L171"
+        },
+        {
+          "path": "internal/cronjobs/cronjobs.go",
+          "start_line": 194,
+          "end_line": 194,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go#L194"
+        },
+        {
+          "path": "internal/cronjobs/cronjobs.go",
+          "start_line": 205,
+          "end_line": 205,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go#L205"
+        },
+        {
+          "path": "internal/cronjobs/cronjobs.go",
+          "start_line": 40,
+          "end_line": 40,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go#L40"
+        }
+      ],
+      "unrun_experiment": "Inject clock for AND/next-year boundary, Forbid/Replace/Allow and per-namespace traversal.",
+      "chapters": [
+        31,
+        32
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-023",
+      "capability": "Local volumes",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Volume/claim/attachment records constrain node and single-writer eligibility; agent sends Docker named volume mounts.",
+      "boundary": "Local Docker volume is not replicated storage; safe automated stateful identity/order/recovery remains design only. Memory attachment ownership is not physical fencing.",
+      "evidence": [
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 488,
+          "end_line": 488,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L488"
+        },
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 512,
+          "end_line": 512,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L512"
+        },
+        {
+          "path": "internal/agent/agent.go",
+          "start_line": 287,
+          "end_line": 287,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L287"
+        },
+        {
+          "path": "internal/docker/docker.go",
+          "start_line": 453,
+          "end_line": 453,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L453"
+        }
+      ],
+      "unrun_experiment": "Dedicated named volume write/read, incompatible node/second-writer fixture, cleanup only owned volumes.",
+      "chapters": [
+        19,
+        32,
+        33
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-024",
+      "capability": "Discovery, DNS and Traefik",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "API derives healthy endpoints and Traefik config; optional ORCH_DNS_ADDR starts UDP DNS in server with configured TTL.",
+      "boundary": "Host-port discovery is not overlay/CNI/network policy, and external reverse proxy remains separate process.",
+      "evidence": [
+        {
+          "path": "internal/api/api.go",
+          "start_line": 1165,
+          "end_line": 1165,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1165"
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 149,
+          "end_line": 149,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L149"
+        },
+        {
+          "path": "internal/dns/server.go",
+          "start_line": 47,
+          "end_line": 47,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/dns/server.go#L47"
+        },
+        {
+          "path": "internal/traefik/config.go",
+          "start_line": 46,
+          "end_line": 46,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/traefik/config.go#L46"
+        }
+      ],
+      "unrun_experiment": "Run endpoint filters/config fixtures plus own loopback UDP DNS; container routing requires own isolated network lab.",
+      "chapters": [
+        33,
+        34
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-025",
+      "capability": "Notifications",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "MemoryService dispatcher uses webhook HTTP sender, retries/backoff, optional HMAC and redaction.",
+      "boundary": "No durable queue or encrypted sink persistence established; arbitrary outbound target URLs need separate network threat model.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 147,
+          "end_line": 147,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L147"
+        },
+        {
+          "path": "internal/notifications/notifications.go",
+          "start_line": 77,
+          "end_line": 77,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/notifications/notifications.go#L77"
+        },
+        {
+          "path": "internal/controlplane/workloads.go",
+          "start_line": 524,
+          "end_line": 524,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L524"
+        }
+      ],
+      "unrun_experiment": "httptest signed delivery/retry/redaction plus explicitly scoped prohibited-network cases.",
+      "chapters": [
+        34,
+        38
+      ],
+      "risk_status": "Outbound-network abuse risk is source-derived hypothesis, not proof all URLs are exploitable."
+    },
+    {
+      "id": "CAP-026",
+      "capability": "Upgrade and migrations",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Registration/heartbeat check agent ranges; opt-in startup schema guard and explicit migration subcommands use manager locking/version transactions.",
+      "boundary": "Schema check is opt-in; compatibility constants and version warning do not prove rolling upgrades or shared durable runtime.",
+      "evidence": [
+        {
+          "path": "internal/version/version.go",
+          "start_line": 12,
+          "end_line": 12,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/version/version.go#L12"
+        },
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "start_line": 544,
+          "end_line": 544,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L544"
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 107,
+          "end_line": 107,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L107"
+        },
+        {
+          "path": "internal/migrations/manager.go",
+          "start_line": 138,
+          "end_line": 138,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/migrations/manager.go#L138"
+        }
+      ],
+      "unrun_experiment": "Run compatibility fixtures and all 16 migrations up/status/down on isolated DB; test mixed-version binaries separately.",
+      "chapters": [
+        35
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-027",
+      "capability": "Retention",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Daily startup loop calls memory pruning; API supports dry run; active/unresolved task history is protected by explicit predicates.",
+      "boundary": "Prunes memory maps/slices, not an integrated durable retention service; requested targets must be checked one by one.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 206,
+          "end_line": 206,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L206"
+        },
+        {
+          "path": "internal/controlplane/operations.go",
+          "start_line": 26,
+          "end_line": 26,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go#L26"
+        },
+        {
+          "path": "internal/controlplane/operations.go",
+          "start_line": 102,
+          "end_line": 102,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go#L102"
+        }
+      ],
+      "unrun_experiment": "Fixed-clock dry-run and preservation tests; compare every target, not just aggregate count.",
+      "chapters": [
+        35,
+        38
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-028",
+      "capability": "Usage/export and billing",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Minute startup snapshots record requested resource/replica/service/task-runtime/port/storage-claim aggregates and report/CSV surfaces.",
+      "boundary": "Requested allocation snapshots are not measured cgroup consumption or financial-grade accounting. Payments/invoicing are future work.",
+      "evidence": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 195,
+          "end_line": 195,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L195"
+        },
+        {
+          "path": "internal/controlplane/operations.go",
+          "start_line": 116,
+          "end_line": 116,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go#L116"
+        },
+        {
+          "path": "internal/controlplane/operations.go",
+          "start_line": 158,
+          "end_line": 158,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/operations.go#L158"
+        }
+      ],
+      "unrun_experiment": "Fixed-clock known allocation and CSV fixture; never infer currency or actual CPU usage.",
+      "chapters": [
+        37
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-029",
+      "capability": "Events, audits, metrics, profiling",
+      "classification": "runtime-integrated",
+      "source_supported_claim": "Default events/audits remain memory-backed; request/scheduler/rollout/node/agent metrics use injected instruments; optional debug listener serves pprof.",
+      "boundary": "Standalone reconciler metrics are not live if no reconciler loop. Audit append best effort; metrics exempt user JWT; debug listener unauthenticated and configurable.",
+      "evidence": [
+        {
+          "path": "internal/api/api.go",
+          "start_line": 1255,
+          "end_line": 1255,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1255"
+        },
+        {
+          "path": "internal/api/api.go",
+          "start_line": 1199,
+          "end_line": 1199,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1199"
+        },
+        {
+          "path": "cmd/orch-server/main.go",
+          "start_line": 126,
+          "end_line": 126,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L126"
+        },
+        {
+          "path": "internal/api/debug.go",
+          "start_line": 8,
+          "end_line": 8,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/debug.go#L8"
+        }
+      ],
+      "unrun_experiment": "Inspect actual /metrics series/auth and default-disabled debug endpoint; prove event atomicity separately with DB transaction.",
+      "chapters": [
+        10,
+        11,
+        24,
+        38,
+        39
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    },
+    {
+      "id": "CAP-030",
+      "capability": "Signing, scanning, CNI, plugins, stateful orchestration",
+      "classification": "design only",
+      "source_supported_claim": "Dedicated design documents describe future signing/trust, SBOM/scans, overlay networking, plugin ABI and stateful identity/order/recovery.",
+      "boundary": "No default implementation/enforcement or production outcome follows from design presence.",
+      "evidence": [
+        {
+          "path": "docs/IMAGE_SIGNING_DESIGN.md",
+          "start_line": 1,
+          "end_line": 1,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/IMAGE_SIGNING_DESIGN.md#L1"
+        },
+        {
+          "path": "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md",
+          "start_line": 1,
+          "end_line": 1,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/SUPPLY_CHAIN_SECURITY_DESIGN.md#L1"
+        },
+        {
+          "path": "docs/NETWORKING_DESIGN.md",
+          "start_line": 1,
+          "end_line": 1,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/NETWORKING_DESIGN.md#L1"
+        },
+        {
+          "path": "docs/PLUGIN_SYSTEM_DESIGN.md",
+          "start_line": 1,
+          "end_line": 1,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/PLUGIN_SYSTEM_DESIGN.md#L1"
+        },
+        {
+          "path": "docs/STATEFUL_WORKLOADS_DESIGN.md",
+          "start_line": 1,
+          "end_line": 1,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/docs/STATEFUL_WORKLOADS_DESIGN.md#L1"
+        }
+      ],
+      "unrun_experiment": "No experiment can validate unimplemented enforcement; use tested teaching extension and new edition lock if implemented.",
+      "chapters": [
+        29,
+        32,
+        33,
+        36,
+        40
+      ],
+      "risk_status": "source-derived boundary; no runtime outcome asserted"
+    }
+  ]
+}

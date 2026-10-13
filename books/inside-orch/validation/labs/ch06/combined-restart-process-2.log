@@ -1,0 +1,7 @@
+{"time":"2026-10-13T02:57:33.058079338+02:00","level":"INFO","msg":"starting server","addr":"127.0.0.1:32883"}
+{"time":"2026-10-13T02:57:33.104778806+02:00","level":"INFO","msg":"http request","request_id":"6979c679-060e-446c-91c6-3904364ae76d","method":"GET","path":"/readyz","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.122924488+02:00","level":"INFO","msg":"http request","request_id":"f3a2deb9-940e-43da-9d94-9ed4b1e5eb5f","method":"GET","path":"/v1/services","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.123479532+02:00","level":"INFO","msg":"http request","request_id":"c6383aae-00c3-4070-819c-971b261b707b","method":"GET","path":"/v1/tasks","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.123885949+02:00","level":"INFO","msg":"http request","request_id":"0c52fb16-ef8e-426e-814f-de2d76e7df47","method":"GET","path":"/v1/nodes","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.124345448+02:00","level":"INFO","msg":"http request","request_id":"5c4db3a3-ba83-4389-b591-3ba8c26e910f","method":"GET","path":"/v1/namespaces","status":200,"duration_ms":0}
+{"time":"2026-10-13T02:57:33.124581867+02:00","level":"INFO","msg":"shutting down server"}

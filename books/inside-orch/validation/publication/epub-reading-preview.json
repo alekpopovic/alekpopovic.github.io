@@ -1,0 +1,1246 @@
+{
+  "extraction_integrity": {
+    "archive_members_byte_equal": true,
+    "archive_members": 206,
+    "xhtml_documents": 200,
+    "footnote_markup_count": 0
+  },
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "started_at_utc": "2026-10-13T02:57:48.826Z",
+  "command": [
+    "/home/popac/.local/share/mise/installs/node/26.4.0/bin/node",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/preview_epub.cjs",
+    "/tmp/inside-orch-epub-preview-e5ba1daf5715"
+  ],
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "browser_version": "155.0.8059.39",
+  "preview_engine": "Actual Chromium file:// rendering of unmodified extracted EPUB XHTML; reader-type preference simulated by font-size override, OS theme by prefers-color-scheme.",
+  "cases": [
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Chapter 4 - Domain Models and State Machines",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 2,
+      "tables": 1,
+      "images": [
+        {
+          "src": "../media/examples/diagrams/task-lifecycle.png",
+          "loaded": true,
+          "alt": "Selected task lifecycle: server assignment, accepted agent progress and health reports, terminal failure/stop cleanup, and duplicate removed acknowledgement."
+        }
+      ],
+      "wideElements": [],
+      "file": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04.png",
+      "screenshot_sha256": "ec5eb68e4cbc7212ccbe741651a3d83210bff29289ba9129c04887cf19952cca",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-table.png",
+      "diagram_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-diagram.png"
+    },
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 3,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17.png",
+      "screenshot_sha256": "ceb28056e7e2e25d37ea143b3e45029fb8dd67d5da1d5b8d97bc5baed7db6eed",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix A - CLI, API, and Configuration Reference",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 1,
+      "tables": 2,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/a-cli-api-config.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA.png",
+      "screenshot_sha256": "5a4a907826f382b76e8d896f15f84092db80162e30034fda90427debd2d18746",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix B - Lifecycle States and Invariant Reference",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 6,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/b-lifecycle-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixB.png",
+      "screenshot_sha256": "ff90faf6c456787d2ed24fda322c4ec1667b59391be67db9268f8a615b27490a",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixB-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 12,
+      "tables": 0,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/c-annotated-history.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC.png",
+      "screenshot_sha256": "4f287e3ce5ee52d8b37afd89e6669bfb323611e73e0a17c67687169affee8b5e",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC-code.png",
+      "long_url_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC-long-url.png"
+    },
+    {
+      "scenario": {
+        "id": "small-light",
+        "width": 390,
+        "height": 844,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/f-glossary-bibliography.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixF.png",
+      "screenshot_sha256": "90d513958469245c75e16af344787609a059b41ed6b64b3d0b5772d558b5a69e",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixF-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Chapter 4 - Domain Models and State Machines",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 2,
+      "tables": 1,
+      "images": [
+        {
+          "src": "../media/examples/diagrams/task-lifecycle.png",
+          "loaded": true,
+          "alt": "Selected task lifecycle: server assignment, accepted agent progress and health reports, terminal failure/stop cleanup, and duplicate removed acknowledgement."
+        }
+      ],
+      "wideElements": [],
+      "file": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04.png",
+      "screenshot_sha256": "224ea616dbc92cac72c6f0f5eda36deca408d7b364cadae4083eed0a2cc32894",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-table.png",
+      "diagram_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-diagram.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 3,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17.png",
+      "screenshot_sha256": "3e1ee002566fe9fd72c22b549ff43d4ab4f001e347462dd7d75968333df3825a",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix A - CLI, API, and Configuration Reference",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 1,
+      "tables": 2,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/a-cli-api-config.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA.png",
+      "screenshot_sha256": "949a1be5072c718b173e368477ae82578ca027aab85e2b306e32b8cd66d3297b",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix B - Lifecycle States and Invariant Reference",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 6,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/b-lifecycle-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixB.png",
+      "screenshot_sha256": "c5439ccbea613a3aee32f97d01a03de7c5d85fed8841982a3094a9d43ebeebd5",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixB-table.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 12,
+      "tables": 0,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/c-annotated-history.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC.png",
+      "screenshot_sha256": "9ad23c9878668e3300a89e447a0d801ddd6eb7f247e9546a23e52d08014c0b18",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC-code.png",
+      "long_url_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC-long-url.png"
+    },
+    {
+      "scenario": {
+        "id": "small-large-dark",
+        "width": 390,
+        "height": 844,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index",
+      "viewport": 390,
+      "documentWidth": 390,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/f-glossary-bibliography.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixF.png",
+      "screenshot_sha256": "a0f53448dde90e8a2eb1102ffa862d3fed329632d1632fba0927d44e8ed8d718",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixF-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Chapter 4 - Domain Models and State Machines",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 2,
+      "tables": 1,
+      "images": [
+        {
+          "src": "../media/examples/diagrams/task-lifecycle.png",
+          "loaded": true,
+          "alt": "Selected task lifecycle: server assignment, accepted agent progress and health reports, terminal failure/stop cleanup, and duplicate removed acknowledgement."
+        }
+      ],
+      "wideElements": [],
+      "file": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04.png",
+      "screenshot_sha256": "a2bbc12836f11d6238eb3cc9d6965ac7f6584657355994d97b490d7ff600e014",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-table.png",
+      "diagram_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-diagram.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 3,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17.png",
+      "screenshot_sha256": "4db787f29411985222a40dc1e1f4518c34ec6fd36e84e6138602393a77935e2e",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix A - CLI, API, and Configuration Reference",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 1,
+      "tables": 2,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/a-cli-api-config.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA.png",
+      "screenshot_sha256": "34aeb613d7da856b0ff7be902403f537fb5b743088bb4117fd9b09be9456aea3",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix B - Lifecycle States and Invariant Reference",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 6,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/b-lifecycle-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixB.png",
+      "screenshot_sha256": "8fff0406b9e40249711fcb950f19f64c92fa46ac0bc5a59f50b5e6058ce17274",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixB-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 12,
+      "tables": 0,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/c-annotated-history.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC.png",
+      "screenshot_sha256": "5330e3774adaa8d9749395207e77244929ae4ccfab8eeaf6c654b07aad3c765b",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC-code.png",
+      "long_url_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC-long-url.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-light",
+        "width": 1280,
+        "height": 900,
+        "size": 16,
+        "color": "light"
+      },
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "16px",
+      "bodyColor": "rgb(0, 0, 0)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/f-glossary-bibliography.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixF.png",
+      "screenshot_sha256": "0fb8f43d20ac796d8681db34317cca162ca85fe96a40ab121a3df6ec6a3cb026",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixF-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Chapter 4 - Domain Models and State Machines",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 2,
+      "tables": 1,
+      "images": [
+        {
+          "src": "../media/examples/diagrams/task-lifecycle.png",
+          "loaded": true,
+          "alt": "Selected task lifecycle: server assignment, accepted agent progress and health reports, terminal failure/stop cleanup, and duplicate removed acknowledgement."
+        }
+      ],
+      "wideElements": [],
+      "file": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04.png",
+      "screenshot_sha256": "0cb099eaf8554eca11f1366d62c55a83bc19e0dfc2f8757aa387436a514364e5",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-table.png",
+      "diagram_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-diagram.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Chapter 17 - Rolling Updates and Rollback Invariants",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 3,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17.png",
+      "screenshot_sha256": "7a1bab8b3c85b23978a91322f3f35e09d8b7678536cfa96846ee5350bfd7aa83",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix A - CLI, API, and Configuration Reference",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 1,
+      "tables": 2,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/a-cli-api-config.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA.png",
+      "screenshot_sha256": "bdb7e1ad7477460e9debf55ee633687e88007182f251f9b76e65d5139578b8d7",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA-code.png",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix B - Lifecycle States and Invariant Reference",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 6,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/b-lifecycle-invariants.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixB.png",
+      "screenshot_sha256": "a94b62f15cd48f1925156654016f14f7586a49cf477c9c8b028fad982e1bade9",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixB-table.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 12,
+      "tables": 0,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/c-annotated-history.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC.png",
+      "screenshot_sha256": "7f760d046ecdc9f2419bf6228f63f27d64ed7024325164140fd4bd777d531357",
+      "code_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC-code.png",
+      "long_url_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC-long-url.png"
+    },
+    {
+      "scenario": {
+        "id": "wide-large-dark",
+        "width": 1280,
+        "height": 900,
+        "size": 24,
+        "color": "dark"
+      },
+      "title": "Appendix F - Glossary, Bibliography, and Boundary Index",
+      "viewport": 1280,
+      "documentWidth": 1280,
+      "bodyFont": "24px",
+      "bodyColor": "rgb(255, 255, 255)",
+      "background": "rgba(0, 0, 0, 0)",
+      "codeBlocks": 0,
+      "tables": 1,
+      "images": [],
+      "wideElements": [],
+      "file": "EPUB/text/f-glossary-bibliography.xhtml",
+      "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixF.png",
+      "screenshot_sha256": "14adc0b5b20bd4c87d6d3e96447a7ad27b40ddb59e89fd759383c5028a890173",
+      "table_screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixF-table.png"
+    }
+  ],
+  "navigation": [
+    {
+      "action": "Click contents Chapter 4",
+      "url": "file:///tmp/inside-orch-epub-preview-e5ba1daf5715/EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "h1": "Chapter 4 - Domain Models and State Machines",
+      "passed": true,
+      "contents_entries": 49
+    },
+    {
+      "action": "Follow Chapter 4 worked answers",
+      "url": "file:///tmp/inside-orch-epub-preview-e5ba1daf5715/EPUB/text/companion-manuscript-solutions-ch04-md.xhtml",
+      "h1": "Chapter 4 - Worked Answers",
+      "passed": true
+    },
+    {
+      "action": "Return from answers to Chapter 4",
+      "url": "file:///tmp/inside-orch-epub-preview-e5ba1daf5715/EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "passed": true
+    }
+  ],
+  "failures": [],
+  "network_requests": [],
+  "screenshots_root": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots",
+  "cover": {
+    "screenshot": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/cover.png",
+    "source": "EPUB/media/cover.png"
+  },
+  "finished_at_utc": "2026-10-13T02:57:55.426Z",
+  "overall_status": "passed",
+  "preview_limitations": [
+    "Chromium XHTML preview is not Kindle, Apple Books, Kobo, Calibre or a dedicated EPUB engine.",
+    "Font-size override simulates user-selected type size; pagination and proprietary reading controls were not tested.",
+    "Footnote inspection applies only if the edition actually contains footnote markup.",
+    "Element overflow and screenshots remain explicit observations; structural EPUBCheck is a separate root-owned validation."
+  ],
+  "content_complete": {
+    "reading_sections": 47,
+    "all_present": true,
+    "sections": [
+      {
+        "canonical_path": "manuscript/00-preface.md",
+        "epub_member": "EPUB/text/00-preface.xhtml",
+        "rendered_h1": "Preface",
+        "canonical_sha256": "7b4ffbaeac31756c2f2cbd27762e344c5fc05ce443cb8ee16cec040c8ea1bf35"
+      },
+      {
+        "canonical_path": "manuscript/appendices/a-cli-api-config.md",
+        "epub_member": "EPUB/text/a-cli-api-config.xhtml",
+        "rendered_h1": "Appendix A - CLI, API, and Configuration Reference",
+        "canonical_sha256": "36077d9631361ab46b881011e6d4622374ee526fc2ea775155987705723de36c"
+      },
+      {
+        "canonical_path": "manuscript/appendices/b-lifecycle-invariants.md",
+        "epub_member": "EPUB/text/b-lifecycle-invariants.xhtml",
+        "rendered_h1": "Appendix B - Lifecycle States and Invariant Reference",
+        "canonical_sha256": "c9a04d773f4ac4e8ff76d1b828daa460829a6dcdfa611ff97b557d7b128cbced"
+      },
+      {
+        "canonical_path": "manuscript/appendices/c-annotated-history.md",
+        "epub_member": "EPUB/text/c-annotated-history.xhtml",
+        "rendered_h1": "Appendix C - Commit Atlas and Original Prompt Crosswalk",
+        "canonical_sha256": "3fc5d10c55bd7a4b622098ada7a9efc00d4516485d678e35d7316a99e1ede227"
+      },
+      {
+        "canonical_path": "manuscript/appendices/d-exercises-solutions.md",
+        "epub_member": "EPUB/text/d-exercises-solutions.xhtml",
+        "rendered_h1": "Appendix D - Worked Exercises and Design Solutions",
+        "canonical_sha256": "bf903c344ad490fd329cc794019151ba03c542223de5c1f64e1db2e58627b493"
+      },
+      {
+        "canonical_path": "manuscript/appendices/e-ops-measurement.md",
+        "epub_member": "EPUB/text/e-ops-measurement.xhtml",
+        "rendered_h1": "Appendix E - Operator Runbooks and Measurement Contracts",
+        "canonical_sha256": "a2b1cdae1d551ba44d58d49c041cf0d8116093fef69856137c16d30faf65ce16"
+      },
+      {
+        "canonical_path": "manuscript/appendices/f-glossary-bibliography.md",
+        "epub_member": "EPUB/text/f-glossary-bibliography.xhtml",
+        "rendered_h1": "Appendix F - Glossary, Bibliography, and Boundary Index",
+        "canonical_sha256": "cdecf81711ad0914d052b1de460d4c373a7e81eb744134eeda5be77b81a377c6"
+      },
+      {
+        "canonical_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+        "epub_member": "EPUB/text/01-why-build-a-container-orchestrator.xhtml",
+        "rendered_h1": "Chapter 1 - Why Build a Container Orchestrator?",
+        "canonical_sha256": "a9637e96c3111c9af16f81b883ee7c13c77223a33cddc45b7a65f1a39c18772a"
+      },
+      {
+        "canonical_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+        "epub_member": "EPUB/text/02-a-repository-built-for-reasoning.xhtml",
+        "rendered_h1": "Chapter 2 - A Repository Built for Reasoning",
+        "canonical_sha256": "c8ac17616ef2ea48924b8e5e8f10b7b6d8883d146d9b96b0481bd6b67fe35754"
+      },
+      {
+        "canonical_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+        "epub_member": "EPUB/text/03-boot-the-lab-and-deploy-the-first-service.xhtml",
+        "rendered_h1": "Chapter 3 - Boot the Lab and Deploy the First Service",
+        "canonical_sha256": "4f17e41011d18044c557a7163dd931276c7d77b345694391da80a2ef07d9f499"
+      },
+      {
+        "canonical_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+        "epub_member": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+        "rendered_h1": "Chapter 4 - Domain Models and State Machines",
+        "canonical_sha256": "00c68cb986cfe1b5b6e2d56e89cebeea963112c843aec52b293ffbdc29d54a37"
+      },
+      {
+        "canonical_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+        "epub_member": "EPUB/text/05-service-specifications-resources-and-ports.xhtml",
+        "rendered_h1": "Chapter 5 - Service Specifications, Resources, and Ports",
+        "canonical_sha256": "7f59a6f6c0368614fd48f5cbac725e9b4ac2bd3ee0829f402a578fcbc1f79c72"
+      },
+      {
+        "canonical_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+        "epub_member": "EPUB/text/06-follow-one-request-through-the-control-plane.xhtml",
+        "rendered_h1": "Chapter 6 - Follow One Request Through the Control Plane",
+        "canonical_sha256": "9d005bf18dfd5ef38f9b68a8f5c2b0d49643f71f914770e731cbd91c07c2ef4e"
+      },
+      {
+        "canonical_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+        "epub_member": "EPUB/text/07-http-contracts-and-compatible-apis.xhtml",
+        "rendered_h1": "Chapter 7 - HTTP Contracts and Compatible APIs",
+        "canonical_sha256": "50bd746713243cc8960b2c0c64d04afd931c733dfd72064dd9610b6a50929479"
+      },
+      {
+        "canonical_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+        "epub_member": "EPUB/text/08-a-cli-that-operators-can-automate.xhtml",
+        "rendered_h1": "Chapter 8 - A CLI That Operators Can Automate",
+        "canonical_sha256": "53b7d0099543b359341694891750f5d19666f8859f7df67702570dd321e18b76"
+      },
+      {
+        "canonical_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+        "epub_member": "EPUB/text/09-persistence-transactions-and-optimistic-concurrency.xhtml",
+        "rendered_h1": "Chapter 9 - Persistence, Transactions, and Optimistic Concurrency",
+        "canonical_sha256": "648f3fbee979362cd13a1906aaa54d4ba4d38c497246d508f41bb611286b5338"
+      },
+      {
+        "canonical_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+        "epub_member": "EPUB/text/10-a-deterministic-scheduler.xhtml",
+        "rendered_h1": "Chapter 10 - A Deterministic Scheduler",
+        "canonical_sha256": "9567bcfd21c1475a77077fc45cdd2419ca3c4d166f4dab96540f3582c4d88c7f"
+      },
+      {
+        "canonical_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+        "epub_member": "EPUB/text/11-reconciliation-as-repeated-convergence.xhtml",
+        "rendered_h1": "Chapter 11 - Reconciliation as Repeated Convergence",
+        "canonical_sha256": "8fc62b41ab4238d4ed0a5d9b1746ef2993c43fe13c8da5afc4a84fd7d5edd545"
+      },
+      {
+        "canonical_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+        "epub_member": "EPUB/text/12-idempotent-docker-operations-and-drift.xhtml",
+        "rendered_h1": "Chapter 12 - Idempotent Docker Operations and Drift",
+        "canonical_sha256": "120313bcd152942b3f6ceab5e50eea788f77054f0e13d9ff419ec62553b33468"
+      },
+      {
+        "canonical_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+        "epub_member": "EPUB/text/13-agents-heartbeats-and-task-reports.xhtml",
+        "rendered_h1": "Chapter 13 - Agents, Heartbeats, and Task Reports",
+        "canonical_sha256": "dbfe4b4de8a79d21638b14f81d280a7b50ba5c28e2d3ea160fb3d41bf6e63b43"
+      },
+      {
+        "canonical_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+        "epub_member": "EPUB/text/14-health-checks-that-respect-trust-boundaries.xhtml",
+        "rendered_h1": "Chapter 14 - Health Checks That Respect Trust Boundaries",
+        "canonical_sha256": "7be76dbc362d9ac4186a0186482b093455fa6620497b04674d0a600c71cb10e4"
+      },
+      {
+        "canonical_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+        "epub_member": "EPUB/text/15-events-audits-and-notification-boundaries.xhtml",
+        "rendered_h1": "Chapter 15 - Events, Audits, and Notification Boundaries",
+        "canonical_sha256": "c087e6bc484ae5f0b8378813c94c5fd6b8094da6b5e31da25ce276e1c6aac92a"
+      },
+      {
+        "canonical_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+        "epub_member": "EPUB/text/16-log-streaming-without-losing-control.xhtml",
+        "rendered_h1": "Chapter 16 - Log Streaming Without Losing Control",
+        "canonical_sha256": "458206d9418df8def28df81b5816e1444b81cc366affe6c8e89673a0bd108a11"
+      },
+      {
+        "canonical_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+        "epub_member": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+        "rendered_h1": "Chapter 17 - Rolling Updates and Rollback Invariants",
+        "canonical_sha256": "458d6907406818a55114063a70cd91c4ada8e83e0805bc53043bbdf70db814f8"
+      },
+      {
+        "canonical_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+        "epub_member": "EPUB/text/18-safe-deletion-and-resource-cleanup.xhtml",
+        "rendered_h1": "Chapter 18 - Safe Deletion and Resource Cleanup",
+        "canonical_sha256": "e700401572d68750891b1bb5f69a854c25ec86cc262c8cda9f00cf390b7e6c4e"
+      },
+      {
+        "canonical_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+        "epub_member": "EPUB/text/19-offline-nodes-draining-and-rescheduling.xhtml",
+        "rendered_h1": "Chapter 19 - Offline Nodes, Draining, and Rescheduling",
+        "canonical_sha256": "40f196ba4c5414fed1dfa26338178b5b969d6a63d09f5c08dd41565578b66948"
+      },
+      {
+        "canonical_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+        "epub_member": "EPUB/text/20-endpoint-discovery-and-internal-dns.xhtml",
+        "rendered_h1": "Chapter 20 - Endpoint Discovery and Internal DNS",
+        "canonical_sha256": "a2d285e37688cb98a07b54e5072151192b8c151f2dbf736699f1252754242005"
+      },
+      {
+        "canonical_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+        "epub_member": "EPUB/text/21-ingress-host-networking-and-the-overlay-roadmap.xhtml",
+        "rendered_h1": "Chapter 21 - Ingress, Host Networking, and the Overlay Roadmap",
+        "canonical_sha256": "48ab587ac3dfd777317c5ae2c3ca581c860b2803814c605dc1499acf677898e6"
+      },
+      {
+        "canonical_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+        "epub_member": "EPUB/text/22-autoscaling-decisions-and-missing-integration.xhtml",
+        "rendered_h1": "Chapter 22 - Autoscaling Decisions and Missing Integration",
+        "canonical_sha256": "28b30b417bbbac6ec07f1df62231b6d2a15ede8af72782010e5870d064c762d9"
+      },
+      {
+        "canonical_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+        "epub_member": "EPUB/text/23-authentication-authorization-and-node-trust.xhtml",
+        "rendered_h1": "Chapter 23 - Authentication, Authorization, and Node Trust",
+        "canonical_sha256": "3df5ddeacf19ba913f0d64caea51feef4181e54c301c252d1718f94b463b7098"
+      },
+      {
+        "canonical_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+        "epub_member": "EPUB/text/24-encrypted-secrets-and-configuration-redaction.xhtml",
+        "rendered_h1": "Chapter 24 - Encrypted Secrets and Configuration Redaction",
+        "canonical_sha256": "41b07b86059adbf9eaf74119cacbc7e3f9b3374c09c6469ebe53165583305b78"
+      },
+      {
+        "canonical_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+        "epub_member": "EPUB/text/25-registry-credentials-and-immutable-image-identity.xhtml",
+        "rendered_h1": "Chapter 25 - Registry Credentials and Immutable Image Identity",
+        "canonical_sha256": "7a850b68b274f3a1277a3218eefa09916e658882a849f81f83463a2626da7c78"
+      },
+      {
+        "canonical_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+        "epub_member": "EPUB/text/26-security-contexts-admission-and-policy.xhtml",
+        "rendered_h1": "Chapter 26 - Security Contexts, Admission, and Policy",
+        "canonical_sha256": "bf51ff14a2780ca97402feb37a0219a1125d49857892864fdf605ebed839e0f9"
+      },
+      {
+        "canonical_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+        "epub_member": "EPUB/text/27-namespaces-and-the-limits-of-multi-tenancy.xhtml",
+        "rendered_h1": "Chapter 27 - Namespaces and the Limits of Multi-Tenancy",
+        "canonical_sha256": "2f005bb47181d881bba3114f215bafd80f9d922783d6a50336b814992e9579ab"
+      },
+      {
+        "canonical_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+        "epub_member": "EPUB/text/28-quotas-and-usage-accounting.xhtml",
+        "rendered_h1": "Chapter 28 - Quotas and Usage Accounting",
+        "canonical_sha256": "f2993672910df43681f5f2bb941a424727597f2957cb6c67af5b4857f54b5cd7"
+      },
+      {
+        "canonical_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+        "epub_member": "EPUB/text/29-supply-chain-designs-without-false-guarantees.xhtml",
+        "rendered_h1": "Chapter 29 - Supply Chain Designs Without False Guarantees",
+        "canonical_sha256": "5b250e53ebe20622ec4fa3f57e3dfb53e2006f64f95fc646e55f6db9bc30e44b"
+      },
+      {
+        "canonical_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+        "epub_member": "EPUB/text/30-gitops-drift-and-controlled-reconciliation.xhtml",
+        "rendered_h1": "Chapter 30 - GitOps, Drift, and Controlled Reconciliation",
+        "canonical_sha256": "696f0d3c3dac5ba1926b76ae74a2ba589cda38620c0356db12d61770ab98523d"
+      },
+      {
+        "canonical_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+        "epub_member": "EPUB/text/31-finite-jobs-and-time-based-work.xhtml",
+        "rendered_h1": "Chapter 31 - Finite Jobs and Time-Based Work",
+        "canonical_sha256": "253b54ce1038f543077bad2d08776c99cb30bdd231f9dab13367e84674d173b6"
+      },
+      {
+        "canonical_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+        "epub_member": "EPUB/text/32-local-volumes-claims-and-workload-topology.xhtml",
+        "rendered_h1": "Chapter 32 - Local Volumes, Claims, and Workload Topology",
+        "canonical_sha256": "bbc0000c9a3a556caae08b7c6d8e4fdc6dbe6cfaf6e6b9b0e23186c585e77d0c"
+      },
+      {
+        "canonical_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+        "epub_member": "EPUB/text/33-extension-interfaces-and-a-plugin-roadmap.xhtml",
+        "rendered_h1": "Chapter 33 - Extension Interfaces and a Plugin Roadmap",
+        "canonical_sha256": "c57b04b4dc300ced2a64e7c6255f4d1146917db64c6c0cf03e64faee9ea9de6a"
+      },
+      {
+        "canonical_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+        "epub_member": "EPUB/text/34-leader-election-and-the-durable-ha-boundary.xhtml",
+        "rendered_h1": "Chapter 34 - Leader Election and the Durable HA Boundary",
+        "canonical_sha256": "5f7f7beb9b1193b60158121aaef5a94b567af8d60547a26217eadbb9f05641b8"
+      },
+      {
+        "canonical_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+        "epub_member": "EPUB/text/35-upgrades-migrations-maintenance-and-retention.xhtml",
+        "rendered_h1": "Chapter 35 - Upgrades, Migrations, Maintenance, and Retention",
+        "canonical_sha256": "968d1e7a08209115eab2f64c86c3657fa5c96aea96406ef4ed41e79a403b2e36"
+      },
+      {
+        "canonical_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+        "epub_member": "EPUB/text/36-fakes-property-tests-fuzzing-and-contracts.xhtml",
+        "rendered_h1": "Chapter 36 - Fakes, Property Tests, Fuzzing, and Contracts",
+        "canonical_sha256": "b9495ce12bc6fd430fa08048aa77eff6f4b6b687932411f81419cfbcd0e69fc6"
+      },
+      {
+        "canonical_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+        "epub_member": "EPUB/text/37-failure-injection-and-recovery-evidence.xhtml",
+        "rendered_h1": "Chapter 37 - Failure Injection and Recovery Evidence",
+        "canonical_sha256": "542927a8bf9d74b977edf7d0fde1007d81827226d994e947163ff7fa0c44a944"
+      },
+      {
+        "canonical_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+        "epub_member": "EPUB/text/38-metrics-dashboards-and-actionable-signals.xhtml",
+        "rendered_h1": "Chapter 38 - Metrics, Dashboards, and Actionable Signals",
+        "canonical_sha256": "863a0f565e548a407305ac3372c3708aca22be59735a23ff30d59f91b41f1462"
+      },
+      {
+        "canonical_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+        "epub_member": "EPUB/text/39-performance-and-scale-tests-that-say-what-they-measure.xhtml",
+        "rendered_h1": "Chapter 39 - Performance and Scale Tests That Say What They Measure",
+        "canonical_sha256": "55a8880ecb52c973f6a285240a1cbcdfa5c589479acc59e3e4f3c05d55a3b143"
+      },
+      {
+        "canonical_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+        "epub_member": "EPUB/text/40-release-a-system-you-can-honestly-operate.xhtml",
+        "rendered_h1": "Chapter 40 - Release a System You Can Honestly Operate",
+        "canonical_sha256": "9d669da4f3bab29d9a3455d02f926468b73568460f2d0828f55ab9e6fbec70c5"
+      }
+    ],
+    "scope": "Every canonical preface/chapter/appendix exists in the archive with a rendered H1; root format validator separately checks exact headings, count and source listings."
+  },
+  "screenshots": [
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/cover.png",
+      "sha256": "95681b144082108dd2a5287fced5d265366531592d6921340d55e9e5fcec66fa"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA-code.png",
+      "sha256": "62d1e5b7356abcba19f7ea38521f9627500364efc58bbd8fc8199ed0a8be18ae"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA-table.png",
+      "sha256": "e73bc73e05b7ca43746b39bc8b4e80f466d9e7542beec3d03c0c9d695de8a696"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixA.png",
+      "sha256": "949a1be5072c718b173e368477ae82578ca027aab85e2b306e32b8cd66d3297b"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixB-table.png",
+      "sha256": "291231bcff96e246165537b9f56e54f1715a47fb84d826e92e97fc4b416fee26"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixB.png",
+      "sha256": "c5439ccbea613a3aee32f97d01a03de7c5d85fed8841982a3094a9d43ebeebd5"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC-code.png",
+      "sha256": "4013704c5b9a0f833d0e0e086bfc379af3777532812e932ec185c231a79b199e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC-long-url.png",
+      "sha256": "70fbe83bc95a80120b0c05ea9ba1d4c6e0c4cadd2674e5cb42d7ca202734187d"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixC.png",
+      "sha256": "9ad23c9878668e3300a89e447a0d801ddd6eb7f247e9546a23e52d08014c0b18"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixF-table.png",
+      "sha256": "a31b29a908de258878e823ffbdff5a13582e3cae0b46283a1c80cb4a5df33aa9"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-appendixF.png",
+      "sha256": "a0f53448dde90e8a2eb1102ffa862d3fed329632d1632fba0927d44e8ed8d718"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-code.png",
+      "sha256": "b5bcf72246fa6a9f7a05a856240c771a12cc54cca80aa0ef8a35d09e2cc4f7a3"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-diagram.png",
+      "sha256": "c8e947da41ac584230a9e7379de07851f2cd27423de3768ecf7f740f6569aebd"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04-table.png",
+      "sha256": "8b60b97efb311c7be7fc4dd5d78ca4e03e509e73fe7e6f240b6dc2a249a7d90a"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter04.png",
+      "sha256": "224ea616dbc92cac72c6f0f5eda36deca408d7b364cadae4083eed0a2cc32894"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17-code.png",
+      "sha256": "9a9cedb662050f2008749b891dd4ae64daf62c1a349b7ab310ffc7ef149f21a2"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17-table.png",
+      "sha256": "1bd25b3d3f97b3e4d4e1987baf11c8a2ec36d5f4d4cb3c8717ad228405de6972"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-large-dark-chapter17.png",
+      "sha256": "3e1ee002566fe9fd72c22b549ff43d4ab4f001e347462dd7d75968333df3825a"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA-code.png",
+      "sha256": "d78df41a8ce93de32a941386f485596bae359f1a2f1173002fb72fadb9f3c5e5"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA-table.png",
+      "sha256": "aa8855714c8fb1c429b844f3436aaf1f3a63ebc8229fc9035a701b25be99fc9d"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixA.png",
+      "sha256": "5a4a907826f382b76e8d896f15f84092db80162e30034fda90427debd2d18746"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixB-table.png",
+      "sha256": "307b1a4355951b984912ec01f7301dc1926d8f3572c76f05b4ea8f3d7a9bb6dc"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixB.png",
+      "sha256": "ff90faf6c456787d2ed24fda322c4ec1667b59391be67db9268f8a615b27490a"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC-code.png",
+      "sha256": "3f8c8df8d386e6c37ed9f87f6b3c4a702e1a6583e5d1cc8456406b30d445aed3"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC-long-url.png",
+      "sha256": "eddc98a982c8e386322be203d8a47076081b4b53401f737a5d4aacd857da682f"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixC.png",
+      "sha256": "4f287e3ce5ee52d8b37afd89e6669bfb323611e73e0a17c67687169affee8b5e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixF-table.png",
+      "sha256": "3034eabfa10f228369fd6aac4c933f81278a032a46e119ed7421896bce5a6e11"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-appendixF.png",
+      "sha256": "90d513958469245c75e16af344787609a059b41ed6b64b3d0b5772d558b5a69e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-code.png",
+      "sha256": "5a1dac7952faa5cad41098474418dd24326d6c373b91329a6917594fbcaeca74"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-diagram.png",
+      "sha256": "b7ff1e3e0fb4d795bfbca708305d5f19818584ad5686bf5e517c0b300712d5be"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04-table.png",
+      "sha256": "4514b16cfa75eac9aff4500ad3efdcf9809b4df285c0251400afdf1742e4e94e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter04.png",
+      "sha256": "ec5eb68e4cbc7212ccbe741651a3d83210bff29289ba9129c04887cf19952cca"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17-code.png",
+      "sha256": "93a073429433d998d0b467438ab80e0b4b7c66ac343c52f293d88595329e3306"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17-table.png",
+      "sha256": "f075e6ad0a4d2fb79e670f603704dcda1bef319d5e41a8c65f3101621b9e7278"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/small-light-chapter17.png",
+      "sha256": "ceb28056e7e2e25d37ea143b3e45029fb8dd67d5da1d5b8d97bc5baed7db6eed"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA-code.png",
+      "sha256": "c764f5ef1a45f3be53ac99452da41775da6ec552d0c2f15653d4fe50ea333826"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA-table.png",
+      "sha256": "39acdde2e36c8806ffb0cf1dd8f4569f91f6947080b4b413b16bc2f6a23cfccd"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixA.png",
+      "sha256": "bdb7e1ad7477460e9debf55ee633687e88007182f251f9b76e65d5139578b8d7"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixB-table.png",
+      "sha256": "a94b62f15cd48f1925156654016f14f7586a49cf477c9c8b028fad982e1bade9"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixB.png",
+      "sha256": "a94b62f15cd48f1925156654016f14f7586a49cf477c9c8b028fad982e1bade9"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC-code.png",
+      "sha256": "8a71864a222e9d623a336135c9ec4ca41933712b3bbc40916639b03c0a745e5e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC-long-url.png",
+      "sha256": "03654071f3775d9d22079953a00335b674246f663a8aba7c1913367480d92b2c"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixC.png",
+      "sha256": "7f760d046ecdc9f2419bf6228f63f27d64ed7024325164140fd4bd777d531357"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixF-table.png",
+      "sha256": "64f68b77d05faa8d9b9c4bf3b869c28ca4fdcf59b98c1dc95894c859a542617c"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-appendixF.png",
+      "sha256": "14adc0b5b20bd4c87d6d3e96447a7ad27b40ddb59e89fd759383c5028a890173"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-code.png",
+      "sha256": "62e2d0e1fe425cea325333b771fad7cfdca83131ce62086a5f2734871a63c86d"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-diagram.png",
+      "sha256": "91a14683bc05f87d3ecb4fe4e224e82587c3694f022a446f175c7e7118aceeea"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04-table.png",
+      "sha256": "b0485e1c08283effe945e7a17fce03d4da23f431fda5a105ce27a282c39046b9"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter04.png",
+      "sha256": "0cb099eaf8554eca11f1366d62c55a83bc19e0dfc2f8757aa387436a514364e5"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17-code.png",
+      "sha256": "54c9039b36e9e48214077d2cca6cfd025c01dba80ad3d7655fc2f77c34ef69b7"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17-table.png",
+      "sha256": "e6c9d5d1642154959a99d8290263a9de2289971cc4940f007ddf514c5ff5e0b4"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-large-dark-chapter17.png",
+      "sha256": "7a1bab8b3c85b23978a91322f3f35e09d8b7678536cfa96846ee5350bfd7aa83"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA-code.png",
+      "sha256": "229ac17043b7bc65fcaebfe1276c13f0b1c2eed162d2dc054088ef812bc2f804"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA-table.png",
+      "sha256": "6092388201ecf1e951525f67a58218f46d695a9356a0503c530dde982e01b43f"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixA.png",
+      "sha256": "34aeb613d7da856b0ff7be902403f537fb5b743088bb4117fd9b09be9456aea3"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixB-table.png",
+      "sha256": "8fff0406b9e40249711fcb950f19f64c92fa46ac0bc5a59f50b5e6058ce17274"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixB.png",
+      "sha256": "8fff0406b9e40249711fcb950f19f64c92fa46ac0bc5a59f50b5e6058ce17274"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC-code.png",
+      "sha256": "a6c06ddc7a5dad256829740b23b87982b435b700049eda1dd6eba0139136645a"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC-long-url.png",
+      "sha256": "557cddbebad4f7fd75e44c5948c630ffce4c1ad33a625fc8b7f3e4d4c826dceb"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixC.png",
+      "sha256": "5330e3774adaa8d9749395207e77244929ae4ccfab8eeaf6c654b07aad3c765b"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixF-table.png",
+      "sha256": "7f0b9a1154dc477e8b2b0336c5e2d2a529ca61934820107fa20eb56b00c385dc"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-appendixF.png",
+      "sha256": "0fb8f43d20ac796d8681db34317cca162ca85fe96a40ab121a3df6ec6a3cb026"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-code.png",
+      "sha256": "e29ada0d3e07fa37750c607bca8e61324c0a63ec6058382267dfd68435bad454"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-diagram.png",
+      "sha256": "3ad3e0d1804d5e7aa2b568789fabb82a393cc396ddd15bb489e87bd636579e9d"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04-table.png",
+      "sha256": "d4c2d406986e2e5ab062be9c7822eeb4a0a0f981f00292b8c7463e430aa7dbcc"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter04.png",
+      "sha256": "a2bbc12836f11d6238eb3cc9d6965ac7f6584657355994d97b490d7ff600e014"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17-code.png",
+      "sha256": "4db787f29411985222a40dc1e1f4518c34ec6fd36e84e6138602393a77935e2e"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17-table.png",
+      "sha256": "d70f7e4a7f9bb3a7e037e0070019641c1e5535437dcfa88f6a7e52e56b2e07b5"
+    },
+    {
+      "path": "/tmp/inside-orch-epub-preview-e5ba1daf5715/screenshots/wide-light-chapter17.png",
+      "sha256": "4db787f29411985222a40dc1e1f4518c34ec6fd36e84e6138602393a77935e2e"
+    }
+  ],
+  "manual_inspection": {
+    "reviewed_at_utc": "2026-10-13T03:16:55.645813+00:00",
+    "screenshots": [
+      "small-large-dark-appendixB-table.png",
+      "small-large-dark-appendixC-long-url.png",
+      "small-light-chapter04-diagram.png",
+      "small-large-dark-appendixF-table.png",
+      "wide-light-appendixA-table.png",
+      "cover.png"
+    ],
+    "observations": [
+      "Tables wrap inside the available viewport at both type sizes; narrow large-type rows can be tall, with no clipped column.",
+      "Source code wraps visually and preserves copied text; long historical HTML URLs and emoji are visible.",
+      "Chapter 4 lifecycle diagram loads; its caption and alternative describe selected edges and cleanup conditions without implying completeness.",
+      "Cover includes title, subtitle and author; dark theme retains readable links and code contrast."
+    ],
+    "footnotes": "No EPUB footnote markup exists in this edition; there is no footnote behavior to exercise."
+  },
+  "exit_code": 0,
+  "format_findings": [
+    {
+      "id": "EPUB-REFLOW-01",
+      "severity": "major",
+      "observation": "Initial narrow table page overflow clipped chapter links at large type.",
+      "resolution_status": "resolved",
+      "repair": "Root added fixed table layout and wrap policies; final 24 preview cases have zero overflow."
+    }
+  ]
+}

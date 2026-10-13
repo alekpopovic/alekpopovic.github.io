@@ -1,0 +1,6 @@
+=== RUN   TestFailedPullExposesCountedOperation
+    metrics_contract_test.go:30: docker_operations_total{operation="pull_image"} 1
+    metrics_contract_test.go:30: docker_operation_errors_total{operation="pull_image"} 1
+--- PASS: TestFailedPullExposesCountedOperation (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/ch38	0.005s

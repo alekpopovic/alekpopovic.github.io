@@ -1,0 +1,5 @@
+=== RUN   TestBookPublishedCronManifest
+    cron_manifest_test.go:48: Actual published YAML reached unchanged CLI CronJobClient with quantity conversions; no server, job execution or Docker
+--- PASS: TestBookPublishedCronManifest (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/review-interfaces	0.004s

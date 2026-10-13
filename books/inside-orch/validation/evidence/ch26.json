@@ -1,0 +1,60 @@
+{
+  "chapter_id": "26",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch26.fields",
+      "statement": "Ordinary service SecurityContext maps through agent into Engine config/HostConfig; empty CapDrop defaults to NET_RAW.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 412,
+      "line_end": 471,
+      "associated_commits": [
+        "a140c4190af17969d207b5738cc7527e4ad96075",
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Explicit mapping is not actual inspected host config or a hostile-tenant sandbox; no invented no-new-privileges field."
+      ]
+    },
+    {
+      "claim_id": "ch26.admission",
+      "statement": "Built-in evaluator returns structured field/rule/message violations and records optional rejection sink.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/admission/admission.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 75,
+      "line_end": 87,
+      "associated_commits": [
+        "a140c4190af17969d207b5738cc7527e4ad96075",
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Static Go evaluator does not run Rego or remote policy; create normalizes defaults after initial admission."
+      ]
+    },
+    {
+      "claim_id": "ch26.entry-points",
+      "statement": "Focused built-in policy/admission and scale/rollout rejection assertions passed.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/admission_test.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 14,
+      "line_end": 48,
+      "associated_commits": [
+        "a140c4190af17969d207b5738cc7527e4ad96075",
+        "9e78fed31df03d7a985a9f4ceae4770739b05014"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch26/focused-tests.json",
+      "limitations": [
+        "Ordinary CLI/API/GitOps apply callers inspected separately; Job and auto-revert internal paths do not inherit universal guarantee."
+      ]
+    }
+  ]
+}

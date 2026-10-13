@@ -1,0 +1,715 @@
+{
+  "schema_version": 1,
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T02:12:19.646495+00:00",
+  "examples": [
+    {
+      "id": "case-parser",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/case-parser/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/case-parser/main.go": "84978b46ea8f71e61617b1b11e5498ba7c48c3dca6980079c860d5bdcf7d0ca6"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-case-parser",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/specs"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/intake/case-study-parse.json",
+      "status": "passed",
+      "scope": "Actual deploy parser for three Atlas fixtures plus expected unknown-field rejection; no deployment.",
+      "readme": "examples/teaching-extensions/case-parser/README.md",
+      "validation_target": "validation/intake/case-study-parse.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch10",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch10/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch10/main.go": "5bb589ee97f1be7d3a32481a611fc8ccfca2e22165bc054aa081ce3360337176"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-scheduler"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch10/hand-plan.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch10/README.md",
+      "validation_target": "validation/labs/ch10/hand-plan.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch15",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch15/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch15/main.go": "49aa9bc70dd40425a260515f020636c26547cf06f263618c82851b2637ffa905"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-events"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch15/atlas-events-corrected.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch15/README.md",
+      "validation_target": "validation/labs/ch15/atlas-events-corrected.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch29",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch29/contract.py",
+        "examples/teaching-extensions/ch29/test_contract.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch29/contract.py": "ace5e25e5bc410bdbc734322b5cb2df98d893bd073fd40e248cb75e57c74371f",
+        "examples/teaching-extensions/ch29/test_contract.py": "de1256f6ed77622d24c192c1a3e31b6fb421703bb53ef6825038cd18f2e163bd"
+      },
+      "command": [
+        "python3",
+        "-B",
+        "test_contract.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch29",
+      "evidence_log": "validation/labs/ch29/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch29/README.md",
+      "validation_target": "validation/labs/ch29/teaching-fixture.json",
+      "go_version": null
+    },
+    {
+      "id": "ch30",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch30/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch30/main.go": "813e3d419db02c75e8f15f39f46cffcb9b2e5991efa427bf17e03e2608678648"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-gitops"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch30/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch30/README.md",
+      "validation_target": "validation/labs/ch30/teaching-fixture.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch31",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch31/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch31/main.go": "40c6e84ab36900dc10fc97e27a05903c4f3461c2e27314bd2c65b2f89002ef78"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-cron"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch31/teaching-fixture.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/ch31/README.md",
+      "validation_target": "validation/labs/ch31/teaching-fixture.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab06",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab06/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab06/main.go": "3ae90e46300f117f707155b7aac5afd673e743238714df442a8b93332bc434c6"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/namespaces-quotas",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/06-namespaces-quotas/fixtures"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/06-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/lab06/README.md",
+      "validation_target": "validation/labs/review076/06-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab07",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab07/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab07/main.go": "0bcdbafe50168e0392cc8c7446716171a70be96a9813585db29de66b957c1f85"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/gitops-jobs-cron",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/07-gitops-jobs-cron/fixtures"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/07-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed.",
+      "readme": "examples/teaching-extensions/lab07/README.md",
+      "validation_target": "validation/labs/review076/07-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch05-parser",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch05/check_manifests.py",
+        "examples/teaching-extensions/ch05/atlas-invalid-port.yaml",
+        "examples/teaching-extensions/ch05/atlas-invalid-field.yaml",
+        "examples/teaching-extensions/ch05/atlas-valid.yaml",
+        "examples/teaching-extensions/ch05/atlas-invalid-cpu.yaml",
+        "examples/teaching-extensions/ch05/atlas-invalid-memory.yaml"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch05/check_manifests.py": "4feea0c4ed7832bc8310730e9e9acf8a4d52f476b1adf92340dce172e36cb0ad",
+        "examples/teaching-extensions/ch05/atlas-invalid-port.yaml": "72ac46e480d0e3ab46910dfe81970eeadd163bcef36da73e1dabaeb4779d4885",
+        "examples/teaching-extensions/ch05/atlas-invalid-field.yaml": "a258f8913086c3103cd989ee4e199812625b8284c8f86ec348f3b79dad8a1660",
+        "examples/teaching-extensions/ch05/atlas-valid.yaml": "9ebaaf0b79e2fb3fbd366c4f0d0bff52779d9bc6da7a49c04421fc61d583a0c0",
+        "examples/teaching-extensions/ch05/atlas-invalid-cpu.yaml": "6c3d3eaff0c12cc77ff6425d6f7af089e9126f8ef0c1d8b832a05e72ec8e32ee",
+        "examples/teaching-extensions/ch05/atlas-invalid-memory.yaml": "4c9efe112ff7ddde62f629c2fa91e27ec1ef12ac0a24e4a71324c4b3b07b1013"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch05/check_manifests.py",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch05/parser-manifests.json",
+      "status": "passed",
+      "scope": "Actual CLI strict parser acceptance/rejection; no runtime deployment",
+      "validation_target": "validation/labs/ch05/parser-manifests.json",
+      "go_version": null
+    },
+    {
+      "id": "ch06-combined-restart",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch06/observe_container_restart.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch06/observe_container_restart.py": "d52930e125d3dfad6f22a42dd22f2c329596185bf9f899310915a4912c9824ca"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch06/observe_container_restart.py",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "--output",
+        "validation/labs/ch06/combined-restart.json"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch06/combined-restart-command.json",
+      "status": "passed",
+      "scope": "Fresh real binary plus manually associated owned Docker container; no claimed adoption",
+      "validation_target": "validation/labs/ch06/combined-restart-command.json",
+      "go_version": null
+    },
+    {
+      "id": "ch07-public-contract",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch07/contract_test.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch07/contract_test.go": "aa3c5713523f5389a8ad009e64921af4dd4c63d30f1b9408673e6eabff1799da"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-v",
+        "./.book-labs/ch07"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch07/public-contract-final.json",
+      "status": "passed",
+      "scope": "Actual in-process API and public client/lifecycle/error behavior; no TCP or daemon",
+      "validation_target": "validation/labs/ch07/public-contract-final.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch07-route-comparison",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch07/compare_routes.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch07/compare_routes.py": "edfea0872c2a3e96669f3d9087a9282a344c13c09b8a045058e908b67dbc66fe"
+      },
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch07/compare_routes.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/labs/ch07/openapi-routes.json",
+      "status": "passed",
+      "scope": "Registered method/path versus OpenAPI structural comparison, not full semantic conformance",
+      "validation_target": "validation/labs/ch07/openapi-routes.json",
+      "go_version": null
+    },
+    {
+      "id": "ch08-cli",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch08/exercise_cli.py",
+        "examples/teaching-extensions/ch08/atlas_status.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch08/exercise_cli.py": "aa5df52af4cd005924ec27211f55d3d04d1ec2a1a487f08d319803dc7fb35bf5",
+        "examples/teaching-extensions/ch08/atlas_status.py": "01400eb20a5d0e5b14850e62aed225e0cc245c3e889a95d4c6d0c1c5c4919d66"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/exercise_cli.py",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch08/exact-cli-identities.json",
+      "status": "passed",
+      "scope": "Owned fresh binary endpoint and actual CLI identities; no Docker placement claim",
+      "validation_target": "validation/labs/ch08/exact-cli-identities.json",
+      "go_version": null
+    },
+    {
+      "id": "ch08-semantic-status",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch08/test_status.py",
+        "examples/teaching-extensions/ch08/atlas_status.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch08/test_status.py": "a42dca36953f9778917a46e1750f9ae263ee905f2d758f2d0f932c10e1856cc2",
+        "examples/teaching-extensions/ch08/atlas_status.py": "01400eb20a5d0e5b14850e62aed225e0cc245c3e889a95d4c6d0c1c5c4919d66"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch08/test_status.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/labs/ch08/status-semantics.json",
+      "status": "passed",
+      "scope": "Eight response semantic fixtures; no connected host",
+      "validation_target": "validation/labs/ch08/status-semantics.json",
+      "go_version": null
+    },
+    {
+      "id": "ch33-adapter",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch33/adapter_contract_test.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch33/adapter_contract_test.go": "7b336356ca8bc05f472033b908ab6599ff8b12ed66a68d18697a11687aacc209"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "./.book-labs/ch33",
+        "-count=1",
+        "-v"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch33/adapter-contract.json",
+      "status": "passed",
+      "scope": "FakeRuntime replay/cancellation plus proposed supplied-handshake validation; no external plugin protocol",
+      "validation_target": "validation/labs/ch33/adapter-contract.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch35-preflight",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch35/preflight_test.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch35/preflight_test.go": "48dfd4d22a42956a3198b6870f7169a60d0f04db6c4250d509c6f4f312567f0f"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "./.book-labs/ch35",
+        "-count=1",
+        "-v"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch35/controlled-preflight-corrected.json",
+      "status": "passed",
+      "scope": "Actual unchanged Cobra decision with supplied version/node fixture; no cluster",
+      "validation_target": "validation/labs/ch35/controlled-preflight-corrected.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch38-metrics",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch38/metrics_contract_test.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch38/metrics_contract_test.go": "6af1d755393f9c71ee599fe49a64f2441ab6987e4d14ee4f96c2d29b7fbaf532"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "./.book-labs/ch38",
+        "-count=1",
+        "-v"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/ch38/failed-pull-emission.json",
+      "status": "passed",
+      "scope": "Actual adapter wrapper instrumentation and Prometheus exposition under FakeRuntime failure; no scrape server",
+      "validation_target": "validation/labs/ch38/failed-pull-emission.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "ch39-summary",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch39/summarize_benchmark.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch39/summarize_benchmark.py": "111c3923c8098eea99645160d148854745bb76d00c92adfd6ddc5e7cafd6b2bd"
+      },
+      "command": [
+        "python3",
+        "books/inside-orch/examples/teaching-extensions/ch39/summarize_benchmark.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/examples/075-benchmark-summary.json",
+      "status": "passed",
+      "scope": "Mechanical summary of three retained bounded Plan benchmark samples; no new benchmark run",
+      "validation_target": "validation/examples/075-benchmark-summary.json",
+      "go_version": null
+    },
+    {
+      "id": "ch40-dossier",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch40/verify_dossier.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch40/verify_dossier.py": "6d8cb390696c1da0ac3972ce4fbb42156ed80d88125731f7fefb47bcd5399418"
+      },
+      "command": [
+        "python3",
+        "books/inside-orch/examples/teaching-extensions/ch40/verify_dossier.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/labs/ch40/dossier-integrity-corrected.json",
+      "status": "passed",
+      "scope": "Checks actual evidence inventory integrity; never production readiness",
+      "validation_target": "validation/labs/ch40/dossier-integrity-corrected.json",
+      "go_version": null
+    },
+    {
+      "id": "lab01-process",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "scripts/observe_process_restart.py"
+      ],
+      "input_sha256": {
+        "scripts/observe_process_restart.py": "15d1ce9bda8c69a292decf217314bf5a2eeb3d58666ac2c4299a30961dc2dbc5"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--server",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+        "--output",
+        "validation/labs/review076/01-fresh-process.json"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/01-fresh-process-command.json",
+      "status": "passed",
+      "scope": "Actual fresh processes on owned ephemeral loopback ports; no Docker in this command",
+      "validation_target": "validation/labs/review076/01-fresh-process-command.json",
+      "go_version": null
+    },
+    {
+      "id": "lab01-docker",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/docker-boundary/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/docker-boundary/main.go": "445d8eaa8d0d5a4f7e5c4a50868aa3a4e2f8391fb90cb402302a6b3290092ae5"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/docker-boundary"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/01-docker-flow-command.json",
+      "status": "passed",
+      "scope": "Guarded real Docker adapter/agent/API flow, captured exact IDs and cleanup; no Compose",
+      "validation_target": "validation/labs/review076/01-docker-flow-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab02",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab02/main.go",
+        "scripts/verify_scheduler_lab.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab02/main.go": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+        "scripts/verify_scheduler_lab.py": "4189753d12ca31019690bcc3711f7073bfddebd341a519d832cba015c82eb082"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/lab02",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/02-scheduler-placement/fixtures/plan.json"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/02-model-and-permutations.json",
+      "status": "passed",
+      "scope": "24 distinct node permutations/6candidates plus separate actual concurrent claim tests; no SQL in this command",
+      "validation_target": "validation/labs/review076/02-model-and-permutations.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab03",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/lab03/agent_contract_test.go",
+        "examples/teaching-extensions/lab03/reconciler_contract_test.go",
+        "scripts/run_drift_lab.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/lab03/agent_contract_test.go": "cc3108e2229218d8ffcd91d41be62b4aa1ea1e0671a903e7abdf798a9a9bdf32",
+        "examples/teaching-extensions/lab03/reconciler_contract_test.go": "3df35a9d352261daf74e451e2a5c8e3db5cce1d17ee3b50bd62bafc97df2b69d",
+        "scripts/run_drift_lab.py": "8a14a1adf51e6eb3e4d3c0726ec1072a771f4cee889cfe923b9fb83aef51850c"
+      },
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/run_drift_lab.py",
+        "--source-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go-root",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64",
+        "--output-prefix",
+        "validation/labs/review076/03-observed"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/labs/review076/03-command.json",
+      "status": "passed",
+      "scope": "15 actual FakeRuntime/MemoryService/reconciler cases; expected rejection preserved; no daemon",
+      "validation_target": "validation/labs/review076/03-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab04",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/rollout/main.go",
+        "scripts/verify_rollout_security_labs.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/rollout/main.go": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9",
+        "scripts/verify_rollout_security_labs.py": "da1c63c665903942da5a409f7d674bbe74a057c2afbc302223eab6aa6139dd3e"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/rollout",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/04-timeline.csv"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/04-command.json",
+      "status": "passed",
+      "scope": "Actual controller/memory fixtures7checkpoints and pending-stop success boundary; no daemon",
+      "validation_target": "validation/labs/review076/04-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab05",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/security/main.go"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/security/main.go": "c3188b3bf9ba9add0f87ba339d0dcc7dd99848a1e0e17b4bda67486a6082c361"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/security",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/05-forbidden-channels"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/05-command.json",
+      "status": "passed",
+      "scope": "Actual in-process API plus owned local probes and synthetic canary; no external service",
+      "validation_target": "validation/labs/review076/05-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "lab08-store",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/full-schema/main.go",
+        "scripts/observe_database_recovery.py"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/full-schema/main.go": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+        "scripts/observe_database_recovery.py": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487"
+      },
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+        "--container",
+        "inside-orch-book-pg-cbfc94ade5b5",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "--output",
+        "validation/labs/review076/08-recovery.json"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/labs/review076/08-recovery-command.json",
+      "status": "passed",
+      "scope": "Owned PostgreSQL16migrations/restore/canary/advisory lock boundary; no default binary persistence",
+      "validation_target": "validation/labs/review076/08-recovery-command.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "review-published-cron",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/review-interfaces/cron_manifest_test.go",
+        "examples/teaching-extensions/review-interfaces/published-cron.yaml"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/review-interfaces/cron_manifest_test.go": "8fb5aacadfb3e3c57dcb6463ee22273de544bc953669fe77057b1cd6c7db8fac",
+        "examples/teaching-extensions/review-interfaces/published-cron.yaml": "941b49cac8fae094cc8d336f2fd3ed00b5f928b95feb79581c791a893fa27941"
+      },
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-v",
+        "./.book-labs/review-interfaces"
+      ],
+      "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "evidence_log": "validation/examples/published-cron-manifest.json",
+      "status": "passed",
+      "scope": "Actual published Chapter31 YAML through unchanged Cobra parser into captured CronJobClient; no server/jobs/Docker",
+      "validation_target": "validation/examples/published-cron-manifest.json",
+      "go_version": "1.25.0"
+    },
+    {
+      "id": "task-lifecycle-diagram",
+      "classification": "teaching extension",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/diagrams/generate_task_lifecycle.py",
+        "examples/diagrams/task-lifecycle.svg",
+        "examples/diagrams/task-lifecycle.png",
+        "examples/diagrams/task-lifecycle.json"
+      ],
+      "input_sha256": {
+        "examples/diagrams/task-lifecycle.svg": "33f47b6d90553779b1b6c3f22fed1b37d44c038a1b1efe25b0436d243c63134c",
+        "examples/diagrams/task-lifecycle.png": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4",
+        "examples/diagrams/task-lifecycle.json": "5e62cc6c49078a15136f0e119b8341dff531b2a43f1554df698321dcf9274a40",
+        "examples/diagrams/generate_task_lifecycle.py": "34678e0c6903ba87a8c563722965d671feeff59343e8d9fb79bab99f53511991"
+      },
+      "command": [
+        "python3",
+        "books/inside-orch/scripts/check_example_utilities.py"
+      ],
+      "cwd": "/home/popac/alekpopovic.github.io",
+      "evidence_log": "validation/examples/075-utilities.json",
+      "status": "passed",
+      "scope": "Isolated deterministic SVG regeneration equality; PNG viewed separately, no runtime guarantee",
+      "validation_target": "validation/examples/075-utilities.json"
+    },
+    {
+      "id": "ch34-ha-adr",
+      "classification": "design only",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "paths": [
+        "examples/teaching-extensions/ch34/ADR-durable-composition.md"
+      ],
+      "input_sha256": {
+        "examples/teaching-extensions/ch34/ADR-durable-composition.md": "76c81ebb682191f42a1fc04cc9dabc965adfb99ec52d1b4104f09aae99eff016"
+      },
+      "status": "inspected",
+      "validation_target": null,
+      "scope": "Proposed durable composition, not runnable code or shipped capability"
+    }
+  ],
+  "errors": [],
+  "note": "Complete original additions registry. Exact source fragments have separate registry/index; optional reader procedures remain expected-only. Canonical hashes frozen here; actual commands retain precise runtime scope."
+}

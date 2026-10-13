@@ -1,0 +1,68 @@
+{
+  "lab_id": "04",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/04-rollout-rollback/lab.json",
+  "definition_sha256": "282f3b5d9fb3c6dd2300c751a96c9adef5d8f429567217e1241e725e9bf08eb0",
+  "guide": "labs/04-rollout-rollback/README.md",
+  "guide_sha256": "a77737b827b39fb227637b4ad8293831f578f649a435cd13a556921748268a7a",
+  "configuration_hashes": {
+    "examples/teaching-extensions/rollout/main.go": "99190d2f419ce2541e355e99087635a153b3efb2421452d82272f67605f259d9"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "In-process rollout cohorts and injected health/status; seven checkpoints, failed history, conflicts, rollback; no live traffic measurement.",
+  "state_continuity": "Fresh rollout MemoryService; independent modeled workload carries the Atlas rollout problem, no surviving containers.",
+  "started_at_utc": "2026-10-13T01:57:47.768451+00:00",
+  "finished_at_utc": "2026-10-13T01:57:48.095720+00:00",
+  "checks": [
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/rollout",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/04-timeline.csv"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:57:47.768451+00:00",
+      "finished_at_utc": "2026-10-13T01:57:48.095720+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/04-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "checkpoint_count": 7,
+    "negative_cases": {
+      "different_rollout": "conflict: operation already in progress: rollout",
+      "late_healthy_report": "invalid state: task dae3ba34-70e9-447d-ba8f-be6bb07f102e with desired=\"running\" actual=\"failed\" cannot accept agent status \"healthy\"",
+      "no_previous_version": "invalid state: no previous successful deployment version",
+      "rollback_during_rollout": "conflict: operation already in progress: rollout",
+      "scale_during_rollout": "conflict: operation already in progress: rollout",
+      "stale_deployment_status": "conflict",
+      "terminal_revival": "invalid state: invalid state transition: deployment \"succeeded\" -> \"running\""
+    },
+    "failed_deployment_status": "failed",
+    "rollback_status": "rolling_back",
+    "timeline_file": "validation/labs/review076/04-timeline.csv"
+  },
+  "original_records": [
+    "validation/labs/review076/04-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/04-command.stdout.txt",
+      "sha256": "d54822affc6fff310f10073b2e5787a904bbe9ea817fe42071b7673f76e6d25d",
+      "bytes": 34801
+    },
+    {
+      "path": "validation/labs/review076/04-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

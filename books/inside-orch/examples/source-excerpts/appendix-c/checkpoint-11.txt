@@ -1,0 +1,6 @@
+func Validate(window types.MaintenanceWindow) error {
+	if window.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if _, err := cronjobs.Parse(window.Schedule); err != nil {
+		return err

@@ -1,0 +1,974 @@
+[
+  {
+    "prompt_id": "020",
+    "chapter_id": "01",
+    "filename": "prompts/020-chapter-01-why-build-a-container-orchestrator.md",
+    "chapter_path": "manuscript/chapters/01-why-build-a-container-orchestrator.md",
+    "word_count": 744,
+    "original_prompts": [
+      0,
+      26
+    ],
+    "related_commits": [
+      "6f90183927991506de435a55582b5c283212ff09",
+      "64a0725387b8130be988948b81774aea7051c718"
+    ],
+    "source_paths": [
+      "README.md",
+      "AGENTS.md",
+      "docs/ARCHITECTURE.md",
+      "cmd/orch-server/main.go"
+    ]
+  },
+  {
+    "prompt_id": "021",
+    "chapter_id": "02",
+    "filename": "prompts/021-chapter-02-a-repository-built-for-reasoning.md",
+    "chapter_path": "manuscript/chapters/02-a-repository-built-for-reasoning.md",
+    "word_count": 731,
+    "original_prompts": [
+      0,
+      1,
+      21
+    ],
+    "related_commits": [
+      "72f27ed1d81b75e499ee65e0c9779e44b237f814",
+      "6f90183927991506de435a55582b5c283212ff09"
+    ],
+    "source_paths": [
+      "AGENTS.md",
+      "go.mod",
+      "Makefile",
+      "docs/DEVELOPMENT.md",
+      "internal/scheduler/scheduler.go",
+      "internal/docker/docker.go"
+    ]
+  },
+  {
+    "prompt_id": "022",
+    "chapter_id": "03",
+    "filename": "prompts/022-chapter-03-boot-the-lab-and-deploy-the-first-service.md",
+    "chapter_path": "manuscript/chapters/03-boot-the-lab-and-deploy-the-first-service.md",
+    "word_count": 751,
+    "original_prompts": [
+      5,
+      21,
+      27,
+      28
+    ],
+    "related_commits": [
+      "f7e77377fbc8565d737ad2cdcf2f2e318b03e4fa",
+      "042a4a44ecfaa884d6173f9d93afafa81a24ea27",
+      "cbfc94ade5b57e449d6b73bf1485b1c5b1647022"
+    ],
+    "source_paths": [
+      "README.md",
+      "docs/INSTALLATION.md",
+      "docs/DEVELOPMENT.md",
+      "scripts/dev-up.sh",
+      "scripts/dev-down.sh",
+      "deployments/examples/http-api.yaml",
+      "internal/cli/root.go"
+    ]
+  },
+  {
+    "prompt_id": "023",
+    "chapter_id": "04",
+    "filename": "prompts/023-chapter-04-domain-models-and-state-machines.md",
+    "chapter_path": "manuscript/chapters/04-domain-models-and-state-machines.md",
+    "word_count": 731,
+    "original_prompts": [
+      2,
+      29
+    ],
+    "related_commits": [
+      "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d",
+      "6526b47f66da88117bab80468ce6b6c711d1e118"
+    ],
+    "source_paths": [
+      "pkg/types/types.go",
+      "pkg/types/lifecycle.go",
+      "pkg/types/lifecycle_test.go",
+      "internal/task/task.go",
+      "internal/node/node.go",
+      "docs/STATE_MACHINES.md"
+    ]
+  },
+  {
+    "prompt_id": "024",
+    "chapter_id": "05",
+    "filename": "prompts/024-chapter-05-service-specifications-resources-and-ports.md",
+    "chapter_path": "manuscript/chapters/05-service-specifications-resources-and-ports.md",
+    "word_count": 744,
+    "original_prompts": [
+      17,
+      34,
+      43
+    ],
+    "related_commits": [
+      "44b60a210c5a17e444b02d622b6af0c1c11375e2",
+      "3bfcef82a54dec457cf9d4187705fa70cc7215cf",
+      "6f7954b8d31b52a7909ebe20d1e22b384af19530"
+    ],
+    "source_paths": [
+      "docs/SERVICE_SPEC.md",
+      "docs/RESOURCES.md",
+      "pkg/types/types.go",
+      "pkg/types/parsers.go",
+      "pkg/types/validation_test.go",
+      "pkg/types/resources_test.go",
+      "internal/cli/deploy.go",
+      "deployments/examples/http-api.yaml"
+    ]
+  },
+  {
+    "prompt_id": "025",
+    "chapter_id": "06",
+    "filename": "prompts/025-chapter-06-follow-one-request-through-the-control-plane.md",
+    "chapter_path": "manuscript/chapters/06-follow-one-request-through-the-control-plane.md",
+    "word_count": 749,
+    "original_prompts": [
+      4,
+      10,
+      25
+    ],
+    "related_commits": [
+      "64a0725387b8130be988948b81774aea7051c718",
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      "cmd/orch-server/main.go",
+      "internal/controlplane/controlplane.go",
+      "internal/controlplane/operations.go",
+      "internal/api/api.go",
+      "docs/ARCHITECTURE.md"
+    ]
+  },
+  {
+    "prompt_id": "026",
+    "chapter_id": "07",
+    "filename": "prompts/026-chapter-07-http-contracts-and-compatible-apis.md",
+    "chapter_path": "manuscript/chapters/07-http-contracts-and-compatible-apis.md",
+    "word_count": 762,
+    "original_prompts": [
+      4,
+      45,
+      61,
+      62
+    ],
+    "related_commits": [
+      "b5d4573f8fa5d56a5dcfde609e3794e93644a39d",
+      "f94414db486b96e7088fccc8c4c502a1fa616d38",
+      "9e78fed31df03d7a985a9f4ceae4770739b05014"
+    ],
+    "source_paths": [
+      "internal/api/api.go",
+      "internal/api/versioning.go",
+      "internal/apperrors/errors.go",
+      "internal/api/api_test.go",
+      "api/openapi.yaml",
+      "api/openapi_test.go",
+      "pkg/client/client.go",
+      "docs/API.md",
+      "docs/API_VERSIONING.md"
+    ]
+  },
+  {
+    "prompt_id": "027",
+    "chapter_id": "08",
+    "filename": "prompts/027-chapter-08-a-cli-that-operators-can-automate.md",
+    "chapter_path": "manuscript/chapters/08-a-cli-that-operators-can-automate.md",
+    "word_count": 743,
+    "original_prompts": [
+      5,
+      43,
+      44
+    ],
+    "related_commits": [
+      "042a4a44ecfaa884d6173f9d93afafa81a24ea27",
+      "a4844c571a0ddf33879556413a62d49a408609e3"
+    ],
+    "source_paths": [
+      "internal/cli/root.go",
+      "internal/cli/root_test.go",
+      "internal/cli/client.go",
+      "internal/cli/deploy.go",
+      "internal/cli/output.go",
+      "internal/config/config.go",
+      "docs/CLI.md",
+      "docs/CONFIGURATION.md"
+    ]
+  },
+  {
+    "prompt_id": "028",
+    "chapter_id": "09",
+    "filename": "prompts/028-chapter-09-persistence-transactions-and-optimistic-concurrency.md",
+    "chapter_path": "manuscript/chapters/09-persistence-transactions-and-optimistic-concurrency.md",
+    "word_count": 748,
+    "original_prompts": [
+      3,
+      24,
+      30
+    ],
+    "related_commits": [
+      "7eba6544ffe2eba41b81faa811e899faf28b77a2",
+      "72fd9baff0bbfde49574257380bcd8f747cc2070"
+    ],
+    "source_paths": [
+      "internal/store/store.go",
+      "internal/store/postgres.go",
+      "internal/store/postgres_test.go",
+      "internal/store/errors.go",
+      "migrations/000001_initial_schema.up.sql",
+      "migrations/000001_initial_schema.down.sql",
+      "docs/MIGRATIONS.md"
+    ]
+  },
+  {
+    "prompt_id": "029",
+    "chapter_id": "10",
+    "filename": "prompts/029-chapter-10-a-deterministic-scheduler.md",
+    "chapter_path": "manuscript/chapters/10-a-deterministic-scheduler.md",
+    "word_count": 747,
+    "original_prompts": [
+      9,
+      17,
+      31
+    ],
+    "related_commits": [
+      "fce0a657651c00ffb697bf4a4aba12d0b171f463",
+      "1a1c216e8cfb442465f4d3c2c114d20da0342795",
+      "3bfcef82a54dec457cf9d4187705fa70cc7215cf"
+    ],
+    "source_paths": [
+      "internal/scheduler/scheduler.go",
+      "internal/scheduler/scheduler_test.go",
+      "internal/scheduler/property_test.go",
+      "internal/scheduler/workloads_test.go",
+      "docs/SCHEDULER.md",
+      "docs/RESOURCES.md"
+    ]
+  },
+  {
+    "prompt_id": "030",
+    "chapter_id": "11",
+    "filename": "prompts/030-chapter-11-reconciliation-as-repeated-convergence.md",
+    "chapter_path": "manuscript/chapters/11-reconciliation-as-repeated-convergence.md",
+    "word_count": 747,
+    "original_prompts": [
+      10,
+      24,
+      32
+    ],
+    "related_commits": [
+      "208eb99758a5dac15a3e083fce3fc3e0dcfdd2e3",
+      "a11cec091a69720c14b9713d8be68f38fe6df332",
+      "316ba80ac1ea7ba465f1b0826b655233a651c043"
+    ],
+    "source_paths": [
+      "internal/reconciler/reconciler.go",
+      "internal/reconciler/reconciler_test.go",
+      "internal/controlplane/controlplane.go",
+      "docs/RECONCILER.md"
+    ]
+  },
+  {
+    "prompt_id": "031",
+    "chapter_id": "12",
+    "filename": "prompts/031-chapter-12-idempotent-docker-operations-and-drift.md",
+    "chapter_path": "manuscript/chapters/12-idempotent-docker-operations-and-drift.md",
+    "word_count": 745,
+    "original_prompts": [
+      6,
+      33,
+      41
+    ],
+    "related_commits": [
+      "2969dfcebd0b15dea99cdf97b5ccdd1ddfd36b41",
+      "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+      "cf9769553d6599d798fafaffe1495d3d739fe993"
+    ],
+    "source_paths": [
+      "internal/docker/docker.go",
+      "internal/docker/docker_test.go",
+      "internal/docker/fake.go",
+      "internal/docker/fake_test.go",
+      "internal/agent/agent.go",
+      "docs/AGENT.md"
+    ]
+  },
+  {
+    "prompt_id": "032",
+    "chapter_id": "13",
+    "filename": "prompts/032-chapter-13-agents-heartbeats-and-task-reports.md",
+    "chapter_path": "manuscript/chapters/13-agents-heartbeats-and-task-reports.md",
+    "word_count": 737,
+    "original_prompts": [
+      7,
+      8,
+      19
+    ],
+    "related_commits": [
+      "5cf9213849164ce1bebc4e042cc37bf5553c2427",
+      "239eb6abab67773e20a18944ac38e2589802946a",
+      "4f25e78c229ba040c07a84801490485b5a0cbb2e"
+    ],
+    "source_paths": [
+      "cmd/orch-agent/main.go",
+      "internal/agent/agent.go",
+      "internal/agent/agent_test.go",
+      "internal/auth/agent.go",
+      "internal/controlplane/agent_test.go",
+      "docs/AGENT.md"
+    ]
+  },
+  {
+    "prompt_id": "033",
+    "chapter_id": "14",
+    "filename": "prompts/033-chapter-14-health-checks-that-respect-trust-boundaries.md",
+    "chapter_path": "manuscript/chapters/14-health-checks-that-respect-trust-boundaries.md",
+    "word_count": 728,
+    "original_prompts": [
+      11,
+      53
+    ],
+    "related_commits": [
+      "ee067bd0f02566eb600031a0cb81f25919d52445",
+      "f92f0a4fcfd760cbc9f850ab4c2e3e6d5dc8a081"
+    ],
+    "source_paths": [
+      "internal/health/health.go",
+      "internal/health/health_test.go",
+      "docs/HEALTHCHECKS.md",
+      "docs/SECURITY.md",
+      "prompts/53-healthcheck-ssrf-protection.md"
+    ]
+  },
+  {
+    "prompt_id": "034",
+    "chapter_id": "15",
+    "filename": "prompts/034-chapter-15-events-audits-and-notification-boundaries.md",
+    "chapter_path": "manuscript/chapters/15-events-audits-and-notification-boundaries.md",
+    "word_count": 755,
+    "original_prompts": [
+      13,
+      46,
+      80
+    ],
+    "related_commits": [
+      "7ff58cef0f736ac9076942ce3ef1039d1fe72c72",
+      "7935c334dcd264e70abb9e795889010b9ecdb03b",
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "internal/events/events.go",
+      "internal/events/events_test.go",
+      "internal/audit/audit.go",
+      "internal/notifications/notifications.go",
+      "internal/notifications/notifications_test.go",
+      "docs/EVENTS.md",
+      "docs/NOTIFICATIONS.md"
+    ]
+  },
+  {
+    "prompt_id": "035",
+    "chapter_id": "16",
+    "filename": "prompts/035-chapter-16-log-streaming-without-losing-control.md",
+    "chapter_path": "manuscript/chapters/16-log-streaming-without-losing-control.md",
+    "word_count": 718,
+    "original_prompts": [
+      12
+    ],
+    "related_commits": [
+      "39e2359653e0e8790feda86eb5fbee3eb5ae509f"
+    ],
+    "source_paths": [
+      "internal/agent/logs.go",
+      "internal/api/logs.go",
+      "internal/docker/docker.go",
+      "docs/LOGS.md",
+      "internal/cli/operations.go"
+    ]
+  },
+  {
+    "prompt_id": "036",
+    "chapter_id": "17",
+    "filename": "prompts/036-chapter-17-rolling-updates-and-rollback-invariants.md",
+    "chapter_path": "manuscript/chapters/17-rolling-updates-and-rollback-invariants.md",
+    "word_count": 752,
+    "original_prompts": [
+      14,
+      15,
+      42
+    ],
+    "related_commits": [
+      "de5900bced92ad9d5786cd258ff7941d67369d33",
+      "430a061fe7f01df966e33d0b86654c627b7d5e39",
+      "5bfb4ac394a609469263de9e14d25d5c2660ee8f"
+    ],
+    "source_paths": [
+      "internal/rollout/rollout.go",
+      "internal/rollout/rollout_test.go",
+      "internal/controlplane/rollback_test.go",
+      "internal/controlplane/operation_lock_test.go",
+      "docs/ROLLOUTS.md"
+    ]
+  },
+  {
+    "prompt_id": "037",
+    "chapter_id": "18",
+    "filename": "prompts/037-chapter-18-safe-deletion-and-resource-cleanup.md",
+    "chapter_path": "manuscript/chapters/18-safe-deletion-and-resource-cleanup.md",
+    "word_count": 732,
+    "original_prompts": [
+      16,
+      25
+    ],
+    "related_commits": [
+      "2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7",
+      "66cfb7049fc1fbceeec9e36a7067febe8cbab698"
+    ],
+    "source_paths": [
+      "internal/reconciler/reconciler.go",
+      "internal/controlplane/controlplane.go",
+      "internal/agent/agent.go",
+      "internal/docker/docker.go",
+      "docs/RECONCILER.md",
+      "docs/RELIABILITY.md"
+    ]
+  },
+  {
+    "prompt_id": "038",
+    "chapter_id": "19",
+    "filename": "prompts/038-chapter-19-offline-nodes-draining-and-rescheduling.md",
+    "chapter_path": "manuscript/chapters/19-offline-nodes-draining-and-rescheduling.md",
+    "word_count": 734,
+    "original_prompts": [
+      39,
+      40
+    ],
+    "related_commits": [
+      "42d4caa4451f4dea24113d48eb1e9e47f2cef558",
+      "a5d4bfb37f70a3119bc6e2d49f8fefc5a1c748a5"
+    ],
+    "source_paths": [
+      "internal/node/monitor.go",
+      "internal/node/monitor_test.go",
+      "internal/controlplane/drain_test.go",
+      "internal/controlplane/offline_test.go",
+      "internal/controlplane/operations.go",
+      "docs/OPERATIONS.md"
+    ]
+  },
+  {
+    "prompt_id": "039",
+    "chapter_id": "20",
+    "filename": "prompts/039-chapter-20-endpoint-discovery-and-internal-dns.md",
+    "chapter_path": "manuscript/chapters/20-endpoint-discovery-and-internal-dns.md",
+    "word_count": 740,
+    "original_prompts": [
+      35,
+      78
+    ],
+    "related_commits": [
+      "03f8c30f6df8d6eb9abadb729b9a92cf7f460c4a",
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "internal/discovery/discovery.go",
+      "internal/discovery/discovery_test.go",
+      "internal/dns/server.go",
+      "internal/dns/server_test.go",
+      "docs/SERVICE_DISCOVERY.md",
+      "deployments/examples/internal-dns-compose.yaml"
+    ]
+  },
+  {
+    "prompt_id": "040",
+    "chapter_id": "21",
+    "filename": "prompts/040-chapter-21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "chapter_path": "manuscript/chapters/21-ingress-host-networking-and-the-overlay-roadmap.md",
+    "word_count": 748,
+    "original_prompts": [
+      36,
+      77
+    ],
+    "related_commits": [
+      "ea0760e8201c842371caf6671a90bcfeb90197bb",
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "internal/traefik/config.go",
+      "internal/traefik/config_test.go",
+      "docs/TRAEFIK.md",
+      "docs/NETWORKING.md",
+      "docs/NETWORKING_DESIGN.md",
+      "deployments/examples/routed-api.yaml",
+      "deployments/examples/traefik-demo.yaml"
+    ]
+  },
+  {
+    "prompt_id": "041",
+    "chapter_id": "22",
+    "filename": "prompts/041-chapter-22-autoscaling-decisions-and-missing-integration.md",
+    "chapter_path": "manuscript/chapters/22-autoscaling-decisions-and-missing-integration.md",
+    "word_count": 732,
+    "original_prompts": [
+      54,
+      55
+    ],
+    "related_commits": [
+      "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+      "b575252d6c5ff0918439e2f209af9d9695eebbb6"
+    ],
+    "source_paths": [
+      "internal/autoscaler/autoscaler.go",
+      "internal/autoscaler/autoscaler_test.go",
+      "docs/AUTOSCALING.md",
+      "docs/AUTOSCALING_DESIGN.md",
+      "cmd/orch-server/main.go"
+    ]
+  },
+  {
+    "prompt_id": "042",
+    "chapter_id": "23",
+    "filename": "prompts/042-chapter-23-authentication-authorization-and-node-trust.md",
+    "chapter_path": "manuscript/chapters/23-authentication-authorization-and-node-trust.md",
+    "word_count": 750,
+    "original_prompts": [
+      18,
+      19,
+      51
+    ],
+    "related_commits": [
+      "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+      "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+      "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+    ],
+    "source_paths": [
+      "internal/auth/auth.go",
+      "internal/auth/agent.go",
+      "internal/auth/agent_test.go",
+      "internal/api/api.go",
+      "docs/SECURITY.md",
+      "docs/SECURITY_REVIEW.md"
+    ]
+  },
+  {
+    "prompt_id": "043",
+    "chapter_id": "24",
+    "filename": "prompts/043-chapter-24-encrypted-secrets-and-configuration-redaction.md",
+    "chapter_path": "manuscript/chapters/24-encrypted-secrets-and-configuration-redaction.md",
+    "word_count": 732,
+    "original_prompts": [
+      37,
+      44
+    ],
+    "related_commits": [
+      "ad738d1867eefb3c92cc4280659ae76943341426",
+      "a4844c571a0ddf33879556413a62d49a408609e3"
+    ],
+    "source_paths": [
+      "internal/secrets/envelope.go",
+      "internal/secrets/envelope_test.go",
+      "internal/config/config.go",
+      "internal/config/config_test.go",
+      "docs/SECRETS.md",
+      "docs/CONFIGURATION.md",
+      "deployments/examples/secrets-api.yaml"
+    ]
+  },
+  {
+    "prompt_id": "044",
+    "chapter_id": "25",
+    "filename": "prompts/044-chapter-25-registry-credentials-and-immutable-image-identity.md",
+    "chapter_path": "manuscript/chapters/25-registry-credentials-and-immutable-image-identity.md",
+    "word_count": 742,
+    "original_prompts": [
+      38,
+      67
+    ],
+    "related_commits": [
+      "fe41c80f83b62a3c8ea8430046acf088ec4014a1",
+      "f2836eabfff8e442d38984433f3e1f5c642667d1"
+    ],
+    "source_paths": [
+      "internal/image/reference.go",
+      "internal/image/reference_test.go",
+      "internal/controlplane/image_test.go",
+      "internal/docker/docker.go",
+      "docs/REGISTRIES.md",
+      "deployments/examples/private-image.yaml",
+      "migrations/000013_image_metadata.up.sql"
+    ]
+  },
+  {
+    "prompt_id": "045",
+    "chapter_id": "26",
+    "filename": "prompts/045-chapter-26-security-contexts-admission-and-policy.md",
+    "chapter_path": "manuscript/chapters/26-security-contexts-admission-and-policy.md",
+    "word_count": 741,
+    "original_prompts": [
+      52,
+      63,
+      64
+    ],
+    "related_commits": [
+      "a140c4190af17969d207b5738cc7527e4ad96075",
+      "9e78fed31df03d7a985a9f4ceae4770739b05014"
+    ],
+    "source_paths": [
+      "internal/policy/policy.go",
+      "internal/policy/policy_test.go",
+      "internal/admission/admission.go",
+      "internal/admission/admission_test.go",
+      "internal/controlplane/admission_test.go",
+      "docs/POLICY_ENGINE_DESIGN.md",
+      "docs/SECURITY.md"
+    ]
+  },
+  {
+    "prompt_id": "046",
+    "chapter_id": "27",
+    "filename": "prompts/046-chapter-27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "chapter_path": "manuscript/chapters/27-namespaces-and-the-limits-of-multi-tenancy.md",
+    "word_count": 736,
+    "original_prompts": [
+      65
+    ],
+    "related_commits": [
+      "9e78fed31df03d7a985a9f4ceae4770739b05014"
+    ],
+    "source_paths": [
+      "internal/namespace/context.go",
+      "internal/controlplane/namespace_test.go",
+      "internal/api/namespace_test.go",
+      "internal/auth/auth.go",
+      "docs/MULTI_TENANCY.md",
+      "migrations/000011_namespaces.up.sql",
+      "migrations/000011_namespaces.down.sql"
+    ]
+  },
+  {
+    "prompt_id": "047",
+    "chapter_id": "28",
+    "filename": "prompts/047-chapter-28-quotas-and-usage-accounting.md",
+    "chapter_path": "manuscript/chapters/28-quotas-and-usage-accounting.md",
+    "word_count": 743,
+    "original_prompts": [
+      66,
+      85
+    ],
+    "related_commits": [
+      "f2836eabfff8e442d38984433f3e1f5c642667d1",
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      "internal/quota/quota.go",
+      "internal/controlplane/quota_test.go",
+      "internal/controlplane/operations.go",
+      "internal/store/postgres.go",
+      "internal/api/quota_gitops_test.go",
+      "docs/MULTI_TENANCY.md",
+      "migrations/000012_resource_quotas.up.sql"
+    ]
+  },
+  {
+    "prompt_id": "048",
+    "chapter_id": "29",
+    "filename": "prompts/048-chapter-29-supply-chain-designs-without-false-guarantees.md",
+    "chapter_path": "manuscript/chapters/29-supply-chain-designs-without-false-guarantees.md",
+    "word_count": 742,
+    "original_prompts": [
+      68,
+      69
+    ],
+    "related_commits": [
+      "f2836eabfff8e442d38984433f3e1f5c642667d1"
+    ],
+    "source_paths": [
+      "docs/IMAGE_SIGNING_DESIGN.md",
+      "docs/SUPPLY_CHAIN_SECURITY_DESIGN.md",
+      "internal/image/reference.go",
+      "internal/policy/policy.go",
+      "prompts/68-image-signing-design.md",
+      "prompts/69-sbom-and-vulnerability-scanning-design.md"
+    ]
+  },
+  {
+    "prompt_id": "049",
+    "chapter_id": "30",
+    "filename": "prompts/049-chapter-30-gitops-drift-and-controlled-reconciliation.md",
+    "chapter_path": "manuscript/chapters/30-gitops-drift-and-controlled-reconciliation.md",
+    "word_count": 736,
+    "original_prompts": [
+      70,
+      71
+    ],
+    "related_commits": [
+      "f2836eabfff8e442d38984433f3e1f5c642667d1"
+    ],
+    "source_paths": [
+      "internal/gitops/gitops.go",
+      "internal/gitops/gitops_test.go",
+      "internal/controlplane/operations.go",
+      "docs/GITOPS.md",
+      "migrations/000014_gitops_sources.up.sql"
+    ]
+  },
+  {
+    "prompt_id": "050",
+    "chapter_id": "31",
+    "filename": "prompts/050-chapter-31-finite-jobs-and-time-based-work.md",
+    "chapter_path": "manuscript/chapters/31-finite-jobs-and-time-based-work.md",
+    "word_count": 746,
+    "original_prompts": [
+      72,
+      73,
+      74
+    ],
+    "related_commits": [
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "internal/controlplane/workloads.go",
+      "internal/controlplane/workloads_test.go",
+      "internal/cronjobs/cronjobs.go",
+      "internal/cronjobs/cronjobs_test.go",
+      "internal/cli/workloads.go",
+      "pkg/types/workloads.go",
+      "docs/JOBS.md",
+      "docs/JOBS_DESIGN.md"
+    ]
+  },
+  {
+    "prompt_id": "051",
+    "chapter_id": "32",
+    "filename": "prompts/051-chapter-32-local-volumes-claims-and-workload-topology.md",
+    "chapter_path": "manuscript/chapters/32-local-volumes-claims-and-workload-topology.md",
+    "word_count": 745,
+    "original_prompts": [
+      75,
+      76
+    ],
+    "related_commits": [
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "internal/controlplane/workloads.go",
+      "internal/controlplane/workloads_test.go",
+      "internal/scheduler/workloads_test.go",
+      "internal/docker/docker.go",
+      "pkg/types/workloads.go",
+      "docs/STORAGE.md",
+      "docs/STATEFUL_WORKLOADS_DESIGN.md"
+    ]
+  },
+  {
+    "prompt_id": "052",
+    "chapter_id": "33",
+    "filename": "prompts/052-chapter-33-extension-interfaces-and-a-plugin-roadmap.md",
+    "chapter_path": "manuscript/chapters/33-extension-interfaces-and-a-plugin-roadmap.md",
+    "word_count": 744,
+    "original_prompts": [
+      79
+    ],
+    "related_commits": [
+      "4d641bbe8913da568d6d9f4697a0144314e10b87"
+    ],
+    "source_paths": [
+      "docs/PLUGIN_SYSTEM_DESIGN.md",
+      "internal/docker/docker.go",
+      "internal/secrets/envelope.go",
+      "internal/notifications/notifications.go",
+      "internal/autoscaler/autoscaler.go"
+    ]
+  },
+  {
+    "prompt_id": "053",
+    "chapter_id": "34",
+    "filename": "prompts/053-chapter-34-leader-election-and-the-durable-ha-boundary.md",
+    "chapter_path": "manuscript/chapters/34-leader-election-and-the-durable-ha-boundary.md",
+    "word_count": 746,
+    "original_prompts": [
+      56,
+      57
+    ],
+    "related_commits": [
+      "b29a6fe91e90f74721e5175e43bf12aed6410f19",
+      "eb3a07c20c550a533afaf36f414ede1ba6c00f78"
+    ],
+    "source_paths": [
+      "internal/leadership/leadership.go",
+      "internal/leadership/leadership_test.go",
+      "internal/leadership/postgres.go",
+      "docs/HA_CONTROL_PLANE_DESIGN.md",
+      "cmd/orch-server/main.go"
+    ]
+  },
+  {
+    "prompt_id": "054",
+    "chapter_id": "35",
+    "filename": "prompts/054-chapter-35-upgrades-migrations-maintenance-and-retention.md",
+    "chapter_path": "manuscript/chapters/35-upgrades-migrations-maintenance-and-retention.md",
+    "word_count": 746,
+    "original_prompts": [
+      81,
+      82,
+      83,
+      84
+    ],
+    "related_commits": [
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      "internal/version/version.go",
+      "internal/version/version_test.go",
+      "internal/migrations/manager.go",
+      "internal/migrations/manager_test.go",
+      "internal/maintenance/maintenance.go",
+      "internal/controlplane/operations.go",
+      "docs/UPGRADES.md",
+      "docs/MIGRATIONS.md"
+    ]
+  },
+  {
+    "prompt_id": "055",
+    "chapter_id": "36",
+    "filename": "prompts/055-chapter-36-fakes-property-tests-fuzzing-and-contracts.md",
+    "chapter_path": "manuscript/chapters/36-fakes-property-tests-fuzzing-and-contracts.md",
+    "word_count": 758,
+    "original_prompts": [
+      22,
+      33,
+      86,
+      87
+    ],
+    "related_commits": [
+      "903ece1ea30c5a0f4902b3f2e9cb475fdea41fdc",
+      "c69f9ffa830284692aabf9e65ab9eb1f79d3a114",
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      "internal/docker/fake.go",
+      "internal/e2e/orchestrator_test.go",
+      "internal/scheduler/property_test.go",
+      "internal/api/fuzz_test.go",
+      "internal/cli/fuzz_test.go",
+      "pkg/types/fuzz_test.go",
+      "docs/TESTING.md"
+    ]
+  },
+  {
+    "prompt_id": "056",
+    "chapter_id": "37",
+    "filename": "prompts/056-chapter-37-failure-injection-and-recovery-evidence.md",
+    "chapter_path": "manuscript/chapters/37-failure-injection-and-recovery-evidence.md",
+    "word_count": 740,
+    "original_prompts": [
+      25,
+      26,
+      59
+    ],
+    "related_commits": [
+      "66cfb7049fc1fbceeec9e36a7067febe8cbab698",
+      "fe385251b7a2051b10af3dd6caaad8bb4821fa21"
+    ],
+    "source_paths": [
+      "internal/e2e/chaos_test.go",
+      "internal/docker/fake.go",
+      "docs/CHAOS_TESTING.md",
+      "docs/RELIABILITY.md",
+      "prompts/25-failure-modes-hardening.md",
+      "prompts/26-senior-distributed-systems-review.md"
+    ]
+  },
+  {
+    "prompt_id": "057",
+    "chapter_id": "38",
+    "filename": "prompts/057-chapter-38-metrics-dashboards-and-actionable-signals.md",
+    "chapter_path": "manuscript/chapters/38-metrics-dashboards-and-actionable-signals.md",
+    "word_count": 758,
+    "original_prompts": [
+      20,
+      46,
+      47,
+      48
+    ],
+    "related_commits": [
+      "b3e29e593f46b4e90899a56bd9391c03d7c42f1a",
+      "357903ef7cb95a7d6d8fad5f426a48ed48bc0b76",
+      "aa44e586fd79147173588f0bf86763814bd23ec4"
+    ],
+    "source_paths": [
+      "internal/metrics/prometheus.go",
+      "internal/metrics/prometheus_test.go",
+      "internal/docker/metrics.go",
+      "deploy/monitoring/prometheus-rules.yaml",
+      "deploy/monitoring/prometheus.yml",
+      "deploy/monitoring/grafana/orchestrator-dashboard.json",
+      "docs/OBSERVABILITY.md"
+    ]
+  },
+  {
+    "prompt_id": "058",
+    "chapter_id": "39",
+    "filename": "prompts/058-chapter-39-performance-and-scale-tests-that-say-what-they-measure.md",
+    "chapter_path": "manuscript/chapters/39-performance-and-scale-tests-that-say-what-they-measure.md",
+    "word_count": 751,
+    "original_prompts": [
+      58,
+      88,
+      89
+    ],
+    "related_commits": [
+      "7fcdaf5877145b77bb484b2bc7cabae8eb75acab",
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      "cmd/orch-loadtest/main.go",
+      "cmd/orch-loadtest/scale_test.go",
+      "internal/scheduler/benchmark_test.go",
+      "internal/controlplane/benchmark_test.go",
+      "internal/api/benchmark_test.go",
+      "internal/api/debug.go",
+      "docs/LOAD_TESTING.md",
+      "docs/PERFORMANCE.md",
+      "docs/SCALE_TESTING.md"
+    ]
+  },
+  {
+    "prompt_id": "059",
+    "chapter_id": "40",
+    "filename": "prompts/059-chapter-40-release-a-system-you-can-honestly-operate.md",
+    "chapter_path": "manuscript/chapters/40-release-a-system-you-can-honestly-operate.md",
+    "word_count": 793,
+    "original_prompts": [
+      23,
+      27,
+      28,
+      49,
+      50,
+      60,
+      90
+    ],
+    "related_commits": [
+      "18fcf32524007ba7d8a71acd70e5acc48f758e49",
+      "64abe001e83932cba294831424557dfd16f77c8c",
+      "7985b9ebe276f8447e1b8abfceb0d6b746ea6f2d"
+    ],
+    "source_paths": [
+      ".github/workflows/ci.yml",
+      "Makefile",
+      "CHANGELOG.md",
+      "RELEASE_NOTES.md",
+      "docs/PRODUCTION_DEPLOYMENT.md",
+      "docs/BACKUP_RESTORE.md",
+      "deployments/production/docker-compose.yml",
+      "deployments/production/systemd/orch-server.service",
+      "deployments/production/systemd/orch-agent.service",
+      "scripts/backup-db.sh",
+      "scripts/restore-db.sh"
+    ]
+  }
+]

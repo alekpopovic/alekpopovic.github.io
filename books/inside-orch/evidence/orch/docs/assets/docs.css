@@ -1,0 +1,407 @@
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+.brand-panel {
+  background:
+    radial-gradient(circle at 20% 0%, rgb(34 211 238 / 0.18), transparent 36%),
+    radial-gradient(circle at 100% 20%, rgb(139 92 246 / 0.16), transparent 38%),
+    rgb(255 255 255 / 0.86);
+}
+
+.dark .brand-panel {
+  background:
+    radial-gradient(circle at 20% 0%, rgb(34 211 238 / 0.12), transparent 36%),
+    radial-gradient(circle at 100% 20%, rgb(139 92 246 / 0.14), transparent 38%),
+    rgb(15 23 42 / 0.78);
+}
+
+.metric-card {
+  align-items: flex-start;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.92), rgb(239 246 255 / 0.84));
+  border: 1px solid rgb(191 219 254 / 0.72);
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 45px -34px rgb(15 23 42 / 0.45);
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem;
+  transition: all 180ms ease;
+}
+
+.metric-card:hover {
+  border-color: rgb(35 116 225 / 0.5);
+  box-shadow: 0 24px 55px -34px rgb(35 116 225 / 0.6);
+  transform: translateY(-2px);
+}
+
+.metric-card span {
+  font-size: 1.45rem;
+}
+
+.metric-card strong {
+  color: rgb(15 23 42);
+}
+
+.metric-card small {
+  color: rgb(100 116 139);
+}
+
+.dark .metric-card {
+  background: linear-gradient(135deg, rgb(15 23 42 / 0.86), rgb(30 41 59 / 0.72));
+  border-color: rgb(51 65 85);
+}
+
+.dark .metric-card strong {
+  color: rgb(248 250 252);
+}
+
+.dark .metric-card small {
+  color: rgb(148 163 184);
+}
+
+.mini-stat {
+  border-radius: 1rem;
+  display: grid;
+  padding: 0.8rem;
+}
+
+.mini-stat strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.mini-stat span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+  opacity: 0.76;
+  text-transform: uppercase;
+}
+
+.doc-action {
+  align-items: center;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.94), rgb(239 246 255 / 0.8));
+  border: 1px solid rgb(191 219 254 / 0.72);
+  border-radius: 999px;
+  color: rgb(29 78 216);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  transition: all 150ms ease;
+}
+
+.doc-action:hover {
+  border-color: rgb(35 116 225 / 0.62);
+  box-shadow: 0 14px 32px -24px rgb(35 116 225 / 0.7);
+  transform: translateY(-1px);
+}
+
+.dark .doc-action {
+  background: linear-gradient(135deg, rgb(15 23 42 / 0.9), rgb(30 41 59 / 0.78));
+  border-color: rgb(51 65 85);
+  color: rgb(147 197 253);
+}
+
+.toc-panel {
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+}
+
+.toc-link {
+  border-left: 2px solid transparent;
+  color: rgb(100 116 139);
+  display: block;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  padding: 0.45rem 0.5rem 0.45rem 0.75rem;
+  transition: all 150ms ease;
+}
+
+.toc-link:hover {
+  border-color: rgb(35 116 225 / 0.55);
+  color: rgb(29 78 216);
+}
+
+.toc-link.depth-3 {
+  font-size: 0.78rem;
+  padding-left: 1.35rem;
+}
+
+.dark .toc-link {
+  color: rgb(148 163 184);
+}
+
+.dark .toc-link:hover {
+  color: rgb(147 197 253);
+}
+
+.quick-link {
+  border-radius: 0.875rem;
+  border: 1px solid rgb(226 232 240);
+  color: rgb(51 65 85);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.65rem 0.8rem;
+  transition: all 150ms ease;
+}
+
+.quick-link:hover {
+  border-color: rgb(35 116 225 / 0.45);
+  color: rgb(29 95 192);
+  transform: translateY(-1px);
+}
+
+.dark .quick-link {
+  border-color: rgb(30 41 59);
+  color: rgb(203 213 225);
+}
+
+.dark .quick-link:hover {
+  border-color: rgb(96 165 250 / 0.45);
+  color: rgb(147 197 253);
+}
+
+.nav-link {
+  align-items: center;
+  border-radius: 0.9rem;
+  color: rgb(71 85 105);
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  transition: all 150ms ease;
+}
+
+.nav-link:hover {
+  background: rgb(248 250 252);
+  color: rgb(15 23 42);
+}
+
+.nav-link.active {
+  background: rgb(35 116 225 / 0.1);
+  color: rgb(29 95 192);
+  font-weight: 700;
+}
+
+.dark .nav-link {
+  color: rgb(148 163 184);
+}
+
+.dark .nav-link:hover {
+  background: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
+.dark .nav-link.active {
+  background: rgb(35 116 225 / 0.18);
+  color: rgb(147 197 253);
+}
+
+.doc-content {
+  overflow-wrap: anywhere;
+}
+
+.doc-content::before {
+  background: linear-gradient(90deg, #22d3ee, #2374e1, #8b5cf6);
+  border-radius: 999px;
+  content: "";
+  display: block;
+  height: 0.28rem;
+  margin-bottom: 2rem;
+  width: 7rem;
+}
+
+.doc-content > *:first-child {
+  margin-top: 0;
+}
+
+.doc-content h1,
+.doc-content h2,
+.doc-content h3,
+.doc-content h4 {
+  color: rgb(15 23 42);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  scroll-margin-top: 6rem;
+}
+
+.dark .doc-content h1,
+.dark .doc-content h2,
+.dark .doc-content h3,
+.dark .doc-content h4 {
+  color: white;
+}
+
+.doc-content h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 1.25rem;
+}
+
+.doc-content h2 {
+  border-top: 1px solid rgb(226 232 240);
+  font-size: 1.75rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+}
+
+.dark .doc-content h2 {
+  border-color: rgb(30 41 59);
+}
+
+.doc-content h3 {
+  font-size: 1.25rem;
+  margin-top: 2rem;
+}
+
+.doc-content h4 {
+  font-size: 1.05rem;
+  margin-top: 1.5rem;
+}
+
+.doc-content p,
+.doc-content li {
+  color: rgb(71 85 105);
+  line-height: 1.8;
+}
+
+.dark .doc-content p,
+.dark .doc-content li {
+  color: rgb(203 213 225);
+}
+
+.doc-content p,
+.doc-content ul,
+.doc-content ol,
+.doc-content pre,
+.doc-content table,
+.doc-content blockquote {
+  margin-top: 1rem;
+}
+
+.doc-content ul,
+.doc-content ol {
+  padding-left: 1.35rem;
+}
+
+.doc-content ul {
+  list-style: disc;
+}
+
+.doc-content ol {
+  list-style: decimal;
+}
+
+.doc-content a {
+  color: rgb(29 95 192);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.doc-content a:hover {
+  text-decoration: underline;
+}
+
+.dark .doc-content a {
+  color: rgb(147 197 253);
+}
+
+.doc-content code {
+  background: rgb(241 245 249);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.45rem;
+  color: rgb(15 23 42);
+  font-size: 0.9em;
+  padding: 0.12rem 0.35rem;
+}
+
+.dark .doc-content code {
+  background: rgb(15 23 42);
+  border-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
+.doc-content pre {
+  background: rgb(15 23 42);
+  border-radius: 1rem;
+  color: rgb(226 232 240);
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.doc-content pre code {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0;
+}
+
+.doc-content blockquote {
+  background: linear-gradient(135deg, rgb(239 246 255 / 0.9), rgb(236 254 255 / 0.72));
+  border: 1px solid rgb(191 219 254 / 0.7);
+  border-left: 4px solid rgb(35 116 225);
+  border-radius: 1rem;
+  color: rgb(71 85 105);
+  padding: 0.9rem 1rem;
+}
+
+.dark .doc-content blockquote {
+  background: linear-gradient(135deg, rgb(15 23 42 / 0.88), rgb(30 41 59 / 0.68));
+  border-color: rgb(51 65 85);
+  color: rgb(203 213 225);
+}
+
+.doc-content table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.doc-content th,
+.doc-content td {
+  border: 1px solid rgb(226 232 240);
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc-content th {
+  background: rgb(248 250 252);
+  color: rgb(15 23 42);
+  font-weight: 700;
+}
+
+.dark .doc-content th,
+.dark .doc-content td {
+  border-color: rgb(30 41 59);
+}
+
+.dark .doc-content th {
+  background: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
+.doc-content .mermaid {
+  background:
+    radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.1), transparent 34%),
+    radial-gradient(circle at 100% 10%, rgb(139 92 246 / 0.1), transparent 36%),
+    rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  border-radius: 1.25rem;
+  margin-top: 1.2rem;
+  overflow-x: auto;
+  padding: 1rem;
+}
+
+.dark .doc-content .mermaid {
+  background:
+    radial-gradient(circle at 0% 0%, rgb(34 211 238 / 0.08), transparent 34%),
+    radial-gradient(circle at 100% 10%, rgb(139 92 246 / 0.08), transparent 36%),
+    rgb(15 23 42);
+  border-color: rgb(30 41 59);
+}

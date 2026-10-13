@@ -1,0 +1,89 @@
+{
+  "chapter_id": "22",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch22.equation",
+      "statement": "Recommendation uses ceil(current*utilization/target), then min/max bounds.",
+      "classification": "implemented package",
+      "source_path": "internal/autoscaler/autoscaler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 213,
+      "line_end": 228,
+      "associated_commits": [
+        "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+        "b575252d6c5ff0918439e2f209af9d9695eebbb6"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Units and sample quality are provider contract; no resource reservation.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch22.cooldown",
+      "statement": "Cooldown map belongs to controller and is set after successful ScaleService.",
+      "classification": "implemented package",
+      "source_path": "internal/autoscaler/autoscaler.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 148,
+      "line_end": 170,
+      "associated_commits": [
+        "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+        "b575252d6c5ff0918439e2f209af9d9695eebbb6"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Lost on controller reconstruction; not durable.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch22.stabilization",
+      "statement": "StabilizationWindow is declared/validated but not consumed by controller.",
+      "classification": "partial integration",
+      "source_path": "pkg/types/types.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 521,
+      "line_end": 557,
+      "associated_commits": [
+        "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+        "b575252d6c5ff0918439e2f209af9d9695eebbb6"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Absence verified against entire autoscaler implementation; no history smoothing.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch22.wiring",
+      "statement": "Default server does not instantiate autoscaler or production MetricsProvider.",
+      "classification": "partial integration",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 146,
+      "line_end": 238,
+      "associated_commits": [
+        "cf4766ccc7ae05dffda1337d9fe89a7bf33bc9e2",
+        "b575252d6c5ff0918439e2f209af9d9695eebbb6"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Package tests do not activate binary behavior.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestAutoscalerScalesUpAndDown",
+    "TestAutoscalerRespectsCooldown",
+    "TestAutoscalerClampsMaxAndMinReplicas",
+    "TestAutoscalerSkipsActiveRollout"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

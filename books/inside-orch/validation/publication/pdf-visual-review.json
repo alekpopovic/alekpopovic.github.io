@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "reviewed_at_utc": "2026-10-13T03:58:36.633860+00:00",
+  "pdf_sha256": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+  "page_count": 546,
+  "all_pages_rendered": true,
+  "all_pages_actually_visually_reviewed": true,
+  "ranges": [
+    [
+      1,
+      96
+    ],
+    [
+      97,
+      180
+    ],
+    [
+      181,
+      360
+    ],
+    [
+      361,
+      546
+    ]
+  ],
+  "range_records": [
+    {
+      "path": "validation/publication/pdf-visual-source-review.json",
+      "sha256": "4194b274f6d57c74da21cba0e1cfa8ba00ba3cde52a313311b60a4839abdfb79",
+      "status": "passed_with_nonblocking_typography_note"
+    },
+    {
+      "path": "validation/publication/pdf-visual-root.json",
+      "sha256": "0e3e9eb0e8776430fa169ebf601db0c87506977e8c6b4c1ad9e0f8e07576f6c6",
+      "status": "passed"
+    },
+    {
+      "path": "validation/publication/pdf-visual-lab-review.json",
+      "sha256": "5eb33871452b2fbd4b796a011c9057da0a0ec55c96da8cff5f3f6c7c66dadb1c",
+      "status": "passed_assigned_range"
+    },
+    {
+      "path": "validation/publication/pdf-visual-editorial.json",
+      "sha256": "aa69b53762ff1dbe56a6b9efe96c448096cb14ad23dae2fc17be5bd648616259",
+      "status": "passed"
+    }
+  ],
+  "render_manifest": "validation/publication/pdf-pages.json",
+  "format_structure": "validation/publication/format-structure.json",
+  "major_findings": [
+    {
+      "id": "PDF-B-FOUR-COLUMN",
+      "status": "resolved",
+      "evidence": "validation/publication/pdf-editorial-b-regression.json",
+      "repair": "Distinct four-column invariant layout; finalpages359360 actually re-viewed bytwoagents andfinalformatchecks passed."
+    }
+  ],
+  "accepted_minor_typography": [
+    "Readable within-word wraps in narrow source tables and invariant IDs.",
+    "Short chapter reference continuation pages may contain whitespace."
+  ],
+  "remaining_blockers": [],
+  "limits": [
+    "AI-assisted actual raster visual review, not external human editorial endorsement.",
+    "Contact sheets coverallpages; full-sizefollowups targetcode/diagrams/tables/suspects, noteverypageatfullsize."
+  ],
+  "prior_reviewed_pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+  "artifact_rebind": {
+    "evidence": "validation/publication/pdf-rebuild-equivalence.json",
+    "method": "All546finalrastersbyte-identicaltoactuallyvisuallyreviewededition; no changedpage. Earlier per-range reports retain their exact originalartifacthash."
+  }
+}

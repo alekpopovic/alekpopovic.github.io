@@ -1,0 +1,1312 @@
+commit 72fd9baff0bbfde49574257380bcd8f747cc2070
+Date: 2026-07-14T13:24:17+02:00
+Subject: Add transaction boundaries for store operations
+
+
+---
+ docs/RECONCILER.md                   |   2 +-
+ docs/RELIABILITY.md                  |  20 +++-
+ docs/ROLLOUTS.md                     |   2 +-
+ internal/reconciler/reconciler.go    |  99 +++++++++++------
+ internal/rollout/rollout.go          | 117 +++++++++++++-------
+ internal/scheduler/scheduler.go      |  46 ++++++--
+ internal/scheduler/scheduler_test.go | 157 +++++++++++++++++++++++++++
+ internal/store/postgres.go           | 203 ++++++++++++++++++++++-------------
+ internal/store/postgres_test.go      | 145 +++++++++++++++++++++++++
+ internal/store/store.go              |  24 +++++
+ 10 files changed, 658 insertions(+), 157 deletions(-)
+
+diff --git a/docs/RECONCILER.md b/docs/RECONCILER.md
+index 3f7653e..1273408 100644
+--- a/docs/RECONCILER.md
++++ b/docs/RECONCILER.md
+@@ -69,6 +69,6 @@ Repeated delete and reconcile passes are idempotent.
+ ## Current Limitations
+ 
+ - No durable leader election yet.
+-- No database transaction wrapping a full service reconciliation pass.
++- Individual create/stop/status-plus-event writes use `store.WithTx` when the store supports transactions; a full reconciliation pass is still intentionally recomputed step by step.
+ - No controller for abrupt node heartbeat expiry yet.
+ - The default `orch-server` binary currently uses the in-memory control plane rather than this store-backed reconciler loop.
+diff --git a/docs/RELIABILITY.md b/docs/RELIABILITY.md
+index d04ec61..4a0065b 100644
+--- a/docs/RELIABILITY.md
++++ b/docs/RELIABILITY.md
+@@ -64,6 +64,24 @@ Docker create/start failure is reported as `failed` with the runtime error as fa
+ 
+ Store operations return errors. Controllers should retry from fresh state on the next loop. Full database retry/backoff policy is roadmap.
+ 
++### Transaction Boundaries
++
++Durable control-plane code must wrap multi-write operations in `store.WithTx`. The callback receives a store interface, not a database-specific transaction type.
++
++Critical transaction boundaries:
++
++- service create: service row, initial service version row, and `service.created` event;
++- scale: service update, reconciliation side effects, and `service.scaled` event;
++- scheduler assignment: task assignment and `task.assigned` event;
++- agent status report: task status update and task status/failure/health event;
++- rollout request: service version update, deployment row, and rollout event;
++- rollback request: service version restore, rollback deployment row, and rollback event;
++- service deletion: service `deleting` mark, task stop directives, and deletion-started event.
++
++PostgreSQL-backed transactions use row-level locking for task assignment preflight and still finish with an atomic `UPDATE ... actual_status = 'pending'` guard. Concurrent scheduler attempts must result in at most one persisted assignment and one assignment event.
++
++The in-memory control plane currently protects these same multi-write flows with a single mutex. When `orch-server` is wired to PostgreSQL, equivalent API and controller flows must use `store.WithTx` rather than issuing separate store calls.
++
+ ### Rollout Interrupted Mid-Way
+ 
+ The rollout controller recomputes state from deployment and task records. It respects max surge and max unavailable on each pass.
+@@ -93,6 +111,6 @@ Every reliability-sensitive change should add tests for:
+ - Wire server to PostgreSQL.
+ - Add heartbeat expiry and node-failure rebalancing.
+ - Add real leader election.
+-- Add database transaction boundaries around multi-row controller operations where needed.
++- Add automatic transaction retries for serialization conflicts and deadlocks.
+ - Add progress deadlines for rollouts.
+ - Add persistent event export.
+diff --git a/docs/ROLLOUTS.md b/docs/ROLLOUTS.md
+index 70c936d..4ea4631 100644
+--- a/docs/ROLLOUTS.md
++++ b/docs/ROLLOUTS.md
+@@ -72,4 +72,4 @@ Status-change events are emitted only when the deployment status actually change
+ - No manual pause/resume endpoint yet.
+ - No automatic rollback on failed rollout.
+ - No progress deadline.
+-- No per-step transaction wrapping deployment update plus events.
++- No transaction retry loop for serialization conflicts or deadlocks yet.
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index 741c4a9..d468fcc 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -235,22 +235,30 @@ func (r *Reconciler) reconcileDeletingService(ctx context.Context, service types
+ 		}
+ 	}
+ 	if allRemoved {
+-		updated, err := r.store.UpdateServiceStatus(ctx, service.ID, types.ServiceDeleted, service.UpdatedAt)
++		transactional := r.transactional()
++		var updated types.Service
++		err := store.WithTx(ctx, r.store, func(txCtx context.Context, tx Store) error {
++			var err error
++			updated, err = tx.UpdateServiceStatus(txCtx, service.ID, types.ServiceDeleted, service.UpdatedAt)
++			if err != nil {
++				return err
++			}
++			return events.Emit(txCtx, tx, types.Event{
++				Type:              events.TypeServiceDeleted,
++				Severity:          types.EventInfo,
++				Source:            "reconciler",
++				Message:           "service deletion completed",
++				RelatedObjectType: "service",
++				RelatedObjectID:   string(updated.ID),
++				Timestamp:         r.now(),
++			}, eventOptions(transactional)...)
++		})
+ 		if err != nil {
+ 			if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
+ 				return result, nil
+ 			}
+ 			return result, fmt.Errorf("mark service %s deleted: %w", service.ID, err)
+ 		}
+-		_ = events.Emit(ctx, r.store, types.Event{
+-			Type:              events.TypeServiceDeleted,
+-			Severity:          types.EventInfo,
+-			Source:            "reconciler",
+-			Message:           "service deletion completed",
+-			RelatedObjectType: "service",
+-			RelatedObjectID:   string(updated.ID),
+-			Timestamp:         r.now(),
+-		}, events.WithLogger(r.logger))
+ 	}
+ 	return result, nil
+ }
+@@ -368,19 +376,25 @@ func (r *Reconciler) createTask(ctx context.Context, service types.Service, reas
+ 		Image:         service.Spec.Image,
+ 		Version:       service.DeploymentVersion,
+ 	}
+-	created, err := r.store.CreateTask(ctx, task)
++	transactional := r.transactional()
++	err := store.WithTx(ctx, r.store, func(txCtx context.Context, tx Store) error {
++		created, err := tx.CreateTask(txCtx, task)
++		if err != nil {
++			return err
++		}
++		return events.Emit(txCtx, tx, types.Event{
++			Type:              events.TypeReconcilerTaskCreated,
++			Severity:          types.EventInfo,
++			Source:            "reconciler",
++			Message:           reason,
++			RelatedObjectType: "task",
++			RelatedObjectID:   string(created.ID),
++			Timestamp:         r.now(),
++		}, eventOptions(transactional)...)
++	})
+ 	if err != nil {
+ 		return fmt.Errorf("create task for service %s: %w", service.ID, err)
+ 	}
+-	_ = events.Emit(ctx, r.store, types.Event{
+-		Type:              events.TypeReconcilerTaskCreated,
+-		Severity:          types.EventInfo,
+-		Source:            "reconciler",
+-		Message:           reason,
+-		RelatedObjectType: "task",
+-		RelatedObjectID:   string(created.ID),
+-		Timestamp:         r.now(),
+-	}, events.WithLogger(r.logger))
+ 	return nil
+ }
+ 
+@@ -388,23 +402,46 @@ func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason strin
+ 	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
+ 		return false, nil
+ 	}
+-	stopped, err := r.store.StopTask(ctx, task.ID, task.UpdatedAt)
++	transactional := r.transactional()
++	stopped := false
++	err := store.WithTx(ctx, r.store, func(txCtx context.Context, tx Store) error {
++		stoppedTask, err := tx.StopTask(txCtx, task.ID, task.UpdatedAt)
++		if err != nil {
++			return err
++		}
++		if err := events.Emit(txCtx, tx, types.Event{
++			Type:              events.TypeReconcilerTaskStopped,
++			Severity:          types.EventInfo,
++			Source:            "reconciler",
++			Message:           reason,
++			RelatedObjectType: "task",
++			RelatedObjectID:   string(stoppedTask.ID),
++			Timestamp:         r.now(),
++		}, eventOptions(transactional)...); err != nil {
++			return err
++		}
++		stopped = true
++		return nil
++	})
+ 	if err != nil {
+ 		if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
+ 			return false, nil
+ 		}
+ 		return false, fmt.Errorf("stop task %s: %w", task.ID, err)
+ 	}
+-	_ = events.Emit(ctx, r.store, types.Event{
+-		Type:              events.TypeReconcilerTaskStopped,
+-		Severity:          types.EventInfo,
+-		Source:            "reconciler",
+-		Message:           reason,
+-		RelatedObjectType: "task",
+-		RelatedObjectID:   string(stopped.ID),
+-		Timestamp:         r.now(),
+-	}, events.WithLogger(r.logger))
+-	return true, nil
++	return stopped, nil
++}
++
++func (r *Reconciler) transactional() bool {
++	_, ok := any(r.store).(store.Transactor)
++	return ok
++}
++
++func eventOptions(transactional bool) []events.EmitOption {
++	if transactional {
++		return []events.EmitOption{events.Strict()}
++	}
++	return nil
+ }
+ 
+ func isNonTerminal(task types.Task) bool {
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index 5d1813a..a1f26f6 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -8,6 +8,7 @@ import (
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/internal/store"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ )
+ 
+@@ -186,26 +187,40 @@ func (c *Controller) createNewTasks(ctx context.Context, deployment types.Deploy
+ 		surgeLimit = service.Spec.Replicas
+ 	}
+ 	for state.newActive+created < service.Spec.Replicas && state.totalActive+created < surgeLimit {
+-		task, err := c.store.CreateTask(ctx, types.Task{
+-			ServiceID:     service.ID,
+-			DesiredStatus: types.TaskRunning,
+-			ActualStatus:  types.TaskPending,
+-			Image:         service.Spec.Image,
+-			Version:       deployment.ToVersion,
++		transactional := c.transactional()
++		var task types.Task
++		err := store.WithTx(ctx, c.store, func(txCtx context.Context, tx Store) error {
++			createdTask, err := tx.CreateTask(txCtx, types.Task{
++				ServiceID:     service.ID,
++				DesiredStatus: types.TaskRunning,
++				ActualStatus:  types.TaskPending,
++				Image:         service.Spec.Image,
++				Version:       deployment.ToVersion,
++			})
++			if err != nil {
++				return err
++			}
++			if err := events.Emit(txCtx, tx, types.Event{
++				Type:              events.TypeRolloutTaskCreated,
++				Severity:          types.EventInfo,
++				Source:            "rollout",
++				Message:           "created new-version task",
++				RelatedObjectType: "task",
++				RelatedObjectID:   string(createdTask.ID),
++				Timestamp:         c.now(),
++			}, c.eventOptions(transactional)...); err != nil {
++				return err
++			}
++			task = createdTask
++			return nil
+ 		})
+ 		if err != nil {
+ 			return created, fmt.Errorf("create rollout task: %w", err)
+ 		}
++		if task.ID == "" {
++			return created, fmt.Errorf("create rollout task: %w", store.ErrInvalidState)
++		}
+ 		created++
+-		_ = events.Emit(ctx, c.store, types.Event{
+-			Type:              events.TypeRolloutTaskCreated,
+-			Severity:          types.EventInfo,
+-			Source:            "rollout",
+-			Message:           "created new-version task",
+-			RelatedObjectType: "task",
+-			RelatedObjectID:   string(task.ID),
+-			Timestamp:         c.now(),
+-		}, events.WithLogger(c.logger))
+ 	}
+ 	return created, nil
+ }
+@@ -223,20 +238,28 @@ func (c *Controller) stopOldTasks(ctx context.Context, deployment types.Deployme
+ 		if service.Spec.Replicas-(state.available-stopped-1) > deployment.MaxUnavailable {
+ 			break
+ 		}
+-		stoppedTask, err := c.store.StopTask(ctx, task.ID, task.UpdatedAt)
++		transactional := c.transactional()
++		stoppedTask := types.Task{}
++		err := store.WithTx(ctx, c.store, func(txCtx context.Context, tx Store) error {
++			var err error
++			stoppedTask, err = tx.StopTask(txCtx, task.ID, task.UpdatedAt)
++			if err != nil {
++				return err
++			}
++			return events.Emit(txCtx, tx, types.Event{
++				Type:              events.TypeRolloutTaskStopped,
++				Severity:          types.EventInfo,
++				Source:            "rollout",
++				Message:           "stopped old-version task",
++				RelatedObjectType: "task",
++				RelatedObjectID:   string(stoppedTask.ID),
++				Timestamp:         c.now(),
++			}, c.eventOptions(transactional)...)
++		})
+ 		if err != nil {
+ 			return stopped, fmt.Errorf("stop old rollout task %s: %w", task.ID, err)
+ 		}
+ 		stopped++
+-		_ = events.Emit(ctx, c.store, types.Event{
+-			Type:              events.TypeRolloutTaskStopped,
+-			Severity:          types.EventInfo,
+-			Source:            "rollout",
+-			Message:           "stopped old-version task",
+-			RelatedObjectType: "task",
+-			RelatedObjectID:   string(stoppedTask.ID),
+-			Timestamp:         c.now(),
+-		}, events.WithLogger(c.logger))
+ 	}
+ 	return stopped, nil
+ }
+@@ -245,24 +268,44 @@ func (c *Controller) setStatus(ctx context.Context, deployment types.Deployment,
+ 	if deployment.Status == status {
+ 		return deployment, nil
+ 	}
+-	updated, err := c.store.UpdateDeploymentStatus(ctx, deployment.ID, status, deployment.UpdatedAt)
++	transactional := c.transactional()
++	var updated types.Deployment
++	err := store.WithTx(ctx, c.store, func(txCtx context.Context, tx Store) error {
++		var err error
++		updated, err = tx.UpdateDeploymentStatus(txCtx, deployment.ID, status, deployment.UpdatedAt)
++		if err != nil {
++			return err
++		}
++		return events.Emit(txCtx, tx, types.Event{
++			Type:              events.TypeRolloutStatusChanged,
++			Severity:          severity,
++			Source:            "rollout",
++			Message:           message,
++			RelatedObjectType: "service",
++			RelatedObjectID:   string(updated.ServiceID),
++			Timestamp:         c.now(),
++		}, c.eventOptions(transactional)...)
++	})
+ 	if err != nil {
+ 		return types.Deployment{}, fmt.Errorf("update rollout status: %w", err)
+ 	}
+-	deployment = updated
+ 	if status == types.DeploymentFailed {
+ 		c.metrics.IncRolloutFailures()
+ 	}
+-	_ = events.Emit(ctx, c.store, types.Event{
+-		Type:              events.TypeRolloutStatusChanged,
+-		Severity:          severity,
+-		Source:            "rollout",
+-		Message:           message,
+-		RelatedObjectType: "service",
+-		RelatedObjectID:   string(deployment.ServiceID),
+-		Timestamp:         c.now(),
+-	}, events.WithLogger(c.logger))
+-	return deployment, nil
++	return updated, nil
++}
++
++func (c *Controller) transactional() bool {
++	_, ok := any(c.store).(store.Transactor)
++	return ok
++}
++
++func (c *Controller) eventOptions(transactional bool) []events.EmitOption {
++	options := []events.EmitOption{events.WithLogger(c.logger)}
++	if transactional {
++		options = append(options, events.Strict())
++	}
++	return options
+ }
+ 
+ type rolloutState struct {
+diff --git a/internal/scheduler/scheduler.go b/internal/scheduler/scheduler.go
+index 3712b61..749f684 100644
+--- a/internal/scheduler/scheduler.go
++++ b/internal/scheduler/scheduler.go
+@@ -123,15 +123,33 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 		if !ok {
+ 			continue
+ 		}
+-		if _, err := s.store.AssignTask(ctx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
+-			if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
+-				continue
+-			}
++		assigned, err := s.persistAssignment(ctx, task, assignment)
++		if err != nil {
+ 			s.metrics.IncSchedulerErrors()
+-			return assignments, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
++			return assignments, err
++		}
++		if assigned {
++			assignments = append(assignments, assignment)
++		}
++	}
++	return assignments, nil
++}
++
++func (s *Scheduler) persistAssignment(ctx context.Context, task types.Task, assignment Assignment) (bool, error) {
++	transactional := false
++	if _, ok := any(s.store).(store.Transactor); ok {
++		transactional = true
++	}
++	assigned := false
++	err := store.WithTx(ctx, s.store, func(txCtx context.Context, tx Store) error {
++		if _, err := tx.AssignTask(txCtx, assignment.TaskID, assignment.NodeID, task.UpdatedAt); err != nil {
++			return err
+ 		}
+-		assignments = append(assignments, assignment)
+-		_ = events.Emit(ctx, s.store, types.Event{
++		options := []events.EmitOption(nil)
++		if transactional {
++			options = append(options, events.Strict())
++		}
++		if err := events.Emit(txCtx, tx, types.Event{
+ 			Type:              events.TypeTaskAssigned,
+ 			Severity:          types.EventInfo,
+ 			Source:            "scheduler",
+@@ -139,9 +157,19 @@ func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+ 			RelatedObjectType: "task",
+ 			RelatedObjectID:   string(assignment.TaskID),
+ 			Timestamp:         s.now(),
+-		})
++		}, options...); err != nil {
++			return fmt.Errorf("emit task assignment event: %w", err)
++		}
++		assigned = true
++		return nil
++	})
++	if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
++		return false, nil
+ 	}
+-	return assignments, nil
++	if err != nil {
++		return false, fmt.Errorf("assign task %s: %w", assignment.TaskID, err)
++	}
++	return assigned, nil
+ }
+ 
+ func (s *Scheduler) loadRunningTasks(ctx context.Context, nodes []types.Node) ([]types.Task, error) {
+diff --git a/internal/scheduler/scheduler_test.go b/internal/scheduler/scheduler_test.go
+index 6cb90a5..1a8eb9f 100644
+--- a/internal/scheduler/scheduler_test.go
++++ b/internal/scheduler/scheduler_test.go
+@@ -3,6 +3,7 @@ package scheduler
+ import (
+ 	"context"
+ 	"errors"
++	"sync"
+ 	"testing"
+ 	"time"
+ 
+@@ -192,6 +193,35 @@ func TestRunOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 	}
+ }
+ 
++func TestRunOnceRollsBackTransactionalAssignmentWhenEventFails(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	base := &fakeStore{
++		pending: []types.Task{task},
++		nodes: []types.Node{
++			nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		},
++		services: map[types.ServiceID]types.Service{
++			"svc": serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
++		},
++		failEvents: true,
++	}
++
++	assignments, err := New(&transactionalFakeStore{fakeStore: base}).RunOnce(context.Background())
++	if !errors.Is(err, errFakeEvent) {
++		t.Fatalf("expected transactional event failure, got %v", err)
++	}
++	if len(assignments) != 0 {
++		t.Fatalf("expected no returned assignments after rollback, got %#v", assignments)
++	}
++	if len(base.assigned) != 0 {
++		t.Fatalf("expected assignment rollback, got %#v", base.assigned)
++	}
++	if len(base.events) != 0 {
++		t.Fatalf("expected no persisted event, got %#v", base.events)
++	}
++}
++
+ func TestRunOnceSkipsAssignmentConflict(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+@@ -218,6 +248,55 @@ func TestRunOnceSkipsAssignmentConflict(t *testing.T) {
+ 	}
+ }
+ 
++func TestConcurrentSchedulerAttemptsAssignTaskOnce(t *testing.T) {
++	task := pendingTask("task-a", "svc")
++	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
++	store := &concurrentAssignmentStore{
++		task:    task,
++		node:    nodeFixture("node-a", types.NodeReady, nil, types.Resources{CPU: 2000, Memory: 2048}),
++		service: serviceFixture("svc", types.Resources{CPU: 500, Memory: 512}, nil),
++	}
++	scheduler := New(store)
++	assignment := Assignment{TaskID: task.ID, NodeID: "node-a"}
++
++	var wg sync.WaitGroup
++	results := make(chan bool, 2)
++	errs := make(chan error, 2)
++	for i := 0; i < 2; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			assigned, err := scheduler.persistAssignment(context.Background(), task, assignment)
++			results <- assigned
++			errs <- err
++		}()
++	}
++	wg.Wait()
++	close(results)
++	close(errs)
++
++	successes := 0
++	for assigned := range results {
++		if assigned {
++			successes++
++		}
++	}
++	for err := range errs {
++		if err != nil {
++			t.Fatalf("expected conflict to be treated as benign, got %v", err)
++		}
++	}
++	if successes != 1 {
++		t.Fatalf("expected exactly one assignment success, got %d", successes)
++	}
++	if store.task.ActualStatus != types.TaskAssigned || store.task.NodeID != "node-a" {
++		t.Fatalf("expected task assigned once, got %#v", store.task)
++	}
++	if len(store.events) != 1 {
++		t.Fatalf("expected one assignment event, got %#v", store.events)
++	}
++}
++
+ func TestRunOnceAccountsForNonTerminalAssignedTasks(t *testing.T) {
+ 	task := pendingTask("task-a", "svc")
+ 	task.UpdatedAt = time.Date(2026, 6, 11, 10, 0, 0, 0, time.UTC)
+@@ -263,6 +342,84 @@ type fakeStore struct {
+ 	assignErr  error
+ }
+ 
++type transactionalFakeStore struct {
++	*fakeStore
++}
++
++func (s *transactionalFakeStore) WithTx(ctx context.Context, fn store.TxFunc) error {
++	assigned := append([]Assignment(nil), s.assigned...)
++	events := append([]types.Event(nil), s.events...)
++	if err := fn(ctx, s); err != nil {
++		s.assigned = assigned
++		s.events = events
++		return err
++	}
++	return nil
++}
++
++type concurrentAssignmentStore struct {
++	mu      sync.Mutex
++	task    types.Task
++	node    types.Node
++	service types.Service
++	events  []types.Event
++}
++
++func (s *concurrentAssignmentStore) WithTx(ctx context.Context, fn store.TxFunc) error {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	task := s.task
++	events := append([]types.Event(nil), s.events...)
++	if err := fn(ctx, s); err != nil {
++		s.task = task
++		s.events = events
++		return err
++	}
++	return nil
++}
++
++func (s *concurrentAssignmentStore) ListTasksByStatus(_ context.Context, status types.TaskStatus) ([]types.Task, error) {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if s.task.ActualStatus == status {
++		return []types.Task{s.task}, nil
++	}
++	return nil, nil
++}
++
++func (s *concurrentAssignmentStore) ListNodesByStatus(_ context.Context, status types.NodeStatus) ([]types.Node, error) {
++	if s.node.Status == status {
++		return []types.Node{s.node}, nil
++	}
++	return nil, nil
++}
++
++func (s *concurrentAssignmentStore) ListTasksByNode(context.Context, types.NodeID) ([]types.Task, error) {
++	return nil, nil
++}
++
++func (s *concurrentAssignmentStore) GetService(context.Context, types.ServiceID) (types.Service, error) {
++	return s.service, nil
++}
++
++func (s *concurrentAssignmentStore) AssignTask(_ context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++	if s.task.ID != id {
++		return types.Task{}, store.ErrNotFound
++	}
++	if s.task.ActualStatus != types.TaskPending || !s.task.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Task{}, store.ErrConflict
++	}
++	s.task.NodeID = nodeID
++	s.task.ActualStatus = types.TaskAssigned
++	s.task.UpdatedAt = s.task.UpdatedAt.Add(time.Second)
++	return s.task, nil
++}
++
++func (s *concurrentAssignmentStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
++	s.events = append(s.events, event)
++	return event, nil
++}
++
+ func (s *fakeStore) ListTasksByStatus(_ context.Context, status types.TaskStatus) ([]types.Task, error) {
+ 	if status == types.TaskPending {
+ 		return s.pending, nil
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 688c901..ca0e173 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -17,11 +17,38 @@ import (
+ )
+ 
+ type PostgresStore struct {
++	*postgresStore
+ 	pool *pgxpool.Pool
+ }
+ 
++type postgresStore struct {
++	db    postgresDB
++	begin func(context.Context) (pgx.Tx, error)
++}
++
++type postgresDB interface {
++	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
++	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
++	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
++}
++
+ func NewPostgresStore(pool *pgxpool.Pool) *PostgresStore {
+-	return &PostgresStore{pool: pool}
++	return &PostgresStore{
++		postgresStore: &postgresStore{
++			db:    pool,
++			begin: pool.Begin,
++		},
++		pool: pool,
++	}
++}
++
++func (s *PostgresStore) WithTx(ctx context.Context, fn TxFunc) error {
++	if s == nil || s.pool == nil {
++		return fmt.Errorf("%w: postgres store is not initialized", ErrInvalidState)
++	}
++	return s.postgresStore.withTx(ctx, func(txStore *postgresStore) error {
++		return fn(ctx, txStore)
++	})
+ }
+ 
+ func ConnectPostgres(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+@@ -36,7 +63,23 @@ func ConnectPostgres(ctx context.Context, databaseURL string) (*pgxpool.Pool, er
+ 	return pool, nil
+ }
+ 
+-func (s *PostgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (types.Node, error) {
++func (s *postgresStore) withTx(ctx context.Context, fn func(*postgresStore) error) error {
++	if s.begin == nil {
++		return fn(s)
++	}
++	tx, err := s.begin(ctx)
++	if err != nil {
++		return mapPostgresError(err)
++	}
++	txStore := &postgresStore{db: tx}
++	defer rollback(ctx, tx)
++	if err := fn(txStore); err != nil {
++		return err
++	}
++	return mapPostgresError(tx.Commit(ctx))
++}
++
++func (s *postgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (types.Node, error) {
+ 	if err := spec.Validate(); err != nil {
+ 		return types.Node{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+@@ -46,7 +89,7 @@ func (s *PostgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (ty
+ 		return types.Node{}, err
+ 	}
+ 
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO nodes (
+ 			hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+@@ -72,8 +115,8 @@ func (s *PostgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (ty
+ 	return node, nil
+ }
+ 
+-func (s *PostgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Node, error) {
+-	row := s.pool.QueryRow(ctx, `
++func (s *postgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Node, error) {
++	row := s.db.QueryRow(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+ 			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
+@@ -88,7 +131,7 @@ func (s *PostgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Nod
+ 	return node, nil
+ }
+ 
+-func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expectedUpdatedAt time.Time) (types.Node, error) {
++func (s *postgresStore) UpdateNode(ctx context.Context, node types.Node, expectedUpdatedAt time.Time) (types.Node, error) {
+ 	spec := types.NodeSpec{
+ 		Hostname:         node.Hostname,
+ 		AdvertiseAddress: node.AdvertiseAddress,
+@@ -105,7 +148,7 @@ func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 		return types.Node{}, err
+ 	}
+ 
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE nodes
+ 		SET hostname = $2,
+ 			advertise_address = $3,
+@@ -150,8 +193,8 @@ func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 	return updated, nil
+ }
+ 
+-func (s *PostgresStore) ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error) {
+-	rows, err := s.pool.Query(ctx, `
++func (s *postgresStore) ListNodesByStatus(ctx context.Context, status types.NodeStatus) ([]types.Node, error) {
++	rows, err := s.db.Query(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+ 			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
+@@ -179,7 +222,7 @@ func (s *PostgresStore) ListNodesByStatus(ctx context.Context, status types.Node
+ 	return nodes, nil
+ }
+ 
+-func (s *PostgresStore) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
++func (s *postgresStore) CreateService(ctx context.Context, spec types.ServiceSpec) (types.Service, error) {
+ 	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
+ 	if err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+@@ -189,27 +232,26 @@ func (s *PostgresStore) CreateService(ctx context.Context, spec types.ServiceSpe
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+ 
+-	tx, err := s.pool.Begin(ctx)
+-	if err != nil {
+-		return types.Service{}, mapPostgresError(err)
+-	}
+-	defer rollback(ctx, tx)
+-
+-	service, err := insertService(ctx, tx, spec)
++	var service types.Service
++	err = s.withTx(ctx, func(tx *postgresStore) error {
++		created, err := insertService(ctx, tx.db, spec)
++		if err != nil {
++			return err
++		}
++		if err := insertServiceVersion(ctx, tx.db, created.ID, created.DeploymentVersion, spec); err != nil {
++			return err
++		}
++		service = created
++		return nil
++	})
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+-	if err := insertServiceVersion(ctx, tx, service.ID, service.DeploymentVersion, spec); err != nil {
+-		return types.Service{}, err
+-	}
+-	if err := tx.Commit(ctx); err != nil {
+-		return types.Service{}, mapPostgresError(err)
+-	}
+ 	return service, nil
+ }
+ 
+-func (s *PostgresStore) GetService(ctx context.Context, id types.ServiceID) (types.Service, error) {
+-	row := s.pool.QueryRow(ctx, serviceSelectSQL()+` WHERE id = $1`, string(id))
++func (s *postgresStore) GetService(ctx context.Context, id types.ServiceID) (types.Service, error) {
++	row := s.db.QueryRow(ctx, serviceSelectSQL()+` WHERE id = $1`, string(id))
+ 	service, err := scanService(row)
+ 	if err != nil {
+ 		return types.Service{}, mapPostgresError(err)
+@@ -217,8 +259,8 @@ func (s *PostgresStore) GetService(ctx context.Context, id types.ServiceID) (typ
+ 	return service, nil
+ }
+ 
+-func (s *PostgresStore) ListServices(ctx context.Context) ([]types.Service, error) {
+-	rows, err := s.pool.Query(ctx, serviceSelectSQL()+` ORDER BY name, id`)
++func (s *postgresStore) ListServices(ctx context.Context) ([]types.Service, error) {
++	rows, err := s.db.Query(ctx, serviceSelectSQL()+` ORDER BY name, id`)
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -238,7 +280,7 @@ func (s *PostgresStore) ListServices(ctx context.Context) ([]types.Service, erro
+ 	return services, nil
+ }
+ 
+-func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++func (s *postgresStore) UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+ 	normalized, err := types.NormalizeServiceSpec(spec, types.DefaultResourceDefaults())
+ 	if err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+@@ -248,26 +290,25 @@ func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, s
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+ 
+-	tx, err := s.pool.Begin(ctx)
+-	if err != nil {
+-		return types.Service{}, mapPostgresError(err)
+-	}
+-	defer rollback(ctx, tx)
+-
+-	service, err := updateService(ctx, tx, id, spec, expectedUpdatedAt)
++	var service types.Service
++	err = s.withTx(ctx, func(tx *postgresStore) error {
++		updated, err := updateService(ctx, tx.db, id, spec, expectedUpdatedAt)
++		if err != nil {
++			return err
++		}
++		if err := insertServiceVersion(ctx, tx.db, updated.ID, updated.DeploymentVersion, spec); err != nil {
++			return err
++		}
++		service = updated
++		return nil
++	})
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+-	if err := insertServiceVersion(ctx, tx, service.ID, service.DeploymentVersion, spec); err != nil {
+-		return types.Service{}, err
+-	}
+-	if err := tx.Commit(ctx); err != nil {
+-		return types.Service{}, mapPostgresError(err)
+-	}
+ 	return service, nil
+ }
+ 
+-func (s *PostgresStore) UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error) {
++func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error) {
+ 	current, err := s.GetService(ctx, id)
+ 	if err != nil {
+ 		return types.Service{}, err
+@@ -275,7 +316,7 @@ func (s *PostgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 	if err := types.ValidateServiceTransition(current.Status, status); err != nil {
+ 		return types.Service{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE services
+ 		SET status = $2,
+ 			updated_at = timezone('utc', now()),
+@@ -298,7 +339,7 @@ func (s *PostgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 	return service, nil
+ }
+ 
+-func (s *PostgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
++func (s *postgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
+ 	if task.DesiredStatus == "" {
+ 		task.DesiredStatus = types.TaskRunning
+ 	}
+@@ -308,7 +349,7 @@ func (s *PostgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	if !types.ValidTaskStatus(task.DesiredStatus) || !types.ValidTaskStatus(task.ActualStatus) {
+ 		return types.Task{}, fmt.Errorf("%w: task status is invalid", ErrInvalidState)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+ 			service_id, node_id, container_id, desired_status, actual_status,
+ 			image, version, restart_count, failure_reason, started_at, finished_at
+@@ -335,8 +376,16 @@ func (s *PostgresStore) CreateTask(ctx context.Context, task types.Task) (types.
+ 	return created, nil
+ }
+ 
+-func (s *PostgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Task, error) {
+-	row := s.pool.QueryRow(ctx, taskSelectSQL()+` WHERE id = $1`, string(id))
++func (s *postgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Task, error) {
++	return s.getTask(ctx, id, false)
++}
++
++func (s *postgresStore) getTask(ctx context.Context, id types.TaskID, forUpdate bool) (types.Task, error) {
++	sql := taskSelectSQL() + ` WHERE id = $1`
++	if forUpdate {
++		sql += ` FOR UPDATE`
++	}
++	row := s.db.QueryRow(ctx, sql, string(id))
+ 	task, err := scanTask(row)
+ 	if err != nil {
+ 		return types.Task{}, mapPostgresError(err)
+@@ -344,15 +393,15 @@ func (s *PostgresStore) GetTask(ctx context.Context, id types.TaskID) (types.Tas
+ 	return task, nil
+ }
+ 
+-func (s *PostgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
+-	current, err := s.GetTask(ctx, id)
++func (s *postgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID types.NodeID, expectedUpdatedAt time.Time) (types.Task, error) {
++	current, err := s.getTask(ctx, id, s.begin == nil)
+ 	if err != nil {
+ 		return types.Task{}, err
+ 	}
+ 	if err := types.ValidateTaskTransition(current.ActualStatus, types.TaskAssigned); err != nil {
+ 		return types.Task{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE tasks
+ 		SET node_id = $2,
+ 			actual_status = $3,
+@@ -383,7 +432,7 @@ func (s *PostgresStore) AssignTask(ctx context.Context, id types.TaskID, nodeID
+ 	return task, nil
+ }
+ 
+-func (s *PostgresStore) StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error) {
++func (s *postgresStore) StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	current, err := s.GetTask(ctx, id)
+ 	if err != nil {
+ 		return types.Task{}, err
+@@ -394,7 +443,7 @@ func (s *PostgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 	if err := types.ValidateTaskDesiredTransition(current.DesiredStatus, types.TaskStopped); err != nil {
+ 		return types.Task{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE tasks
+ 		SET desired_status = $2,
+ 			updated_at = timezone('utc', now()),
+@@ -423,7 +472,7 @@ func (s *PostgresStore) StopTask(ctx context.Context, id types.TaskID, expectedU
+ 	return task, nil
+ }
+ 
+-func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error) {
++func (s *postgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, desired types.TaskStatus, actual types.TaskStatus, containerID string, failureReason string, expectedUpdatedAt time.Time) (types.Task, error) {
+ 	current, err := s.GetTask(ctx, id)
+ 	if err != nil {
+ 		return types.Task{}, err
+@@ -434,7 +483,7 @@ func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 	if err := types.ValidateTaskTransition(current.ActualStatus, actual); err != nil {
+ 		return types.Task{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE tasks
+ 		SET desired_status = $2,
+ 			actual_status = $3,
+@@ -462,20 +511,20 @@ func (s *PostgresStore) UpdateTaskStatus(ctx context.Context, id types.TaskID, d
+ 	return task, nil
+ }
+ 
+-func (s *PostgresStore) ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error) {
++func (s *postgresStore) ListTasksByService(ctx context.Context, serviceID types.ServiceID) ([]types.Task, error) {
+ 	return s.listTasks(ctx, taskSelectSQL()+` WHERE service_id = $1 ORDER BY created_at, id`, string(serviceID))
+ }
+ 
+-func (s *PostgresStore) ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
++func (s *postgresStore) ListTasksByNode(ctx context.Context, nodeID types.NodeID) ([]types.Task, error) {
+ 	return s.listTasks(ctx, taskSelectSQL()+` WHERE node_id = $1 ORDER BY created_at, id`, string(nodeID))
+ }
+ 
+-func (s *PostgresStore) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
++func (s *postgresStore) ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error) {
+ 	return s.listTasks(ctx, taskSelectSQL()+` WHERE actual_status = $1 ORDER BY created_at, id`, string(status))
+ }
+ 
+-func (s *PostgresStore) listTasks(ctx context.Context, sql string, arg any) ([]types.Task, error) {
+-	rows, err := s.pool.Query(ctx, sql, arg)
++func (s *postgresStore) listTasks(ctx context.Context, sql string, arg any) ([]types.Task, error) {
++	rows, err := s.db.Query(ctx, sql, arg)
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -495,8 +544,8 @@ func (s *PostgresStore) listTasks(ctx context.Context, sql string, arg any) ([]t
+ 	return tasks, nil
+ }
+ 
+-func (s *PostgresStore) CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error) {
+-	row := s.pool.QueryRow(ctx, `
++func (s *postgresStore) CreateDeployment(ctx context.Context, deployment types.Deployment) (types.Deployment, error) {
++	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO deployments (
+ 			service_id, from_version, to_version, strategy, status,
+ 			max_unavailable, max_surge, started_at, completed_at
+@@ -521,8 +570,8 @@ func (s *PostgresStore) CreateDeployment(ctx context.Context, deployment types.D
+ 	return created, nil
+ }
+ 
+-func (s *PostgresStore) GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error) {
+-	row := s.pool.QueryRow(ctx, deploymentSelectSQL()+` WHERE id = $1`, string(id))
++func (s *postgresStore) GetDeployment(ctx context.Context, id types.DeploymentID) (types.Deployment, error) {
++	row := s.db.QueryRow(ctx, deploymentSelectSQL()+` WHERE id = $1`, string(id))
+ 	deployment, err := scanDeployment(row)
+ 	if err != nil {
+ 		return types.Deployment{}, mapPostgresError(err)
+@@ -530,8 +579,8 @@ func (s *PostgresStore) GetDeployment(ctx context.Context, id types.DeploymentID
+ 	return deployment, nil
+ }
+ 
+-func (s *PostgresStore) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
+-	rows, err := s.pool.Query(ctx, deploymentSelectSQL()+` WHERE status = $1 ORDER BY created_at, id`, string(status))
++func (s *postgresStore) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
++	rows, err := s.db.Query(ctx, deploymentSelectSQL()+` WHERE status = $1 ORDER BY created_at, id`, string(status))
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -551,7 +600,7 @@ func (s *PostgresStore) ListDeploymentsByStatus(ctx context.Context, status type
+ 	return deployments, nil
+ }
+ 
+-func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
++func (s *postgresStore) UpdateDeploymentStatus(ctx context.Context, id types.DeploymentID, status types.DeploymentStatus, expectedUpdatedAt time.Time) (types.Deployment, error) {
+ 	current, err := s.GetDeployment(ctx, id)
+ 	if err != nil {
+ 		return types.Deployment{}, err
+@@ -559,7 +608,7 @@ func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 	if err := types.ValidateDeploymentTransition(current.Status, status); err != nil {
+ 		return types.Deployment{}, fmt.Errorf("%w: %v", ErrInvalidState, err)
+ 	}
+-	row := s.pool.QueryRow(ctx, `
++	row := s.db.QueryRow(ctx, `
+ 		UPDATE deployments
+ 		SET status = $2,
+ 			started_at = CASE WHEN $2 IN ('running', 'rolling_back') AND started_at IS NULL THEN timezone('utc', now()) ELSE started_at END,
+@@ -583,8 +632,8 @@ func (s *PostgresStore) UpdateDeploymentStatus(ctx context.Context, id types.Dep
+ 	return deployment, nil
+ }
+ 
+-func (s *PostgresStore) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
+-	row := s.pool.QueryRow(ctx, `
++func (s *postgresStore) AppendEvent(ctx context.Context, event types.Event) (types.Event, error) {
++	row := s.db.QueryRow(ctx, `
+ 		INSERT INTO events (
+ 			type, severity, source, message, related_object_type, related_object_id, created_at
+ 		)
+@@ -605,7 +654,7 @@ func (s *PostgresStore) AppendEvent(ctx context.Context, event types.Event) (typ
+ 	return created, nil
+ }
+ 
+-func (s *PostgresStore) ListEvents(ctx context.Context, filter events.Filter) ([]types.Event, error) {
++func (s *postgresStore) ListEvents(ctx context.Context, filter events.Filter) ([]types.Event, error) {
+ 	limit := filter.Limit
+ 	if limit <= 0 || limit > 500 {
+ 		limit = 100
+@@ -644,7 +693,7 @@ func (s *PostgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	args = append(args, limit)
+ 	sql += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d", len(args))
+ 
+-	rows, err := s.pool.Query(ctx, sql, args...)
++	rows, err := s.db.Query(ctx, sql, args...)
+ 	if err != nil {
+ 		return nil, mapPostgresError(err)
+ 	}
+@@ -664,12 +713,12 @@ func (s *PostgresStore) ListEvents(ctx context.Context, filter events.Filter) ([
+ 	return events, nil
+ }
+ 
+-func insertService(ctx context.Context, tx pgx.Tx, spec types.ServiceSpec) (types.Service, error) {
++func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
+ 	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+-	row := tx.QueryRow(ctx, `
++	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+ 			name, image, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints
+@@ -696,12 +745,12 @@ func insertService(ctx context.Context, tx pgx.Tx, spec types.ServiceSpec) (type
+ 	return service, nil
+ }
+ 
+-func updateService(ctx context.Context, tx pgx.Tx, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
++func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+ 	env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+-	row := tx.QueryRow(ctx, `
++	row := db.QueryRow(ctx, `
+ 		UPDATE services
+ 		SET name = $2,
+ 			image = $3,
+@@ -743,12 +792,12 @@ func updateService(ctx context.Context, tx pgx.Tx, id types.ServiceID, spec type
+ 	return service, nil
+ }
+ 
+-func insertServiceVersion(ctx context.Context, tx pgx.Tx, serviceID types.ServiceID, version int64, spec types.ServiceSpec) error {
++func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.ServiceID, version int64, spec types.ServiceSpec) error {
+ 	specJSON, err := jsonBytes(spec)
+ 	if err != nil {
+ 		return err
+ 	}
+-	_, err = tx.Exec(ctx, `
++	_, err = db.Exec(ctx, `
+ 		INSERT INTO service_versions (service_id, version, spec)
+ 		VALUES ($1, $2, $3)`,
+ 		string(serviceID),
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index c3ce641..424e77f 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -193,6 +193,151 @@ func TestPostgresStoreIntegration(t *testing.T) {
+ 	}
+ }
+ 
++func TestPostgresStoreWithTxRollsBackOnError(t *testing.T) {
++	databaseURL := os.Getenv("ORCH_INTEGRATION_DATABASE_URL")
++	if databaseURL == "" {
++		t.Skip("set ORCH_INTEGRATION_DATABASE_URL to run PostgreSQL integration tests")
++	}
++
++	ctx := context.Background()
++	pool, err := ConnectPostgres(ctx, databaseURL)
++	if err != nil {
++		t.Fatalf("connect postgres: %v", err)
++	}
++	defer pool.Close()
++
++	migrate(t, ctx, pool)
++	pgStore := NewPostgresStore(pool)
++	var durable Store = pgStore
++	errRollback := errors.New("rollback tx")
++	var serviceID types.ServiceID
++
++	err = WithTx(ctx, durable, func(txCtx context.Context, tx Store) error {
++		service, err := tx.CreateService(txCtx, serviceSpecFixture())
++		if err != nil {
++			return err
++		}
++		serviceID = service.ID
++		if _, err := tx.AppendEvent(txCtx, types.Event{
++			Type:              events.TypeServiceCreated,
++			Severity:          types.EventInfo,
++			Source:            "test",
++			Message:           "service created",
++			RelatedObjectType: "service",
++			RelatedObjectID:   string(service.ID),
++		}); err != nil {
++			return err
++		}
++		return errRollback
++	})
++	if !errors.Is(err, errRollback) {
++		t.Fatalf("expected rollback error, got %v", err)
++	}
++	if _, err := pgStore.GetService(ctx, serviceID); !errors.Is(err, ErrNotFound) {
++		t.Fatalf("expected service insert to roll back, got %v", err)
++	}
++	events, err := pgStore.ListEvents(ctx, events.Filter{ServiceID: serviceID})
++	if err != nil {
++		t.Fatalf("list events: %v", err)
++	}
++	if len(events) != 0 {
++		t.Fatalf("expected event insert to roll back, got %#v", events)
++	}
++}
++
++func TestPostgresStoreConcurrentAssignTaskOnce(t *testing.T) {
++	databaseURL := os.Getenv("ORCH_INTEGRATION_DATABASE_URL")
++	if databaseURL == "" {
++		t.Skip("set ORCH_INTEGRATION_DATABASE_URL to run PostgreSQL integration tests")
++	}
++
++	ctx := context.Background()
++	pool, err := ConnectPostgres(ctx, databaseURL)
++	if err != nil {
++		t.Fatalf("connect postgres: %v", err)
++	}
++	defer pool.Close()
++
++	migrate(t, ctx, pool)
++	pgStore := NewPostgresStore(pool)
++	var durable Store = pgStore
++	node, err := pgStore.CreateNode(ctx, types.NodeSpec{
++		Hostname:         "node-1",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("create node: %v", err)
++	}
++	service, err := pgStore.CreateService(ctx, serviceSpecFixture())
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	task, err := pgStore.CreateTask(ctx, types.Task{
++		ServiceID:     service.ID,
++		DesiredStatus: types.TaskRunning,
++		ActualStatus:  types.TaskPending,
++		Image:         service.Spec.Image,
++		Version:       service.DeploymentVersion,
++	})
++	if err != nil {
++		t.Fatalf("create task: %v", err)
++	}
++
++	results := make(chan error, 2)
++	for i := 0; i < 2; i++ {
++		go func() {
++			results <- WithTx(ctx, durable, func(txCtx context.Context, tx Store) error {
++				assigned, err := tx.AssignTask(txCtx, task.ID, node.ID, task.UpdatedAt)
++				if err != nil {
++					return err
++				}
++				_, err = tx.AppendEvent(txCtx, types.Event{
++					Type:              events.TypeTaskAssigned,
++					Severity:          types.EventInfo,
++					Source:            "test",
++					Message:           "task assigned",
++					RelatedObjectType: "task",
++					RelatedObjectID:   string(assigned.ID),
++				})
++				return err
++			})
++		}()
++	}
++
++	successes := 0
++	conflicts := 0
++	for i := 0; i < 2; i++ {
++		err := <-results
++		switch {
++		case err == nil:
++			successes++
++		case errors.Is(err, ErrConflict):
++			conflicts++
++		default:
++			t.Fatalf("unexpected assignment error: %v", err)
++		}
++	}
++	if successes != 1 || conflicts != 1 {
++		t.Fatalf("expected one success and one conflict, got successes=%d conflicts=%d", successes, conflicts)
++	}
++	assigned, err := pgStore.GetTask(ctx, task.ID)
++	if err != nil {
++		t.Fatalf("get assigned task: %v", err)
++	}
++	if assigned.ActualStatus != types.TaskAssigned || assigned.NodeID != node.ID {
++		t.Fatalf("expected task assigned once, got %#v", assigned)
++	}
++	events, err := pgStore.ListEvents(ctx, events.Filter{TaskID: task.ID})
++	if err != nil {
++		t.Fatalf("list task events: %v", err)
++	}
++	if len(events) != 1 {
++		t.Fatalf("expected one assignment event, got %#v", events)
++	}
++}
++
+ func serviceSpecFixture() types.ServiceSpec {
+ 	return types.ServiceSpec{
+ 		Name:     "web",
+diff --git a/internal/store/store.go b/internal/store/store.go
+index f8d6eb6..3e6524c 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -2,6 +2,7 @@ package store
+ 
+ import (
+ 	"context"
++	"fmt"
+ 	"time"
+ 
+ 	"github.com/alekpopovic/orch/internal/events"
+@@ -53,3 +54,26 @@ type Store interface {
+ 	DeploymentStore
+ 	EventStore
+ }
++
++// TxFunc runs a set of store operations inside one transaction boundary.
++type TxFunc func(ctx context.Context, tx any) error
++
++// Transactor is implemented by stores that can execute a callback atomically.
++type Transactor interface {
++	WithTx(ctx context.Context, fn TxFunc) error
++}
++
++// WithTx runs fn inside candidate's transaction support when it exists.
++func WithTx[S any](ctx context.Context, candidate S, fn func(context.Context, S) error) error {
++	transactor, ok := any(candidate).(Transactor)
++	if !ok {
++		return fn(ctx, candidate)
++	}
++	return transactor.WithTx(ctx, func(txCtx context.Context, tx any) error {
++		scoped, ok := any(tx).(S)
++		if !ok {
++			return fmt.Errorf("%w: transaction store does not implement requested boundary", ErrInvalidState)
++		}
++		return fn(txCtx, scoped)
++	})
++}

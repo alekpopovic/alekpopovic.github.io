@@ -1,0 +1,66 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "brand_source": "docs/BRAND.md",
+  "colors": {
+    "orbit_cyan": "#22d3ee",
+    "control_blue": "#2374e1",
+    "rollout_violet": "#8b5cf6",
+    "success_mint": "#a7f3d0",
+    "deep_space": "#020617",
+    "slate_text": "#0f172a",
+    "paper": "#ffffff",
+    "link_on_paper": "#174f9c"
+  },
+  "print": {
+    "trim_mm": [
+      170,
+      240
+    ],
+    "margin_mm": {
+      "inside": 22,
+      "outside": 18,
+      "top": 19,
+      "bottom": 20
+    },
+    "body_pt": 10.8,
+    "leading": 1.48,
+    "code_pt_min": 8.5
+  },
+  "epub": {
+    "body": "1em",
+    "line_height": 1.5,
+    "reflow": true,
+    "user_font_override": true,
+    "code": "0.9em; overflow-wrap:anywhere; no fixed height"
+  },
+  "online": {
+    "reuse": "existing native book reader",
+    "font_size": "user-controlled",
+    "code": "scroll horizontally inside listing; never clip page",
+    "mobile_tables": "scroll container or definition-list alternative"
+  },
+  "callouts": {
+    "baseline": "BASELINE — source-inspected behavior",
+    "observed": "OBSERVED — execution record required",
+    "expected": "EXPECTED — unrun prediction",
+    "extension": "TEACHING EXTENSION — not upstream"
+  },
+  "assets": [
+    {
+      "path": "docs/assets/orch-mark.svg",
+      "sha256": "f9983a164d9bcea651b6293aa6393d9e53eab91767e9f41ae93499f35ea2b37b",
+      "unchanged_upstream": true
+    },
+    {
+      "path": "docs/assets/orch-wordmark.svg",
+      "sha256": "54e45e6b9c470416abf5ff60a4afde2c8be8a1d4a54564680e82e295d95999dd",
+      "unchanged_upstream": true
+    }
+  ],
+  "contrast_checks": {
+    "slate_text/paper": 17.85,
+    "link_on_paper/paper": 7.97,
+    "orbit_cyan/deep_space": 11.16,
+    "success_mint/deep_space": 15.73
+  }
+}

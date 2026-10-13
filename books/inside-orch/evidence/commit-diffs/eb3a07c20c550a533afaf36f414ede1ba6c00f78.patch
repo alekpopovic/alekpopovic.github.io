@@ -1,0 +1,542 @@
+commit eb3a07c20c550a533afaf36f414ede1ba6c00f78
+Date: 2026-07-14T18:43:36+02:00
+Subject: Add controller leader election MVP
+
+
+---
+ docs/HA_CONTROL_PLANE_DESIGN.md        |  12 +++
+ docs/OPERATIONS.md                     |  14 ++++
+ internal/leadership/leadership.go      | 147 +++++++++++++++++++++++++++++++++
+ internal/leadership/leadership_test.go | 112 +++++++++++++++++++++++++
+ internal/leadership/postgres.go        | 110 ++++++++++++++++++++++++
+ internal/metrics/prometheus.go         |  24 ++++++
+ internal/metrics/prometheus_test.go    |   4 +
+ prompts/EXECUTION_TRACKER.md           |   8 +-
+ 8 files changed, 427 insertions(+), 4 deletions(-)
+
+diff --git a/docs/HA_CONTROL_PLANE_DESIGN.md b/docs/HA_CONTROL_PLANE_DESIGN.md
+index 893319a..65101e0 100644
+--- a/docs/HA_CONTROL_PLANE_DESIGN.md
++++ b/docs/HA_CONTROL_PLANE_DESIGN.md
+@@ -151,3 +151,15 @@ Integration tests:
+ ## MVP Recommendation
+ 
+ Use PostgreSQL advisory locks with one lock per controller. Keep the API active-active and controllers active-passive. Do not introduce etcd yet.
++
++## Implemented MVP
++
++The repository includes `internal/leadership`:
++
++- `LeaderElector` and `Lease` interfaces;
++- a local in-memory elector for deterministic unit tests;
++- a PostgreSQL advisory-lock elector using `pg_try_advisory_lock`;
++- `RunWithLeadership`, which runs a controller only while a lease is held and cancels the controller context when the lease is lost;
++- Prometheus metrics for `controller_leader_status` and `controller_leader_acquisition_failures_total`.
++
++Production wiring should use the PostgreSQL elector with one lock name per controller: `scheduler`, `reconciler`, `rollout`, `node-monitor`, and `autoscaler`.
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index 3e913b6..ab178ef 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -255,3 +255,17 @@ Until server state is wired to PostgreSQL, backups do not preserve live orchestr
+ - Roll server and agents separately.
+ - Avoid running multiple scheduler/reconciler instances without leader election.
+ - Run migrations before deploying binaries that depend on schema changes.
++
++## Controller Leadership
++
++HA deployments should run API servers active-active, but background controllers must be active-passive per controller name. Use the `internal/leadership` PostgreSQL advisory-lock elector when wiring production controllers.
++
++Recommended lock names:
++
++- `scheduler`
++- `reconciler`
++- `rollout`
++- `node-monitor`
++- `autoscaler`
++
++Monitor `controller_leader_status` and `controller_leader_acquisition_failures_total` to confirm exactly one controller leader is active and to detect lock contention or database connectivity issues.
+diff --git a/internal/leadership/leadership.go b/internal/leadership/leadership.go
+new file mode 100644
+index 0000000..9fa255e
+--- /dev/null
++++ b/internal/leadership/leadership.go
+@@ -0,0 +1,147 @@
++package leadership
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"hash/fnv"
++	"log/slog"
++	"sync"
++	"time"
++)
++
++var ErrLockHeld = errors.New("leader lock is already held")
++
++type LeaderElector interface {
++	Acquire(ctx context.Context, name string) (Lease, error)
++}
++
++type Lease interface {
++	Name() string
++	Done() <-chan struct{}
++	Release(ctx context.Context) error
++}
++
++type Metrics interface {
++	SetLeaderStatus(controller string, leader bool)
++	IncLeaderAcquisitionFailure(controller string)
++}
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) SetLeaderStatus(string, bool)       {}
++func (NoopMetrics) IncLeaderAcquisitionFailure(string) {}
++
++func RunWithLeadership(ctx context.Context, elector LeaderElector, controller string, logger *slog.Logger, metrics Metrics, run func(context.Context) error) error {
++	if elector == nil {
++		return fmt.Errorf("leader elector is required")
++	}
++	if run == nil {
++		return fmt.Errorf("leader callback is required")
++	}
++	if logger == nil {
++		logger = slog.Default()
++	}
++	if metrics == nil {
++		metrics = NoopMetrics{}
++	}
++	lease, err := elector.Acquire(ctx, controller)
++	if err != nil {
++		metrics.IncLeaderAcquisitionFailure(controller)
++		return err
++	}
++	metrics.SetLeaderStatus(controller, true)
++	defer metrics.SetLeaderStatus(controller, false)
++	defer func() {
++		releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++		defer cancel()
++		if err := lease.Release(releaseCtx); err != nil {
++			logger.Warn("release leader lease failed", "controller", controller, "error", err)
++		}
++	}()
++
++	leaderCtx, cancel := context.WithCancel(ctx)
++	defer cancel()
++	go func() {
++		select {
++		case <-ctx.Done():
++			cancel()
++		case <-lease.Done():
++			cancel()
++		}
++	}()
++	return run(leaderCtx)
++}
++
++func advisoryLockKey(name string) int64 {
++	hash := fnv.New64a()
++	_, _ = hash.Write([]byte("orch:" + name))
++	return int64(hash.Sum64())
++}
++
++type LocalElector struct {
++	mu     sync.Mutex
++	leases map[string]*localLease
++}
++
++func NewLocalElector() *LocalElector {
++	return &LocalElector{leases: map[string]*localLease{}}
++}
++
++func (e *LocalElector) Acquire(ctx context.Context, name string) (Lease, error) {
++	if err := ctx.Err(); err != nil {
++		return nil, err
++	}
++	e.mu.Lock()
++	defer e.mu.Unlock()
++	if current := e.leases[name]; current != nil && !current.released {
++		return nil, fmt.Errorf("%w: %s", ErrLockHeld, name)
++	}
++	lease := &localLease{name: name, elector: e, done: make(chan struct{})}
++	e.leases[name] = lease
++	return lease, nil
++}
++
++func (e *LocalElector) Lose(name string) {
++	e.mu.Lock()
++	defer e.mu.Unlock()
++	if lease := e.leases[name]; lease != nil {
++		lease.closeLocked()
++	}
++}
++
++type localLease struct {
++	name     string
++	elector  *LocalElector
++	done     chan struct{}
++	released bool
++}
++
++func (l *localLease) Name() string {
++	return l.name
++}
++
++func (l *localLease) Done() <-chan struct{} {
++	return l.done
++}
++
++func (l *localLease) Release(ctx context.Context) error {
++	if err := ctx.Err(); err != nil {
++		return err
++	}
++	l.elector.mu.Lock()
++	defer l.elector.mu.Unlock()
++	l.closeLocked()
++	if l.elector.leases[l.name] == l {
++		delete(l.elector.leases, l.name)
++	}
++	return nil
++}
++
++func (l *localLease) closeLocked() {
++	if l.released {
++		return
++	}
++	l.released = true
++	close(l.done)
++}
+diff --git a/internal/leadership/leadership_test.go b/internal/leadership/leadership_test.go
+new file mode 100644
+index 0000000..5884761
+--- /dev/null
++++ b/internal/leadership/leadership_test.go
+@@ -0,0 +1,112 @@
++package leadership
++
++import (
++	"context"
++	"errors"
++	"log/slog"
++	"testing"
++	"time"
++)
++
++func TestLocalElectorAllowsOneLeader(t *testing.T) {
++	elector := NewLocalElector()
++	first, err := elector.Acquire(context.Background(), "scheduler")
++	if err != nil {
++		t.Fatalf("acquire first lease: %v", err)
++	}
++	if _, err := elector.Acquire(context.Background(), "scheduler"); !errors.Is(err, ErrLockHeld) {
++		t.Fatalf("expected second acquire to fail with ErrLockHeld, got %v", err)
++	}
++	if err := first.Release(context.Background()); err != nil {
++		t.Fatalf("release first lease: %v", err)
++	}
++	second, err := elector.Acquire(context.Background(), "scheduler")
++	if err != nil {
++		t.Fatalf("acquire after release: %v", err)
++	}
++	if err := second.Release(context.Background()); err != nil {
++		t.Fatalf("release second lease: %v", err)
++	}
++}
++
++func TestRunWithLeadershipStopsWhenLeaseLost(t *testing.T) {
++	elector := NewLocalElector()
++	metrics := &recordingLeadershipMetrics{}
++	started := make(chan struct{})
++	done := make(chan error, 1)
++
++	go func() {
++		done <- RunWithLeadership(context.Background(), elector, "reconciler", slog.Default(), metrics, func(ctx context.Context) error {
++			close(started)
++			<-ctx.Done()
++			return ctx.Err()
++		})
++	}()
++
++	select {
++	case <-started:
++	case <-time.After(time.Second):
++		t.Fatal("controller did not start")
++	}
++	elector.Lose("reconciler")
++	select {
++	case err := <-done:
++		if !errors.Is(err, context.Canceled) {
++			t.Fatalf("expected context canceled after lock loss, got %v", err)
++		}
++	case <-time.After(time.Second):
++		t.Fatal("controller did not stop after lock loss")
++	}
++	if metrics.status["reconciler"] {
++		t.Fatalf("expected leader status false after stop")
++	}
++}
++
++func TestRunWithLeadershipRecordsAcquisitionFailure(t *testing.T) {
++	elector := NewLocalElector()
++	lease, err := elector.Acquire(context.Background(), "rollout")
++	if err != nil {
++		t.Fatalf("acquire lease: %v", err)
++	}
++	defer lease.Release(context.Background())
++	metrics := &recordingLeadershipMetrics{}
++
++	err = RunWithLeadership(context.Background(), elector, "rollout", slog.Default(), metrics, func(context.Context) error {
++		t.Fatal("controller should not run without leadership")
++		return nil
++	})
++	if !errors.Is(err, ErrLockHeld) {
++		t.Fatalf("expected lock held error, got %v", err)
++	}
++	if metrics.failures["rollout"] != 1 {
++		t.Fatalf("expected acquisition failure metric, got %#v", metrics.failures)
++	}
++}
++
++func TestAdvisoryLockKeyIsStable(t *testing.T) {
++	if advisoryLockKey("scheduler") != advisoryLockKey("scheduler") {
++		t.Fatalf("expected stable advisory key")
++	}
++	if advisoryLockKey("scheduler") == advisoryLockKey("reconciler") {
++		t.Fatalf("expected different controllers to use different keys")
++	}
++}
++
++type recordingLeadershipMetrics struct {
++	status   map[string]bool
++	failures map[string]int
++}
++
++func (m *recordingLeadershipMetrics) SetLeaderStatus(controller string, leader bool) {
++	if m.status == nil {
++		m.status = map[string]bool{}
++	}
++	m.status[controller] = leader
++}
++
++func (m *recordingLeadershipMetrics) IncLeaderAcquisitionFailure(controller string) {
++	if m.failures == nil {
++		m.failures = map[string]int{}
++	}
++	m.failures[controller]++
++}
+diff --git a/internal/leadership/postgres.go b/internal/leadership/postgres.go
+new file mode 100644
+index 0000000..f55b741
+--- /dev/null
++++ b/internal/leadership/postgres.go
+@@ -0,0 +1,110 @@
++package leadership
++
++import (
++	"context"
++	"fmt"
++	"sync"
++	"time"
++
++	"github.com/jackc/pgx/v5/pgxpool"
++)
++
++type PostgresElector struct {
++	pool          *pgxpool.Pool
++	checkInterval time.Duration
++}
++
++func NewPostgresElector(pool *pgxpool.Pool) *PostgresElector {
++	return &PostgresElector{pool: pool, checkInterval: 5 * time.Second}
++}
++
++func (e *PostgresElector) Acquire(ctx context.Context, name string) (Lease, error) {
++	if e.pool == nil {
++		return nil, fmt.Errorf("postgres pool is required")
++	}
++	conn, err := e.pool.Acquire(ctx)
++	if err != nil {
++		return nil, fmt.Errorf("acquire lock connection: %w", err)
++	}
++	key := advisoryLockKey(name)
++	var acquired bool
++	if err := conn.QueryRow(ctx, `SELECT pg_try_advisory_lock($1)`, key).Scan(&acquired); err != nil {
++		conn.Release()
++		return nil, fmt.Errorf("try advisory lock %s: %w", name, err)
++	}
++	if !acquired {
++		conn.Release()
++		return nil, fmt.Errorf("%w: %s", ErrLockHeld, name)
++	}
++	lease := &postgresLease{
++		name:          name,
++		key:           key,
++		conn:          conn,
++		done:          make(chan struct{}),
++		checkInterval: e.checkInterval,
++	}
++	go lease.monitor(ctx)
++	return lease, nil
++}
++
++type postgresLease struct {
++	name          string
++	key           int64
++	conn          *pgxpool.Conn
++	done          chan struct{}
++	checkInterval time.Duration
++	closeOnce     sync.Once
++}
++
++func (l *postgresLease) Name() string {
++	return l.name
++}
++
++func (l *postgresLease) Done() <-chan struct{} {
++	return l.done
++}
++
++func (l *postgresLease) Release(ctx context.Context) error {
++	select {
++	case <-l.done:
++		return nil
++	default:
++	}
++	defer l.close()
++	var unlocked bool
++	if err := l.conn.QueryRow(ctx, `SELECT pg_advisory_unlock($1)`, l.key).Scan(&unlocked); err != nil {
++		return fmt.Errorf("unlock advisory lock %s: %w", l.name, err)
++	}
++	return nil
++}
++
++func (l *postgresLease) monitor(ctx context.Context) {
++	interval := l.checkInterval
++	if interval <= 0 {
++		interval = 5 * time.Second
++	}
++	ticker := time.NewTicker(interval)
++	defer ticker.Stop()
++	for {
++		select {
++		case <-ctx.Done():
++			l.close()
++			return
++		case <-l.done:
++			return
++		case <-ticker.C:
++			var ok int
++			if err := l.conn.QueryRow(ctx, `SELECT 1`).Scan(&ok); err != nil {
++				l.close()
++				return
++			}
++		}
++	}
++}
++
++func (l *postgresLease) close() {
++	l.closeOnce.Do(func() {
++		close(l.done)
++		l.conn.Release()
++	})
++}
+diff --git a/internal/metrics/prometheus.go b/internal/metrics/prometheus.go
+index 568f4ec..a609652 100644
+--- a/internal/metrics/prometheus.go
++++ b/internal/metrics/prometheus.go
+@@ -32,6 +32,8 @@ type Server struct {
+ 	autoscalerDecisions *prometheus.CounterVec
+ 	autoscalerErrors    prometheus.Counter
+ 	autoscalerRecommend *prometheus.GaugeVec
++	leaderStatus        *prometheus.GaugeVec
++	leaderFailures      *prometheus.CounterVec
+ }
+ 
+ func NewServer() *Server {
+@@ -116,6 +118,14 @@ func NewServer() *Server {
+ 			Name: "autoscaler_recommendation_replicas",
+ 			Help: "Latest autoscaler replica recommendation by service.",
+ 		}, []string{"service_id"}),
++		leaderStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
++			Name: "controller_leader_status",
++			Help: "Controller leader status by controller name; 1 when this process is leader.",
++		}, []string{"controller"}),
++		leaderFailures: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "controller_leader_acquisition_failures_total",
++			Help: "Total controller leader lock acquisition failures by controller name.",
++		}, []string{"controller"}),
+ 	}
+ 	m.registry.MustRegister(
+ 		m.apiRequests,
+@@ -137,6 +147,8 @@ func NewServer() *Server {
+ 		m.autoscalerDecisions,
+ 		m.autoscalerErrors,
+ 		m.autoscalerRecommend,
++		m.leaderStatus,
++		m.leaderFailures,
+ 	)
+ 	return m
+ }
+@@ -221,6 +233,18 @@ func (m *Server) SetAutoscalerRecommendation(serviceID string, replicas int) {
+ 	m.autoscalerRecommend.WithLabelValues(serviceID).Set(float64(replicas))
+ }
+ 
++func (m *Server) SetLeaderStatus(controller string, leader bool) {
++	value := 0.0
++	if leader {
++		value = 1
++	}
++	m.leaderStatus.WithLabelValues(controller).Set(value)
++}
++
++func (m *Server) IncLeaderAcquisitionFailure(controller string) {
++	m.leaderFailures.WithLabelValues(controller).Inc()
++}
++
+ func (m *Server) add(counter prometheus.Counter, count int) {
+ 	if count <= 0 {
+ 		return
+diff --git a/internal/metrics/prometheus_test.go b/internal/metrics/prometheus_test.go
+index ea3494d..df373ac 100644
+--- a/internal/metrics/prometheus_test.go
++++ b/internal/metrics/prometheus_test.go
+@@ -31,6 +31,8 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 	metrics.IncAutoscalerDecision("scale_up")
+ 	metrics.IncAutoscalerErrors()
+ 	metrics.SetAutoscalerRecommendation("svc-1", 4)
++	metrics.SetLeaderStatus("scheduler", true)
++	metrics.IncLeaderAcquisitionFailure("scheduler")
+ 
+ 	body := scrape(t, metrics.Handler())
+ 	for _, want := range []string{
+@@ -53,6 +55,8 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 		`autoscaler_decisions_total{decision="scale_up"} 1`,
+ 		"autoscaler_errors_total 1",
+ 		`autoscaler_recommendation_replicas{service_id="svc-1"} 4`,
++		`controller_leader_status{controller="scheduler"} 1`,
++		`controller_leader_acquisition_failures_total{controller="scheduler"} 1`,
+ 	} {
+ 		if !strings.Contains(body, want) {
+ 			t.Fatalf("expected scrape to contain %q\n%s", want, body)
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index b206443..2ed4084 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `56-ha-control-plane-design.md`
+-- Last matching commit: `same commit: Add HA control plane design`
+-- Completed prompt range: `00` through `56`
+-- Next prompt to execute: `57-controller-leader-election-mvp.md`
++- Last executed prompt: `57-controller-leader-election-mvp.md`
++- Last matching commit: `same commit: Add controller leader election MVP`
++- Completed prompt range: `00` through `57`
++- Next prompt to execute: `58-multi-agent-load-test.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

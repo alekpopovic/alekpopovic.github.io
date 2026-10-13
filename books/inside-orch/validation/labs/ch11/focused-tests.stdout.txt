@@ -1,0 +1,43 @@
+=== RUN   TestReconcileOnceServiceReplicas
+=== RUN   TestReconcileOnceServiceReplicas/scale_up
+=== RUN   TestReconcileOnceServiceReplicas/scale_down
+=== RUN   TestReconcileOnceServiceReplicas/failed_task_replacement
+=== RUN   TestReconcileOnceServiceReplicas/no-op_when_desired_equals_actual
+=== RUN   TestReconcileOnceServiceReplicas/service_deletion
+=== RUN   TestReconcileOnceServiceReplicas/version_mismatch
+--- PASS: TestReconcileOnceServiceReplicas (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/scale_up (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/scale_down (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/failed_task_replacement (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/no-op_when_desired_equals_actual (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/service_deletion (0.00s)
+    --- PASS: TestReconcileOnceServiceReplicas/version_mismatch (0.00s)
+=== RUN   TestReconcileOnceIsIdempotent
+--- PASS: TestReconcileOnceIsIdempotent (0.00s)
+=== RUN   TestReconcileRestartBetweenCreationAndSchedulingDoesNotDuplicate
+--- PASS: TestReconcileRestartBetweenCreationAndSchedulingDoesNotDuplicate (0.00s)
+=== RUN   TestReconcileRepeatedLoopWithSameServiceDoesNotEmitNoopEvents
+--- PASS: TestReconcileRepeatedLoopWithSameServiceDoesNotEmitNoopEvents (0.00s)
+=== RUN   TestReconcileFailedTaskReplacementOnlyOnce
+--- PASS: TestReconcileFailedTaskReplacementOnlyOnce (0.00s)
+=== RUN   TestReconcileScaleDownRepeatedTwiceIsStable
+--- PASS: TestReconcileScaleDownRepeatedTwiceIsStable (0.00s)
+=== RUN   TestReconcileOnceUsesLeaderLock
+--- PASS: TestReconcileOnceUsesLeaderLock (0.00s)
+=== RUN   TestReconcileOnceIgnoresEventEmissionFailure
+2026/10/13 02:44:48 WARN event emission failed event_type=reconciler.task.created error="event failed"
+--- PASS: TestReconcileOnceIgnoresEventEmissionFailure (0.00s)
+=== RUN   TestReconcileDeletingServiceWithRunningTasks
+--- PASS: TestReconcileDeletingServiceWithRunningTasks (0.00s)
+=== RUN   TestReconcileDeletingServiceIsIdempotentForAlreadyStoppedTasks
+--- PASS: TestReconcileDeletingServiceIsIdempotentForAlreadyStoppedTasks (0.00s)
+=== RUN   TestReconcileDeletingServiceFinalCleanupAfterAgentReturns
+--- PASS: TestReconcileDeletingServiceFinalCleanupAfterAgentReturns (0.00s)
+=== RUN   TestReconcileServiceDeletionRepeatedTwiceContinuesCleanup
+--- PASS: TestReconcileServiceDeletionRepeatedTwiceContinuesCleanup (0.00s)
+=== RUN   TestReconcileMissingServiceCleanupSurvivesRestart
+--- PASS: TestReconcileMissingServiceCleanupSurvivesRestart (0.00s)
+=== RUN   TestReconcileSkipsServicesWithActiveRollouts
+--- PASS: TestReconcileSkipsServicesWithActiveRollouts (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/reconciler	0.017s

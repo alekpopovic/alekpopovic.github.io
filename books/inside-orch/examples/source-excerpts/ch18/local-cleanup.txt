@@ -1,0 +1,6 @@
+func (r *Runner) removeLocalContainer(ctx context.Context, containerID orchdocker.ContainerID) error {
+	if err := r.runtime.StopContainer(ctx, containerID, 10*time.Second); err != nil {
+		return err
+	}
+	return r.runtime.RemoveContainer(ctx, containerID, true)
+}

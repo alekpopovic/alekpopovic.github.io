@@ -1,0 +1,49 @@
+# Lab 01 — Initialize, deploy, and distinguish readiness from durability
+
+This lab asks a narrow operational question: does starting a fresh default `orch-server` restore the objects that a previous server owned? A PostgreSQL connection string is configuration; the relevant implementation is the constructor that chooses live state. We inspect that constructor, exercise a complete disposable workload, and then measure a fresh process independently. These experiments use the frozen source edition, not the website's Jekyll root as a Go module.
+
+There are three useful modes. **Inspection** needs only Python and the installed source corpus. **Offline execution** needs the exact Go toolchain, previously downloaded dependencies and permission for temporary loopback test listeners. **Docker execution** additionally needs a lab-authorized Docker daemon and the cached `nginx:1.27-alpine` image. PostgreSQL migration observations are a fourth, separate track. A skip in one mode never becomes a pass in another. The commands in this guide are procedures; the linked records identify what the author actually ran.
+
+## Establish the source and ownership boundary
+
+From the website root, run `python3 books/inside-orch/scripts/verify_pack.py`. The source lock names full revision `cbfc94ade5b57e449d6b73bf1485b1c5b1647022` and 361 application files. Copy that source to a new disposable directory outside `books/inside-orch`. Never build inside `evidence/orch`. Inspect `cmd/orch-server/main.go` at the locked revision: it constructs `controlplane.NewMemoryService` regardless of `DATABASE_URL`. The optional schema check opens the migration manager but does not replace that constructor.
+
+Choose loopback API addresses dynamically, record every child PID, and stop only those children. The supplied `scripts/observe_process_restart.py` owns two sequential server processes on an allocated loopback port, allowlists their environment, checks the source-copy hashes, bounds readiness polling, and records stop results. It does not connect to an existing server. If the allocated port becomes occupied before startup, the child exits and the experiment fails; it must not attach to whatever owns that port.
+
+The source export uses Go1.25.0. Set `GOROOT` to the selected toolchain's root, `GOTOOLCHAIN=local`, `GOENV=off`, and run-owned `GOPATH`, `GOMODCACHE`, and `GOCACHE`. For a source export without `.git`, set `GOFLAGS=-buildvcs=false`. Build `cmd/orch`, `cmd/orch-server`, and `cmd/orch-agent` into the disposable run's `bin` directory. Record those commands and tool versions rather than assuming a globally installed `orch` matches the source lock.
+
+## Verify the actual command and manifest surfaces
+
+Run the built CLI with `version` and `--help`, then the built server with `config print`. The version record must match the inspected CLI; help is discovery, not evidence that every listed command ran. Configuration output must redact the database URL, bootstrap token and envelope key. An empty JWT setting means optional user authentication is disabled in this local fixture. Do not transplant that setting into a public listener.
+
+Validate [book-http.yaml](book-http.yaml) using `orch validate <absolute-file-path>`. This is the CLI's deployment schema: `resources` and `restart` are supported keys. The HTTP API instead accepts a `spec` wrapper with domain JSON field names. They are distinct surfaces. The first authoring attempt used API names in CLI YAML and was rejected; the corrected manifest passed the real parser. Preserving this failure makes the difference visible.
+
+The CLI fixture requests 100m CPU and 128Mi memory, with one replica and no published ports. The separately instrumented HTTP resource experiment deliberately uses 100m/64Mi requests and 250m/128Mi limits to distinguish request accounting from Docker enforcement. Do not combine those two inputs into a single claimed transcript.
+
+## Observe a complete, bounded Docker flow
+
+The [Docker teaching harness](../../examples/teaching-extensions/docker-boundary/main.go) starts a fresh loopback API handler and a real agent runner with the locked adapter. Its wrapper permits cached images only and restricts stop/remove to captured container IDs. It adds a node filter to task-only log lookups for this disposable exercise. Those safety instrumentation changes are teaching code; they do not assert the upstream runtime already has the same restrictions.
+
+The harness records node, service, task and container identifiers from actual responses. It checks the nginx welcome body with `docker exec ... wget http://127.0.0.1/` inside the captured container, reads logs through server→agent→Docker, verifies one service-created event, scales 1→2→1, waits for the removed task, deletes the service, and waits for terminal removal of both historical tasks. No workload port is published on the host. Its timelines contain observed task objects and UTC times, not invented identifiers. The API uses `httptest` here; this is a package integration flow, not execution of upstream Compose or proof that the production server's controllers are durable.
+
+The actual successful run is [docker-complete-flow-log-guard.json](../../validation/intake/docker-complete-flow-log-guard.json), with raw structured output in [its stdout](../../validation/intake/docker-complete-flow-log-guard.stdout.txt). An earlier wrapper rejected the log handler's task-only lookup; that unsuccessful harness attempt remains recorded separately. Do not attribute a harness safety-filter mistake to the source application.
+
+## Restart a real default server process
+
+Run `scripts/observe_process_restart.py` with explicit `--working-copy`, `--server`, and a new book-relative `--output`. It captures `/v1/version`, creates `book-payments`, registers a manual lab node and creates `book-http`. It records services, tasks, nodes and namespaces before stopping the first child. Manual registration does not execute a Docker workload. The second child is a new binary process with the same safe configuration and a new MemoryService.
+
+The [actual restart record](../../validation/intake/fresh-server-restart-authenticated.json) shows readiness before and after, a service/task/node present before restart, empty lists afterwards, disappearance of the custom namespace and recreation of `default`. The captured PIDs differ. The experiment intentionally leaves agent and Docker survival out of scope; the previous Docker flow already cleaned its own containers. This isolates process-owned intent from remote side-effect survival. A separate [combined restart experiment](../../validation/labs/ch06/combined-restart.json) keeps one explicitly owned Docker container running across two actual server processes. The first server receives a manually authenticated running-task report with that captured container ID. The fresh server loses the service, task and node while the exact container remains running; cleanup then confirms its absence. This is an observed orphan boundary, not agent Runner adoption or restored intent.
+
+Migration status is measured independently in [full-schema recovery evidence](../../validation/intake/full-schema-recovery-corrected.json): all 16 migrations were applied in an owned throwaway database. The restart fixture points to an unused local database endpoint with schema checking disabled. These records jointly establish two separate mechanisms; they do not claim that the restart process connected to the migrated database or restored its rows.
+
+## Verification and cleanup
+
+Run `python3 books/inside-orch/scripts/verify_lab_records.py --lab 01 --mode inspection` for a useful source-only conclusion without Go downloads or Docker. Use `--mode recorded` to check the author-run evidence and write `validation/labs/01-check.json`. Recorded mode audits existing results; it does not silently rerun containers or overwrite a reader's experiment. A new execution should use new output filenames and explicitly select its own target environment.
+
+Stop the captured agent before deleting its containers. The [post-run inspection](../../validation/intake/docker-complete-flow-cleanup.json) confirms all three captured Docker IDs are absent. The harness removes only its captured IDs; never prune the Docker daemon, kill all processes with a matching name, or delete every `orch.managed=true` container. A server process exit is not permission to remove containers from another run. For an interrupted run, re-establish PID command lines and container identity before cleanup. Preserve observations and failure logs before removing temporary files.
+
+## Questions with worked answers
+
+1. **Why can `/readyz` pass after all services disappear?** Readiness describes the new server's ability to handle its configured work. It does not assert that a previous process's desired-state maps have been reconstructed. The before/after object lists are the durability oracle.
+2. **Would successful `pg_restore` change this result?** It can restore the PostgreSQL store's rows, schema and encrypted values. The default constructor still selects MemoryService, so restoration alone does not hydrate live orchestration intent. A durable-service composition would be a separately implemented and tested extension.
+3. **What if an agent and container survive the API restart?** A remote container can outlive the memory that authorized it. Re-registration, ownership matching and cleanup need their own experiment, including stale credentials and namespace identity. The isolated restart record cannot establish that result. The combined experiment observes survival of a manually associated container, while actual Runner re-enrollment and adoption still require separate evidence. Broad cleanup would destroy the evidence needed to diagnose the boundary.

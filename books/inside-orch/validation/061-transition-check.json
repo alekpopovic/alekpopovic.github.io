@@ -1,0 +1,297 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T02:01:15.587105+00:00",
+  "command": "python3 books/inside-orch/scripts/check_appendix_references.py",
+  "state_sets": {
+    "deployment": [
+      "failed",
+      "paused",
+      "pending",
+      "rolled_back",
+      "rolling_back",
+      "running",
+      "succeeded"
+    ],
+    "node": [
+      "draining",
+      "offline",
+      "ready",
+      "unknown"
+    ],
+    "service": [
+      "active",
+      "deleted",
+      "deleting"
+    ],
+    "task_actual": [
+      "assigned",
+      "created",
+      "failed",
+      "healthy",
+      "pending",
+      "pulling",
+      "removed",
+      "running",
+      "starting",
+      "stopped",
+      "stopping",
+      "unhealthy"
+    ],
+    "task_desired": [
+      "assigned",
+      "created",
+      "failed",
+      "healthy",
+      "pending",
+      "pulling",
+      "removed",
+      "running",
+      "starting",
+      "stopped",
+      "stopping",
+      "unhealthy"
+    ]
+  },
+  "matrix": {
+    "deployment": {
+      "failed": [
+        "failed"
+      ],
+      "paused": [
+        "running",
+        "paused",
+        "failed"
+      ],
+      "pending": [
+        "pending",
+        "running",
+        "succeeded",
+        "failed",
+        "rolling_back",
+        "rolled_back"
+      ],
+      "rolled_back": [
+        "rolled_back"
+      ],
+      "rolling_back": [
+        "paused",
+        "failed",
+        "rolling_back",
+        "rolled_back"
+      ],
+      "running": [
+        "running",
+        "paused",
+        "succeeded",
+        "failed"
+      ],
+      "succeeded": [
+        "succeeded"
+      ]
+    },
+    "node": {
+      "draining": [
+        "ready",
+        "draining",
+        "offline"
+      ],
+      "offline": [
+        "ready",
+        "offline"
+      ],
+      "ready": [
+        "ready",
+        "draining",
+        "offline"
+      ],
+      "unknown": [
+        "ready",
+        "offline",
+        "unknown"
+      ]
+    },
+    "service": {
+      "active": [
+        "active",
+        "deleting"
+      ],
+      "deleted": [
+        "deleted"
+      ],
+      "deleting": [
+        "deleting",
+        "deleted"
+      ]
+    },
+    "task_actual": {
+      "assigned": [
+        "assigned",
+        "pulling",
+        "created",
+        "running",
+        "healthy",
+        "unhealthy",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "created": [
+        "created",
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "failed": [
+        "removed",
+        "failed"
+      ],
+      "healthy": [
+        "running",
+        "healthy",
+        "unhealthy",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "pending": [
+        "pending",
+        "assigned",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "pulling": [
+        "pulling",
+        "created",
+        "running",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "removed": [
+        "removed"
+      ],
+      "running": [
+        "running",
+        "healthy",
+        "unhealthy",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "starting": [
+        "starting",
+        "running",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "stopped": [
+        "stopped",
+        "removed"
+      ],
+      "stopping": [
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ],
+      "unhealthy": [
+        "running",
+        "healthy",
+        "unhealthy",
+        "stopping",
+        "stopped",
+        "removed",
+        "failed"
+      ]
+    },
+    "task_desired": {
+      "assigned": [
+        "assigned"
+      ],
+      "created": [
+        "created"
+      ],
+      "failed": [
+        "failed"
+      ],
+      "healthy": [
+        "healthy"
+      ],
+      "pending": [
+        "pending"
+      ],
+      "pulling": [
+        "pulling"
+      ],
+      "removed": [
+        "removed"
+      ],
+      "running": [
+        "running",
+        "stopped",
+        "removed"
+      ],
+      "starting": [
+        "starting"
+      ],
+      "stopped": [
+        "stopped",
+        "removed"
+      ],
+      "stopping": [
+        "stopping"
+      ],
+      "unhealthy": [
+        "unhealthy"
+      ]
+    }
+  },
+  "terminal": {
+    "service": [
+      "deleted"
+    ],
+    "task_actual": [
+      "failed",
+      "stopped",
+      "removed"
+    ],
+    "deployment": [
+      "succeeded",
+      "failed",
+      "rolled_back"
+    ],
+    "job": [
+      "succeeded",
+      "failed"
+    ]
+  },
+  "owners": {
+    "service": "control plane",
+    "task_desired": "control plane",
+    "task_actual": "assigned agent reports; control plane validates/converts or marks node-loss effects",
+    "node": "registration/heartbeat/monitor/control-plane operations",
+    "deployment": "rollout/control-plane operation",
+    "job": "MemoryService task-derived bookkeeping",
+    "cron": "cron controller chooses occurrence; MemoryService records metadata"
+  },
+  "checks": {
+    "actual_validator_matrix_equal": true,
+    "actual_agent_guards_equal": true
+  },
+  "invariant_count": 7,
+  "test_gaps": [],
+  "execution": "validation/reference-offline-inventory.json",
+  "scope": "Rechecks actual offline validator results and source symbols; no distributed proof.",
+  "errors": [],
+  "passed": true
+}

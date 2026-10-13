@@ -1,0 +1,103 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-10-13T04:50:22.884242+00:00",
+  "finished_at_utc": "2026-10-13T04:50:23.691457+00:00",
+  "command": [
+    "/tmp/inside-orch-verify-final-release.py",
+    "2790a4d4d0cf0d71431ee2ca4f4532f4edfc6f69f9d15216389a473e15032e4b"
+  ],
+  "working_directory": "/home/popac/alekpopovic.github.io",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "release_zip_sha256": "2790a4d4d0cf0d71431ee2ca4f4532f4edfc6f69f9d15216389a473e15032e4b",
+  "release_zip_bytes": 33217750,
+  "members": 37,
+  "edition_manifest_sha256": "02e3e7941b3989a6869aa7a9186142497dfecea2e77a40dff0985399f280cec5",
+  "all_outer_manifest_hashes_and_sizes_verified": 36,
+  "five_exports_exact_frozen_hashes": {
+    "inside-orch.pdf": "a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3",
+    "inside-orch.epub": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+    "inside-orch.md": "4fc404c8e137dcf3f431744328e82e2b6f7b5956de48773a28326c3db898ffbc",
+    "inside-orch-offline.zip": "040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a",
+    "inside-orch-sources.zip": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06"
+  },
+  "outer_crc_passed": true,
+  "ordered_fixed_metadata": true,
+  "safe_paths_no_private_artifact_paths": true,
+  "nested_packages": {
+    "inside-orch-offline.zip": {
+      "members": 610,
+      "crc_passed": true,
+      "all_member_hashes_passed": true,
+      "safe_paths_no_private_artifact_paths": true,
+      "sha256": "040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a"
+    },
+    "inside-orch-sources.zip": {
+      "members": 1064,
+      "crc_passed": true,
+      "all_member_hashes_passed": true,
+      "safe_paths_no_private_artifact_paths": true,
+      "sha256": "052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06"
+    }
+  },
+  "pdf_pages_actual": 546,
+  "unified_markdown_exact_47_section_assembly": true,
+  "measured_metadata_matches_gate_and_measurement": true,
+  "exact_gate_and_review_report_sha256": {
+    "validation/release-gate.json": "d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278",
+    "validation/RELEASE_GATE.md": "0968a32056684dd5a9838c37fa708cdbd62f1416fd638b1ab3c69f909e433f95",
+    "validation/reviews/final-findings.json": "25112b16878e0ff2eb94815b3b486eaad70d41c358d243199fe9ee7e385e121a",
+    "validation/reviews/final-independent-review.md": "1a47d7eb38222bd90dcb4f38d26889724978d2a2d9cf0b667b06105ff44142ed",
+    "validation/reviews/final-reader-developer.json": "720df192be9ef01a69b6a20876f31d3fd2041b1c1e72cb0666c774d73a1d6e82",
+    "validation/reviews/final-reader-developer.md": "152151a4268cf39fd7ae18a7582a2ca3ccb3d9e2209e27a676c44f4cece36457",
+    "validation/reviews/final-reader-devops.json": "300118e1d32612e6ab76e0f46f5595729717ef6364e441e20dfe9be748a1fbf1",
+    "validation/reviews/final-reader-devops.md": "b5b175e135dc05e171619f2cb19e75f217dfd1aa20eb295c30fe6bb1a0462820",
+    "validation/reviews/final-reader-architect.json": "310550ea8db67c8563f42ed4e49cdfaa29b4569e6c96fcfecc8f6d0f362d625b",
+    "validation/reviews/final-reader-architect.md": "e69c6a7fc6b704d4c20b55ec2233bc2699eeb6f6ea3ec6eaffcbef4488d56c44"
+  },
+  "tracker_snapshot": {
+    "rows": 100,
+    "000_through_097": "done",
+    "098": "in_progress",
+    "099": "pending",
+    "sha256": "a5c30747200c01e090f16d2a24cde87669778ed505ee11d1b8694898f0126bdc",
+    "snapshot_note": "Actual tracker at archive assembly: completed preceding tasks; 098/099 may still be in progress/pending. Final author-facing tracker remains canonical outside this frozen archive."
+  },
+  "truthful_snapshot_boundaries": true,
+  "historical_range_report_limitation_preserved": true,
+  "unmodified_archive_after_read": true,
+  "scope": "Independent standard-library ZIP parsing/member hashes/CRC/path inspection, exact five frozen exports, parsed PDF page count, complete canonical Markdown equality, three review report bindings and actual archived tracker status. No build, lab execution, gate change, extraction, archive mutation or deployment. Private-artifact check is a structural allowlist/path check, not mathematically exhaustive secret detection.",
+  "probe_script_sha256": "1c81fe9cb37735c604852f80a57ee7021d7d3aecfaaedaa1b078748f0a0a2b30",
+  "probe_source": "from pathlib import Path,PurePosixPath\nimport datetime,hashlib,json,zipfile,stat,io,csv,re,sys\nfrom pypdf import PdfReader\nBOOK=Path('/home/popac/alekpopovic.github.io/books/inside-orch');DIST=BOOK/'dist';PREFIX='inside-orch-1.0/';started=datetime.datetime.now(datetime.timezone.utc).isoformat()\ndef digest(data):return hashlib.sha256(data).hexdigest()\ndef safe_names(archive):\n names=archive.namelist();assert len(names)==len(set(names)),'duplicate names';assert names==sorted(names),'unsorted names'\n for item in archive.infolist():\n  name=item.filename;p=PurePosixPath(name)\n  assert not p.is_absolute() and '..' not in p.parts and '\\\\'not in name and '\\x00'not in name,'unsafe member path'\n  assert not stat.S_ISLNK(item.external_attr>>16),'symlink'\n  assert not(item.flag_bits&1),'encrypted member'\n  assert item.date_time==(2026,10,13,0,0,0),'nonfixed timestamp'\n  assert not any(part in ['.git','.aws','.ssh','node_modules','__pycache__','prompts'] for part in p.parts),'forbidden private/cached path'\n  assert not any(part=='.env' or part.startswith('.env.') for part in p.parts),'environment file'\n  assert not name.lower().endswith(('.dump','.pem','.key','.p12','.pfx')),'private key/database dump'\n  assert '/evidence/orch/'not in name and '/evidence/site/'not in name,'unrelated immutable snapshot'\n assert archive.testzip()is None,'CRC failure'\n return names\nfrozen_expected={'inside-orch.pdf':'a734dd82a27fde589fd81cf9755693401f8b1abbe9a055d1ebe2e482916caee3','inside-orch.epub':'e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b','inside-orch.md':'4fc404c8e137dcf3f431744328e82e2b6f7b5956de48773a28326c3db898ffbc','inside-orch-offline.zip':'040359760ed4ae64623c3907c7ff3433a3da8bcb0278f22a152b39241ce3ab0a','inside-orch-sources.zip':'052901306f6e0b0073f45752193879df6f8c7bf88b46251f43d03c87a8699e06'}\nzip_path=DIST/'inside-orch-release.zip';before=digest(zip_path.read_bytes());expected_release=sys.argv[1];assert before==expected_release,'Parent final outer ZIP hash differs'\nmember_checks={};nested={};exact_canonical={}\nwith zipfile.ZipFile(zip_path) as archive:\n names=safe_names(archive);assert all(n.startswith(PREFIX)for n in names),'unexpected outer prefix'\n raw_manifest=archive.read(PREFIX+'EDITION-MANIFEST.json');assert raw_manifest==(BOOK/'publication/edition-manifest.json').read_bytes(),'edition manifest differs'\n manifest=json.loads(raw_manifest);assert set(names)=={PREFIX+x for x in manifest['files']}|{PREFIX+'EDITION-MANIFEST.json'},'unmanifested/member missing'\n for name,entry in manifest['files'].items():\n  data=archive.read(PREFIX+name);assert digest(data)==entry['sha256']and len(data)==entry['bytes'],'manifest hash/size differs:'+name\n  member_checks[name]={'sha256':digest(data),'bytes':len(data)}\n for name,wanted in frozen_expected.items():\n  data=archive.read(PREFIX+name);assert digest(data)==wanted,'frozen export differs:'+name;assert data==(DIST/name).read_bytes(),'current export differs:'+name\n base=BOOK/'manuscript';sources=[base/p for p in(base/'Book.txt').read_text().splitlines()if p.strip()];assembled='\\n\\n'.join(p.read_text().rstrip()for p in sources)+'\\n';assert archive.read(PREFIX+'inside-orch.md').decode()==assembled and len(sources)==47\n pages=len(PdfReader(io.BytesIO(archive.read(PREFIX+'inside-orch.pdf'))).pages);assert pages==546==manifest['pdf_pages']\n with zipfile.ZipFile(io.BytesIO(archive.read(PREFIX+'inside-orch.epub')))as epub:\n  assert epub.testzip()is None;assert epub.read('mimetype')==b'application/epub+zip'\n for n in ['validation/release-gate.json','validation/RELEASE_GATE.md','validation/reviews/final-findings.json','validation/reviews/final-independent-review.md']+[f'validation/reviews/final-reader-{lens}.{ext}'for lens in ['developer','devops','architect']for ext in ['json','md']]:\n  data=archive.read(PREFIX+'edition/'+n);assert data==(BOOK/n).read_bytes(),'exact final report differs:'+n;exact_canonical[n]=digest(data)\n gate=json.loads(archive.read(PREFIX+'edition/validation/release-gate.json'));review=json.loads(archive.read(PREFIX+'edition/validation/reviews/final-findings.json'))\n assert gate['status']=='passed_local_edition_gate'and not gate['blockers'];assert digest(archive.read(PREFIX+'edition/validation/release-gate.json'))=='d4651b1e5f5d8daac5ebaa7352b950b3cb04faf14402886576e221fea2fa4278'\n assert review['status']=='passed'and not review['remaining_blockers'];assert review['gate_sha256']==manifest['release_gate_sha256']==exact_canonical['validation/release-gate.json']\n assert digest(archive.read(PREFIX+'edition/validation/reviews/final-findings.json'))==manifest['independent_review_sha256']\n assert len(review['lenses'])==3\n for lens in review['lenses']:\n  assert digest(archive.read(PREFIX+'edition/'+lens['report']))==lens['sha256']\n  assert digest(archive.read(PREFIX+'edition/'+lens['narrative_report']))==lens['narrative_sha256']\n assert manifest['source_sha']==gate['source_sha']=='cbfc94ade5b57e449d6b73bf1485b1c5b1647022'\n for key in ['meaningful_words','pdf_pages','reading_sections','numbered_chapters','appendices']:assert manifest[key]==gate[key]\n assert manifest['executed_labs']==gate['mandatory_labs']==8\n measurement=json.loads(archive.read(PREFIX+'edition/validation/publication/manuscript-measurement.json'));assert manifest['meaningful_words']==measurement['meaningful_manuscript_words']==101211\n assert manifest['word_count_breakdown']==measurement['totals'];assert measurement['totals']['reading_sections']+measurement['totals']['worked_answers']==101211\n raw_tracker=archive.read(PREFIX+'edition/state/execution-tracker.csv');rows=list(csv.DictReader(io.StringIO(raw_tracker.decode())));assert len(rows)==100 and len({r['id']for r in rows})==100\n statuses={r['id']:r['status']for r in rows};assert all(statuses[f'{n:03}']=='done'for n in range(98));assert statuses['098']=='in_progress'and statuses['099']=='pending'\n tracker={'rows':100,'000_through_097':'done','098':statuses['098'],'099':statuses['099'],'sha256':digest(raw_tracker),'snapshot_note':manifest['tracker_snapshot']}\n for outer_name,prefix in [('inside-orch-offline.zip','inside-orch/'),('inside-orch-sources.zip','books/inside-orch/')]:\n  with zipfile.ZipFile(io.BytesIO(archive.read(PREFIX+outer_name)))as package:\n   inner_names=safe_names(package);assert all(n.startswith(prefix)for n in inner_names)\n   inner_manifest=json.loads(package.read(prefix+'PACKAGE-MANIFEST.json'));assert set(inner_names)==set(inner_manifest['files'])|{prefix+'PACKAGE-MANIFEST.json'}\n   for name,record in inner_manifest['files'].items():\n    data=package.read(name);assert digest(data)==record['sha256']and len(data)==record['bytes']\n   nested[outer_name]={'members':len(inner_names),'crc_passed':True,'all_member_hashes_passed':True,'safe_paths_no_private_artifact_paths':True,'sha256':frozen_expected[outer_name]}\n history=json.loads(archive.read(PREFIX+'edition/validation/publication/pdf-range-report-history.json'));assert any(r['prior_sha256']=='5eb33871452b2fbd4b796a011c9057da0a0ec55c96da8cff5f3f6c7c66dadb1c'and not r['historical_exact_hash_paths']for r in history['report_history'])\n assert '095' in manifest['source_package_snapshot']and '096' in manifest['source_package_snapshot'],'source snapshot boundary missing'\n assert '099' in manifest['tracker_snapshot'],'pending tracker boundary missing'\n for name in ['edition/publication/HANDOFF.md','edition/publication/RELEASE_NOTES.md']:\n  data=archive.read(PREFIX+name).decode();assert '_test'in data,'database erratum workaround absent'\nassert before==digest(zip_path.read_bytes()),'Verifier mutated the archive'\nresult={'status':'passed','started_at_utc':started,'finished_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'command':sys.argv,'working_directory':str(Path.cwd()),'source_sha':manifest['source_sha'],'release_zip_sha256':before,'release_zip_bytes':zip_path.stat().st_size,'members':len(names),'edition_manifest_sha256':digest(raw_manifest),'all_outer_manifest_hashes_and_sizes_verified':len(member_checks),'five_exports_exact_frozen_hashes':frozen_expected,'outer_crc_passed':True,'ordered_fixed_metadata':True,'safe_paths_no_private_artifact_paths':True,'nested_packages':nested,'pdf_pages_actual':pages,'unified_markdown_exact_47_section_assembly':True,'measured_metadata_matches_gate_and_measurement':True,'exact_gate_and_review_report_sha256':exact_canonical,'tracker_snapshot':tracker,'truthful_snapshot_boundaries':True,'historical_range_report_limitation_preserved':True,'unmodified_archive_after_read':True,'scope':'Independent standard-library ZIP parsing/member hashes/CRC/path inspection, exact five frozen exports, parsed PDF page count, complete canonical Markdown equality, three review report bindings and actual archived tracker status. No build, lab execution, gate change, extraction, archive mutation or deployment. Private-artifact check is a structural allowlist/path check, not mathematically exhaustive secret detection.','probe_script_sha256':digest(Path(__file__).read_bytes()),'probe_source':Path(__file__).read_text()}\nreport=BOOK/'validation/publication/final-release-independent-verification.json';report.write_text(json.dumps(result,indent=2)+'\\n')\nmd=f'''# Independent final release archive verification\n\nPassed at {result['finished_at_utc']}. This is an independent read of the existing outer ZIP; no accepted export, source/reader ZIP, gate, format or archive was changed.\n\nOuter ZIP SHA256: `{before}`; {len(names)} members, {zip_path.stat().st_size} bytes. Its CRC, exact member inventory, all {len(member_checks)} manifest hashes/sizes, sorted names, fixed timestamps, safe paths, no symlinks/encryption and nested reader/source ZIP CRCs/member hashes passed.\n\nAll five frozen exports match their accepted hashes and current files. The PDF actually parses as546pages. Unified Markdown exactly matches the47canonical reading sections. Measured counts match the frozen096gate and measurement record. The archived gate, reconciled findings and all three JSON/Markdown reader reports match their exact frozen bindings. The archived tracker has100unique rows:000\u2013097done,098in_progress,099pending. No future task is relabelled complete.\n\nThe edition records the095source snapshot separately from later096\u2013099handoff/review members. It retains the unavailable exact prior lab range-report hash and final rebind history honestly; no backup is invented. Both handoff documents include the accepted `_test` database-name workaround.\n\nActual command and timestamps are in `098-independent-final-release-history-scope-command.json`; all detailed hashes and the probe source are in [final-release-independent-verification.json](final-release-independent-verification.json). This check does not rerun labs, inspect production services, certify every possible credential pattern or claim human endorsement. Independent system checksum verification is retained separately.\n''';(BOOK/'validation/publication/final-release-independent-verification.md').write_text(md)\nprint(json.dumps({k:v for k,v in result.items()if k not in ['probe_source','exact_gate_and_review_report_sha256','five_exports_exact_frozen_hashes']},indent=2))\n",
+  "checks": [
+    {
+      "command": [
+        ".venv/bin/python",
+        "/tmp/inside-orch-verify-final-release.py",
+        "2790a4d4d0cf0d71431ee2ca4f4532f4edfc6f69f9d15216389a473e15032e4b"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T04:50:22.782529+00:00",
+      "finished_at_utc": "2026-10-13T04:50:23.737484+00:00",
+      "exit_code": 0,
+      "status": "passed",
+      "log_path": "validation/publication/098-independent-final-release-history-scope-command.json"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "SHA256SUMS.txt"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io/books/inside-orch/dist",
+      "started_at_utc": "2026-10-13T04:49:37.794193+00:00",
+      "finished_at_utc": "2026-10-13T04:49:37.840388+00:00",
+      "exit_code": 0,
+      "status": "passed",
+      "log_path": "validation/publication/098-independent-final-checksums-command.json"
+    }
+  ],
+  "initial_validator_correction": {
+    "record": "validation/publication/098-independent-final-release-command.json",
+    "reason": "Initial probe unnecessarily required the historical-range limitation prose in both separate handoff documents. The exact dedicated history JSON is already an outer member and passes its asserted honest unavailable-backup state. Corrected that duplicate-prose condition; no archive/content change. All original hash/CRC/path/tracker checks retained."
+  }
+}

@@ -1,0 +1,6 @@
+func (s *Scheduler) RunOnce(ctx context.Context) ([]Assignment, error) {
+	if s.store == nil {
+		return nil, fmt.Errorf("scheduler store is required")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err

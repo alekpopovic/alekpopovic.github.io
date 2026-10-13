@@ -1,0 +1,43 @@
+{
+  "prompt": "086",
+  "status": "passed",
+  "reviewed_at_utc": "2026-10-13T03:33:08.685561+00:00",
+  "cover_svg_sha256": "bb8aeda769bd667094c1ddcf879b5f5605358ed4865052690406d8fa241c9e12",
+  "cover_png_sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc",
+  "card_preview_sha256": "20083c715f1f30877158c0e23d4c5f65771ebe97b1d28503d650f1b22faa087f",
+  "dimensions": [
+    1700,
+    2400
+  ],
+  "aspect_ratio": "170:240",
+  "actual_visual_views": [
+    "publication/cover.png",
+    "publication/cover-card-preview.png"
+  ],
+  "observations": [
+    "Full title, subtitle, author and source-edition label readable at full cover and 340×480 card sizes.",
+    "Navy background/cyan title and white body have clear visible contrast; no clipping or missing glyphs.",
+    "Decorative orbit lines are not an architecture diagram. Existing Orch identity is retained."
+  ],
+  "metadata_equal_keys": [
+    "title",
+    "subtitle",
+    "author",
+    "language",
+    "edition",
+    "source_sha",
+    "status",
+    "description",
+    "rights",
+    "meaningful_manuscript_words",
+    "reading_sections",
+    "numbered_chapters",
+    "appendices"
+  ],
+  "rights": "Original manuscript all rights reserved; no new license on Orch excerpts. Bundled font hashes and original notices checked.",
+  "measured_catalog": "publication/catalog.json",
+  "limitations": [
+    "Actual production publication remains unperformed.",
+    "Canonical metadata retains historical planned-field keys and null page_count; measured final counts live in catalog.json and final format evidence as directed by root."
+  ]
+}

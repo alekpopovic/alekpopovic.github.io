@@ -1,0 +1,37 @@
+{
+  "id": "ch36-bounded-port-fuzz",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "test",
+    "./pkg/types",
+    "-run",
+    "^$",
+    "-fuzz",
+    "^FuzzPortSpec$",
+    "-fuzztime",
+    "2s",
+    "-parallel",
+    "1"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOFLAGS",
+    "ORCH_E2E_DATABASE_URL",
+    "ORCH_E2E_DOCKER",
+    "GOMAXPROCS"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:23:52.480129+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T01:24:03.492446+00:00",
+  "duration_seconds": 11.012,
+  "stdout": "validation/labs/ch36/bounded-port-fuzz.stdout.txt",
+  "stderr": "validation/labs/ch36/bounded-port-fuzz.stderr.txt"
+}

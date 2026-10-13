@@ -118,7 +118,6 @@
   .project-flow { list-style: none; padding: 0; display: grid; gap: 12px; margin-top: 25px; }
   .project-flow li { display: flex; align-items: center; gap: 16px; background: #fffdf6; border-radius: 16px; padding: 16px; font-size: 15px; }
   .project-flow span { display: grid; place-items: center; border-radius: 50%; width: 30px; height: 30px; background: #2153d8; color: white; flex-shrink: 0; }
-  .project-story pre { background: #202b40; color: #fff3b8; padding: 25px; border-radius: 20px; overflow: auto; font-size: 13px; line-height: 1.9; }
   .project-story .project-example-note, .project-story .project-source-note { margin-top: 18px; font-size: 13px; line-height: 1.7; }
   .project-preview { margin: 0 0 35px; }
   .project-preview img { display: block; width: 100%; height: auto; border-radius: 20px; border: 1px solid #20201e30; }
@@ -550,7 +549,6 @@
     .book-article { line-height: 1.8; }
     .book-article h2 { font-size: 23px; }
     .book-article h3 { font-size: 19px; }
-    .book-article pre { font-size: 11px; padding: 15px; }
     .reader-pager { grid-template-columns: minmax(0, 1fr); }
     .book-actions { gap: 7px; }
     .book-license-page { padding-top: 120px; }
@@ -655,8 +653,6 @@
   .article-prose h2 { font-size: 30px; line-height: 1.2; }
   .article-prose a { color: var(--post-ink); text-decoration: underline; text-underline-offset: 4px; }
   .article-prose code { color: #5136b5; font-size: .85em; }
-  .article-prose pre { max-width: 100%; overflow-x: auto; border-radius: 18px; background: #252638; font-size: 14px; }
-  .article-prose pre code { color: #fff3b8; font-size: inherit; }
   .article-prose blockquote { border-color: var(--post-ink); font-weight: 500; }
   .article-chapter-callout { display: flex; gap: 22px; margin-top: 50px; padding: 32px; background: var(--post-background); border-radius: 25px; }
   .article-chapter-mark { color: var(--post-ink); font-size: 40px; line-height: 1; }
@@ -1025,7 +1021,6 @@ html:not(.js) [data-backup-controls] { display: none; }
 .reading-shelf { margin-block: 50px; }
 .reading-shelf > h2 { font-size: 30px; font-weight: 700; margin-bottom: 22px; }
 [data-backup-status] { margin-bottom: 24px; }
-.learning-exercise pre { overflow: auto; margin-block: 20px; padding: 20px; border-radius: 12px; background: #20201e; color: #fff3b8; font: 14px/1.8 ui-monospace, monospace; }
 .project-demo video { display: block; width: 100%; height: auto; border: 1px solid #20201e; border-radius: 16px; margin-block: 22px; background: #171923; }
 .project-demo details { margin-block: 20px; }
 .project-demo summary { cursor: pointer; font-weight: 600; }

@@ -1,0 +1,22 @@
+Manage scheduled jobs
+
+Usage:
+  orch cronjob [command]
+
+Available Commands:
+  apply       
+  ls          
+  resume      
+  suspend     
+
+Flags:
+  -h, --help   help for cronjob
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch cronjob [command] --help" for more information about a command.

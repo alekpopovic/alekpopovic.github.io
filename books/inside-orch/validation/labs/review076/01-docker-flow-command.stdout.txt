@@ -1,0 +1,211 @@
+{
+  "captured_ids": {
+    "direct_container": "00df469e74979320019119b19a254d823d72a3e8af2694a98ad61c027574cbc5",
+    "node": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+    "ordinary_container": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+    "service": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+    "task": "89a881e3-0d1d-494c-8035-c4eafbd312ea"
+  },
+  "cleanup": "agent canceled before exact captured container IDs removed; deferred cleanup runs after JSON emission",
+  "creation_events": 1,
+  "direct_host_config": {
+    "memory": 134217728,
+    "nano_cpus": 250000000
+  },
+  "flow": [
+    {
+      "active": 1,
+      "at_utc": "2026-10-13T01:39:07.250907241Z",
+      "removed": 0,
+      "stage": "deployed",
+      "tasks": [
+        {
+          "id": "89a881e3-0d1d-494c-8035-c4eafbd312ea",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:06.904311115Z",
+          "updated_at": "2026-10-13T01:39:07.111915565Z",
+          "started_at": "2026-10-13T01:39:07.111915565Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "active": 2,
+      "at_utc": "2026-10-13T01:39:07.555865293Z",
+      "removed": 0,
+      "stage": "scaled-up",
+      "tasks": [
+        {
+          "id": "89a881e3-0d1d-494c-8035-c4eafbd312ea",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:06.904311115Z",
+          "updated_at": "2026-10-13T01:39:07.111915565Z",
+          "started_at": "2026-10-13T01:39:07.111915565Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "532e7208-ca22-4046-9fff-c0f93540c087",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:07.251069696Z",
+          "updated_at": "2026-10-13T01:39:07.53541667Z",
+          "started_at": "2026-10-13T01:39:07.53541667Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "active": 1,
+      "at_utc": "2026-10-13T01:39:07.91041642Z",
+      "removed": 1,
+      "stage": "scaled-down",
+      "tasks": [
+        {
+          "id": "89a881e3-0d1d-494c-8035-c4eafbd312ea",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+          "desired_status": "running",
+          "actual_status": "running",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:06.904311115Z",
+          "updated_at": "2026-10-13T01:39:07.111915565Z",
+          "started_at": "2026-10-13T01:39:07.111915565Z",
+          "finished_at": "0001-01-01T00:00:00Z"
+        },
+        {
+          "id": "532e7208-ca22-4046-9fff-c0f93540c087",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78",
+          "desired_status": "removed",
+          "actual_status": "removed",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:07.251069696Z",
+          "updated_at": "2026-10-13T01:39:07.90924061Z",
+          "started_at": "2026-10-13T01:39:07.53541667Z",
+          "finished_at": "2026-10-13T01:39:07.90924061Z"
+        }
+      ]
+    },
+    {
+      "active": 0,
+      "at_utc": "2026-10-13T01:39:08.240011453Z",
+      "removed": 2,
+      "stage": "deleted",
+      "tasks": [
+        {
+          "id": "89a881e3-0d1d-494c-8035-c4eafbd312ea",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "e5dbb32232885cdcd1b2da8a4a07e8525f7252fb2efc6acaf94536ca3ae9ab3f",
+          "desired_status": "stopped",
+          "actual_status": "removed",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:06.904311115Z",
+          "updated_at": "2026-10-13T01:39:08.225084494Z",
+          "started_at": "2026-10-13T01:39:07.111915565Z",
+          "finished_at": "2026-10-13T01:39:08.225084494Z"
+        },
+        {
+          "id": "532e7208-ca22-4046-9fff-c0f93540c087",
+          "namespace": "default",
+          "service_id": "4d84007f-cf75-4be7-880b-6d39dec4797a",
+          "node_id": "f204d23a-89be-42de-b2e2-4a48293cb37c",
+          "container_id": "684176ca53ae004d06132f59ee8311b1ee37bbb584d27c334c0af29e8fdf2f78",
+          "desired_status": "removed",
+          "actual_status": "removed",
+          "image": "nginx:1.27-alpine",
+          "requested_image": "nginx:1.27-alpine",
+          "image_registry": "docker.io",
+          "image_name": "library/nginx",
+          "image_tag": "1.27-alpine",
+          "version": 1,
+          "restart_count": 0,
+          "created_at": "2026-10-13T01:39:07.251069696Z",
+          "updated_at": "2026-10-13T01:39:07.90924061Z",
+          "started_at": "2026-10-13T01:39:07.53541667Z",
+          "finished_at": "2026-10-13T01:39:07.90924061Z"
+        }
+      ]
+    }
+  ],
+  "http_probe": {
+    "bytes": 615,
+    "method": "docker exec wget loopback inside captured container",
+    "sha256": "fb47468a2cd3953c7131431991afcc6a2703f14640520102eea0a685a7e8d6de",
+    "welcome_matched": true
+  },
+  "image_id": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+  "logs": {
+    "bytes": 1218,
+    "nginx_matched": true,
+    "sha256": "825f6525c2002432b60e7cf94b8b6edac03e705bc3f3436df22768bcc6528421"
+  },
+  "observed_at_utc": "2026-10-13T01:39:08.240326376Z",
+  "ordinary_host_config": {
+    "memory": 0,
+    "nano_cpus": 0
+  },
+  "ordinary_running": true,
+  "published_ports": 0,
+  "scope": "actual server handler plus agent Runner plus Docker adapter; teaching wrapper requires cached images and guards owned IDs; no published workload ports",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed"
+}

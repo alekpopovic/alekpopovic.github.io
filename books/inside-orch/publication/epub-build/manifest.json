@@ -1,0 +1,1038 @@
+{
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "captured_at_utc": "2026-10-13T03:33:08.685561+00:00",
+  "reading_sections": 47,
+  "members": [
+    {
+      "path": "mimetype",
+      "bytes": 20,
+      "sha256": "e468e350d1143eb648f60c7b0bd6031101ec0544a361ca74ecef256ac901f48b"
+    },
+    {
+      "path": "EPUB/media/cover.png",
+      "bytes": 309024,
+      "sha256": "f28372abc5d052c83e231f50e0d5db5133220c8f420b8ea1f91580c7f392e2bc"
+    },
+    {
+      "path": "EPUB/media/examples/diagrams/task-lifecycle.png",
+      "bytes": 154443,
+      "sha256": "76cf8471a5a724d964a8f1c22c5c3c117659a053326cff3addc91ce07064c6a4"
+    },
+    {
+      "path": "EPUB/nav.xhtml",
+      "bytes": 6402,
+      "sha256": "a61d922f3522ef3e68994574c9e4e734b2b6807d0ca78303c6be5495aab2c2cb"
+    },
+    {
+      "path": "EPUB/package.opf",
+      "bytes": 29686,
+      "sha256": "18ee786894191690bd25867889a2bd0445e97f8c0e5787112f2e667efce17bb5"
+    },
+    {
+      "path": "EPUB/styles/book.css",
+      "bytes": 638,
+      "sha256": "c0319a681a81e4764701d4b0074f493288b406a6e633f9ce83e9809ddfd102b7"
+    },
+    {
+      "path": "EPUB/text/00-preface.xhtml",
+      "bytes": 7793,
+      "sha256": "4cc15f495a3be7eed11ee398a251c8301660b32627a32cd0e3b7b1dc0c5dec37"
+    },
+    {
+      "path": "EPUB/text/01-why-build-a-container-orchestrator.xhtml",
+      "bytes": 15905,
+      "sha256": "c87b9c8b5ec5846b2509358f4eb6ca7b231c4e5afd8480ac6825a5994f0b3ce5"
+    },
+    {
+      "path": "EPUB/text/02-a-repository-built-for-reasoning.xhtml",
+      "bytes": 15639,
+      "sha256": "c6a9422a5affaa11b6a0389086d18e48e0e000a3be69537ed46b71d874035817"
+    },
+    {
+      "path": "EPUB/text/03-boot-the-lab-and-deploy-the-first-service.xhtml",
+      "bytes": 17354,
+      "sha256": "c3d9b5a6b3ffc5f41fcd875f5241eb9986e1199122705b30e7e1de0a10345e0a"
+    },
+    {
+      "path": "EPUB/text/04-domain-models-and-state-machines.xhtml",
+      "bytes": 17106,
+      "sha256": "a08157b5a250db1666c727bd398464596a15d70a791b868135fb92d9834d667b"
+    },
+    {
+      "path": "EPUB/text/05-service-specifications-resources-and-ports.xhtml",
+      "bytes": 16852,
+      "sha256": "1ec0a2cac87ec86069003ad6e4995dd24b9a17a61df2aa2c424f58c04509c89b"
+    },
+    {
+      "path": "EPUB/text/06-follow-one-request-through-the-control-plane.xhtml",
+      "bytes": 15992,
+      "sha256": "ca614b9525f689fa9b02d10942e5f745b16bb7c636d77c24d5d5a879801c39b7"
+    },
+    {
+      "path": "EPUB/text/07-http-contracts-and-compatible-apis.xhtml",
+      "bytes": 17195,
+      "sha256": "d47aa12239b2cfcc189b3760f5322084ead00666d6d9ccc71582debea839c24a"
+    },
+    {
+      "path": "EPUB/text/08-a-cli-that-operators-can-automate.xhtml",
+      "bytes": 16875,
+      "sha256": "3ebe1b06127d5f8addd666ca312a6e013726ce40e45cf4282f6ba746cbc117f8"
+    },
+    {
+      "path": "EPUB/text/09-persistence-transactions-and-optimistic-concurrency.xhtml",
+      "bytes": 16933,
+      "sha256": "e032a102efd07c5304841e9775c88ce916c7a09f107198a077b3199e8c6ccf7b"
+    },
+    {
+      "path": "EPUB/text/10-a-deterministic-scheduler.xhtml",
+      "bytes": 16685,
+      "sha256": "c08ae3e2f7deee799edd76b6f9f4536739bb566ae1ad109347ce173522ed43a9"
+    },
+    {
+      "path": "EPUB/text/11-reconciliation-as-repeated-convergence.xhtml",
+      "bytes": 16174,
+      "sha256": "8d53e0e7be17591a754e6ef2ad234a92cd66c2483b592f32bdeb4013b3408882"
+    },
+    {
+      "path": "EPUB/text/12-idempotent-docker-operations-and-drift.xhtml",
+      "bytes": 16968,
+      "sha256": "cdbcf7afcb9dbc3e85ffcc14db26498ebe4d6c9105b63e7c583f4b004123e4dd"
+    },
+    {
+      "path": "EPUB/text/13-agents-heartbeats-and-task-reports.xhtml",
+      "bytes": 16849,
+      "sha256": "7ffc6afe05a349b0bfe42e11bfb02e0c20654a363d57ed3619deeb7f8a256e7e"
+    },
+    {
+      "path": "EPUB/text/14-health-checks-that-respect-trust-boundaries.xhtml",
+      "bytes": 16505,
+      "sha256": "7d64969dc9eec5433923ac1797fe88c61c410c9fab38e07dd7ee796ed02d76c3"
+    },
+    {
+      "path": "EPUB/text/15-events-audits-and-notification-boundaries.xhtml",
+      "bytes": 16790,
+      "sha256": "ec207bd19381f8bb93370975bc96ad063738065feac64a33cfb7c32f71c279d0"
+    },
+    {
+      "path": "EPUB/text/16-log-streaming-without-losing-control.xhtml",
+      "bytes": 16522,
+      "sha256": "ac09fbe8325fc8805065f48ff7e5f5f3f2cd5a2b55b33d943cbea9749eb93d13"
+    },
+    {
+      "path": "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml",
+      "bytes": 16814,
+      "sha256": "b6c221e99813eb72a5305f0cb9f29e9d1a6668ee06928240fef7b3406e7f9fc2"
+    },
+    {
+      "path": "EPUB/text/18-safe-deletion-and-resource-cleanup.xhtml",
+      "bytes": 17274,
+      "sha256": "2f94e0e0eff653c4182817e69991167cef6116db0409d4d46ec34c017bf0511d"
+    },
+    {
+      "path": "EPUB/text/19-offline-nodes-draining-and-rescheduling.xhtml",
+      "bytes": 17462,
+      "sha256": "eee9a384a18ae7a76cc5410a5875673a6c0527dcb037110e927b64a791262bfb"
+    },
+    {
+      "path": "EPUB/text/20-endpoint-discovery-and-internal-dns.xhtml",
+      "bytes": 16466,
+      "sha256": "2d9f1a1a4d44d17912b2300f428dbcf04f80e175ba20afe4b9d61a64472997d4"
+    },
+    {
+      "path": "EPUB/text/21-ingress-host-networking-and-the-overlay-roadmap.xhtml",
+      "bytes": 16726,
+      "sha256": "d9e49c849c073f60ac2904691854e33ae360b0683af0fbf395670566e76ae497"
+    },
+    {
+      "path": "EPUB/text/22-autoscaling-decisions-and-missing-integration.xhtml",
+      "bytes": 17243,
+      "sha256": "3ea3c39b88b2a447697959a51ec155249e8744bf2e14032b14c665b8ca0426cb"
+    },
+    {
+      "path": "EPUB/text/23-authentication-authorization-and-node-trust.xhtml",
+      "bytes": 16575,
+      "sha256": "3eaaefcad94c4e83280dc66f2539de32cc6c131f060045528c2b4c0486a8d0ae"
+    },
+    {
+      "path": "EPUB/text/24-encrypted-secrets-and-configuration-redaction.xhtml",
+      "bytes": 18758,
+      "sha256": "d71b25b3f602ceb5ec81e5720b18a36385de2e02546a2569e602d8a779dc97ef"
+    },
+    {
+      "path": "EPUB/text/25-registry-credentials-and-immutable-image-identity.xhtml",
+      "bytes": 16736,
+      "sha256": "18afe2282472d42900792e16f3afe2b45e77af12005c86df6866fa907234256b"
+    },
+    {
+      "path": "EPUB/text/26-security-contexts-admission-and-policy.xhtml",
+      "bytes": 16074,
+      "sha256": "ea48b98868897c52108433ff57d59f4ef55a7e9b7bfdd89786d4bdef59af1546"
+    },
+    {
+      "path": "EPUB/text/27-namespaces-and-the-limits-of-multi-tenancy.xhtml",
+      "bytes": 15464,
+      "sha256": "062814d6c573c7066db4f7b56e34816293757a27686f29e8b3f71950d051338b"
+    },
+    {
+      "path": "EPUB/text/28-quotas-and-usage-accounting.xhtml",
+      "bytes": 16025,
+      "sha256": "7d1df2e01d456f2b27e656d8c6b8ae9b2406871601f7744e4ef201893c120f99"
+    },
+    {
+      "path": "EPUB/text/29-supply-chain-designs-without-false-guarantees.xhtml",
+      "bytes": 16289,
+      "sha256": "0e2d4795299140fed8c8ff898ed09b17565054509cb19654f94aef5becc50f73"
+    },
+    {
+      "path": "EPUB/text/30-gitops-drift-and-controlled-reconciliation.xhtml",
+      "bytes": 16356,
+      "sha256": "648b7c1f57f9978fac37eed41e93015512e296009201a70e14c34dd2a41ff0ee"
+    },
+    {
+      "path": "EPUB/text/31-finite-jobs-and-time-based-work.xhtml",
+      "bytes": 16624,
+      "sha256": "dc3c08a1e39a7c88570670d2b33546d97dc8f16ed537d093b00d47fe83d6738a"
+    },
+    {
+      "path": "EPUB/text/32-local-volumes-claims-and-workload-topology.xhtml",
+      "bytes": 16349,
+      "sha256": "1ffeb7256eca0c14f1430ca73df1aa6cf454c5db9bad51c63c6bd3d8b4ab6f85"
+    },
+    {
+      "path": "EPUB/text/33-extension-interfaces-and-a-plugin-roadmap.xhtml",
+      "bytes": 16441,
+      "sha256": "db18590047f53b03d0609f852f3fc0ae31ea1e3041922ff36d7b212dcf6ec54b"
+    },
+    {
+      "path": "EPUB/text/34-leader-election-and-the-durable-ha-boundary.xhtml",
+      "bytes": 15668,
+      "sha256": "0ebe521cb7db74fd4b9283c57522a8bfe12da02eaa1144d90f3708b3a330ecae"
+    },
+    {
+      "path": "EPUB/text/35-upgrades-migrations-maintenance-and-retention.xhtml",
+      "bytes": 15892,
+      "sha256": "214dca17f2615171de3410050dfca99967281dc20dcb425e8aeeda1896315911"
+    },
+    {
+      "path": "EPUB/text/36-fakes-property-tests-fuzzing-and-contracts.xhtml",
+      "bytes": 15413,
+      "sha256": "b5e6daa9cb9a752ab3d8d0dd1b147dec303f1787dd28856387c518e57d692da9"
+    },
+    {
+      "path": "EPUB/text/37-failure-injection-and-recovery-evidence.xhtml",
+      "bytes": 16131,
+      "sha256": "d48677931b9ad80890467844d90467b19a1a004b3c335a30c0af31102386cf44"
+    },
+    {
+      "path": "EPUB/text/38-metrics-dashboards-and-actionable-signals.xhtml",
+      "bytes": 16172,
+      "sha256": "0fe462f1a2ad6d7fdd8d4b35a1e64b13f104e45bf44229d9064712ffcd963fcd"
+    },
+    {
+      "path": "EPUB/text/39-performance-and-scale-tests-that-say-what-they-measure.xhtml",
+      "bytes": 15210,
+      "sha256": "71ce15e995380adbe1d51c5a1f060f487008bff730bf6def8b0f0f11676d7fbd"
+    },
+    {
+      "path": "EPUB/text/40-release-a-system-you-can-honestly-operate.xhtml",
+      "bytes": 16292,
+      "sha256": "33ea7be7d04237b20ee485f141ebe0d9e63e4aee428fc6d0228e2e305e5e34a0"
+    },
+    {
+      "path": "EPUB/text/a-cli-api-config.xhtml",
+      "bytes": 20608,
+      "sha256": "6208f1186ebcbeda411c0bf8ea7f580a41e67510ed24d43bc4bf5382f243eff3"
+    },
+    {
+      "path": "EPUB/text/b-lifecycle-invariants.xhtml",
+      "bytes": 16754,
+      "sha256": "7c0c962c56c4ffb3e6ea132c01f65b3b58c2b03b5a8343d9475f8e4052c86064"
+    },
+    {
+      "path": "EPUB/text/c-annotated-history.xhtml",
+      "bytes": 18599,
+      "sha256": "80ffb301e3e342204854ffea215ec09a54c150289b344b7feae8edc2f6ec6a86"
+    },
+    {
+      "path": "EPUB/text/companion-examples-source-excerpts-ch09-metadata-json.xhtml",
+      "bytes": 1695,
+      "sha256": "6196e3e57221471bba81b10d804d7373bc983bb0fddcf3d2baebe101ae8b7004"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-ch33-adapter-contract-test-go.xhtml",
+      "bytes": 4254,
+      "sha256": "9cf5fb00216dffb2f107a27e4bf3222c5206186cb33ad2097df4f4292291eb16"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-ch34-adr-durable-composition-md.xhtml",
+      "bytes": 2835,
+      "sha256": "5c6c1bb524054133e8beb4b8c7eaf4dd6073f21369fa196668f3fdf8d7078d68"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-ch35-preflight-test-go.xhtml",
+      "bytes": 2442,
+      "sha256": "e6edb7c635fc17f8413b03fc3855cba8de0a11318e81457d5f4a3b23855ab3d5"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-ch38-metrics-contract-test-go.xhtml",
+      "bytes": 1540,
+      "sha256": "3449a947826d33e9d5d3b71063bf572c3dad19553345fe3d6f421409f8e494a9"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-ch40-verify-dossier-py.xhtml",
+      "bytes": 3560,
+      "sha256": "af2bcf938b494119691c5d3ef0f6c6f5f3bac4694bc1c473f91d9eb21de71411"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-docker-boundary-main-go.xhtml",
+      "bytes": 10946,
+      "sha256": "ff6e091097713325b67221446e0fb026f382668b2eb0ae6340150cb3a2331436"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-full-schema-main-go.xhtml",
+      "bytes": 7750,
+      "sha256": "5d67b34ed6b765bdaddd471d719cd43120001e8d9f73a36f498c3b42ce0e9613"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-lab02-main-go.xhtml",
+      "bytes": 10055,
+      "sha256": "eb2608dc2d7da973807f7b40362a8f974e0eb1149ee868ab9bad5aac77fa1a72"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-rollout-main-go.xhtml",
+      "bytes": 11472,
+      "sha256": "3fdd920d4694618e8d738da0af50e133376b6cfbb5ac9dd436f5854476c8b663"
+    },
+    {
+      "path": "EPUB/text/companion-examples-teaching-extensions-security-main-go.xhtml",
+      "bytes": 15915,
+      "sha256": "2c875494e5bc63010cc70a8087ea6a78870092f0c64370ed1104cc706b9f127a"
+    },
+    {
+      "path": "EPUB/text/companion-exercises-questions-md.xhtml",
+      "bytes": 22960,
+      "sha256": "3afedce0024a98cb130fe6dde62951c6b4cad684e1c6266f12104f3a304bf6b1"
+    },
+    {
+      "path": "EPUB/text/companion-labs-01-initialization-restart-book-http-yaml.xhtml",
+      "bytes": 443,
+      "sha256": "63b0415812cfc8e65a2f02cf0025cd8d585dd437e03fc054445d0f64cbe2f69a"
+    },
+    {
+      "path": "EPUB/text/companion-labs-01-initialization-restart-readme-md.xhtml",
+      "bytes": 11392,
+      "sha256": "33714ec626755592a2bed23979d78231701b771ee974ac9e797e07ee46293472"
+    },
+    {
+      "path": "EPUB/text/companion-labs-02-scheduler-placement-fixtures-plan-json.xhtml",
+      "bytes": 15864,
+      "sha256": "9b21a0a5f763e34cf1fce8d48016e63e028d7d759884dfad995e2b893f4fb168"
+    },
+    {
+      "path": "EPUB/text/companion-labs-02-scheduler-placement-readme-md.xhtml",
+      "bytes": 12446,
+      "sha256": "cdb459a98d314262078b229f82a346a26bbee812be5f0efa9ac43c798e932d0a"
+    },
+    {
+      "path": "EPUB/text/companion-labs-03-reconciler-drift-fixtures-cases-json.xhtml",
+      "bytes": 1660,
+      "sha256": "20543d2c5d4571587ee4f5fcf81e7ffd9e9c32e6c286c6e38770b7d8c4b0ac7b"
+    },
+    {
+      "path": "EPUB/text/companion-labs-03-reconciler-drift-readme-md.xhtml",
+      "bytes": 11109,
+      "sha256": "be9f22105ee1253c21f7eabbd5d5608dbfc14333b7b1df560fc94898cc7d6ae9"
+    },
+    {
+      "path": "EPUB/text/companion-labs-04-rollout-rollback-readme-md.xhtml",
+      "bytes": 8811,
+      "sha256": "439792aa6a56391e6cd99beadc11ef73a1ea8d7a2b7a60239a13617cecb4e636"
+    },
+    {
+      "path": "EPUB/text/companion-labs-05-security-boundaries-readme-md.xhtml",
+      "bytes": 11075,
+      "sha256": "369be639219c1ced99aa0d0e3036ca9069e3b6fcc7af2da42a8869cd31061c97"
+    },
+    {
+      "path": "EPUB/text/companion-labs-06-namespaces-quotas-readme-md.xhtml",
+      "bytes": 10478,
+      "sha256": "b131f77a8e538449728c750b1e319c6a25ecc5b55316dd79418bd9321d05865e"
+    },
+    {
+      "path": "EPUB/text/companion-labs-07-gitops-jobs-cron-readme-md.xhtml",
+      "bytes": 10455,
+      "sha256": "a53e18492d3ffdb2e7f4428751417a86a48c99d1c827eda11d93f4b6f384c5a6"
+    },
+    {
+      "path": "EPUB/text/companion-labs-08-recovery-boundaries-readme-md.xhtml",
+      "bytes": 9886,
+      "sha256": "bf4d6395eae910c409f0321993a618f74c012180ac359c2761ddb2b48d9a44ab"
+    },
+    {
+      "path": "EPUB/text/companion-labs-environment-md.xhtml",
+      "bytes": 10129,
+      "sha256": "f8209d4a490809703c469f8c3865ced77d35c8fc70189f44af025355e2e96583"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-appendix-d-md.xhtml",
+      "bytes": 16017,
+      "sha256": "c68e52b46b75692298fa2d93998c9a47aa1e79748ef62ab3646dcec0c1ec4c03"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch01-md.xhtml",
+      "bytes": 2816,
+      "sha256": "4908b69d738a080920bde0cbc003d0c6ad6c27ced65a0402739167d4ac3c7c8c"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch02-md.xhtml",
+      "bytes": 2723,
+      "sha256": "a708f74f30373c733ec5ed6e34c4303e8e8d41005be9f072bf0f31c7c2d3eed3"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch03-md.xhtml",
+      "bytes": 2904,
+      "sha256": "835d4d2c86b62026defa361b72fa7ae70cc6ae781541a44f7ad8c845d0980925"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch04-md.xhtml",
+      "bytes": 3031,
+      "sha256": "d46c075cfdc877437e17bfcb6734dcba4c9a01af1c1473bb2b659b765b7e8568"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch05-md.xhtml",
+      "bytes": 2800,
+      "sha256": "f835b42d9ef26f4a4509d66069b5da8dbbb53962431d4550b99dc50b51a4bad2"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch06-md.xhtml",
+      "bytes": 2904,
+      "sha256": "a08ec5be1b432129f8ed715f978209503e3f8d960cfd9e72ff58de001ec857e3"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch07-md.xhtml",
+      "bytes": 2590,
+      "sha256": "13324673c65dc2bc90d04df5faa1e3679a6f69e50817ee79ad3300688898aa79"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch08-md.xhtml",
+      "bytes": 2779,
+      "sha256": "94c49690f616264c09f1b3ddec9f4c70e61d0b7f613c2ba867ee00507f9e398d"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch09-md.xhtml",
+      "bytes": 3543,
+      "sha256": "8191145f9ec99e3afae137d5130d48880152660b3774e036b86365b89b673b74"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch10-md.xhtml",
+      "bytes": 3379,
+      "sha256": "ef146947400370c4640a983bf0b5c23fd62f873cf0fe3d9408f779aaeb7e34cb"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch11-md.xhtml",
+      "bytes": 3064,
+      "sha256": "4d104e44451c8436fd3ffdf2c28466fdfbb369e2b6d435f5238e62c9f46005c5"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch12-md.xhtml",
+      "bytes": 3083,
+      "sha256": "be5dedc34954fef14fa2ff74afb41b88bb8a0194c0e974ceb1188c032b0a09c2"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch13-md.xhtml",
+      "bytes": 3160,
+      "sha256": "5a5a116db6f405499b894c696c3c753c5d7f7d5a5e521bf30e59aea1890330f6"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch14-md.xhtml",
+      "bytes": 2942,
+      "sha256": "64f7222aa2cd1143d4e36cb475d207332d21b0b30dee8923c7b003b8f2fd4c26"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch15-md.xhtml",
+      "bytes": 3070,
+      "sha256": "1bef2de4bbf72431f5018a1671d0c51f1c94c2489573de86e52a78f4e33b408a"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch16-md.xhtml",
+      "bytes": 3007,
+      "sha256": "aac0420d1f53c7af9133ca9a967f429fa28fe8624f44fae85b72526f38e03da5"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch17-md.xhtml",
+      "bytes": 2273,
+      "sha256": "18dcd4180bc6ad39d3535a81ea3c97e70531095959077399ea76fea8ee5b9dd0"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch18-md.xhtml",
+      "bytes": 2229,
+      "sha256": "7d9fd0483f2315d78959bcfde251920728eb81dbb8d8c008c314dba6abaa7b04"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch19-md.xhtml",
+      "bytes": 2159,
+      "sha256": "ab84b3daaa5a1172a3acdebbf8dc5c57e9b3e636fe3d0d8d53b4566cd66f3dc7"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch20-md.xhtml",
+      "bytes": 2090,
+      "sha256": "a28bb219fda142ac16190dea11ee0703acb6251425ade71197fb87298365a4d7"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch21-md.xhtml",
+      "bytes": 2096,
+      "sha256": "2ad6e89a48ed065fbc7a10eb8783741242887bdced1528136933ab887a4e4762"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch22-md.xhtml",
+      "bytes": 2112,
+      "sha256": "094a074edb41c15eb8c324f502be3bffca41aa9e1042d2455d892d3b2598a151"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch23-md.xhtml",
+      "bytes": 2044,
+      "sha256": "a950a61bcd0a7aafb445b9cc3e06cf47fbe63969a6a6e20c0c35db2d0919905b"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch24-md.xhtml",
+      "bytes": 2180,
+      "sha256": "6d89f82cb7b3d3456927538be5cc370508bf8d786284574db6dc9ea2b7d46d26"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch25-md.xhtml",
+      "bytes": 2786,
+      "sha256": "4500bf8bc76b85a643cf570339a1fb24338ba17e8acd2e9d574c19f30d12655d"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch26-md.xhtml",
+      "bytes": 2728,
+      "sha256": "e7151a3e27924156e25f9edca606b8e5eb0f07afb86ed902d82ada2ef60a40d0"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch27-md.xhtml",
+      "bytes": 2717,
+      "sha256": "295ee8391c537609148ada1bc4853ed83d1954710da29f12567eec4433f64ee7"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch28-md.xhtml",
+      "bytes": 2837,
+      "sha256": "47cb40fd1592717edb966b28def3e5334a481ff2cc8c9112542585bf766bb4f6"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch29-md.xhtml",
+      "bytes": 2758,
+      "sha256": "cc150a18d2791a9495859ec03fdf7ff5173076a3a77b82336fff898fb39671bc"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch30-md.xhtml",
+      "bytes": 2737,
+      "sha256": "186018c1c2bb420864cd20b9a723c21367f6805b951a38acd6f37334f5377f74"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch31-md.xhtml",
+      "bytes": 2637,
+      "sha256": "b842dae92079fea44d5cde454ecfbb63eb7ae912ad01bd82988da3d8e5db38aa"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch32-md.xhtml",
+      "bytes": 2831,
+      "sha256": "dc741f4aa6d521fa85a95df781bd59845e9eaf50203f744937ba776fa5c4b33b"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch33-md.xhtml",
+      "bytes": 3138,
+      "sha256": "26bdaa873666b59e5adbfe7baf1dd9caf327efe285d6e80e8fb3cad835983eca"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch34-md.xhtml",
+      "bytes": 3024,
+      "sha256": "c21d4341c303bb22794915224ba8e848482d724833302b86b96506443f4f0c7d"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch35-md.xhtml",
+      "bytes": 2922,
+      "sha256": "dcf8c137575344f98613870a8a433d9b687d89d88aee0a30df80e3537ffc3448"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch36-md.xhtml",
+      "bytes": 2994,
+      "sha256": "9a1b9eaed375c907f1028c94b5a7923bde01ba7fa1925b1223fe5319f8ad27c8"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch37-md.xhtml",
+      "bytes": 3013,
+      "sha256": "8bbdb4b2246480ee68224702ec4d0cbd4f5bfe3f15dad746403868bc1a73b86d"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch38-md.xhtml",
+      "bytes": 3053,
+      "sha256": "9117e17247b1291ba4e8960352fcf040b84bfb8d49dabafa92f623efec794911"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch39-md.xhtml",
+      "bytes": 3138,
+      "sha256": "71fd8e0682f01ea34d043cfce4322781cec14412640621f7fc82f33048419cc8"
+    },
+    {
+      "path": "EPUB/text/companion-manuscript-solutions-ch40-md.xhtml",
+      "bytes": 3378,
+      "sha256": "98248ae7bec3d300bafae7249bd82c39872e92f34acfcea7d6832bb8b572d6ac"
+    },
+    {
+      "path": "EPUB/text/companion-scripts-observe-database-recovery-py.xhtml",
+      "bytes": 6100,
+      "sha256": "864f20dcad85fce1e24be257402079f26127e0832610e46ee040fd559cb116ea"
+    },
+    {
+      "path": "EPUB/text/companion-tests-test-recovery-targets-py.xhtml",
+      "bytes": 1284,
+      "sha256": "7ddbc569ff34f5be2a5cfc45dcfc61c61f8477fd4061b3fbb1f6f11c9a5cd940"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-appendices-json.xhtml",
+      "bytes": 25438,
+      "sha256": "6dd139fe0bac2d6627ab780aaba52322661a59d751153b36ed8eb98dd4f3649b"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch09-json.xhtml",
+      "bytes": 5330,
+      "sha256": "1055923331efc6c9854d52befa11873abe2cdf45349b65fb7503118526f60907"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch10-json.xhtml",
+      "bytes": 4517,
+      "sha256": "123d78a6f77f31cdb6ecaf3a44385a1ccfabc7c9803b23519a2013acb80fccb6"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch11-json.xhtml",
+      "bytes": 4441,
+      "sha256": "bb27a451e09981c479515db0a7ec9c00325d0b3608b672507764afd920ecf7a4"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch12-json.xhtml",
+      "bytes": 4459,
+      "sha256": "24fda789ce53afb701c3c4fd37403fb4c0e2b5055df30242e985d28822d4accc"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch13-json.xhtml",
+      "bytes": 3516,
+      "sha256": "bd947adb47bbb3c208268930a0470334229c6db7a706077e925328c8c8cc6392"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch14-json.xhtml",
+      "bytes": 4208,
+      "sha256": "5a5fb3ce9979450035962622dc43a86d5f0680b0ec2fae1f4f652b4a7827a51e"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch15-json.xhtml",
+      "bytes": 5554,
+      "sha256": "4c915a360f5c9d941a1eff3bb2b4862325c942ba3e0d2bbd7ae4abfa72539be1"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch16-json.xhtml",
+      "bytes": 3952,
+      "sha256": "e66ee6f638d4962990daa9e5d811b2aff8aa5714ee92a2c24687953cbafc39b6"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch25-json.xhtml",
+      "bytes": 4352,
+      "sha256": "0ee37a3a1c975774c07a792ebf425b2bed2179f6fa5c309dea8a070e6dff972f"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch26-json.xhtml",
+      "bytes": 3362,
+      "sha256": "3939c52c6393ad9f602e0a5eb718e9293e49aa9d7767647ebe77b8a684bff206"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch27-json.xhtml",
+      "bytes": 3993,
+      "sha256": "eca7d4729caa9a5feb7badc69cd4d9064ed92c74905924463ff440ab5f0b918c"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch28-json.xhtml",
+      "bytes": 4399,
+      "sha256": "de2f04ca64b02e715d8f49a226a5e70ec9a2bed9d8fbf290c0781b4fa0771ced"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch29-json.xhtml",
+      "bytes": 3968,
+      "sha256": "d579c4b657f4d32f0b6cc6a0b8b2e8bf71a3e529dec2e680ed7670528106c7c1"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch30-json.xhtml",
+      "bytes": 4356,
+      "sha256": "c185865df545c06566f29a4971c563fddbca88f6fab838f13a5e0452c68f5c91"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch31-json.xhtml",
+      "bytes": 4082,
+      "sha256": "81222e0fa18781b3b52b7187d6860d29fff4f38887d03bb88ca1e6b68abe8941"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch32-json.xhtml",
+      "bytes": 5785,
+      "sha256": "c252316828039f5ec74ed03d75ac5e45a0ef331588ec00c5bd4b29d3da0df02d"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch33-json.xhtml",
+      "bytes": 5144,
+      "sha256": "795412823f8fece5c660af1eefc42e30dd842dfcb15e400ce93a5e9aab1d2da6"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch34-json.xhtml",
+      "bytes": 6560,
+      "sha256": "0c8ffeecad60c0f9ced87cccfe3b08fbc25f5af51649212b599e13d5db2b8ab8"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch35-json.xhtml",
+      "bytes": 7983,
+      "sha256": "adda8071c0b3cc1417f464b858c44489e73af37e31eadb5ccea98d1fb90b0983"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch36-json.xhtml",
+      "bytes": 5743,
+      "sha256": "673edfca8509bdeaa9c1578eb268ed4b057b72a4c6c183c9618a626b2cf61111"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch37-json.xhtml",
+      "bytes": 7003,
+      "sha256": "f2da1d5383b2177d154e1981f7c52262fd83b7157cbcea5d2294334bcecbf075"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch38-json.xhtml",
+      "bytes": 6536,
+      "sha256": "0827b0b77371f07478efe06edcb400fc75710c52e047030fa2c6cf6775be8084"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch39-json.xhtml",
+      "bytes": 5827,
+      "sha256": "0634b5caa696b13cfb471755b359de6c33c8a1799da599f94bdb2aa98e071b96"
+    },
+    {
+      "path": "EPUB/text/companion-validation-evidence-ch40-json.xhtml",
+      "bytes": 6521,
+      "sha256": "e18fa5fce7d84e7b5013d9d6c1bc2f8a4c6735d3c9598a477aad03355a595e27"
+    },
+    {
+      "path": "EPUB/text/companion-validation-exercises-mutation-runs-json.xhtml",
+      "bytes": 14802,
+      "sha256": "8edeb01971a3f4cfa248e72fd1f921d6d83786d0b714e0fa0549272aa853c5f0"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-docker-complete-flow-cleanup-json.xhtml",
+      "bytes": 2127,
+      "sha256": "40eac16b0105788a11ca221ce4eb0e31ec55daa13e5cd3743613e1edb32e1a20"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-docker-complete-flow-log-guard-json.xhtml",
+      "bytes": 1638,
+      "sha256": "2b2d32c864f0be7dd4f079b588d2d55e0a3b044078572d9f11b252f4dbaff504"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-docker-complete-flow-log-guard-stdout-txt.xhtml",
+      "bytes": 11875,
+      "sha256": "9efcd2bbf9679de0e3702b3d2ee1b2172f9c720c48e0d5b75f01089c9312ad00"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-fresh-server-restart-authenticated-json.xhtml",
+      "bytes": 6590,
+      "sha256": "7c6ad05db2512ce526963985ba4dc6d69ad2691b4599dc8c66c08bd6c29011ce"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-full-schema-recovery-corrected-json.xhtml",
+      "bytes": 13615,
+      "sha256": "d9ff93944b6341cc88c653805ea6c8b763d6c4f46768d78dfd5c04d4010798fa"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-orch-baseline-tests-json.xhtml",
+      "bytes": 1672,
+      "sha256": "1774387fbfdb3464ab94f7505b42186bf67441dd340ddc73b16e43c07edc8db2"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-orch-build-isolated-root-json.xhtml",
+      "bytes": 1679,
+      "sha256": "f83fd0f88276766f6ab9cf8ef329dd563719c361048160f891b392af9e38e73c"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-orch-race-tests-json.xhtml",
+      "bytes": 1676,
+      "sha256": "4fcec74d5a142d690e572bad34537c6bbb1c9f6e5fcd438ce17e5a4af4001c0a"
+    },
+    {
+      "path": "EPUB/text/companion-validation-intake-postgres-store-owned-json.xhtml",
+      "bytes": 1784,
+      "sha256": "2d6a3dfc17e5b1eb5c416465c88340c41df34b046ff4cbe09b17091507387342"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-03-check-json.xhtml",
+      "bytes": 111545,
+      "sha256": "0a11e50c94d324ec0b76a7eb56afc471e80d0ec124d44e446b86f36a4fbb36ab"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-04-check-json.xhtml",
+      "bytes": 5000,
+      "sha256": "ca624f2ce4b62601b263a21627f1f616f2b2fbaefafad4b9355ffbab6107a80d"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-04-timeline-csv.xhtml",
+      "bytes": 1266,
+      "sha256": "c9260317e140aef2c44d5f0c5882fff99ab8a42c72ef4367e538500324926e4a"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-05-check-json.xhtml",
+      "bytes": 11106,
+      "sha256": "34bd82540d0e834186aca79d0533aae45be8ec98e4414a06e1290a87323c302e"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch06-combined-restart-json.xhtml",
+      "bytes": 8390,
+      "sha256": "f7b423cbbfbe4f7a286a4fc7199becf2798de3c34d540b89bf3f8f4a79d8142b"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch10-hand-plan-json.xhtml",
+      "bytes": 1446,
+      "sha256": "476ff24882e40591dc4c36cb76987c8529406853307ccaf90933020623726f18"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch11-focused-tests-json.xhtml",
+      "bytes": 1560,
+      "sha256": "990c480fa7844c57d7c7bd910896a34c2decf8067b5de707f00099d8f2e9db9c"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch12-focused-tests-json.xhtml",
+      "bytes": 1773,
+      "sha256": "10aaa34d638b029c47151a49e5b6f0d82a7e9f93171827d2a361a2b02afbf8b6"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch13-focused-tests-json.xhtml",
+      "bytes": 1761,
+      "sha256": "46609150596af8a3e0e3c1cdb1b5711fb3638d1bbc40229ccc877a6e8e202db0"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch14-focused-tests-json.xhtml",
+      "bytes": 1690,
+      "sha256": "cd784227f383417dfe17c855300ba531213148ade425ce789b50c5fcb1a09c8e"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch14-focused-tests-loopback-json.xhtml",
+      "bytes": 1735,
+      "sha256": "ef0400612f5bcf34825844b0030c8ff866a0e9a2845f487cecbd66cffda56085"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch15-atlas-events-corrected-json.xhtml",
+      "bytes": 1512,
+      "sha256": "903b0169b39671516e2d33e6c215961e90624a1a3dc88fc3edc89d34ccd5d4ee"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch15-focused-tests-json.xhtml",
+      "bytes": 1605,
+      "sha256": "354aaa7c978fda94cd752ab7a6bde391bc89531684583c6f3477e739bd0180d2"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch16-focused-tests-json.xhtml",
+      "bytes": 1668,
+      "sha256": "be1c7758a21a1281d8681eb1e05552be1dee9667a337213944468c757ad3a104"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch25-focused-tests-json.xhtml",
+      "bytes": 1664,
+      "sha256": "33d65b13773742ce48b89046f16db2d50bd722a23d7511e85239143cd6376310"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch26-focused-tests-json.xhtml",
+      "bytes": 1655,
+      "sha256": "53aa9d1227b7ebb0e4295b36842a6378396f3ee40fb7fff1c1180ad3df5bd4da"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch27-focused-tests-json.xhtml",
+      "bytes": 1706,
+      "sha256": "3f7c8410c65d28d157aef75b3d031ccc5755e471d80456d4e260038d9490d027"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch28-focused-tests-json.xhtml",
+      "bytes": 1749,
+      "sha256": "34e33fe5ed78e178d07d1e1af6e654369d5aabfa907768fd36a8350cd0b29234"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch29-teaching-fixture-json.xhtml",
+      "bytes": 1264,
+      "sha256": "b19e4145ea8aa3dc532701ffbfaf828a8c5198da6f5ce91d83192aab3a6aa91b"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch30-focused-tests-json.xhtml",
+      "bytes": 1720,
+      "sha256": "d96e3afb9aa9c1199f3686b98e4ba54c296abac12a1cfeac77c7396d90aa8026"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch30-teaching-fixture-json.xhtml",
+      "bytes": 1467,
+      "sha256": "324a3d17005eaf8655fa943df839f0ee9e94377d5e2152757d500dd95c0c9fc1"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch31-focused-tests-json.xhtml",
+      "bytes": 1682,
+      "sha256": "78e3606344768e9be69d7c8e73e3c85848dcf4e08eda9d427d6b66a6b7f67cab"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch31-teaching-fixture-json.xhtml",
+      "bytes": 1465,
+      "sha256": "42459c9304a0e9941adb2e7e29e05bdc206c5adea9288e8901bd7cbc402e8912"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch32-focused-tests-json.xhtml",
+      "bytes": 1643,
+      "sha256": "a049327f6d967cebd158043f2cc3ebdeed80a26458f3594b6ce3c98fe138df29"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch33-adapter-contract-json.xhtml",
+      "bytes": 1494,
+      "sha256": "de013017aa6cb882fdab95f27989e7a9c76643e1a3df3f892fa74898d7cf9022"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch34-leadership-tests-json.xhtml",
+      "bytes": 1599,
+      "sha256": "160b84932c85baa65d0edba5fe9135ba438145f1313c76fc89efb5123c1c2bfa"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch35-controlled-preflight-corrected-json.xhtml",
+      "bytes": 1564,
+      "sha256": "43625124fda2a4284189643020d8be2316dfb134561f3cb6f864ab92d4f57ba8"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch35-operations-tests-json.xhtml",
+      "bytes": 1944,
+      "sha256": "b31aa6fec294fadd14afeb58dff0380675509e6b37c754c63b223885d9d95ffd"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch36-bounded-port-fuzz-json.xhtml",
+      "bytes": 1739,
+      "sha256": "73bc7008fcf47e7fd6d45a0b0728b4e4b12181ca96d178ec9d850913866a3338"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch36-seeded-properties-json.xhtml",
+      "bytes": 1935,
+      "sha256": "6952449ddae6923be19532cd022bb1925518230f330f0deb13b259d0d623a71a"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch37-fault-tests-json.xhtml",
+      "bytes": 1830,
+      "sha256": "69a23f718e8956bbeecc15fd3aff016859996ec8bf4f51cd9bfa21aaa73e9613"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch38-failed-pull-emission-json.xhtml",
+      "bytes": 1515,
+      "sha256": "664a36f7fc6a2ef864cdd16a09d44f4130e584ce1c57e1bf2c1f5bb6660e9296"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch38-metrics-tests-json.xhtml",
+      "bytes": 1669,
+      "sha256": "e64da42fca08b220dfd99500a33dc71df1e620c3757ed06e5f40c3f5561f39d9"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch39-bounded-benchmarks-json.xhtml",
+      "bytes": 1914,
+      "sha256": "2699ff553534f2759e290bf47bda9759bb587bb137170f05d7742c679cdd690a"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch39-bounded-fake-load-json.xhtml",
+      "bytes": 1500,
+      "sha256": "91ad7575f9fc0a820a76fc78f28c36bb191eb81829ed5d981c6a99a3a7edaf98"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch39-scheduler-profile-absolute-json.xhtml",
+      "bytes": 1929,
+      "sha256": "86ec39e017bba7d6debea644f3fb4d7b285d81da8e42cee4743d24e419671fb9"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch39-scheduler-summary-json.xhtml",
+      "bytes": 2610,
+      "sha256": "beaeb4ae2099be266747e2f62a8f75536b85b5c8c6595df247c003e9026ccbaa"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch39-thousand-service-scale-json.xhtml",
+      "bytes": 1739,
+      "sha256": "9f6cf7ec28577b38e5b63ae7f2f5202a5e11b877af815e4ace0599660fd89839"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-ch40-dossier-integrity-corrected-json.xhtml",
+      "bytes": 1300,
+      "sha256": "eebf04ccac14c13c3271c29c8e8e323856c7cb3b4bcbc6bcc8e5473c8cca53f9"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab02-concurrent-claims-json.xhtml",
+      "bytes": 1729,
+      "sha256": "8cb04f722cdae4eb6281a1d5919ffe65e7340178e70d5281735fbed167ae9dc5"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab02-model-and-permutations-json.xhtml",
+      "bytes": 1633,
+      "sha256": "51e0be25c688c22284b8ab1c7786de02afff430ce7cad106d6d384c172af29f5"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab04-rollout-observed-json.xhtml",
+      "bytes": 1590,
+      "sha256": "ead538c9406c62477ff92663e84bf95a8f88bdd21e2376f47cc9eb7d14b9c59e"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab04-rollout-observed-stdout-txt.xhtml",
+      "bytes": 48832,
+      "sha256": "dacac7819763124a2da6d06e08f4d153b2780042dbffbbe77eebc8051dc0be72"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab05-security-local-probes-json.xhtml",
+      "bytes": 1622,
+      "sha256": "47a197462cb1f527898c0b94a0cccad937cc4a474be0c10424f629444bf6c575"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab05-security-local-probes-stdout-txt.xhtml",
+      "bytes": 18645,
+      "sha256": "b8fbf013528db75acbcf6eb0b3311b0290a69cdb2ef01c413780539f35236baa"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab08-fixed-seed-fake-load-json.xhtml",
+      "bytes": 1535,
+      "sha256": "57542713212ae62f1442af1345afc18976bfb479a5ae5e9b8d0dc8eb92884765"
+    },
+    {
+      "path": "EPUB/text/companion-validation-labs-lab08-fixed-seed-fake-load-stdout-txt.xhtml",
+      "bytes": 581,
+      "sha256": "8dc0ffbc4a76fdee5bcb91d006658f462f0b730d7693118ccdb57e6d355bbf82"
+    },
+    {
+      "path": "EPUB/text/companion-validation-reviews-ch17-24-fresh-source-tests-json.xhtml",
+      "bytes": 11271,
+      "sha256": "d8dee234d903f35d9aa73924cf17d4e99c7d238d0cfc5745fbd3efa36bb540f4"
+    },
+    {
+      "path": "EPUB/text/companion-validation-reviews-ch17-24-source-tests-json.xhtml",
+      "bytes": 1835,
+      "sha256": "0dcd8624bd810bfe5cb53554491e505be36c91475660cc960c50e7bee44c8732"
+    },
+    {
+      "path": "EPUB/text/cover.xhtml",
+      "bytes": 445,
+      "sha256": "3f54375f468bff211fc872ee86d9d265a7913430ff60d1a7652da908a8770722"
+    },
+    {
+      "path": "EPUB/text/d-exercises-solutions.xhtml",
+      "bytes": 20403,
+      "sha256": "4159d04d1a516e8f93deafeabb99db11423413c70392b13d8e1aab5e1e16b88f"
+    },
+    {
+      "path": "EPUB/text/e-ops-measurement.xhtml",
+      "bytes": 12733,
+      "sha256": "6014f91ababe872ea89b8f6e1ee99b5ae1cdbe1d933a73713d8fdad848182e64"
+    },
+    {
+      "path": "EPUB/text/f-glossary-bibliography.xhtml",
+      "bytes": 41501,
+      "sha256": "d97d093ffac090b5a1700c0ec750747cc4012103c47da163265ac8fdd1ff38ae"
+    },
+    {
+      "path": "META-INF/container.xml",
+      "bytes": 220,
+      "sha256": "31105a9e8dc5f9c8e9f972cb9499daf389dd83197ef01457d662868df9a1d43f"
+    }
+  ],
+  "scope": "Actual final EPUB member inventory and exact extracted package/navigation/CSS/container controls. This workspace does not run a separate EPUB build; scripts/build.py is canonical."
+}

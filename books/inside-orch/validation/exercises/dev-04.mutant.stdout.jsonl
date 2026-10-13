@@ -1,0 +1,9 @@
+{"Time":"2026-10-13T03:38:48.227357052+02:00","Action":"start","Package":"github.com/alekpopovic/orch/internal/rollout"}
+{"Time":"2026-10-13T03:38:48.230568442+02:00","Action":"run","Package":"github.com/alekpopovic/orch/internal/rollout","Test":"TestControllerSuccessfulRollout"}
+{"Time":"2026-10-13T03:38:48.230583179+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/rollout","Test":"TestControllerSuccessfulRollout","Output":"=== RUN   TestControllerSuccessfulRollout\n"}
+{"Time":"2026-10-13T03:38:48.230684592+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/rollout","Test":"TestControllerSuccessfulRollout","Output":"    rollout_test.go:33: expected succeeded rollout, got \"running\"\n"}
+{"Time":"2026-10-13T03:38:48.230695557+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/rollout","Test":"TestControllerSuccessfulRollout","Output":"--- FAIL: TestControllerSuccessfulRollout (0.00s)\n"}
+{"Time":"2026-10-13T03:38:48.230705195+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/rollout","Test":"TestControllerSuccessfulRollout","Elapsed":0}
+{"Time":"2026-10-13T03:38:48.230714135+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/rollout","Output":"FAIL\n"}
+{"Time":"2026-10-13T03:38:48.230849003+02:00","Action":"output","Package":"github.com/alekpopovic/orch/internal/rollout","Output":"FAIL\tgithub.com/alekpopovic/orch/internal/rollout\t0.003s\n"}
+{"Time":"2026-10-13T03:38:48.230863809+02:00","Action":"fail","Package":"github.com/alekpopovic/orch/internal/rollout","Elapsed":0.004}

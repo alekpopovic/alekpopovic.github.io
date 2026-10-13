@@ -1,0 +1,1204 @@
+commit b575252d6c5ff0918439e2f209af9d9695eebbb6
+Date: 2026-07-14T18:40:33+02:00
+Subject: Add autoscaling MVP
+
+
+---
+ docs/AUTOSCALING.md                            |  57 ++++++
+ docs/SERVICE_SPEC.md                           |  15 ++
+ internal/autoscaler/autoscaler.go              | 271 +++++++++++++++++++++++++
+ internal/autoscaler/autoscaler_test.go         | 217 ++++++++++++++++++++
+ internal/cli/deploy.go                         |  34 ++++
+ internal/cli/deploy_test.go                    |   9 +
+ internal/events/events.go                      |   3 +
+ internal/metrics/prometheus.go                 |  30 +++
+ internal/metrics/prometheus_test.go            |   6 +
+ internal/store/postgres.go                     |  67 +++---
+ internal/store/postgres_test.go                |  14 +-
+ migrations/000010_service_autoscaling.down.sql |   2 +
+ migrations/000010_service_autoscaling.up.sql   |   2 +
+ pkg/types/types.go                             |  43 ++++
+ pkg/types/validation_test.go                   |  25 +++
+ prompts/EXECUTION_TRACKER.md                   |   8 +-
+ 16 files changed, 770 insertions(+), 33 deletions(-)
+
+diff --git a/docs/AUTOSCALING.md b/docs/AUTOSCALING.md
+new file mode 100644
+index 0000000..d038bf9
+--- /dev/null
++++ b/docs/AUTOSCALING.md
+@@ -0,0 +1,57 @@
++# Autoscaling
++
++`orch` includes an autoscaling controller MVP for service replica counts. The MVP is CPU-based and intentionally uses a metrics provider abstraction so controller tests do not require Prometheus, Docker, or network access.
++
++## Service YAML
++
++```yaml
++name: api
++image: ghcr.io/example/api:1.0.0
++replicas: 2
++resources:
++  cpu: 500m
++  memory: 512Mi
++autoscaling:
++  enabled: true
++  minReplicas: 2
++  maxReplicas: 10
++  targetCPUUtilization: 70
++  cooldown: 60s
++```
++
++Fields:
++
++- `enabled`: turns autoscaling decisions on for the service.
++- `minReplicas`: lower bound for desired replicas.
++- `maxReplicas`: upper bound for desired replicas.
++- `targetCPUUtilization`: target average CPU utilization percentage.
++- `cooldown`: minimum time between autoscaler-initiated scale operations.
++- `stabilizationWindow`: reserved for conservative scale-down behavior; persisted in the spec for compatibility.
++
++## Controller Behavior
++
++The autoscaler:
++
++1. Lists active services with autoscaling enabled.
++2. Skips services with an active rollout or rollback.
++3. Reads CPU utilization from the configured metrics provider.
++4. Computes `ceil(currentReplicas * observedCPU / targetCPU)`.
++5. Clamps the recommendation to `minReplicas..maxReplicas`.
++6. Respects cooldown.
++7. Calls the same `ScaleService` control-plane path used by the API and CLI.
++
++Scale decisions emit `autoscaler.scaled`, `autoscaler.skipped`, or `autoscaler.error` events when an event store is provided.
++
++## Metrics
++
++Server metrics expose:
++
++- `autoscaler_decisions_total{decision=...}`
++- `autoscaler_errors_total`
++- `autoscaler_recommendation_replicas{service_id=...}`
++
++## Current Limitations
++
++- The built-in MVP provides the controller and fake metrics provider; a production Prometheus metrics provider is still future work.
++- Cooldown state is in controller memory until durable autoscaling status is added.
++- Scale-down stabilization is represented in the API shape but not yet enforced beyond cooldown.
+diff --git a/docs/SERVICE_SPEC.md b/docs/SERVICE_SPEC.md
+index dc1a478..1e6422e 100644
+--- a/docs/SERVICE_SPEC.md
++++ b/docs/SERVICE_SPEC.md
+@@ -59,6 +59,21 @@ securityContext:
+ 
+ By default, `orch` rejects privileged containers, host networking, host PID, host path mounts outside configured prefixes, and capability additions outside the cluster allowlist. If `capDrop` is omitted, the Docker runtime drops `NET_RAW` by default.
+ 
++## Autoscaling
++
++`autoscaling` enables CPU-based replica autoscaling through the autoscaler controller:
++
++```yaml
++autoscaling:
++  enabled: true
++  minReplicas: 2
++  maxReplicas: 10
++  targetCPUUtilization: 70
++  cooldown: 60s
++```
++
++The controller updates desired replicas through the normal service scale path, clamps decisions to min/max replicas, respects cooldown, and skips services with an active rollout.
++
+ ## Validation
+ 
+ Validate locally without creating a service:
+diff --git a/internal/autoscaler/autoscaler.go b/internal/autoscaler/autoscaler.go
+new file mode 100644
+index 0000000..b81d9a5
+--- /dev/null
++++ b/internal/autoscaler/autoscaler.go
+@@ -0,0 +1,271 @@
++package autoscaler
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"log/slog"
++	"math"
++	"sync"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++const defaultCooldown = time.Minute
++
++type ControlPlane interface {
++	ListServices(ctx context.Context) ([]types.Service, error)
++	ScaleService(ctx context.Context, id types.ServiceID, replicas int) (types.Service, error)
++	GetServiceRollout(ctx context.Context, id types.ServiceID) (types.Deployment, error)
++}
++
++type MetricsProvider interface {
++	ServiceCPUUtilization(ctx context.Context, service types.Service) (float64, error)
++}
++
++type EventStore interface {
++	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
++}
++
++type Metrics interface {
++	IncAutoscalerDecision(decision string)
++	IncAutoscalerErrors()
++	SetAutoscalerRecommendation(serviceID string, replicas int)
++}
++
++type NoopMetrics struct{}
++
++func (NoopMetrics) IncAutoscalerDecision(string)            {}
++func (NoopMetrics) IncAutoscalerErrors()                    {}
++func (NoopMetrics) SetAutoscalerRecommendation(string, int) {}
++
++type Controller struct {
++	controlPlane ControlPlane
++	provider     MetricsProvider
++	eventStore   EventStore
++	metrics      Metrics
++	logger       *slog.Logger
++	now          func() time.Time
++	lastScaleAt  map[types.ServiceID]time.Time
++}
++
++type Option func(*Controller)
++
++func WithEventStore(eventStore EventStore) Option {
++	return func(c *Controller) {
++		c.eventStore = eventStore
++	}
++}
++
++func WithMetrics(metrics Metrics) Option {
++	return func(c *Controller) {
++		if metrics != nil {
++			c.metrics = metrics
++		}
++	}
++}
++
++func WithClock(now func() time.Time) Option {
++	return func(c *Controller) {
++		if now != nil {
++			c.now = now
++		}
++	}
++}
++
++func NewController(controlPlane ControlPlane, provider MetricsProvider, logger *slog.Logger, opts ...Option) *Controller {
++	if logger == nil {
++		logger = slog.Default()
++	}
++	c := &Controller{
++		controlPlane: controlPlane,
++		provider:     provider,
++		metrics:      NoopMetrics{},
++		logger:       logger,
++		now:          func() time.Time { return time.Now().UTC() },
++		lastScaleAt:  map[types.ServiceID]time.Time{},
++	}
++	for _, opt := range opts {
++		opt(c)
++	}
++	return c
++}
++
++func (c *Controller) Run(ctx context.Context, interval time.Duration) error {
++	if interval <= 0 {
++		interval = 30 * time.Second
++	}
++	ticker := time.NewTicker(interval)
++	defer ticker.Stop()
++	for {
++		if err := c.RunOnce(ctx); err != nil {
++			c.logger.Warn("autoscaler pass failed", "error", err)
++		}
++		select {
++		case <-ctx.Done():
++			return ctx.Err()
++		case <-ticker.C:
++		}
++	}
++}
++
++func (c *Controller) RunOnce(ctx context.Context) error {
++	if c.controlPlane == nil {
++		return fmt.Errorf("autoscaler control plane is required")
++	}
++	if c.provider == nil {
++		return fmt.Errorf("autoscaler metrics provider is required")
++	}
++	services, err := c.controlPlane.ListServices(ctx)
++	if err != nil {
++		c.metrics.IncAutoscalerErrors()
++		return fmt.Errorf("list services: %w", err)
++	}
++	for _, service := range services {
++		if err := ctx.Err(); err != nil {
++			return err
++		}
++		if !service.Spec.Autoscaling.Enabled || service.Status != types.ServiceActive {
++			continue
++		}
++		if err := c.reconcileService(ctx, service); err != nil {
++			c.metrics.IncAutoscalerErrors()
++			c.emit(ctx, service, events.TypeAutoscalerError, types.EventWarning, err.Error(), nil)
++			return err
++		}
++	}
++	return nil
++}
++
++func (c *Controller) reconcileService(ctx context.Context, service types.Service) error {
++	if c.hasActiveRollout(ctx, service.ID) {
++		c.metrics.IncAutoscalerDecision("skip_rollout")
++		c.emit(ctx, service, events.TypeAutoscalerSkipped, types.EventInfo, "autoscaling skipped during active rollout", map[string]string{"reason": "active_rollout"})
++		return nil
++	}
++	policy := effectivePolicy(service.Spec.Autoscaling)
++	if last := c.lastScaleAt[service.ID]; !last.IsZero() && c.now().Sub(last) < policy.Cooldown {
++		c.metrics.IncAutoscalerDecision("skip_cooldown")
++		c.emit(ctx, service, events.TypeAutoscalerSkipped, types.EventInfo, "autoscaling skipped during cooldown", map[string]string{"reason": "cooldown"})
++		return nil
++	}
++	utilization, err := c.provider.ServiceCPUUtilization(ctx, service)
++	if err != nil {
++		c.metrics.IncAutoscalerDecision("skip_metrics")
++		c.emit(ctx, service, events.TypeAutoscalerSkipped, types.EventWarning, "autoscaling skipped because metrics are unavailable", map[string]string{"reason": "metrics_unavailable"})
++		return nil
++	}
++	recommended := recommendation(service.Spec.Replicas, utilization, policy)
++	c.metrics.SetAutoscalerRecommendation(string(service.ID), recommended)
++	if recommended == service.Spec.Replicas {
++		c.metrics.IncAutoscalerDecision("skip_noop")
++		return nil
++	}
++	updated, err := c.controlPlane.ScaleService(ctx, service.ID, recommended)
++	if err != nil {
++		return fmt.Errorf("scale service %s to %d replicas: %w", service.ID, recommended, err)
++	}
++	c.lastScaleAt[service.ID] = c.now()
++	decision := "scale_up"
++	if recommended < service.Spec.Replicas {
++		decision = "scale_down"
++	}
++	c.metrics.IncAutoscalerDecision(decision)
++	c.emit(ctx, updated, events.TypeAutoscalerScaled, types.EventInfo, "autoscaler changed desired replicas", map[string]string{
++		"from":            fmt.Sprintf("%d", service.Spec.Replicas),
++		"to":              fmt.Sprintf("%d", recommended),
++		"cpu_utilization": fmt.Sprintf("%.2f", utilization),
++	})
++	return nil
++}
++
++func (c *Controller) hasActiveRollout(ctx context.Context, serviceID types.ServiceID) bool {
++	deployment, err := c.controlPlane.GetServiceRollout(ctx, serviceID)
++	if err != nil {
++		return false
++	}
++	return !types.IsTerminalDeploymentStatus(deployment.Status)
++}
++
++func (c *Controller) emit(ctx context.Context, service types.Service, eventType string, severity types.EventSeverity, message string, details map[string]string) {
++	_ = events.Emit(ctx, c.eventStore, types.Event{
++		Type:              eventType,
++		Severity:          severity,
++		Source:            "autoscaler",
++		Message:           message,
++		RelatedObjectType: "service",
++		RelatedObjectID:   string(service.ID),
++		Details:           details,
++		Timestamp:         c.now(),
++	}, events.WithLogger(c.logger))
++}
++
++func effectivePolicy(policy types.AutoscalingPolicy) types.AutoscalingPolicy {
++	if policy.Cooldown <= 0 {
++		policy.Cooldown = defaultCooldown
++	}
++	return policy
++}
++
++func recommendation(current int, cpuUtilization float64, policy types.AutoscalingPolicy) int {
++	if current < policy.MinReplicas {
++		current = policy.MinReplicas
++	}
++	recommended := current
++	if policy.TargetCPUUtilization > 0 {
++		recommended = int(math.Ceil(float64(current) * cpuUtilization / float64(policy.TargetCPUUtilization)))
++	}
++	if recommended < policy.MinReplicas {
++		recommended = policy.MinReplicas
++	}
++	if policy.MaxReplicas > 0 && recommended > policy.MaxReplicas {
++		recommended = policy.MaxReplicas
++	}
++	return recommended
++}
++
++type FakeMetricsProvider struct {
++	mu     sync.Mutex
++	values map[types.ServiceID]float64
++	err    error
++}
++
++func NewFakeMetricsProvider(values map[types.ServiceID]float64) *FakeMetricsProvider {
++	cloned := make(map[types.ServiceID]float64, len(values))
++	for key, value := range values {
++		cloned[key] = value
++	}
++	return &FakeMetricsProvider{values: cloned}
++}
++
++func (p *FakeMetricsProvider) Set(serviceID types.ServiceID, value float64) {
++	p.mu.Lock()
++	defer p.mu.Unlock()
++	if p.values == nil {
++		p.values = map[types.ServiceID]float64{}
++	}
++	p.values[serviceID] = value
++}
++
++func (p *FakeMetricsProvider) SetError(err error) {
++	p.mu.Lock()
++	defer p.mu.Unlock()
++	p.err = err
++}
++
++func (p *FakeMetricsProvider) ServiceCPUUtilization(_ context.Context, service types.Service) (float64, error) {
++	p.mu.Lock()
++	defer p.mu.Unlock()
++	if p.err != nil {
++		return 0, p.err
++	}
++	value, ok := p.values[service.ID]
++	if !ok {
++		return 0, errors.New("cpu metrics unavailable")
++	}
++	return value, nil
++}
++
++var _ MetricsProvider = (*FakeMetricsProvider)(nil)
+diff --git a/internal/autoscaler/autoscaler_test.go b/internal/autoscaler/autoscaler_test.go
+new file mode 100644
+index 0000000..5a6311d
+--- /dev/null
++++ b/internal/autoscaler/autoscaler_test.go
+@@ -0,0 +1,217 @@
++package autoscaler
++
++import (
++	"context"
++	"io"
++	"log/slog"
++	"testing"
++	"time"
++
++	"github.com/alekpopovic/orch/internal/controlplane"
++	"github.com/alekpopovic/orch/internal/events"
++	"github.com/alekpopovic/orch/pkg/types"
++)
++
++func TestAutoscalerScalesUpAndDown(t *testing.T) {
++	ctx := context.Background()
++	service := controlplane.NewMemoryService()
++	created := createAutoscaledService(t, service, 2, types.AutoscalingPolicy{
++		Enabled:              true,
++		MinReplicas:          1,
++		MaxReplicas:          10,
++		TargetCPUUtilization: 50,
++		Cooldown:             time.Second,
++	})
++	provider := NewFakeMetricsProvider(map[types.ServiceID]float64{created.ID: 100})
++	metrics := &recordingMetrics{}
++	controller := NewController(service, provider, testLogger(), WithEventStore(service), WithMetrics(metrics), WithClock(fixedClock(time.Unix(100, 0))))
++
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("scale up: %v", err)
++	}
++	scaled, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get scaled service: %v", err)
++	}
++	if scaled.Spec.Replicas != 4 {
++		t.Fatalf("expected scale up to 4 replicas, got %d", scaled.Spec.Replicas)
++	}
++
++	provider.Set(created.ID, 25)
++	controller.now = fixedClock(time.Unix(102, 0))
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("scale down: %v", err)
++	}
++	scaled, err = service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get scaled service: %v", err)
++	}
++	if scaled.Spec.Replicas != 2 {
++		t.Fatalf("expected scale down to 2 replicas, got %d", scaled.Spec.Replicas)
++	}
++	if metrics.decisions["scale_up"] != 1 || metrics.decisions["scale_down"] != 1 {
++		t.Fatalf("expected scale decisions, got %#v", metrics.decisions)
++	}
++	autoscalerEvents, err := service.ListEvents(ctx, events.Filter{Type: events.TypeAutoscalerScaled})
++	if err != nil {
++		t.Fatalf("list events: %v", err)
++	}
++	if len(autoscalerEvents) != 2 {
++		t.Fatalf("expected autoscaler scale events, got %#v", autoscalerEvents)
++	}
++}
++
++func TestAutoscalerRespectsCooldown(t *testing.T) {
++	ctx := context.Background()
++	service := controlplane.NewMemoryService()
++	created := createAutoscaledService(t, service, 2, types.AutoscalingPolicy{
++		Enabled:              true,
++		MinReplicas:          1,
++		MaxReplicas:          10,
++		TargetCPUUtilization: 50,
++		Cooldown:             time.Minute,
++	})
++	now := time.Unix(200, 0)
++	provider := NewFakeMetricsProvider(map[types.ServiceID]float64{created.ID: 100})
++	controller := NewController(service, provider, testLogger(), WithEventStore(service), WithClock(func() time.Time { return now }))
++
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("first scale: %v", err)
++	}
++	now = now.Add(30 * time.Second)
++	provider.Set(created.ID, 200)
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("cooldown pass: %v", err)
++	}
++	scaled, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if scaled.Spec.Replicas != 4 {
++		t.Fatalf("expected cooldown to keep 4 replicas, got %d", scaled.Spec.Replicas)
++	}
++}
++
++func TestAutoscalerClampsMaxAndMinReplicas(t *testing.T) {
++	ctx := context.Background()
++	service := controlplane.NewMemoryService()
++	maxed := createAutoscaledService(t, service, 5, types.AutoscalingPolicy{
++		Enabled:              true,
++		MinReplicas:          2,
++		MaxReplicas:          6,
++		TargetCPUUtilization: 50,
++		Cooldown:             time.Second,
++	})
++	minned := createAutoscaledServiceWithName(t, service, "minned", 4, types.AutoscalingPolicy{
++		Enabled:              true,
++		MinReplicas:          2,
++		MaxReplicas:          10,
++		TargetCPUUtilization: 50,
++		Cooldown:             time.Second,
++	})
++	provider := NewFakeMetricsProvider(map[types.ServiceID]float64{
++		maxed.ID:  500,
++		minned.ID: 1,
++	})
++	controller := NewController(service, provider, testLogger(), WithClock(fixedClock(time.Unix(300, 0))))
++
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("run autoscaler: %v", err)
++	}
++	maxed, err := service.GetService(ctx, maxed.ID)
++	if err != nil {
++		t.Fatalf("get maxed service: %v", err)
++	}
++	minned, err = service.GetService(ctx, minned.ID)
++	if err != nil {
++		t.Fatalf("get minned service: %v", err)
++	}
++	if maxed.Spec.Replicas != 6 {
++		t.Fatalf("expected max clamp to 6, got %d", maxed.Spec.Replicas)
++	}
++	if minned.Spec.Replicas != 2 {
++		t.Fatalf("expected min clamp to 2, got %d", minned.Spec.Replicas)
++	}
++}
++
++func TestAutoscalerSkipsActiveRollout(t *testing.T) {
++	ctx := context.Background()
++	service := controlplane.NewMemoryService()
++	created := createAutoscaledService(t, service, 2, types.AutoscalingPolicy{
++		Enabled:              true,
++		MinReplicas:          1,
++		MaxReplicas:          10,
++		TargetCPUUtilization: 50,
++	})
++	if _, err := service.RolloutService(ctx, created.ID, controlplane.RolloutSpec{Image: "nginx:1.28", MaxUnavailable: 1, MaxSurge: 1}); err != nil {
++		t.Fatalf("start rollout: %v", err)
++	}
++	provider := NewFakeMetricsProvider(map[types.ServiceID]float64{created.ID: 200})
++	metrics := &recordingMetrics{}
++	controller := NewController(service, provider, testLogger(), WithEventStore(service), WithMetrics(metrics))
++
++	if err := controller.RunOnce(ctx); err != nil {
++		t.Fatalf("run autoscaler: %v", err)
++	}
++	got, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if got.Spec.Replicas != 2 {
++		t.Fatalf("expected active rollout to keep replicas at 2, got %d", got.Spec.Replicas)
++	}
++	if metrics.decisions["skip_rollout"] != 1 {
++		t.Fatalf("expected skip rollout decision, got %#v", metrics.decisions)
++	}
++}
++
++func createAutoscaledService(t *testing.T, service *controlplane.MemoryService, replicas int, autoscaling types.AutoscalingPolicy) types.Service {
++	t.Helper()
++	return createAutoscaledServiceWithName(t, service, "api", replicas, autoscaling)
++}
++
++func createAutoscaledServiceWithName(t *testing.T, service *controlplane.MemoryService, name string, replicas int, autoscaling types.AutoscalingPolicy) types.Service {
++	t.Helper()
++	created, err := service.CreateService(context.Background(), types.ServiceSpec{
++		Name:        name,
++		Image:       "nginx:1.27",
++		Replicas:    replicas,
++		Autoscaling: autoscaling,
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return created
++}
++
++func fixedClock(now time.Time) func() time.Time {
++	return func() time.Time { return now.UTC() }
++}
++
++func testLogger() *slog.Logger {
++	return slog.New(slog.NewTextHandler(io.Discard, nil))
++}
++
++type recordingMetrics struct {
++	decisions       map[string]int
++	errors          int
++	recommendations map[string]int
++}
++
++func (m *recordingMetrics) IncAutoscalerDecision(decision string) {
++	if m.decisions == nil {
++		m.decisions = map[string]int{}
++	}
++	m.decisions[decision]++
++}
++
++func (m *recordingMetrics) IncAutoscalerErrors() {
++	m.errors++
++}
++
++func (m *recordingMetrics) SetAutoscalerRecommendation(serviceID string, replicas int) {
++	if m.recommendations == nil {
++		m.recommendations = map[string]int{}
++	}
++	m.recommendations[serviceID] = replicas
++}
+diff --git a/internal/cli/deploy.go b/internal/cli/deploy.go
+index b72fea4..693894c 100644
+--- a/internal/cli/deploy.go
++++ b/internal/cli/deploy.go
+@@ -22,6 +22,7 @@ type DeployFile struct {
+ 	Env             DeployEnv             `yaml:"env"`
+ 	Resources       DeployResources       `yaml:"resources"`
+ 	SecurityContext DeploySecurityContext `yaml:"securityContext"`
++	Autoscaling     DeployAutoscaling     `yaml:"autoscaling"`
+ 	Healthcheck     DeployHealthcheck     `yaml:"healthcheck"`
+ 	Restart         DeployRestart         `yaml:"restart"`
+ 	Placement       DeployPlacement       `yaml:"placement"`
+@@ -83,6 +84,15 @@ type DeployHostPathMount struct {
+ 	ReadOnly      bool   `yaml:"readOnly"`
+ }
+ 
++type DeployAutoscaling struct {
++	Enabled              bool   `yaml:"enabled"`
++	MinReplicas          int    `yaml:"minReplicas"`
++	MaxReplicas          int    `yaml:"maxReplicas"`
++	TargetCPUUtilization int    `yaml:"targetCPUUtilization"`
++	Cooldown             string `yaml:"cooldown"`
++	StabilizationWindow  string `yaml:"stabilizationWindow"`
++}
++
+ type DeployHealthcheck struct {
+ 	Type               string `yaml:"type"`
+ 	Scheme             string `yaml:"scheme"`
+@@ -131,6 +141,10 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 	if err != nil {
+ 		return types.ServiceSpec{}, err
+ 	}
++	autoscaling, err := deploy.Autoscaling.toDomain()
++	if err != nil {
++		return types.ServiceSpec{}, err
++	}
+ 
+ 	spec := types.ServiceSpec{
+ 		Name:            strings.TrimSpace(deploy.Name),
+@@ -143,6 +157,7 @@ func ParseDeploy(data []byte) (types.ServiceSpec, error) {
+ 			Limits:   requests,
+ 		},
+ 		SecurityContext:      deploy.SecurityContext.toDomain(),
++		Autoscaling:          autoscaling,
+ 		RestartPolicy:        restartPolicy(deploy.Restart.Policy),
+ 		PlacementConstraints: placementConstraints(deploy.Placement.Labels),
+ 	}
+@@ -206,6 +221,25 @@ func (context DeploySecurityContext) toDomain() types.SecurityContext {
+ 	}
+ }
+ 
++func (autoscaling DeployAutoscaling) toDomain() (types.AutoscalingPolicy, error) {
++	cooldown, err := parseOptionalDuration(autoscaling.Cooldown)
++	if err != nil {
++		return types.AutoscalingPolicy{}, fmt.Errorf("invalid autoscaling cooldown: %w", err)
++	}
++	stabilization, err := parseOptionalDuration(autoscaling.StabilizationWindow)
++	if err != nil {
++		return types.AutoscalingPolicy{}, fmt.Errorf("invalid autoscaling stabilization window: %w", err)
++	}
++	return types.AutoscalingPolicy{
++		Enabled:              autoscaling.Enabled,
++		MinReplicas:          autoscaling.MinReplicas,
++		MaxReplicas:          autoscaling.MaxReplicas,
++		TargetCPUUtilization: autoscaling.TargetCPUUtilization,
++		Cooldown:             cooldown,
++		StabilizationWindow:  stabilization,
++	}, nil
++}
++
+ func (deploy DeployFile) Validate() error {
+ 	if strings.TrimSpace(deploy.Name) == "" {
+ 		return fmt.Errorf("name is required")
+diff --git a/internal/cli/deploy_test.go b/internal/cli/deploy_test.go
+index 7c5732c..a3480dc 100644
+--- a/internal/cli/deploy_test.go
++++ b/internal/cli/deploy_test.go
+@@ -33,6 +33,12 @@ securityContext:
+   readOnlyRootFilesystem: true
+   capDrop:
+     - NET_RAW
++autoscaling:
++  enabled: true
++  minReplicas: 2
++  maxReplicas: 10
++  targetCPUUtilization: 70
++  cooldown: 60s
+ healthcheck:
+   type: http
+   scheme: http
+@@ -75,6 +81,9 @@ placement:
+ 	if spec.SecurityContext.User != "1000:1000" || !spec.SecurityContext.ReadOnlyRootFilesystem || len(spec.SecurityContext.CapDrop) != 1 {
+ 		t.Fatalf("unexpected security context %#v", spec.SecurityContext)
+ 	}
++	if !spec.Autoscaling.Enabled || spec.Autoscaling.MinReplicas != 2 || spec.Autoscaling.MaxReplicas != 10 || spec.Autoscaling.TargetCPUUtilization != 70 {
++		t.Fatalf("unexpected autoscaling %#v", spec.Autoscaling)
++	}
+ 	if spec.Healthcheck == nil || spec.Healthcheck.Port != 8080 || spec.Healthcheck.Path != "/health" || spec.Healthcheck.Scheme != "http" {
+ 		t.Fatalf("unexpected healthcheck %#v", spec.Healthcheck)
+ 	}
+diff --git a/internal/events/events.go b/internal/events/events.go
+index 3fb5d0d..6bac976 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -38,6 +38,9 @@ const (
+ 	TypeRolloutTaskCreated     = "rollout.task.created"
+ 	TypeRolloutTaskStopped     = "rollout.task.stopped"
+ 	TypeRolloutStatusChanged   = "rollout.status.changed"
++	TypeAutoscalerScaled       = "autoscaler.scaled"
++	TypeAutoscalerSkipped      = "autoscaler.skipped"
++	TypeAutoscalerError        = "autoscaler.error"
+ 	TypeControllerError        = "controller.error"
+ )
+ 
+diff --git a/internal/metrics/prometheus.go b/internal/metrics/prometheus.go
+index 364189d..568f4ec 100644
+--- a/internal/metrics/prometheus.go
++++ b/internal/metrics/prometheus.go
+@@ -29,6 +29,9 @@ type Server struct {
+ 	tasksFailed         prometheus.Counter
+ 	rollouts            prometheus.Counter
+ 	rolloutFailures     prometheus.Counter
++	autoscalerDecisions *prometheus.CounterVec
++	autoscalerErrors    prometheus.Counter
++	autoscalerRecommend *prometheus.GaugeVec
+ }
+ 
+ func NewServer() *Server {
+@@ -101,6 +104,18 @@ func NewServer() *Server {
+ 			Name: "rollout_failures_total",
+ 			Help: "Total rollouts marked failed.",
+ 		}),
++		autoscalerDecisions: prometheus.NewCounterVec(prometheus.CounterOpts{
++			Name: "autoscaler_decisions_total",
++			Help: "Total autoscaler decisions by decision type.",
++		}, []string{"decision"}),
++		autoscalerErrors: prometheus.NewCounter(prometheus.CounterOpts{
++			Name: "autoscaler_errors_total",
++			Help: "Total autoscaler controller errors.",
++		}),
++		autoscalerRecommend: prometheus.NewGaugeVec(prometheus.GaugeOpts{
++			Name: "autoscaler_recommendation_replicas",
++			Help: "Latest autoscaler replica recommendation by service.",
++		}, []string{"service_id"}),
+ 	}
+ 	m.registry.MustRegister(
+ 		m.apiRequests,
+@@ -119,6 +134,9 @@ func NewServer() *Server {
+ 		m.tasksFailed,
+ 		m.rollouts,
+ 		m.rolloutFailures,
++		m.autoscalerDecisions,
++		m.autoscalerErrors,
++		m.autoscalerRecommend,
+ 	)
+ 	return m
+ }
+@@ -191,6 +209,18 @@ func (m *Server) IncRolloutFailures() {
+ 	m.rolloutFailures.Inc()
+ }
+ 
++func (m *Server) IncAutoscalerDecision(decision string) {
++	m.autoscalerDecisions.WithLabelValues(decision).Inc()
++}
++
++func (m *Server) IncAutoscalerErrors() {
++	m.autoscalerErrors.Inc()
++}
++
++func (m *Server) SetAutoscalerRecommendation(serviceID string, replicas int) {
++	m.autoscalerRecommend.WithLabelValues(serviceID).Set(float64(replicas))
++}
++
+ func (m *Server) add(counter prometheus.Counter, count int) {
+ 	if count <= 0 {
+ 		return
+diff --git a/internal/metrics/prometheus_test.go b/internal/metrics/prometheus_test.go
+index 4af91d3..ea3494d 100644
+--- a/internal/metrics/prometheus_test.go
++++ b/internal/metrics/prometheus_test.go
+@@ -28,6 +28,9 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 	metrics.IncTasksFailed()
+ 	metrics.IncRollouts()
+ 	metrics.IncRolloutFailures()
++	metrics.IncAutoscalerDecision("scale_up")
++	metrics.IncAutoscalerErrors()
++	metrics.SetAutoscalerRecommendation("svc-1", 4)
+ 
+ 	body := scrape(t, metrics.Handler())
+ 	for _, want := range []string{
+@@ -47,6 +50,9 @@ func TestServerMetricsExposeExpectedCollectors(t *testing.T) {
+ 		"tasks_failed_total 1",
+ 		"rollouts_total 1",
+ 		"rollout_failures_total 1",
++		`autoscaler_decisions_total{decision="scale_up"} 1`,
++		"autoscaler_errors_total 1",
++		`autoscaler_recommendation_replicas{service_id="svc-1"} 4`,
+ 	} {
+ 		if !strings.Contains(body, want) {
+ 			t.Fatalf("expected scrape to contain %q\n%s", want, body)
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index 821aeac..032be73 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -324,7 +324,7 @@ func (s *postgresStore) UpdateServiceStatus(ctx context.Context, id types.Servic
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $3
+ 		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints, routes,
++			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		string(status),
+@@ -991,18 +991,18 @@ func (s *postgresStore) ListAuditLogs(ctx context.Context, filter audit.Filter)
+ }
+ 
+ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (types.Service, error) {
+-	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	row := db.QueryRow(ctx, `
+ 		INSERT INTO services (
+ 			name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-			resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes
++			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes
+ 		)
+-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
++		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+ 		RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-			resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes, status,
++			resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
+@@ -1014,6 +1014,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ 		ports,
+ 		requirements,
+ 		securityContext,
++		autoscaling,
+ 		healthcheck,
+ 		restartPolicy,
+ 		constraints,
+@@ -1027,7 +1028,7 @@ func insertService(ctx context.Context, db postgresDB, spec types.ServiceSpec) (
+ }
+ 
+ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error) {
+-	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		return types.Service{}, err
+ 	}
+@@ -1043,16 +1044,17 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 				ports = $9,
+ 				resource_requirements = $10,
+ 				security_context = $11,
+-				healthcheck = $12,
+-				restart_policy = $13,
+-				placement_constraints = $14,
+-				routes = $16,
++				autoscaling = $12,
++				healthcheck = $13,
++				restart_policy = $14,
++				placement_constraints = $15,
++				routes = $17,
+ 				deployment_version = deployment_version + 1,
+ 				updated_at = timezone('utc', now()),
+ 				version = version + 1
+-			WHERE id = $1 AND updated_at = $15
++			WHERE id = $1 AND updated_at = $16
+ 			RETURNING id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-				resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes,
++				resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 				status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+@@ -1065,6 +1067,7 @@ func updateService(ctx context.Context, db postgresDB, id types.ServiceID, spec
+ 		ports,
+ 		requirements,
+ 		securityContext,
++		autoscaling,
+ 		healthcheck,
+ 		restartPolicy,
+ 		constraints,
+@@ -1098,7 +1101,7 @@ func insertServiceVersion(ctx context.Context, db postgresDB, serviceID types.Se
+ 
+ func serviceSelectSQL() string {
+ 	return `SELECT id, name, image, image_pull_secret, stateful, replicas, env, secret_refs, ports,
+-		resource_requirements, security_context, healthcheck, restart_policy, placement_constraints, routes,
++		resource_requirements, security_context, autoscaling, healthcheck, restart_policy, placement_constraints, routes,
+ 		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+@@ -1161,7 +1164,7 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ func scanService(row pgx.Row) (types.Service, error) {
+ 	var service types.Service
+ 	var id string
+-	var env, secretRefs, ports, requirements, securityContext, restartPolicy, constraints, routes []byte
++	var env, secretRefs, ports, requirements, securityContext, autoscaling, restartPolicy, constraints, routes []byte
+ 	var healthcheck []byte
+ 	err := row.Scan(
+ 		&id,
+@@ -1175,6 +1178,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&ports,
+ 		&requirements,
+ 		&securityContext,
++		&autoscaling,
+ 		&healthcheck,
+ 		&restartPolicy,
+ 		&constraints,
+@@ -1191,7 +1195,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 	if service.Status == "" {
+ 		service.Status = types.ServiceActive
+ 	}
+-	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes); err != nil {
++	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		return types.Service{}, err
+ 	}
+ 	service.CreatedAt = service.CreatedAt.UTC()
+@@ -1400,50 +1404,54 @@ func scanAuditLog(row pgx.Row) (audit.Log, error) {
+ 	return log, nil
+ }
+ 
+-func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
++func serviceJSON(spec types.ServiceSpec) ([]byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, []byte, error) {
+ 	env, err := jsonBytes(defaultMap(spec.Env))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	secretRefs, err := jsonBytes(defaultSlice(spec.SecretRefs))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	ports, err := jsonBytes(defaultSlice(spec.Ports))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	requirements, err := jsonBytes(spec.ResourceRequirements)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	securityContext, err := jsonBytes(spec.SecurityContext)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++	}
++	autoscaling, err := jsonBytes(spec.Autoscaling)
++	if err != nil {
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	var healthcheck []byte
+ 	if spec.Healthcheck != nil {
+ 		healthcheck, err = jsonBytes(spec.Healthcheck)
+ 		if err != nil {
+-			return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++			return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 		}
+ 	}
+ 	restartPolicy, err := jsonBytes(spec.RestartPolicy)
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	constraints, err := jsonBytes(defaultSlice(spec.PlacementConstraints))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+ 	routes, err := jsonBytes(defaultSlice(spec.Routes))
+ 	if err != nil {
+-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, err
++		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, err
+ 	}
+-	return env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, nil
++	return env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, nil
+ }
+ 
+-func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, securityContext []byte, healthcheck []byte, restartPolicy []byte, constraints []byte, routes []byte) error {
++func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, ports []byte, requirements []byte, securityContext []byte, autoscaling []byte, healthcheck []byte, restartPolicy []byte, constraints []byte, routes []byte) error {
+ 	if err := json.Unmarshal(env, &spec.Env); err != nil {
+ 		return fmt.Errorf("decode service env: %w", err)
+ 	}
+@@ -1461,6 +1469,11 @@ func decodeServiceJSON(spec *types.ServiceSpec, env []byte, secretRefs []byte, p
+ 			return fmt.Errorf("decode service security context: %w", err)
+ 		}
+ 	}
++	if len(autoscaling) > 0 {
++		if err := json.Unmarshal(autoscaling, &spec.Autoscaling); err != nil {
++			return fmt.Errorf("decode service autoscaling: %w", err)
++		}
++	}
+ 	if len(healthcheck) > 0 {
+ 		var check types.Healthcheck
+ 		if err := json.Unmarshal(healthcheck, &check); err != nil {
+diff --git a/internal/store/postgres_test.go b/internal/store/postgres_test.go
+index 4156d82..25255d5 100644
+--- a/internal/store/postgres_test.go
++++ b/internal/store/postgres_test.go
+@@ -53,7 +53,7 @@ func TestMapPostgresError(t *testing.T) {
+ 
+ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	spec := serviceSpecFixture()
+-	env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
++	env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes, err := serviceJSON(spec)
+ 	if err != nil {
+ 		t.Fatalf("encode service json: %v", err)
+ 	}
+@@ -62,7 +62,7 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	got.Name = spec.Name
+ 	got.Image = spec.Image
+ 	got.Replicas = spec.Replicas
+-	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, securityContext, healthcheck, restartPolicy, constraints, routes); err != nil {
++	if err := decodeServiceJSON(&got, env, secretRefs, ports, requirements, securityContext, autoscaling, healthcheck, restartPolicy, constraints, routes); err != nil {
+ 		t.Fatalf("decode service json: %v", err)
+ 	}
+ 
+@@ -81,6 +81,9 @@ func TestServiceJSONRoundTrip(t *testing.T) {
+ 	if !got.SecurityContext.ReadOnlyRootFilesystem || got.SecurityContext.User != "1000:1000" {
+ 		t.Fatalf("expected security context to round trip, got %#v", got.SecurityContext)
+ 	}
++	if !got.Autoscaling.Enabled || got.Autoscaling.MaxReplicas != 6 {
++		t.Fatalf("expected autoscaling to round trip, got %#v", got.Autoscaling)
++	}
+ }
+ 
+ func TestPostgresStoreIntegration(t *testing.T) {
+@@ -405,6 +408,13 @@ func serviceSpecFixture() types.ServiceSpec {
+ 			ReadOnlyRootFilesystem: true,
+ 			CapDrop:                []string{"NET_RAW"},
+ 		},
++		Autoscaling: types.AutoscalingPolicy{
++			Enabled:              true,
++			MinReplicas:          1,
++			MaxReplicas:          6,
++			TargetCPUUtilization: 70,
++			Cooldown:             time.Minute,
++		},
+ 		Healthcheck: &types.Healthcheck{
+ 			Type:               types.HealthcheckHTTP,
+ 			Path:               "/healthz",
+diff --git a/migrations/000010_service_autoscaling.down.sql b/migrations/000010_service_autoscaling.down.sql
+new file mode 100644
+index 0000000..545e942
+--- /dev/null
++++ b/migrations/000010_service_autoscaling.down.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE services
++    DROP COLUMN autoscaling;
+diff --git a/migrations/000010_service_autoscaling.up.sql b/migrations/000010_service_autoscaling.up.sql
+new file mode 100644
+index 0000000..8218a8b
+--- /dev/null
++++ b/migrations/000010_service_autoscaling.up.sql
+@@ -0,0 +1,2 @@
++ALTER TABLE services
++    ADD COLUMN autoscaling JSONB NOT NULL DEFAULT '{}'::jsonb;
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index b0f9871..a421826 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -160,6 +160,7 @@ type ServiceSpec struct {
+ 	Ports                []Port                `json:"ports,omitempty"`
+ 	ResourceRequirements ResourceRequirements  `json:"resource_requirements"`
+ 	SecurityContext      SecurityContext       `json:"security_context,omitempty"`
++	Autoscaling          AutoscalingPolicy     `json:"autoscaling,omitempty"`
+ 	Healthcheck          *Healthcheck          `json:"healthcheck,omitempty"`
+ 	RestartPolicy        RestartPolicy         `json:"restart_policy"`
+ 	PlacementConstraints []PlacementConstraint `json:"placement_constraints,omitempty"`
+@@ -186,6 +187,9 @@ func (spec ServiceSpec) Validate() error {
+ 	if err := spec.SecurityContext.Validate(); err != nil {
+ 		return err
+ 	}
++	if err := spec.Autoscaling.Validate(); err != nil {
++		return err
++	}
+ 	for i, port := range spec.Ports {
+ 		if err := port.Validate(); err != nil {
+ 			return fmt.Errorf("ports[%d]: %w", i, err)
+@@ -439,6 +443,45 @@ type ResourceRequirements struct {
+ 	Limits   Resources `json:"limits"`
+ }
+ 
++type AutoscalingPolicy struct {
++	Enabled              bool          `json:"enabled,omitempty"`
++	MinReplicas          int           `json:"min_replicas,omitempty"`
++	MaxReplicas          int           `json:"max_replicas,omitempty"`
++	TargetCPUUtilization int           `json:"target_cpu_utilization,omitempty"`
++	Cooldown             time.Duration `json:"cooldown,omitempty"`
++	StabilizationWindow  time.Duration `json:"stabilization_window,omitempty"`
++}
++
++func (policy AutoscalingPolicy) Validate() error {
++	if policy.MinReplicas < 0 {
++		return fmt.Errorf("autoscaling min replicas cannot be negative")
++	}
++	if policy.MaxReplicas < 0 {
++		return fmt.Errorf("autoscaling max replicas cannot be negative")
++	}
++	if policy.Enabled {
++		if policy.MaxReplicas == 0 {
++			return fmt.Errorf("autoscaling max replicas is required when autoscaling is enabled")
++		}
++		if policy.TargetCPUUtilization <= 0 {
++			return fmt.Errorf("autoscaling target CPU utilization must be positive")
++		}
++	}
++	if policy.MaxReplicas > 0 && policy.MinReplicas > policy.MaxReplicas {
++		return fmt.Errorf("autoscaling min replicas cannot exceed max replicas")
++	}
++	if policy.TargetCPUUtilization < 0 || policy.TargetCPUUtilization > 1000 {
++		return fmt.Errorf("autoscaling target CPU utilization must be between 1 and 1000")
++	}
++	if policy.Cooldown < 0 {
++		return fmt.Errorf("autoscaling cooldown cannot be negative")
++	}
++	if policy.StabilizationWindow < 0 {
++		return fmt.Errorf("autoscaling stabilization window cannot be negative")
++	}
++	return nil
++}
++
+ type ResourceDefaults struct {
+ 	Requests Resources
+ 	Limits   Resources
+diff --git a/pkg/types/validation_test.go b/pkg/types/validation_test.go
+index ea48b2e..6f1578d 100644
+--- a/pkg/types/validation_test.go
++++ b/pkg/types/validation_test.go
+@@ -108,6 +108,13 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			ReadOnlyRootFilesystem: true,
+ 			CapDrop:                []string{"NET_RAW"},
+ 		},
++		Autoscaling: AutoscalingPolicy{
++			Enabled:              true,
++			MinReplicas:          1,
++			MaxReplicas:          5,
++			TargetCPUUtilization: 70,
++			Cooldown:             time.Minute,
++		},
+ 		PlacementConstraints: []PlacementConstraint{
+ 			{Key: "region", Operator: ConstraintEquals, Value: "us-east"},
+ 		},
+@@ -230,6 +237,24 @@ func TestServiceSpecValidate(t *testing.T) {
+ 			}(),
+ 			wantErr: "security_context.host_path_mounts[0]",
+ 		},
++		{
++			name: "autoscaling max required",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Autoscaling.MaxReplicas = 0
++				return spec
++			}(),
++			wantErr: "autoscaling max replicas is required",
++		},
++		{
++			name: "autoscaling min exceeds max",
++			spec: func() ServiceSpec {
++				spec := cloneServiceSpec(valid)
++				spec.Autoscaling.MinReplicas = 6
++				return spec
++			}(),
++			wantErr: "autoscaling min replicas cannot exceed max replicas",
++		},
+ 		{
+ 			name: "invalid placement constraint",
+ 			spec: func() ServiceSpec {
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 43776cb..a116fb8 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `54-autoscaling-design-doc.md`
+-- Last matching commit: `same commit: Add autoscaling design`
+-- Completed prompt range: `00` through `54`
+-- Next prompt to execute: `55-autoscaling-mvp-implementation.md`
++- Last executed prompt: `55-autoscaling-mvp-implementation.md`
++- Last matching commit: `same commit: Add autoscaling MVP`
++- Completed prompt range: `00` through `55`
++- Next prompt to execute: `56-ha-control-plane-design.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

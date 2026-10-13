@@ -1,0 +1,25 @@
+{
+  "captured_ids": {
+    "direct_container": "8d5a51a6658742827e81b67c807679677a1632a87823efeee88aa6b755dbddd1",
+    "node": "c1528d95-8f6c-4143-872e-adc1c0a34381",
+    "ordinary_container": "5675bb82d8e49f708b0462c9193ab2b9ac987bd3f0ca75f3383baf84d19cf941",
+    "service": "d7f4666f-2e35-4adc-a259-8a5d984889c3",
+    "task": "dd865121-367b-4d90-8e20-37ecfc81275b"
+  },
+  "cleanup": "agent canceled before exact captured container IDs removed; deferred cleanup runs after JSON emission",
+  "direct_host_config": {
+    "memory": 134217728,
+    "nano_cpus": 250000000
+  },
+  "image_id": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+  "observed_at_utc": "2026-10-13T00:45:37.822340974Z",
+  "ordinary_host_config": {
+    "memory": 0,
+    "nano_cpus": 0
+  },
+  "ordinary_running": true,
+  "published_ports": 0,
+  "scope": "actual server handler plus agent Runner plus Docker adapter; teaching wrapper requires cached images and guards owned IDs; no published workload ports",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "status": "passed"
+}

@@ -1,0 +1,151 @@
+{
+  "repository": "https://github.com/alekpopovic/alekpopovic.github.io",
+  "baseline_sha": "80801c8d3d97a4d8ff78e0fe69f3f902beda00c0",
+  "execution_root": "repository root",
+  "book_root": "books/inside-orch",
+  "book_id": "inside-orch",
+  "public_url": "https://www.alekpopovic.com/books/inside-orch/",
+  "canonical_metadata": "books/inside-orch/book.json",
+  "reading_order": "books/inside-orch/manuscript/Book.txt",
+  "preface": "books/inside-orch/manuscript/00-preface.md",
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "total_sections": 47,
+  "catalog": "scripts/book_catalog.py",
+  "generated_pages": "book-pages/inside-orch/",
+  "generated_public_files": "assets/books/inside-orch/",
+  "generated_metadata": "_data/books.json",
+  "generated_files_are_git_ignored": true,
+  "public_pdf": "/assets/books/inside-orch/downloads/inside-orch.pdf",
+  "public_epub": "/assets/books/inside-orch/downloads/inside-orch.epub",
+  "required_posts": 3,
+  "post_chapters": [
+    "05-service-specifications-resources-and-ports",
+    "06-follow-one-request-through-the-control-plane",
+    "19-offline-nodes-draining-and-rescheduling"
+  ],
+  "chapter_h1_grammar": "# Chapter N - Title",
+  "appendix_h1_grammar": "# Appendix A - Title",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 8127,
+      "sha256": "e4c464a42dd7d086492e6b83ca119408eef73ac90a0889859af001fc2b780721",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/AGENTS.md"
+    },
+    {
+      "path": "README.md",
+      "bytes": 17333,
+      "sha256": "da30bb8a7bed14411bc1c74dab3da4c71b45454d8842be582d7a120421a7b325",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/README.md"
+    },
+    {
+      "path": "_config.yml",
+      "bytes": 1898,
+      "sha256": "8a9c6ae68d6bc4623c9e50c1be25cdfe0d2d0c94d5f2414e0bc0e3162db4f946",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_config.yml"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 503,
+      "sha256": "b1a64dfe9b0059f1fe2de0fb961d9e2b570da4858324a6e6d2818a8d54bb4c11",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/.gitignore"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1246,
+      "sha256": "b78359dc9d6927e85e5396b0e53e1b38094227a7d237db15fd107b53b22bcaf3",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/package.json"
+    },
+    {
+      "path": "requirements-books.txt",
+      "bytes": 129,
+      "sha256": "d78e918db953399ba81d772a78d4432c288da6507d78a54dc21dcfea9c25f450",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/requirements-books.txt"
+    },
+    {
+      "path": "scripts/book_catalog.py",
+      "bytes": 13207,
+      "sha256": "3b60691cf9d09ddf864850e9d75f7066e5ecef4ae6910bad8a1b1fe11eb4d298",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/scripts/book_catalog.py"
+    },
+    {
+      "path": "scripts/build-books.py",
+      "bytes": 9140,
+      "sha256": "9b8312f092b04d3a6a8a561f1e18d5d6390ea09079d37582086d17f901924a88",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/scripts/build-books.py"
+    },
+    {
+      "path": "scripts/check-books.py",
+      "bytes": 12351,
+      "sha256": "e0c8630dabc1ff79faed3d9507bb25f7ea838b9174ef4693316602c90dc143af",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/scripts/check-books.py"
+    },
+    {
+      "path": "scripts/check-site.py",
+      "bytes": 20673,
+      "sha256": "fe78d05f2cfb42aee3b9e389dd88c81378f3c9015453eda9a710d3677c5dfc28",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/scripts/check-site.py"
+    },
+    {
+      "path": "scripts/check-publication.py",
+      "bytes": 6970,
+      "sha256": "c0797ffa8797cfe96d7f39f82da40cf98272857e49e31dd4a28aec4ecd8bebeb",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/scripts/check-publication.py"
+    },
+    {
+      "path": "_layouts/book.html",
+      "bytes": 10574,
+      "sha256": "b71ab8b843c8372d656e809da9fe8f652872aee0c9f55e4f4fc8d79f33f1cc02",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_layouts/book.html"
+    },
+    {
+      "path": "_layouts/book-overview.html",
+      "bytes": 2425,
+      "sha256": "6956ea9e05e041d70cc6ecc4b4d270af97842977a731e925dfc628a7a652aa87",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_layouts/book-overview.html"
+    },
+    {
+      "path": "_plugins/site_features.rb",
+      "bytes": 12434,
+      "sha256": "8d616e9def1cd6961a051d8ed9db78c5f9785d49de820d5ea97b1dabbcf86f8a",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_plugins/site_features.rb"
+    },
+    {
+      "path": "_data/glossary.yml",
+      "bytes": 3348,
+      "sha256": "045b3034bafc8421bb5e4e398b613a47afec14f6d5c56751ef4ab2d3b56cf7c1",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_data/glossary.yml"
+    },
+    {
+      "path": "_data/updates.yml",
+      "bytes": 3622,
+      "sha256": "048d5d9ddc918d32543295fa424d1834cf01a4348db45634902a5b9b3f84622f",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/_data/updates.yml"
+    },
+    {
+      "path": "books/modern-ci-book/book.json",
+      "bytes": 398,
+      "sha256": "419b05db295ac6c126ca33925bda7cd5c3cb0e392b9abaf1abefd9f828f03eba",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/books/modern-ci-book/book.json"
+    },
+    {
+      "path": "books/modern-ci-book/manuscript/Book.txt",
+      "bytes": 545,
+      "sha256": "9c017b87c8237d789e3b95e49aa69577cc6b4c78459cee87de4b1b5dd341d0ec",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/books/modern-ci-book/manuscript/Book.txt"
+    },
+    {
+      "path": "books/modern-ci-book/scripts/build.py",
+      "bytes": 12063,
+      "sha256": "c605a354ea086f32b3a0646a6c3f7bb70718828993831e8f63fa0a4a65e45cba",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/books/modern-ci-book/scripts/build.py"
+    },
+    {
+      "path": ".github/workflows/pages.yml",
+      "bytes": 4040,
+      "sha256": "688221cf7c20e200fdf92199fd9905f15554bca685a83e89fe30e0debbc48125",
+      "url": "https://github.com/alekpopovic/alekpopovic.github.io/blob/80801c8d3d97a4d8ff78e0fe69f3f902beda00c0/.github/workflows/pages.yml"
+    }
+  ]
+}

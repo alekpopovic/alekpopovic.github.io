@@ -1,0 +1,383 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "rows": [
+    {
+      "claim_id": "G-01",
+      "claim": "Live API intent is volatile",
+      "component": "MemoryService",
+      "active_caller": "main\u2192NewMemoryService\u2192API handlers",
+      "state_owner": "server maps",
+      "atomicity_persistence_boundary": "one process mutex; no persistence",
+      "failure_scenario": "Fresh server loses services/tasks/node credentials.",
+      "source_anchors": [
+        {
+          "path": "cmd/orch-server/main.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 142,
+          "line_end": 148,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/cmd/orch-server/main.go#L142-L148"
+        }
+      ],
+      "observed_validation": "validation/intake/fresh-server-restart-authenticated.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-02",
+      "claim": "Ordinary service placement can bypass Plan",
+      "component": "immediate reconciliation",
+      "active_caller": "CreateService/ScaleService\u2192reconcileServiceTasksLocked",
+      "state_owner": "MemoryService tasks/nodes",
+      "atomicity_persistence_boundary": "same mutex; round-robin with volume checks",
+      "failure_scenario": "Declared CPU/labels can differ from planner eligibility.",
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 2249,
+          "line_end": 2383,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2249-L2383"
+        }
+      ],
+      "observed_validation": "validation/labs/02-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-03",
+      "claim": "A task claim can have one winner",
+      "component": "scheduler/store",
+      "active_caller": "scheduler.persistAssignment\u2192AssignTask",
+      "state_owner": "one pending task record",
+      "atomicity_persistence_boundary": "expected UpdatedAt and pending; SQL transaction/local lock by concrete store",
+      "failure_scenario": "Distinct task rows can still race shared capacity; stale worker remains live.",
+      "source_anchors": [
+        {
+          "path": "internal/store/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 892,
+          "line_end": 909,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L892-L909"
+        }
+      ],
+      "observed_validation": "validation/intake/full-schema-recovery-corrected.json",
+      "observation_limit": "Default scheduler can call MemoryService.AssignTask; the cited SQL implementation was separately executed in the full-schema teaching harness, not as the default live backend.",
+      "classification": "partial integration"
+    },
+    {
+      "claim_id": "G-04",
+      "claim": "Planner capacity/ports are invocation-local",
+      "component": "scheduler.Plan",
+      "active_caller": "periodic scheduler only for pending work",
+      "state_owner": "temporary clusterState",
+      "atomicity_persistence_boundary": "one Plan invocation; no shared resource transaction",
+      "failure_scenario": "Separate planners can each reserve different rows against same old budget.",
+      "source_anchors": [
+        {
+          "path": "internal/scheduler/scheduler.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 270,
+          "line_end": 347,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/scheduler/scheduler.go#L270-L347"
+        }
+      ],
+      "observed_validation": "validation/exercises/offline-runs.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-05",
+      "claim": "Replica recovery depends on policy and capacity",
+      "component": "MemoryService bookkeeping",
+      "active_caller": "service mutations/reports/node monitor",
+      "state_owner": "service/task maps",
+      "atomicity_persistence_boundary": "one process; observation can lag runtime",
+      "failure_scenario": "No eligible node or restart-never can leave deficit.",
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 2249,
+          "line_end": 2383,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L2249-L2383"
+        }
+      ],
+      "observed_validation": "validation/intake/orch-baseline-tests.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-06",
+      "claim": "Rollout health budget counts model work",
+      "component": "rollout controller",
+      "active_caller": "default main starts Run\u2192RunOnce",
+      "state_owner": "deployment/task records",
+      "atomicity_persistence_boundary": "desired-running active predicate; old reported running/healthy vs new healthy",
+      "failure_scenario": "Success and logical stop can precede acknowledged physical removal.",
+      "source_anchors": [
+        {
+          "path": "internal/rollout/rollout.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 145,
+          "line_end": 180,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/rollout/rollout.go#L145-L180"
+        }
+      ],
+      "observed_validation": "validation/labs/04-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-07",
+      "claim": "Cleanup requires owned runtime identity",
+      "component": "agent removal",
+      "active_caller": "task reconciliation\u2192removeAssignedTask",
+      "state_owner": "daemon objects plus task map",
+      "atomicity_persistence_boundary": "managed/node/task label match; retryable runtime calls",
+      "failure_scenario": "Partition delays stop/removal; no broad sweep or fencing guarantee.",
+      "source_anchors": [
+        {
+          "path": "internal/agent/agent.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 418,
+          "line_end": 465,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L418-L465"
+        }
+      ],
+      "observed_validation": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-08",
+      "claim": "Node offline is suspicion, not revocation",
+      "component": "node monitor",
+      "active_caller": "main nodeMonitor\u2192MarkStaleNodesOffline",
+      "state_owner": "MemoryService nodes/tasks",
+      "atomicity_persistence_boundary": "heartbeat timeout and local mutation",
+      "failure_scenario": "Isolated stateless worker can continue after replacement; stateful withheld.",
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 669,
+          "line_end": 752,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L669-L752"
+        }
+      ],
+      "observed_validation": "validation/labs/01-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-09",
+      "claim": "Runtime resource limits are dropped on ordinary path",
+      "component": "agent\u2192Docker",
+      "active_caller": "ensureTask ContainerSpec literal",
+      "state_owner": "daemon HostConfig",
+      "atomicity_persistence_boundary": "DTO/constructor field propagation missing",
+      "failure_scenario": "Requested limits can be accepted while actual container has zero limits.",
+      "source_anchors": [
+        {
+          "path": "internal/agent/agent.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 253,
+          "line_end": 267,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L253-L267"
+        }
+      ],
+      "observed_validation": "validation/intake/docker-resource-boundary-corrected.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "partial integration"
+    },
+    {
+      "claim_id": "G-10",
+      "claim": "Namespace access is logical scope",
+      "component": "API+MemoryService",
+      "active_caller": "middleware\u2192explicit namespace\u2192Matches",
+      "state_owner": "namespace metadata and roles",
+      "atomicity_persistence_boundary": "object lookup and local context",
+      "failure_scenario": "Host/network/shared physical volume names remain common trust domain.",
+      "source_anchors": [
+        {
+          "path": "internal/namespace/context.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 49,
+          "line_end": 55,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/namespace/context.go#L49-L55"
+        }
+      ],
+      "observed_validation": "validation/labs/06-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-11",
+      "claim": "Quota scale serializes projected intent locally",
+      "component": "MemoryService quota",
+      "active_caller": "ScaleService\u2192usage\u2192Check\u2192mutation",
+      "state_owner": "namespace requested usage",
+      "atomicity_persistence_boundary": "one mutex; SQL package uses distinct xact advisory lock",
+      "failure_scenario": "Jobs/restoration need separate callers; measured use and billing absent.",
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/controlplane.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 1486,
+          "line_end": 1550,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/controlplane.go#L1486-L1550"
+        }
+      ],
+      "observed_validation": "validation/exercises/offline-runs.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-12",
+      "claim": "Local writer exclusion is metadata authority",
+      "component": "volume helpers",
+      "active_caller": "service reconciliation\u2192nodesForVolumeMountsLocked/attach",
+      "state_owner": "volume/attachment maps",
+      "atomicity_persistence_boundary": "active attachment predicate and snapshot NodeID",
+      "failure_scenario": "No distributed storage, stale-host fencing, or physical namespace uniqueness.",
+      "source_anchors": [
+        {
+          "path": "internal/controlplane/workloads.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 484,
+          "line_end": 533,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/controlplane/workloads.go#L484-L533"
+        }
+      ],
+      "observed_validation": "validation/labs/ch32/focused-tests.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-13",
+      "claim": "Leadership library is not default HA",
+      "component": "PostgreSQL elector",
+      "active_caller": "no default server caller",
+      "state_owner": "database session lock/local lease",
+      "atomicity_persistence_boundary": "unwired; cancellation can retain session lock",
+      "failure_scenario": "Done closes yet other pool remains blocked until original pool closes.",
+      "source_anchors": [
+        {
+          "path": "internal/leadership/postgres.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 28,
+          "line_end": 110,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/leadership/postgres.go#L28-L110"
+        }
+      ],
+      "observed_validation": "validation/intake/full-schema-recovery-corrected.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "implemented package"
+    },
+    {
+      "claim_id": "G-14",
+      "claim": "Autoscaling library is not active default control",
+      "component": "autoscaler",
+      "active_caller": "no default main construction",
+      "state_owner": "local lastScaleAt and supplied provider",
+      "atomicity_persistence_boundary": "unwired; no real provider/stabilization use",
+      "failure_scenario": "Controller reconstruction forgets cooldown; policy alone does not start scaling.",
+      "source_anchors": [
+        {
+          "path": "internal/autoscaler/autoscaler.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 190,
+          "line_end": 272,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/autoscaler/autoscaler.go#L190-L272"
+        }
+      ],
+      "observed_validation": "validation/reviews/ch17-24-fresh-source-tests.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "implemented package"
+    },
+    {
+      "claim_id": "G-15",
+      "claim": "Supplied digest parsing is not remote trust",
+      "component": "ParserResolver",
+      "active_caller": "service image resolver\u2192Parse",
+      "state_owner": "image metadata",
+      "atomicity_persistence_boundary": "syntax only",
+      "failure_scenario": "No registry lookup, signature or vulnerability verdict follows.",
+      "source_anchors": [
+        {
+          "path": "internal/image/reference.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 16,
+          "line_end": 25,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/image/reference.go#L16-L25"
+        }
+      ],
+      "observed_validation": "validation/labs/ch25/focused-tests.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "implemented package"
+    },
+    {
+      "claim_id": "G-16",
+      "claim": "GitOps sync has per-file outcomes",
+      "component": "GitOps controller",
+      "active_caller": "default main\u2192Sync\u2192ApplyService",
+      "state_owner": "service/source maps",
+      "atomicity_persistence_boundary": "sequential mutations; revision checkpoint later",
+      "failure_scenario": "Earlier files can apply before later failure; auto-revert bypasses fresh policy/quota.",
+      "source_anchors": [
+        {
+          "path": "internal/gitops/gitops.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 218,
+          "line_end": 281,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L218-L281"
+        }
+      ],
+      "observed_validation": "validation/labs/07-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-17",
+      "claim": "Cron occurrence acceptance is not exactly-once effects",
+      "component": "cron controller",
+      "active_caller": "default main\u2192RunOnce\u2192CreateJob\u2192UpdateCronJob",
+      "state_owner": "memory schedules/jobs/tasks",
+      "atomicity_persistence_boundary": "create precedes checkpoint; no enclosing transaction",
+      "failure_scenario": "Crash can revisit occurrence; Forbid inspects only prior active cohort.",
+      "source_anchors": [
+        {
+          "path": "internal/cronjobs/cronjobs.go",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 63,
+          "line_end": 116,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/cronjobs/cronjobs.go#L63-L116"
+        }
+      ],
+      "observed_validation": "validation/labs/07-check.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "runtime-integrated"
+    },
+    {
+      "claim_id": "G-18",
+      "claim": "Database restore covers persisted package records",
+      "component": "migration/store extension",
+      "active_caller": "explicit teaching harness; not default API",
+      "state_owner": "owned PostgreSQL database plus separately held key",
+      "atomicity_persistence_boundary": "all16 migrations and synthetic canary restore",
+      "failure_scenario": "Dump excludes default memory intent, daemon resources and envelope key.",
+      "source_anchors": [
+        {
+          "path": "scripts/backup-db.sh",
+          "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+          "line_start": 1,
+          "line_end": 69,
+          "url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/scripts/backup-db.sh#L1-L69"
+        }
+      ],
+      "observed_validation": "validation/intake/full-schema-recovery-corrected.json",
+      "observation_limit": "Record supports its captured scenario only; source trace establishes composition.",
+      "classification": "implemented package"
+    }
+  ]
+}

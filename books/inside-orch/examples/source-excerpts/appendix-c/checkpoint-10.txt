@@ -1,0 +1,6 @@
+func (s *MemoryService) CreateJob(ctx context.Context, spec types.JobSpec) (types.Job, error) {
+	if err := spec.Validate(); err != nil {
+		return types.Job{}, fmt.Errorf("%w: %v", store.ErrInvalidState, err)
+	}
+	req, err := spec.ResourceRequirements.WithDefaults(types.DefaultResourceDefaults())
+	if err != nil {

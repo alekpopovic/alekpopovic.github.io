@@ -1,0 +1,20 @@
+Add a GitOps source
+
+Usage:
+  orch gitops add [flags]
+
+Flags:
+      --branch string         Git branch (default "main")
+      --drift-policy string   drift policy: warn or auto_revert (default "warn")
+  -h, --help                  help for add
+      --interval duration     sync interval (default 1m0s)
+      --path string           manifest file or directory (default ".")
+      --prune                 delete services whose manifests are removed
+      --repo string           Git repository URL
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

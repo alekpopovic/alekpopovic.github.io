@@ -1,0 +1,24 @@
+{
+  "id": "fresh-server-restart",
+  "command": [
+    "python3",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_process_restart.py",
+    "--working-copy",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "--server",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-server",
+    "--output",
+    "validation/intake/fresh-server-restart.json"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:38:35.529673+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 1,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T00:38:35.644549+00:00",
+  "duration_seconds": 0.115,
+  "stdout": "validation/intake/fresh-server-restart-command.stdout.txt",
+  "stderr": "validation/intake/fresh-server-restart-command.stderr.txt"
+}

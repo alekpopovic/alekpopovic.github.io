@@ -1,0 +1,22 @@
+{
+  "id": "review075-current-canonical-compilation",
+  "command": [
+    "python3",
+    "books/inside-orch/scripts/compile_registered_examples.py",
+    "--source-copy",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "--go-root",
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64"
+  ],
+  "cwd": "/home/popac/alekpopovic.github.io",
+  "environment_keys": [],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T02:08:40.342948+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T02:08:42.461971+00:00",
+  "duration_seconds": 2.119,
+  "stdout": "validation/examples/075-current-compilation.stdout.txt",
+  "stderr": "validation/examples/075-current-compilation.stderr.txt"
+}

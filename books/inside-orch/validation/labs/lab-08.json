@@ -1,0 +1,120 @@
+{
+  "lab_id": "08",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:04:54.740543+00:00",
+  "status": "passed",
+  "definition": "labs/08-recovery-boundaries/lab.json",
+  "definition_sha256": "d0524fe5e257761b2cbd147dcaf450032a6c243778a8b9f51685c4a7330d3900",
+  "guide": "labs/08-recovery-boundaries/README.md",
+  "guide_sha256": "f3fd9ee847c3488a0cc013e37108790d3ff0a674f51186df9946e91eba62eebd",
+  "configuration_hashes": {
+    "examples/teaching-extensions/full-schema/main.go": "5f31b97f8b9b1d8c3c92e5e5adc0532f834d8b1312e018137002f5f2bd043918",
+    "scripts/observe_database_recovery.py": "47de3a1e4efcd800dddc520c2b13ff8db3223a42af6f5a013a4e758361115487",
+    "tests/test_recovery_targets.py": "96d6b7749f7b56d0348dadd814b5a07780fdf6a9a36cd7b884317b5d88a27f1d"
+  },
+  "environment_record": "validation/labs/review076/environment.json",
+  "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "execution_scope": "Actual dedicated PostgreSQL all-sixteen-schema extension, assignment CAS, pooled-session lease/canary dump/restore; separate fixed-seed fake scheduler/reconciler load, not default runtime durability or cluster throughput.",
+  "state_continuity": "Distinct guarded source/restore child databases created empty, both dropped; independent fake-load process owns only memory.",
+  "started_at_utc": "2026-10-13T01:58:47.784188+00:00",
+  "finished_at_utc": "2026-10-13T01:58:56.837275+00:00",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+        "--container",
+        "inside-orch-book-pg-cbfc94ade5b5",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "--output",
+        "validation/labs/review076/08-recovery.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:47.784188+00:00",
+      "finished_at_utc": "2026-10-13T01:58:49.154617+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/08-recovery-command.json",
+      "status": "passed"
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-loadtest",
+        "--nodes",
+        "3",
+        "--services",
+        "30",
+        "--replicas",
+        "2",
+        "--failure-rate",
+        "0.02",
+        "--duration",
+        "2s",
+        "--seed",
+        "20261013"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": "Pinned disposable source, exact toolchain and scope; environment and lab definition linked. Root owns PostgreSQL writes and exact Docker cleanup.",
+      "started_at_utc": "2026-10-13T01:58:54.824927+00:00",
+      "finished_at_utc": "2026-10-13T01:58:56.837275+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/08-fake-load-command.json",
+      "status": "passed"
+    }
+  ],
+  "actual_observations": {
+    "schema": "000016",
+    "claims": {
+      "conflicts": 1,
+      "winners": 1
+    },
+    "leadership": {
+      "done_closed_after_cancel": true,
+      "lock_retained_after_cancel_and_release": true,
+      "other_pool_acquires_after_original_pool_close": true,
+      "other_pool_initially_blocked": true,
+      "scope": "package cancellation path with healthy pooled session, not running server HA"
+    },
+    "restored_canary_digest_matches": true,
+    "wrong_key_rejected": true,
+    "cleanup": {
+      "created_databases_removed": [
+        "inside_orch_lab_cbfc94ade5b5_recovery_test",
+        "inside_orch_lab_cbfc94ade5b5_restored_test"
+      ]
+    },
+    "load_actual_output": "tasks_created=60\ntasks_running=39\ntasks_failed=21\naverage_convergence_time=34.097\u00b5s\nscheduler_errors=0\nreconciler_errors=0\nconvergence_duration=1.11756ms\nscheduler_iterations=20\nreconciliation_iterations=30\n",
+    "load_timing_scope": "Fixed-seed fake in-process observation on this recorded environment, not universal benchmark."
+  },
+  "original_records": [
+    "validation/labs/review076/08-recovery-command.json",
+    "validation/labs/review076/08-fake-load-command.json"
+  ],
+  "logs": [
+    {
+      "path": "validation/labs/review076/08-recovery-command.stdout.txt",
+      "sha256": "a01350584a9bcc2f0d8d86abc50d8d5fc6e22b5dfe3dd7a03799b40c7198ca55",
+      "bytes": 77
+    },
+    {
+      "path": "validation/labs/review076/08-recovery-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "validation/labs/review076/08-fake-load-command.stdout.txt",
+      "sha256": "9b4ce5324f07fb6205cf3cf42325e8a19cdb780448f526038eac9163ae861a81",
+      "bytes": 208
+    },
+    {
+      "path": "validation/labs/review076/08-fake-load-command.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "cleanup": "Exact owned external cleanup linked where applicable; otherwise process-local memory/temporary Git removed by harness. No production resources or broad prune.",
+  "rerun_criteria": "Rebuild unchanged pinned disposable module, validate input hashes and owned-resource guards, choose new result paths; do not depend on previous live state."
+}

@@ -1,0 +1,24 @@
+=== RUN   TestHTTPHealthCheck
+=== RUN   TestHTTPHealthCheck/healthy
+=== RUN   TestHTTPHealthCheck/unhealthy
+--- PASS: TestHTTPHealthCheck (0.00s)
+    --- PASS: TestHTTPHealthCheck/healthy (0.00s)
+    --- PASS: TestHTTPHealthCheck/unhealthy (0.00s)
+=== RUN   TestHTTPHealthCheckBlocksExternalRedirect
+--- PASS: TestHTTPHealthCheckBlocksExternalRedirect (0.00s)
+=== RUN   TestHTTPHealthCheckAllowsSameOriginRedirect
+--- PASS: TestHTTPHealthCheckAllowsSameOriginRedirect (0.00s)
+=== RUN   TestHTTPHealthCheckLimitsHugeResponseBody
+--- PASS: TestHTTPHealthCheckLimitsHugeResponseBody (0.00s)
+=== RUN   TestHTTPHealthCheckTimeout
+--- PASS: TestHTTPHealthCheckTimeout (0.10s)
+=== RUN   TestTCPHealthCheck
+--- PASS: TestTCPHealthCheck (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/health	0.108s
+=== RUN   TestReconcileAssignedTaskReportsHealthAfterThresholds
+--- PASS: TestReconcileAssignedTaskReportsHealthAfterThresholds (0.00s)
+=== RUN   TestHealthProbeRequiresAssignedPort
+--- PASS: TestHealthProbeRequiresAssignedPort (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/agent	0.005s

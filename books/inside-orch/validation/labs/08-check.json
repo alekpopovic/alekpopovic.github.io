@@ -1,0 +1,445 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "checked_at_utc": "2026-10-13T00:57:48.988491+00:00",
+  "lab": "08",
+  "mode": "recorded",
+  "validation": "executed",
+  "scope": "Source/hash inspection and verification of existing recorded runs; infrastructure experiments are NOT implicitly repeated",
+  "inspection": {
+    "source_files": 361,
+    "memory_constructor": true,
+    "migration_pairs": 16
+  },
+  "status": "passed",
+  "tracks": {
+    "inspection": "passed",
+    "postgres_artifact_restore": "passed",
+    "fake_agent_load": "passed",
+    "live_orchestration_recovery": "unsupported_default_runtime"
+  },
+  "migration_pairs": [
+    {
+      "up": "migrations/000001_initial_schema.up.sql",
+      "down": "migrations/000001_initial_schema.down.sql",
+      "up_sha256": "9248225e2d130eead700c16cc83f122d9d11de371c4a55ef784c12f211599309",
+      "down_sha256": "ee5910a80a49b46ca3d9af401057c1d00fb6888ed890b34be8091351c4e9719a"
+    },
+    {
+      "up": "migrations/000002_task_ports.up.sql",
+      "down": "migrations/000002_task_ports.down.sql",
+      "up_sha256": "97283b22fe1d46ada9da125cec347c901f8088a03376fde1fce4c69ee91de26f",
+      "down_sha256": "9e45d07ab6bc169f3d9bf5ce5dc5bc1f4935620dde84ce05224242131ee7ae66"
+    },
+    {
+      "up": "migrations/000003_service_routes.up.sql",
+      "down": "migrations/000003_service_routes.down.sql",
+      "up_sha256": "ed48b63c760faa870275e03373f31ddbd5936506979e7508938f7b95f6262cb0",
+      "down_sha256": "bc7888726e741445cfa77579c24acdccad3371b66e81ea013f096dfbf67dc2e5"
+    },
+    {
+      "up": "migrations/000004_secrets.up.sql",
+      "down": "migrations/000004_secrets.down.sql",
+      "up_sha256": "a52f76b42fb1453c430ae47ed45fcf709e47cfd2f4e55e60e3696d7642f2b1df",
+      "down_sha256": "b9df14ee4fd0ce629acd14914dc0e7a0f4582310b440bf790e668e7975f0235e"
+    },
+    {
+      "up": "migrations/000005_registry_credentials.up.sql",
+      "down": "migrations/000005_registry_credentials.down.sql",
+      "up_sha256": "780ca4e86ee8501584c7cf20da0c004d06d89987e6796973f67d3de72adf8db2",
+      "down_sha256": "d5e57a022e6ccbe690a9eaf380394f5bf35b7fd81bdfc93028fd05b9290229be"
+    },
+    {
+      "up": "migrations/000006_task_conditions.up.sql",
+      "down": "migrations/000006_task_conditions.down.sql",
+      "up_sha256": "24a3e61881bdd8cd31bc9b9375c1fdaca0bc13b12b4c702c608fb4a344490f0c",
+      "down_sha256": "c22b0ecbea8d9d58e15b4596708baad80e3f16f105bbc8bea00e727e79852212"
+    },
+    {
+      "up": "migrations/000007_event_details.up.sql",
+      "down": "migrations/000007_event_details.down.sql",
+      "up_sha256": "01c764d2d0a4afb23f1789d5ed6431b1c3e8e99b5b33f16a8ecef6f14fc2d047",
+      "down_sha256": "24a21392ee735326bc0cdc387d8de336b37ec98f05abe7430f072c298d96d874"
+    },
+    {
+      "up": "migrations/000008_audit_logs.up.sql",
+      "down": "migrations/000008_audit_logs.down.sql",
+      "up_sha256": "4dfd67cbe8ce98c5a1ee7dc49a924a6f1fc2fb5c80ea47565bac83398ce01ff6",
+      "down_sha256": "cf7a72fea0c27cf0c3d81100abe79d5bc19d8be3b44402c88e3a54088b40ffc0"
+    },
+    {
+      "up": "migrations/000009_service_security_context.up.sql",
+      "down": "migrations/000009_service_security_context.down.sql",
+      "up_sha256": "7fe9994ac0bce2b3bb3afdbe6fe5fb8efbd9e55774c429519f23aba25e68dd77",
+      "down_sha256": "db422c750ebdb7c0d176fde633d35c5fc044f9100c4f8fa3c3733b8ee7a62016"
+    },
+    {
+      "up": "migrations/000010_service_autoscaling.up.sql",
+      "down": "migrations/000010_service_autoscaling.down.sql",
+      "up_sha256": "3b04fa2b84c40a0ee2fdd79c530373d69ffd3327fa2494dddd9dd7cd7b344671",
+      "down_sha256": "1de5a0a3a73fe5d2d33893fb9ce6d9932604b1bc30bcc8f28ff48a0e1aeb810d"
+    },
+    {
+      "up": "migrations/000011_namespaces.up.sql",
+      "down": "migrations/000011_namespaces.down.sql",
+      "up_sha256": "16bbe6b3fe59ac281fb6f97daf5975b2bbe4e232948b3274bc5cbf1dc145a2bd",
+      "down_sha256": "3b2148d6a7a4a8940a727e18596772703a4a6601178406b2f58ba40452ef7206"
+    },
+    {
+      "up": "migrations/000012_resource_quotas.up.sql",
+      "down": "migrations/000012_resource_quotas.down.sql",
+      "up_sha256": "10672882af0fbaf63859e5f851b87264e391241f47c4765380c6591fac2dffc2",
+      "down_sha256": "0eabb84055b219c14a9430ffdc391f0a4fbcc1ec84e0b5f5ca4fa603bae09784"
+    },
+    {
+      "up": "migrations/000013_image_metadata.up.sql",
+      "down": "migrations/000013_image_metadata.down.sql",
+      "up_sha256": "86d1534ebb9a0c8a249ba01e370caff9a73b9e902795665511476c78ec21f6df",
+      "down_sha256": "adec607a8d7feb27bf649526b62c5e1fef98aaead97d69237097da245b34c454"
+    },
+    {
+      "up": "migrations/000014_gitops_sources.up.sql",
+      "down": "migrations/000014_gitops_sources.down.sql",
+      "up_sha256": "1e6002e7c2bae5f90cf19e7f37482b21c5ab6514147e397c78b52a68de1456d3",
+      "down_sha256": "a4cb51094974d9d6e1fe57e80a103167ddb564c20dfbd6dadb8151a31702e0d9"
+    },
+    {
+      "up": "migrations/000015_jobs_storage_notifications.up.sql",
+      "down": "migrations/000015_jobs_storage_notifications.down.sql",
+      "up_sha256": "8447a9e5d4bc0328256f6ae1cc67aa057e9c0bf038aba92445f97a3e155e48e5",
+      "down_sha256": "03e9c6d7ca9babaacdd2ba5408f7ad4f2f02045ea9ad53fd9066fc6a1d952d14"
+    },
+    {
+      "up": "migrations/000016_operations_safety.up.sql",
+      "down": "migrations/000016_operations_safety.down.sql",
+      "up_sha256": "6e34f4248354146de6f7cf2958138981670bed50878f25957fd2abef9487e362",
+      "down_sha256": "11d2d01cecb93f9b717582eea3116908713f972954cbc27658edc6e697f1a88f"
+    }
+  ],
+  "recovery": {
+    "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "started_at_utc": "2026-10-13T00:42:10.346817+00:00",
+    "container_id": "720f1665d8caf8087d6032eec59141e1f0caeb5c78049d6aa5b8396452c8ee74",
+    "container_image": "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea",
+    "databases": {
+      "source": "inside_orch_lab_cbfc94ade5b5_recovery_test",
+      "target": "inside_orch_lab_cbfc94ade5b5_restored_test"
+    },
+    "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "commands": [
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "SELECT count(*) FROM pg_database WHERE datname='inside_orch_lab_cbfc94ade5b5_recovery_test'"
+        ],
+        "exit_code": 0,
+        "stdout": "0\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "CREATE DATABASE inside_orch_lab_cbfc94ade5b5_recovery_test"
+        ],
+        "exit_code": 0,
+        "stdout": "CREATE DATABASE\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "SELECT count(*) FROM pg_database WHERE datname='inside_orch_lab_cbfc94ade5b5_restored_test'"
+        ],
+        "exit_code": 0,
+        "stdout": "0\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "CREATE DATABASE inside_orch_lab_cbfc94ade5b5_restored_test"
+        ],
+        "exit_code": 0,
+        "stdout": "CREATE DATABASE\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+          "run",
+          "./.book-labs/full-schema",
+          "prepare"
+        ],
+        "exit_code": 0,
+        "stdout": "{\n  \"canary_sha256\": \"3bf1f98b1b5101ff30dbba997ff1adaf53cc082b51878b6869d311f862b3ed51\",\n  \"captured_ids\": {\n    \"node\": \"31d1417b-8b97-4064-83b0-73f38499b294\",\n    \"service\": \"d0208d19-6266-43d7-a8d4-935f734492c0\",\n    \"task\": \"4c193423-737c-4dc5-baea-2c4059bcee30\"\n  },\n  \"claims\": {\n    \"conflicts\": 1,\n    \"winners\": 1\n  },\n  \"down_without_allow_rejected\": true,\n  \"finished_at_utc\": \"2026-10-13T00:42:11.110598612Z\",\n  \"leadership\": {\n    \"done_closed_after_cancel\": true,\n    \"lock_retained_after_cancel_and_release\": true,\n    \"other_pool_acquires_after_original_pool_close\": true,\n    \"other_pool_initially_blocked\": true,\n    \"scope\": \"package cancellation path with healthy pooled session, not running server HA\"\n  },\n  \"mode\": \"prepare\",\n  \"schema_after\": {\n    \"current\": \"000016\",\n    \"latest\": \"000016\",\n    \"pending\": null\n  },\n  \"schema_after_second_up\": {\n    \"current\": \"000016\",\n    \"latest\": \"000016\",\n    \"pending\": null\n  },\n  \"schema_before\": {\n    \"current\": \"\",\n    \"latest\": \"000016\",\n    \"pending\": [\n      \"000001\",\n      \"000002\",\n      \"000003\",\n      \"000004\",\n      \"000005\",\n      \"000006\",\n      \"000007\",\n      \"000008\",\n      \"000009\",\n      \"000010\",\n      \"000011\",\n      \"000012\",\n      \"000013\",\n      \"000014\",\n      \"000015\",\n      \"000016\"\n    ]\n  },\n  \"scope\": \"teaching extension against full-schema PostgreSQL package, not default server persistence\",\n  \"started_at_utc\": \"2026-10-13T00:42:10.947118841Z\",\n  \"status\": \"passed\"\n}\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "pg_dump",
+          "-U",
+          "postgres",
+          "--format=custom",
+          "--no-owner",
+          "--no-privileges",
+          "inside_orch_lab_cbfc94ade5b5_recovery_test"
+        ],
+        "exit_code": 0,
+        "binary_stdout": "dump retained under validation; not embedded",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "-i",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "pg_restore",
+          "-U",
+          "postgres",
+          "--no-owner",
+          "--no-privileges",
+          "--dbname",
+          "inside_orch_lab_cbfc94ade5b5_restored_test"
+        ],
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+          "run",
+          "./.book-labs/full-schema",
+          "verify"
+        ],
+        "exit_code": 0,
+        "stdout": "{\n  \"canary_sha256\": \"3bf1f98b1b5101ff30dbba997ff1adaf53cc082b51878b6869d311f862b3ed51\",\n  \"finished_at_utc\": \"2026-10-13T00:42:11.506023149Z\",\n  \"mode\": \"verify\",\n  \"row_counts\": {\n    \"nodes\": 1,\n    \"services\": 1\n  },\n  \"schema\": {\n    \"current\": \"000016\",\n    \"latest\": \"000016\",\n    \"pending\": null\n  },\n  \"scope\": \"teaching extension against full-schema PostgreSQL package, not default server persistence\",\n  \"started_at_utc\": \"2026-10-13T00:42:11.495178035Z\",\n  \"status\": \"passed\",\n  \"wrong_key_rejected\": true\n}\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "DROP DATABASE inside_orch_lab_cbfc94ade5b5_restored_test WITH (FORCE)"
+        ],
+        "exit_code": 0,
+        "stdout": "DROP DATABASE\n",
+        "stderr": ""
+      },
+      {
+        "argv": [
+          "docker",
+          "exec",
+          "inside-orch-book-pg-cbfc94ade5b5",
+          "psql",
+          "-U",
+          "postgres",
+          "-d",
+          "postgres",
+          "-At",
+          "-v",
+          "ON_ERROR_STOP=1",
+          "-c",
+          "DROP DATABASE inside_orch_lab_cbfc94ade5b5_recovery_test WITH (FORCE)"
+        ],
+        "exit_code": 0,
+        "stdout": "DROP DATABASE\n",
+        "stderr": ""
+      }
+    ],
+    "status": "passed",
+    "prepare": {
+      "canary_sha256": "3bf1f98b1b5101ff30dbba997ff1adaf53cc082b51878b6869d311f862b3ed51",
+      "captured_ids": {
+        "node": "31d1417b-8b97-4064-83b0-73f38499b294",
+        "service": "d0208d19-6266-43d7-a8d4-935f734492c0",
+        "task": "4c193423-737c-4dc5-baea-2c4059bcee30"
+      },
+      "claims": {
+        "conflicts": 1,
+        "winners": 1
+      },
+      "down_without_allow_rejected": true,
+      "finished_at_utc": "2026-10-13T00:42:11.110598612Z",
+      "leadership": {
+        "done_closed_after_cancel": true,
+        "lock_retained_after_cancel_and_release": true,
+        "other_pool_acquires_after_original_pool_close": true,
+        "other_pool_initially_blocked": true,
+        "scope": "package cancellation path with healthy pooled session, not running server HA"
+      },
+      "mode": "prepare",
+      "schema_after": {
+        "current": "000016",
+        "latest": "000016",
+        "pending": null
+      },
+      "schema_after_second_up": {
+        "current": "000016",
+        "latest": "000016",
+        "pending": null
+      },
+      "schema_before": {
+        "current": "",
+        "latest": "000016",
+        "pending": [
+          "000001",
+          "000002",
+          "000003",
+          "000004",
+          "000005",
+          "000006",
+          "000007",
+          "000008",
+          "000009",
+          "000010",
+          "000011",
+          "000012",
+          "000013",
+          "000014",
+          "000015",
+          "000016"
+        ]
+      },
+      "scope": "teaching extension against full-schema PostgreSQL package, not default server persistence",
+      "started_at_utc": "2026-10-13T00:42:10.947118841Z",
+      "status": "passed"
+    },
+    "restored": {
+      "canary_sha256": "3bf1f98b1b5101ff30dbba997ff1adaf53cc082b51878b6869d311f862b3ed51",
+      "finished_at_utc": "2026-10-13T00:42:11.506023149Z",
+      "mode": "verify",
+      "row_counts": {
+        "nodes": 1,
+        "services": 1
+      },
+      "schema": {
+        "current": "000016",
+        "latest": "000016",
+        "pending": null
+      },
+      "scope": "teaching extension against full-schema PostgreSQL package, not default server persistence",
+      "started_at_utc": "2026-10-13T00:42:11.495178035Z",
+      "status": "passed",
+      "wrong_key_rejected": true
+    },
+    "backup": {
+      "path": "validation/intake/full-schema-recovery-corrected.dump",
+      "bytes": 53375,
+      "sha256": "70f413480968ef3c541380f6eb724bb0b9bed25d6eed1de7e7f405cba154dc5f"
+    },
+    "boundaries": [
+      "Only PostgreSQL package rows restored; default server MemoryService maps are separate",
+      "No host production database was touched",
+      "Source scripts inspected; pg_dump/pg_restore executed directly inside lab container"
+    ],
+    "cleanup": {
+      "created_databases_removed": [
+        "inside_orch_lab_cbfc94ade5b5_recovery_test",
+        "inside_orch_lab_cbfc94ade5b5_restored_test"
+      ]
+    },
+    "finished_at_utc": "2026-10-13T00:42:11.630745+00:00"
+  },
+  "load": {
+    "command_record": "validation/labs/lab08-fixed-seed-fake-load.json",
+    "command": [
+      "/tmp/inside-orch-labs-cbfc94ade5b5/bin/orch-loadtest",
+      "--nodes",
+      "3",
+      "--services",
+      "30",
+      "--replicas",
+      "2",
+      "--failure-rate",
+      "0.02",
+      "--duration",
+      "2s",
+      "--seed",
+      "20261013"
+    ],
+    "raw_output": "tasks_created=60\ntasks_running=39\ntasks_failed=21\naverage_convergence_time=48.506\u00b5s\nscheduler_errors=0\nreconciler_errors=0\nconvergence_duration=1.559389ms\nscheduler_iterations=20\nreconciliation_iterations=30\n",
+    "host": {
+      "architecture": "x86_64",
+      "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "available_cpu_count": 12
+    },
+    "go_record": "validation/intake/go125-toolchain-network.json",
+    "measurement_scope": "in-process MemoryService and simulated task transitions, not Docker or PostgreSQL capacity"
+  },
+  "target_guards": {
+    "id": "recovery-target-guards",
+    "command": [
+      "python3",
+      "books/inside-orch/tests/test_recovery_targets.py"
+    ],
+    "cwd": "/home/popac/alekpopovic.github.io",
+    "environment_keys": [],
+    "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+    "started_at_utc": "2026-10-13T00:54:30.273525+00:00",
+    "scope": "Only the command and environment recorded here were executed.",
+    "exit_code": 0,
+    "status": "passed",
+    "finished_at_utc": "2026-10-13T00:54:30.331688+00:00",
+    "duration_seconds": 0.058,
+    "stdout": "validation/labs/recovery-target-guards.stdout.txt",
+    "stderr": "validation/labs/recovery-target-guards.stderr.txt"
+  }
+}

@@ -1,0 +1,10 @@
+=== RUN   TestParseAndRunWithFakeClock
+--- PASS: TestParseAndRunWithFakeClock (0.00s)
+=== RUN   TestConcurrencyForbidAndReplace
+--- PASS: TestConcurrencyForbidAndReplace (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/cronjobs	0.013s
+=== RUN   TestJobSuccessFailureRetryAndDelete
+--- PASS: TestJobSuccessFailureRetryAndDelete (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/internal/controlplane	0.005s

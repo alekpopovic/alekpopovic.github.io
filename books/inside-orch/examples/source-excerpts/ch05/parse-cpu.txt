@@ -1,0 +1,19 @@
+func ParseCPU(value string) (int64, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 0, nil
+	}
+	if strings.HasSuffix(value, "m") {
+		raw := strings.TrimSpace(strings.TrimSuffix(value, "m"))
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || parsed <= 0 {
+			return 0, fmt.Errorf("invalid CPU value %q", value)
+		}
+		return parsed, nil
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil || parsed <= 0 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		return 0, fmt.Errorf("invalid CPU value %q", value)
+	}
+	return int64(parsed * 1000), nil
+}

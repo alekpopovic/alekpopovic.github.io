@@ -1,0 +1,35 @@
+{
+  "id": "full-schema-recovery-corrected",
+  "command": [
+    "python3",
+    "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+    "--container",
+    "inside-orch-book-pg-cbfc94ade5b5",
+    "--working-copy",
+    "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+    "--go",
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "--output",
+    "validation/intake/full-schema-recovery-corrected.json"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN",
+    "GOPATH",
+    "GOMODCACHE",
+    "GOCACHE",
+    "GOENV",
+    "GOFLAGS",
+    "INSIDE_ORCH_LAB_DATABASE_URL"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T00:42:10.281954+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 0,
+  "status": "passed",
+  "finished_at_utc": "2026-10-13T00:42:11.640708+00:00",
+  "duration_seconds": 1.359,
+  "stdout": "validation/intake/full-schema-recovery-corrected-command.stdout.txt",
+  "stderr": "validation/intake/full-schema-recovery-corrected-command.stderr.txt"
+}

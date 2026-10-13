@@ -1,0 +1,39 @@
+=== RUN   TestBookDriftWithLifecycle
+=== RUN   TestBookDriftWithLifecycle/missing-assigned
+=== RUN   TestBookDriftWithLifecycle/missing-running
+=== RUN   TestBookDriftWithLifecycle/stopped-owned
+=== RUN   TestBookDriftWithLifecycle/image-mismatch-running
+=== RUN   TestBookDriftWithLifecycle/version-mismatch-assigned
+=== RUN   TestBookDriftWithLifecycle/service-label-mismatch-running
+=== RUN   TestBookDriftWithLifecycle/foreign-node-reference
+=== RUN   TestBookDriftWithLifecycle/unexpected-owned
+=== RUN   TestBookDriftWithLifecycle/unmanaged-name-similarity
+=== RUN   TestBookDriftWithLifecycle/soft-delete-owned
+--- PASS: TestBookDriftWithLifecycle (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/missing-assigned (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/missing-running (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/stopped-owned (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/image-mismatch-running (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/version-mismatch-assigned (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/service-label-mismatch-running (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/foreign-node-reference (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/unexpected-owned (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/unmanaged-name-similarity (0.00s)
+    --- PASS: TestBookDriftWithLifecycle/soft-delete-owned (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/lab03agent	0.009s
+=== RUN   TestBookReplicaIntent
+=== RUN   TestBookReplicaIntent/below-target
+=== RUN   TestBookReplicaIntent/failed-always
+=== RUN   TestBookReplicaIntent/failed-never
+=== RUN   TestBookReplicaIntent/scale-order
+=== RUN   TestBookReplicaIntent/soft-delete
+--- PASS: TestBookReplicaIntent (0.00s)
+    --- PASS: TestBookReplicaIntent/below-target (0.00s)
+    --- PASS: TestBookReplicaIntent/failed-always (0.00s)
+    --- PASS: TestBookReplicaIntent/failed-never (0.00s)
+    --- PASS: TestBookReplicaIntent/scale-order (0.00s)
+    --- PASS: TestBookReplicaIntent/soft-delete (0.00s)
+PASS
+ok  	github.com/alekpopovic/orch/.book-labs/lab03reconciler	0.005s
+{"case_count": 15, "check": "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/03-observed.json", "status": "passed"}

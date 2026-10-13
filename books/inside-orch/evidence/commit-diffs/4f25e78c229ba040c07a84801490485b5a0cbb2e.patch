@@ -1,0 +1,958 @@
+commit 4f25e78c229ba040c07a84801490485b5a0cbb2e
+Date: 2026-06-11T21:46:14+02:00
+Subject: Improve agent authentication
+
+
+---
+ .env.example                            |  2 +-
+ docs/AGENT.md                           | 10 ++--
+ docs/API.md                             |  6 +--
+ docs/LOGS.md                            |  2 +-
+ docs/SECURITY.md                        | 30 ++++++++++--
+ internal/agent/agent.go                 | 29 +++++++++---
+ internal/agent/logs.go                  |  2 +-
+ internal/api/api.go                     | 83 +++++++++++++++++++++++++++------
+ internal/api/api_test.go                | 52 +++++++++++++++------
+ internal/auth/agent.go                  | 72 ++++++++++++++++++++++++++++
+ internal/auth/agent_test.go             | 67 ++++++++++++++++++++++++++
+ internal/config/config.go               |  6 +--
+ internal/config/config_test.go          | 11 +++++
+ internal/controlplane/controlplane.go   | 45 ++++++++++++++++++
+ internal/store/postgres.go              | 26 +++++++++--
+ migrations/000001_initial_schema.up.sql |  3 ++
+ pkg/types/types.go                      |  3 ++
+ 17 files changed, 392 insertions(+), 57 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 40905b2..78a876e 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,7 +1,7 @@
+ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
+-ORCH_BOOTSTRAP_TOKEN=dev-bootstrap-token
++ORCH_AGENT_REGISTRATION_TOKEN=dev-registration-token
+ ORCH_JWT_SECRET=dev-user-jwt-secret
+ ORCH_USERS=admin:admin,operator:operator,viewer:viewer
+ ORCH_NODE_NAME=local-node
+diff --git a/docs/AGENT.md b/docs/AGENT.md
+index 39a58c6..1970c4f 100644
+--- a/docs/AGENT.md
++++ b/docs/AGENT.md
+@@ -12,7 +12,7 @@ On startup the agent loads:
+ - `ORCH_NODE_LABELS`: comma-separated labels such as `role=app,zone=a`.
+ - `ORCH_AGENT_HEARTBEAT_INTERVAL`: heartbeat period.
+ - `ORCH_DOCKER_SOCKET`: Docker Engine socket path.
+-- `ORCH_BOOTSTRAP_TOKEN`: static bootstrap token used until stronger node identity is added.
++- `ORCH_AGENT_REGISTRATION_TOKEN`: static registration token used to obtain a short-lived agent credential until stronger node identity is added.
+ 
+ The agent detects local capacity from the host:
+ 
+@@ -52,12 +52,14 @@ On graceful shutdown, the agent sends a final heartbeat with `shutdown=true`. If
+ 
+ ## Security
+ 
+-The first version uses a static bootstrap token:
++Registration uses a static registration token:
+ 
+ ```text
+-Authorization: Bearer <ORCH_BOOTSTRAP_TOKEN>
++Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>
+ ```
+ 
+-This is intentionally isolated to the agent endpoint boundary so mTLS-based node identity can replace it later. Treat the token as a secret. Do not commit it, print it, or expose it through logs.
++After registration, the server returns a short-lived agent credential. The agent uses that credential for heartbeat, task polling, and task status updates. Heartbeat responses rotate the credential.
++
++This is intentionally isolated to the agent endpoint boundary so mTLS-based node identity can replace or combine with token credentials later. Treat tokens as secrets. Do not commit them, print them, or expose them through logs.
+ 
+ Access to the Docker socket is highly privileged. A compromised agent can control containers on the node and may be able to affect the host. See `docs/DEVELOPMENT.md` for Docker daemon permission risks.
+diff --git a/docs/API.md b/docs/API.md
+index be84dc3..4eec65f 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -107,14 +107,14 @@ curl http://localhost:8080/v1/tasks/{task_id}
+ 
+ ## Agent Tasks
+ 
+-Agent endpoints require `Authorization: Bearer <ORCH_BOOTSTRAP_TOKEN>` when a bootstrap token is configured.
++Agent registration requires `Authorization: Bearer <ORCH_AGENT_REGISTRATION_TOKEN>`. Registration returns a short-lived agent credential used for heartbeat, task polling, and task status updates.
+ 
+ ```sh
+-curl -H 'Authorization: Bearer local-bootstrap-token' \
++curl -H 'Authorization: Bearer <agent-credential>' \
+   'http://localhost:8080/v1/agent/tasks?node_id={node_id}'
+ 
+ curl -X POST http://localhost:8080/v1/agent/tasks/{task_id}/status \
+-  -H 'Authorization: Bearer local-bootstrap-token' \
++  -H 'Authorization: Bearer <agent-credential>' \
+   -H 'Content-Type: application/json' \
+   -d '{
+     "node_id": "{node_id}",
+diff --git a/docs/LOGS.md b/docs/LOGS.md
+index 41b3d95..9dc1607 100644
+--- a/docs/LOGS.md
++++ b/docs/LOGS.md
+@@ -27,4 +27,4 @@ The response is newline-delimited text over chunked HTTP. `--follow` keeps the s
+ - If the node is offline or unreachable, logs are unavailable.
+ - The control plane depends on each node's `advertise_address` pointing to the agent HTTP listener.
+ 
+-Agents protect the log endpoint with the bootstrap token for now. mTLS should replace this before production multi-tenant use.
++Agents protect the log endpoint with the registration token for now. mTLS should replace this before production multi-tenant use.
+diff --git a/docs/SECURITY.md b/docs/SECURITY.md
+index bb76c6a..cf3a435 100644
+--- a/docs/SECURITY.md
++++ b/docs/SECURITY.md
+@@ -40,17 +40,39 @@ Roles are hierarchical: `admin` includes `operator` and `viewer`; `operator` inc
+ 
+ ## Agent Authentication
+ 
+-Agent authentication is separate from user authentication. Agent endpoints under `/v1/agent/*` continue to use the static bootstrap token configured by `ORCH_BOOTSTRAP_TOKEN`.
++Agent authentication is separate from user authentication.
+ 
+-Do not reuse user JWT secrets as agent bootstrap tokens.
++The registration token configured by `ORCH_AGENT_REGISTRATION_TOKEN` is only used for registration. An agent presents it to `POST /v1/agent/register`. After successful registration, the server issues a short-lived agent credential. The server stores only a hash of that credential on the node record, never the raw token.
++
++Agents use the issued credential for:
++
++- `POST /v1/agent/heartbeat`
++- `GET /v1/agent/tasks`
++- `POST /v1/agent/tasks/{task_id}/status`
++
++Heartbeat responses rotate the credential. The new credential replaces the previous hash, so older credentials stop working. Nodes also have a server-side revocation flag; revoked nodes cannot authenticate with their current credential.
++
++Do not reuse user JWT secrets as agent registration tokens or agent credentials.
++
++## Future mTLS Design
++
++The agent auth implementation is intentionally behind credential issuer/validator interfaces. A future mTLS authenticator can be added beside or instead of token auth:
++
++1. Issue each node a client certificate at registration or through external provisioning.
++2. Bind the certificate subject or SPIFFE ID to the node ID.
++3. Validate certificate chains and revocation status in middleware.
++4. Optionally require both mTLS identity and short-lived token credentials during migration.
++5. Remove static registration tokens once node identity is fully automated.
++
++The API should continue to treat user JWT auth and agent identity as separate middleware chains.
+ 
+ ## Logging
+ 
+-The API access log records request ID, method, path, status, and duration. It does not log `Authorization` headers, JWTs, bootstrap tokens, or request bodies.
++The API access log records request ID, method, path, status, and duration. It does not log `Authorization` headers, JWTs, registration tokens, agent credentials, or request bodies.
+ 
+ ## MVP Limitations
+ 
+ - Users are represented by signed JWT claims plus optional `ORCH_USERS` static config; there is no database-backed user management yet.
+ - Token issuance is external to the server for now.
+ - Use a long, random `ORCH_JWT_SECRET` and rotate it through your deployment secret manager.
+-- mTLS should replace static bootstrap-token agent identity before production multi-tenant use.
++- mTLS should replace or harden registration-token-based agent bootstrap before production multi-tenant use.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index c52f104..a4fda6f 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -465,9 +465,10 @@ func detectMemory() int64 {
+ }
+ 
+ type HTTPClient struct {
+-	baseURL string
+-	token   string
+-	client  *http.Client
++	baseURL        string
++	bootstrapToken string
++	credential     string
++	client         *http.Client
+ }
+ 
+ func NewHTTPClient(serverURL string, token string) (*HTTPClient, error) {
+@@ -476,9 +477,9 @@ func NewHTTPClient(serverURL string, token string) (*HTTPClient, error) {
+ 		return nil, fmt.Errorf("server URL is required")
+ 	}
+ 	return &HTTPClient{
+-		baseURL: serverURL,
+-		token:   token,
+-		client:  &http.Client{Timeout: 15 * time.Second},
++		baseURL:        serverURL,
++		bootstrapToken: token,
++		client:         &http.Client{Timeout: 15 * time.Second},
+ 	}, nil
+ }
+ 
+@@ -487,6 +488,7 @@ func (c *HTTPClient) Register(ctx context.Context, req api.AgentRegisterRequest)
+ 	if err := c.do(ctx, "/v1/agent/register", req, &out); err != nil {
+ 		return api.AgentResponse{}, err
+ 	}
++	c.updateCredential(out)
+ 	return out, nil
+ }
+ 
+@@ -495,6 +497,7 @@ func (c *HTTPClient) Heartbeat(ctx context.Context, req api.AgentHeartbeatReques
+ 	if err := c.do(ctx, "/v1/agent/heartbeat", req, &out); err != nil {
+ 		return api.AgentResponse{}, err
+ 	}
++	c.updateCredential(out)
+ 	return out, nil
+ }
+ 
+@@ -537,7 +540,13 @@ func (c *HTTPClient) doMethod(ctx context.Context, method string, path string, b
+ 	if body != nil {
+ 		req.Header.Set("Content-Type", "application/json")
+ 	}
+-	req.Header.Set("Authorization", "Bearer "+c.token)
++	if path == "/v1/agent/register" {
++		req.Header.Set("Authorization", "Bearer "+c.bootstrapToken)
++	} else if c.credential != "" {
++		req.Header.Set("Authorization", "Bearer "+c.credential)
++	} else {
++		req.Header.Set("Authorization", "Bearer "+c.bootstrapToken)
++	}
+ 
+ 	resp, err := c.client.Do(req)
+ 	if err != nil {
+@@ -554,3 +563,9 @@ func (c *HTTPClient) doMethod(ctx context.Context, method string, path string, b
+ 	}
+ 	return json.NewDecoder(resp.Body).Decode(out)
+ }
++
++func (c *HTTPClient) updateCredential(resp api.AgentResponse) {
++	if resp.Credential != nil && resp.Credential.Token != "" {
++		c.credential = resp.Credential.Token
++	}
++}
+diff --git a/internal/agent/logs.go b/internal/agent/logs.go
+index ff82e54..3b2a107 100644
+--- a/internal/agent/logs.go
++++ b/internal/agent/logs.go
+@@ -87,7 +87,7 @@ func (s *logServer) authorize(w http.ResponseWriter, r *http.Request) bool {
+ 		token = strings.TrimSpace(strings.TrimPrefix(auth, "Bearer "))
+ 	}
+ 	if token != s.token {
+-		http.Error(w, "invalid agent bootstrap token", http.StatusUnauthorized)
++		http.Error(w, "invalid agent registration token", http.StatusUnauthorized)
+ 		return false
+ 	}
+ 	return true
+diff --git a/internal/api/api.go b/internal/api/api.go
+index 06d14a3..c2edd35 100644
+--- a/internal/api/api.go
++++ b/internal/api/api.go
+@@ -29,6 +29,7 @@ type Server struct {
+ 	bootstrapToken string
+ 	jwtSecret      string
+ 	staticUsers    map[string]auth.Role
++	agentIssuer    auth.AgentCredentialIssuer
+ 	now            func() time.Time
+ }
+ 
+@@ -64,6 +65,12 @@ func WithLogStreamer(streamer LogStreamer) Option {
+ 	}
+ }
+ 
++func WithAgentCredentialIssuer(issuer auth.AgentCredentialIssuer) Option {
++	return func(server *Server) {
++		server.agentIssuer = issuer
++	}
++}
++
+ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...Option) http.Handler {
+ 	if controlPlane == nil {
+ 		controlPlane = controlplane.NewMemoryService()
+@@ -80,6 +87,9 @@ func NewHandler(logger *slog.Logger, controlPlane controlplane.Service, opts ...
+ 	if server.logStreamer == nil {
+ 		server.logStreamer = &AgentHTTPLogStreamer{}
+ 	}
++	if server.agentIssuer == nil {
++		server.agentIssuer = auth.NewTokenAgentCredentialIssuer(15 * time.Minute)
++	}
+ 
+ 	mux := http.NewServeMux()
+ 	mux.HandleFunc("GET /healthz", server.healthz)
+@@ -148,6 +158,7 @@ type AgentHeartbeatRequest struct {
+ type AgentResponse struct {
+ 	Node       types.Node                    `json:"node"`
+ 	Status     types.NodeStatus              `json:"status"`
++	Credential *auth.AgentCredential         `json:"credential,omitempty"`
+ 	Directives []controlplane.AgentDirective `json:"directives,omitempty"`
+ }
+ 
+@@ -217,7 +228,7 @@ func (s *Server) readyz(w http.ResponseWriter, _ *http.Request) {
+ }
+ 
+ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+-	if !s.authorizeAgent(w, r) {
++	if !s.authorizeAgentRegistration(w, r) {
+ 		return
+ 	}
+ 	var req AgentRegisterRequest
+@@ -243,13 +254,15 @@ func (s *Server) agentRegister(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
+-	writeJSON(w, http.StatusCreated, AgentResponse{Node: command.Node, Status: command.Node.Status, Directives: command.Directives})
++	credential, err := s.issueAgentCredential(r.Context(), command.Node.ID)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusCreated, AgentResponse{Node: command.Node, Status: command.Node.Status, Credential: &credential, Directives: command.Directives})
+ }
+ 
+ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+-	if !s.authorizeAgent(w, r) {
+-		return
+-	}
+ 	var req AgentHeartbeatRequest
+ 	if !s.decodeJSON(w, r, &req) {
+ 		return
+@@ -258,6 +271,9 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, fmt.Errorf("%w: node_id is required", store.ErrInvalidState))
+ 		return
+ 	}
++	if !s.authorizeAgentCredential(w, r, req.NodeID) {
++		return
++	}
+ 	command, err := s.controlPlane.HeartbeatNode(r.Context(), controlplane.NodeHeartbeat{
+ 		NodeID:      req.NodeID,
+ 		Capacity:    req.Capacity,
+@@ -269,18 +285,23 @@ func (s *Server) agentHeartbeat(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, err)
+ 		return
+ 	}
+-	writeJSON(w, http.StatusOK, AgentResponse{Node: command.Node, Status: command.Node.Status, Directives: command.Directives})
++	credential, err := s.issueAgentCredential(r.Context(), command.Node.ID)
++	if err != nil {
++		s.writeError(w, r, err)
++		return
++	}
++	writeJSON(w, http.StatusOK, AgentResponse{Node: command.Node, Status: command.Node.Status, Credential: &credential, Directives: command.Directives})
+ }
+ 
+ func (s *Server) agentListTasks(w http.ResponseWriter, r *http.Request) {
+-	if !s.authorizeAgent(w, r) {
+-		return
+-	}
+ 	nodeID := strings.TrimSpace(r.URL.Query().Get("node_id"))
+ 	if !validUUID(nodeID) {
+ 		s.writeError(w, r, fmt.Errorf("%w: node_id must be a UUID", store.ErrInvalidState))
+ 		return
+ 	}
++	if !s.authorizeAgentCredential(w, r, types.NodeID(nodeID)) {
++		return
++	}
+ 	tasks, err := s.controlPlane.ListAssignedTasks(r.Context(), types.NodeID(nodeID))
+ 	if err != nil {
+ 		s.writeError(w, r, err)
+@@ -290,9 +311,6 @@ func (s *Server) agentListTasks(w http.ResponseWriter, r *http.Request) {
+ }
+ 
+ func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {
+-	if !s.authorizeAgent(w, r) {
+-		return
+-	}
+ 	taskID := strings.TrimSpace(r.PathValue("task_id"))
+ 	if !validUUID(taskID) {
+ 		s.writeError(w, r, fmt.Errorf("%w: task_id must be a UUID", store.ErrInvalidState))
+@@ -306,6 +324,9 @@ func (s *Server) agentTaskStatus(w http.ResponseWriter, r *http.Request) {
+ 		s.writeError(w, r, fmt.Errorf("%w: node_id is required", store.ErrInvalidState))
+ 		return
+ 	}
++	if !s.authorizeAgentCredential(w, r, req.NodeID) {
++		return
++	}
+ 	if !validAgentTaskStatus(req.Status) {
+ 		s.writeError(w, r, fmt.Errorf("%w: task status is invalid", store.ErrInvalidState))
+ 		return
+@@ -775,7 +796,7 @@ func (s *Server) decodeJSON(w http.ResponseWriter, r *http.Request, target any)
+ 	return true
+ }
+ 
+-func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {
++func (s *Server) authorizeAgentRegistration(w http.ResponseWriter, r *http.Request) bool {
+ 	if s.bootstrapToken == "" {
+ 		return true
+ 	}
+@@ -788,7 +809,7 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {
+ 		writeJSON(w, http.StatusUnauthorized, ErrorResponse{
+ 			Error: RequestError{
+ 				Code:      "unauthorized",
+-				Message:   "invalid agent bootstrap token",
++				Message:   "invalid agent registration token",
+ 				RequestID: requestID(r.Context()),
+ 			},
+ 		})
+@@ -797,6 +818,40 @@ func (s *Server) authorizeAgent(w http.ResponseWriter, r *http.Request) bool {
+ 	return true
+ }
+ 
++func (s *Server) authorizeAgentCredential(w http.ResponseWriter, r *http.Request, nodeID types.NodeID) bool {
++	token, err := auth.ParseBearer(r.Header.Get("Authorization"))
++	if err != nil {
++		s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "missing or invalid agent credential")
++		return false
++	}
++	node, err := s.controlPlane.GetNode(r.Context(), nodeID)
++	if err != nil {
++		s.writeError(w, r, err)
++		return false
++	}
++	record := auth.AgentCredentialRecord{
++		Hash:      node.AgentTokenHash,
++		ExpiresAt: node.AgentTokenExpiry,
++		Revoked:   node.AgentRevoked,
++	}
++	if err := s.agentIssuer.Validate(r.Context(), token, record, s.now()); err != nil {
++		s.writeAuthError(w, r, http.StatusUnauthorized, "unauthorized", "invalid agent credential")
++		return false
++	}
++	return true
++}
++
++func (s *Server) issueAgentCredential(ctx context.Context, nodeID types.NodeID) (auth.AgentCredential, error) {
++	credential, record, err := s.agentIssuer.Issue(ctx, auth.AgentIdentity{NodeID: string(nodeID)})
++	if err != nil {
++		return auth.AgentCredential{}, err
++	}
++	if _, err := s.controlPlane.SetAgentCredential(ctx, nodeID, record.Hash, record.ExpiresAt); err != nil {
++		return auth.AgentCredential{}, err
++	}
++	return credential, nil
++}
++
+ func (s *Server) writeAuthError(w http.ResponseWriter, r *http.Request, status int, code string, message string) {
+ 	writeJSON(w, status, ErrorResponse{
+ 		Error: RequestError{
+diff --git a/internal/api/api_test.go b/internal/api/api_test.go
+index fcc6aa9..d9a0195 100644
+--- a/internal/api/api_test.go
++++ b/internal/api/api_test.go
+@@ -79,12 +79,15 @@ func TestAgentRegisterAndHeartbeat(t *testing.T) {
+ 	if registered.Node.ID == "" || registered.Status != "ready" {
+ 		t.Fatalf("unexpected register response %#v", registered)
+ 	}
++	if registered.Credential == nil || registered.Credential.Token == "" {
++		t.Fatalf("expected issued agent credential")
++	}
+ 
+-	heartbeat := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
++	heartbeat := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
+ 		"node_id": "`+string(registered.Node.ID)+`",
+ 		"capacity": {"cpu": 4000, "memory": 1024},
+ 		"allocatable": {"cpu": 3000, "memory": 512}
+-	}`)
++	}`, registered.Credential.Token)
+ 	if heartbeat.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, heartbeat.Code, heartbeat.Body.String())
+ 	}
+@@ -93,6 +96,17 @@ func TestAgentRegisterAndHeartbeat(t *testing.T) {
+ 	if acknowledged.Node.LastHeartbeatAt.IsZero() {
+ 		t.Fatalf("expected heartbeat timestamp")
+ 	}
++	if acknowledged.Credential == nil || acknowledged.Credential.Token == "" || acknowledged.Credential.Token == registered.Credential.Token {
++		t.Fatalf("expected rotated heartbeat credential")
++	}
++	oldCredentialHeartbeat := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
++		"node_id": "`+string(registered.Node.ID)+`",
++		"capacity": {"cpu": 4000, "memory": 1024},
++		"allocatable": {"cpu": 3000, "memory": 512}
++	}`, registered.Credential.Token)
++	if oldCredentialHeartbeat.Code != http.StatusUnauthorized {
++		t.Fatalf("expected old credential to be rejected, got %d", oldCredentialHeartbeat.Code)
++	}
+ }
+ 
+ func TestDrainNode(t *testing.T) {
+@@ -127,7 +141,7 @@ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, create.Code, create.Body.String())
+ 	}
+ 
+-	list := doAgentRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil)
++	list := doAgentCredentialRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil, registered.Credential.Token)
+ 	if list.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
+ 	}
+@@ -137,11 +151,11 @@ func TestAgentTaskAssignmentAndStatus(t *testing.T) {
+ 		t.Fatalf("expected one assigned task, got %d", len(tasks.Tasks))
+ 	}
+ 
+-	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
++	report := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
+ 		NodeID:      registered.Node.ID,
+ 		Status:      types.TaskRunning,
+ 		ContainerID: "container-1",
+-	})
++	}, registered.Credential.Token)
+ 	if report.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
+ 	}
+@@ -160,12 +174,12 @@ func TestStreamLogsCancellation(t *testing.T) {
+ 	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"), WithLogStreamer(streamer))
+ 	registered := registerTestNode(t, handler)
+ 	created := createLogTestService(t, handler)
+-	tasks := listAgentTasks(t, handler, registered.Node.ID)
+-	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
++	tasks := listAgentTasks(t, handler, registered)
++	report := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
+ 		NodeID:      registered.Node.ID,
+ 		Status:      types.TaskRunning,
+ 		ContainerID: "container-1",
+-	})
++	}, registered.Credential.Token)
+ 	if report.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
+ 	}
+@@ -191,19 +205,19 @@ func TestStreamLogsRejectsOfflineNode(t *testing.T) {
+ 	handler := NewHandler(slog.Default(), controlplane.NewMemoryService(), WithBootstrapToken("secret"))
+ 	registered := registerTestNode(t, handler)
+ 	created := createLogTestService(t, handler)
+-	tasks := listAgentTasks(t, handler, registered.Node.ID)
+-	report := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
++	tasks := listAgentTasks(t, handler, registered)
++	report := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/tasks/"+string(tasks.Tasks[0].Task.ID)+"/status", AgentTaskStatusRequest{
+ 		NodeID:      registered.Node.ID,
+ 		Status:      types.TaskRunning,
+ 		ContainerID: "container-1",
+-	})
++	}, registered.Credential.Token)
+ 	if report.Code != http.StatusOK {
+ 		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, report.Code, report.Body.String())
+ 	}
+-	heartbeat := doAgentRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
++	heartbeat := doAgentCredentialRequest(t, handler, http.MethodPost, "/v1/agent/heartbeat", `{
+ 		"node_id": "`+string(registered.Node.ID)+`",
+ 		"shutdown": true
+-	}`)
++	}`, registered.Credential.Token)
+ 	if heartbeat.Code != http.StatusOK {
+ 		t.Fatalf("expected heartbeat status %d, got %d: %s", http.StatusOK, heartbeat.Code, heartbeat.Body.String())
+ 	}
+@@ -539,6 +553,11 @@ func doAgentRequest(t *testing.T, handler http.Handler, method string, path stri
+ 	return rec
+ }
+ 
++func doAgentCredentialRequest(t *testing.T, handler http.Handler, method string, path string, body any, token string) *httptest.ResponseRecorder {
++	t.Helper()
++	return requestWithHeaders(t, handler, method, path, body, map[string]string{"Authorization": "Bearer " + token})
++}
++
+ func userToken(t *testing.T, role auth.Role) string {
+ 	t.Helper()
+ 	token, err := auth.SignJWT(auth.Claims{
+@@ -566,6 +585,9 @@ func registerTestNode(t *testing.T, handler http.Handler) AgentResponse {
+ 	}
+ 	var registered AgentResponse
+ 	decodeResponse(t, rec, &registered)
++	if registered.Credential == nil || registered.Credential.Token == "" {
++		t.Fatalf("expected issued agent credential")
++	}
+ 	return registered
+ }
+ 
+@@ -587,9 +609,9 @@ func createLogTestService(t *testing.T, handler http.Handler) ServiceResponse {
+ 	return created
+ }
+ 
+-func listAgentTasks(t *testing.T, handler http.Handler, nodeID types.NodeID) AgentTasksResponse {
++func listAgentTasks(t *testing.T, handler http.Handler, registered AgentResponse) AgentTasksResponse {
+ 	t.Helper()
+-	list := doAgentRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(nodeID), nil)
++	list := doAgentCredentialRequest(t, handler, http.MethodGet, "/v1/agent/tasks?node_id="+string(registered.Node.ID), nil, registered.Credential.Token)
+ 	if list.Code != http.StatusOK {
+ 		t.Fatalf("expected tasks status %d, got %d: %s", http.StatusOK, list.Code, list.Body.String())
+ 	}
+diff --git a/internal/auth/agent.go b/internal/auth/agent.go
+new file mode 100644
+index 0000000..c7e64ae
+--- /dev/null
++++ b/internal/auth/agent.go
+@@ -0,0 +1,72 @@
++package auth
++
++import (
++	"context"
++	"crypto/rand"
++	"crypto/sha256"
++	"encoding/base64"
++	"fmt"
++	"time"
++)
++
++type AgentCredential struct {
++	Token     string    `json:"token"`
++	ExpiresAt time.Time `json:"expires_at"`
++}
++
++type AgentCredentialRecord struct {
++	Hash      string
++	ExpiresAt time.Time
++	Revoked   bool
++}
++
++type AgentIdentity struct {
++	NodeID string
++}
++
++type AgentCredentialIssuer interface {
++	Issue(ctx context.Context, identity AgentIdentity) (AgentCredential, AgentCredentialRecord, error)
++	Validate(ctx context.Context, token string, record AgentCredentialRecord, now time.Time) error
++}
++
++type TokenAgentCredentialIssuer struct {
++	ttl func() time.Duration
++}
++
++func NewTokenAgentCredentialIssuer(ttl time.Duration) *TokenAgentCredentialIssuer {
++	if ttl <= 0 {
++		ttl = 15 * time.Minute
++	}
++	return &TokenAgentCredentialIssuer{ttl: func() time.Duration { return ttl }}
++}
++
++func (i *TokenAgentCredentialIssuer) Issue(_ context.Context, _ AgentIdentity) (AgentCredential, AgentCredentialRecord, error) {
++	raw := make([]byte, 32)
++	if _, err := rand.Read(raw); err != nil {
++		return AgentCredential{}, AgentCredentialRecord{}, fmt.Errorf("generate agent credential: %w", err)
++	}
++	token := base64.RawURLEncoding.EncodeToString(raw)
++	expiresAt := time.Now().UTC().Add(i.ttl())
++	return AgentCredential{Token: token, ExpiresAt: expiresAt}, AgentCredentialRecord{
++		Hash:      HashAgentToken(token),
++		ExpiresAt: expiresAt,
++	}, nil
++}
++
++func (i *TokenAgentCredentialIssuer) Validate(_ context.Context, token string, record AgentCredentialRecord, now time.Time) error {
++	if record.Revoked {
++		return ErrInvalidToken
++	}
++	if record.Hash == "" || token == "" || HashAgentToken(token) != record.Hash {
++		return ErrInvalidToken
++	}
++	if !record.ExpiresAt.IsZero() && !now.UTC().Before(record.ExpiresAt.UTC()) {
++		return ErrInvalidToken
++	}
++	return nil
++}
++
++func HashAgentToken(token string) string {
++	sum := sha256.Sum256([]byte(token))
++	return base64.RawURLEncoding.EncodeToString(sum[:])
++}
+diff --git a/internal/auth/agent_test.go b/internal/auth/agent_test.go
+new file mode 100644
+index 0000000..00f1c07
+--- /dev/null
++++ b/internal/auth/agent_test.go
+@@ -0,0 +1,67 @@
++package auth
++
++import (
++	"context"
++	"testing"
++	"time"
++)
++
++func TestAgentCredentialIssuanceStoresOnlyHash(t *testing.T) {
++	issuer := NewTokenAgentCredentialIssuer(time.Minute)
++	credential, record, err := issuer.Issue(context.Background(), AgentIdentity{NodeID: "node-a"})
++	if err != nil {
++		t.Fatalf("issue credential: %v", err)
++	}
++	if credential.Token == "" {
++		t.Fatalf("expected token")
++	}
++	if record.Hash == "" {
++		t.Fatalf("expected stored hash")
++	}
++	if record.Hash == credential.Token {
++		t.Fatalf("raw token must not be stored")
++	}
++	if record.ExpiresAt.IsZero() || credential.ExpiresAt.IsZero() {
++		t.Fatalf("expected expiry")
++	}
++}
++
++func TestAgentCredentialValidation(t *testing.T) {
++	issuer := NewTokenAgentCredentialIssuer(time.Minute)
++	credential, record, err := issuer.Issue(context.Background(), AgentIdentity{NodeID: "node-a"})
++	if err != nil {
++		t.Fatalf("issue credential: %v", err)
++	}
++
++	if err := issuer.Validate(context.Background(), credential.Token, record, time.Now().UTC()); err != nil {
++		t.Fatalf("validate credential: %v", err)
++	}
++	if err := issuer.Validate(context.Background(), "wrong", record, time.Now().UTC()); err == nil {
++		t.Fatalf("expected wrong token to fail")
++	}
++}
++
++func TestAgentCredentialExpiration(t *testing.T) {
++	issuer := NewTokenAgentCredentialIssuer(time.Minute)
++	credential, record, err := issuer.Issue(context.Background(), AgentIdentity{NodeID: "node-a"})
++	if err != nil {
++		t.Fatalf("issue credential: %v", err)
++	}
++
++	if err := issuer.Validate(context.Background(), credential.Token, record, record.ExpiresAt.Add(time.Nanosecond)); err == nil {
++		t.Fatalf("expected expired credential to fail")
++	}
++}
++
++func TestAgentCredentialRevocation(t *testing.T) {
++	issuer := NewTokenAgentCredentialIssuer(time.Minute)
++	credential, record, err := issuer.Issue(context.Background(), AgentIdentity{NodeID: "node-a"})
++	if err != nil {
++		t.Fatalf("issue credential: %v", err)
++	}
++	record.Revoked = true
++
++	if err := issuer.Validate(context.Background(), credential.Token, record, time.Now().UTC()); err == nil {
++		t.Fatalf("expected revoked credential to fail")
++	}
++}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 7d7a956..0030b36 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -36,7 +36,7 @@ func LoadServer() ServerConfig {
+ 		Addr:                getenv("ORCH_SERVER_ADDR", ":8080"),
+ 		DatabaseURL:         getenv("DATABASE_URL", "postgres://orch:orch@localhost:5432/orch?sslmode=disable"),
+ 		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+-		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
++		BootstrapToken:      getenv("ORCH_AGENT_REGISTRATION_TOKEN", getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token")),
+ 		JWTSecret:           getenv("ORCH_JWT_SECRET", ""),
+ 		Users:               getenv("ORCH_USERS", ""),
+ 		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+@@ -50,7 +50,7 @@ func LoadAgent() AgentConfig {
+ 		AgentAddr:           getenv("ORCH_AGENT_ADDR", ":8081"),
+ 		Labels:              labelsFromEnv("ORCH_NODE_LABELS"),
+ 		ServerURL:           getenv("ORCH_SERVER_URL", "http://localhost:8080"),
+-		BootstrapToken:      getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token"),
++		BootstrapToken:      getenv("ORCH_AGENT_REGISTRATION_TOKEN", getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token")),
+ 		DockerSocketPath:    getenv("ORCH_DOCKER_SOCKET", "/var/run/docker.sock"),
+ 		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+ 		HeartbeatInterval:   durationFromEnv("ORCH_AGENT_HEARTBEAT_INTERVAL", 5*time.Second),
+@@ -131,7 +131,7 @@ func (cfg AgentConfig) Validate() error {
+ 		return fmt.Errorf("server URL is required")
+ 	}
+ 	if cfg.BootstrapToken == "" {
+-		return fmt.Errorf("bootstrap token is required")
++		return fmt.Errorf("agent registration token is required")
+ 	}
+ 	if cfg.DockerSocketPath == "" {
+ 		return fmt.Errorf("Docker socket path is required")
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index c4fbc30..ccc3537 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -19,6 +19,7 @@ func TestLoadAgentDefaultsAreValid(t *testing.T) {
+ 	t.Setenv("ORCH_ADVERTISE_ADDRESS", "")
+ 	t.Setenv("ORCH_NODE_LABELS", "")
+ 	t.Setenv("ORCH_SERVER_URL", "")
++	t.Setenv("ORCH_AGENT_REGISTRATION_TOKEN", "")
+ 	t.Setenv("ORCH_BOOTSTRAP_TOKEN", "")
+ 	t.Setenv("ORCH_DOCKER_SOCKET", "")
+ 	t.Setenv("ORCH_AGENT_HEARTBEAT_INTERVAL", "")
+@@ -29,3 +30,13 @@ func TestLoadAgentDefaultsAreValid(t *testing.T) {
+ 		t.Fatalf("expected default agent config to be valid: %v", err)
+ 	}
+ }
++
++func TestLoadAgentPrefersRegistrationToken(t *testing.T) {
++	t.Setenv("ORCH_AGENT_REGISTRATION_TOKEN", "registration")
++	t.Setenv("ORCH_BOOTSTRAP_TOKEN", "legacy")
++
++	cfg := LoadAgent()
++	if cfg.BootstrapToken != "registration" {
++		t.Fatalf("expected registration token to take precedence, got %q", cfg.BootstrapToken)
++	}
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 5ba2c17..4981750 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -18,6 +18,8 @@ import (
+ type Service interface {
+ 	RegisterNode(ctx context.Context, registration NodeRegistration) (NodeCommand, error)
+ 	HeartbeatNode(ctx context.Context, heartbeat NodeHeartbeat) (NodeCommand, error)
++	SetAgentCredential(ctx context.Context, nodeID types.NodeID, tokenHash string, expiresAt time.Time) (types.Node, error)
++	RevokeNode(ctx context.Context, nodeID types.NodeID) (types.Node, error)
+ 	ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]AgentTask, error)
+ 	ReportTaskStatus(ctx context.Context, report TaskStatusReport) (types.Task, error)
+ 	ListNodes(ctx context.Context) ([]types.Node, error)
+@@ -211,6 +213,49 @@ func (s *MemoryService) HeartbeatNode(ctx context.Context, heartbeat NodeHeartbe
+ 	return NodeCommand{Node: node, Directives: directivesForNode(node)}, nil
+ }
+ 
++func (s *MemoryService) SetAgentCredential(ctx context.Context, nodeID types.NodeID, tokenHash string, expiresAt time.Time) (types.Node, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Node{}, err
++	}
++	if nodeID == "" {
++		return types.Node{}, fmt.Errorf("%w: node id is required", store.ErrInvalidState)
++	}
++	if tokenHash == "" || expiresAt.IsZero() {
++		return types.Node{}, fmt.Errorf("%w: agent credential hash and expiry are required", store.ErrInvalidState)
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	node, ok := s.nodes[nodeID]
++	if !ok {
++		return types.Node{}, store.ErrNotFound
++	}
++	node.AgentTokenHash = tokenHash
++	node.AgentTokenExpiry = expiresAt.UTC()
++	node.AgentRevoked = false
++	node.UpdatedAt = s.now()
++	s.nodes[nodeID] = node
++	return node, nil
++}
++
++func (s *MemoryService) RevokeNode(ctx context.Context, nodeID types.NodeID) (types.Node, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Node{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	node, ok := s.nodes[nodeID]
++	if !ok {
++		return types.Node{}, store.ErrNotFound
++	}
++	node.AgentRevoked = true
++	node.UpdatedAt = s.now()
++	s.nodes[nodeID] = node
++	s.appendEventLocked(events.TypeNodeStatusChanged, types.EventWarning, "controlplane", "node agent credential revoked", "node", string(node.ID), node.UpdatedAt)
++	return node, nil
++}
++
+ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.NodeID) ([]AgentTask, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index b20343c..ec5b643 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -2,6 +2,7 @@ package store
+ 
+ import (
+ 	"context"
++	"database/sql"
+ 	"encoding/json"
+ 	"errors"
+ 	"fmt"
+@@ -54,7 +55,7 @@ func (s *PostgresStore) CreateNode(ctx context.Context, spec types.NodeSpec) (ty
+ 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, timezone('utc', now()))
+ 		RETURNING id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, created_at, updated_at`,
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at`,
+ 		spec.Hostname,
+ 		spec.AdvertiseAddress,
+ 		labels,
+@@ -75,7 +76,7 @@ func (s *PostgresStore) GetNode(ctx context.Context, id types.NodeID) (types.Nod
+ 	row := s.pool.QueryRow(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, created_at, updated_at
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
+ 		FROM nodes
+ 		WHERE id = $1`,
+ 		string(id),
+@@ -115,12 +116,15 @@ func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 			allocatable_memory = $8,
+ 			status = $9,
+ 			last_heartbeat_at = $10,
++			agent_token_hash = nullif($12, ''),
++			agent_token_expires_at = $13,
++			agent_revoked = $14,
+ 			updated_at = timezone('utc', now()),
+ 			version = version + 1
+ 		WHERE id = $1 AND updated_at = $11
+ 		RETURNING id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, created_at, updated_at`,
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at`,
+ 		string(node.ID),
+ 		node.Hostname,
+ 		node.AdvertiseAddress,
+@@ -132,6 +136,9 @@ func (s *PostgresStore) UpdateNode(ctx context.Context, node types.Node, expecte
+ 		string(node.Status),
+ 		utcOrNow(node.LastHeartbeatAt),
+ 		expectedUpdatedAt.UTC(),
++		node.AgentTokenHash,
++		nilTime(node.AgentTokenExpiry),
++		node.AgentRevoked,
+ 	)
+ 	updated, err := scanNode(row)
+ 	if err != nil {
+@@ -147,7 +154,7 @@ func (s *PostgresStore) ListNodesByStatus(ctx context.Context, status types.Node
+ 	rows, err := s.pool.Query(ctx, `
+ 		SELECT id, hostname, advertise_address, labels,
+ 			capacity_cpu, capacity_memory, allocatable_cpu, allocatable_memory,
+-			status, last_heartbeat_at, created_at, updated_at
++			status, last_heartbeat_at, agent_token_hash, agent_token_expires_at, agent_revoked, created_at, updated_at
+ 		FROM nodes
+ 		WHERE status = $1
+ 		ORDER BY hostname, id`,
+@@ -711,6 +718,8 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 	var node types.Node
+ 	var id string
+ 	var labels []byte
++	var tokenHash sql.NullString
++	var tokenExpiry sql.NullTime
+ 	err := row.Scan(
+ 		&id,
+ 		&node.Hostname,
+@@ -722,6 +731,9 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 		&node.Allocatable.Memory,
+ 		&node.Status,
+ 		&node.LastHeartbeatAt,
++		&tokenHash,
++		&tokenExpiry,
++		&node.AgentRevoked,
+ 		&node.CreatedAt,
+ 		&node.UpdatedAt,
+ 	)
+@@ -732,6 +744,12 @@ func scanNode(row pgx.Row) (types.Node, error) {
+ 	if err := json.Unmarshal(labels, &node.Labels); err != nil {
+ 		return types.Node{}, fmt.Errorf("decode node labels: %w", err)
+ 	}
++	if tokenHash.Valid {
++		node.AgentTokenHash = tokenHash.String
++	}
++	if tokenExpiry.Valid {
++		node.AgentTokenExpiry = tokenExpiry.Time.UTC()
++	}
+ 	node.LastHeartbeatAt = node.LastHeartbeatAt.UTC()
+ 	node.CreatedAt = node.CreatedAt.UTC()
+ 	node.UpdatedAt = node.UpdatedAt.UTC()
+diff --git a/migrations/000001_initial_schema.up.sql b/migrations/000001_initial_schema.up.sql
+index 58d443a..72788b1 100644
+--- a/migrations/000001_initial_schema.up.sql
++++ b/migrations/000001_initial_schema.up.sql
+@@ -11,6 +11,9 @@ CREATE TABLE nodes (
+     allocatable_memory BIGINT NOT NULL CHECK (allocatable_memory >= 0),
+     status TEXT NOT NULL,
+     last_heartbeat_at TIMESTAMPTZ NOT NULL,
++    agent_token_hash TEXT,
++    agent_token_expires_at TIMESTAMPTZ,
++    agent_revoked BOOLEAN NOT NULL DEFAULT false,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+     version BIGINT NOT NULL DEFAULT 1,
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index d4e146a..837f649 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -24,6 +24,9 @@ type Node struct {
+ 	Allocatable      Resources         `json:"allocatable"`
+ 	Status           NodeStatus        `json:"status"`
+ 	LastHeartbeatAt  time.Time         `json:"last_heartbeat_at"`
++	AgentTokenHash   string            `json:"-"`
++	AgentTokenExpiry time.Time         `json:"-"`
++	AgentRevoked     bool              `json:"-"`
+ 	CreatedAt        time.Time         `json:"created_at"`
+ 	UpdatedAt        time.Time         `json:"updated_at"`
+ }

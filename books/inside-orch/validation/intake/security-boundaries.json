@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:35:06.866797+00:00",
+  "classification": "source-inspected assertions and testable concerns, not demonstrated vulnerabilities",
+  "boundaries": [
+    {
+      "id": "operator-api",
+      "source": "internal/api/api.go",
+      "lines": [
+        1261,
+        1301
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1261-L1301",
+      "finding": "Empty JWT secret bypasses user auth; namespace context still selected. Configured JWT activates role checks; static users override namespace-role claims.",
+      "safe_test": "Fixture empty/configured secret and viewer/operator/admin cross-namespace requests; assert exact rejection and no mutation.",
+      "status": "inspected"
+    },
+    {
+      "id": "registration",
+      "source": "internal/api/api.go",
+      "lines": [
+        1554,
+        1570
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/api.go#L1554-L1570",
+      "finding": "Empty bootstrap token permits registration; configured token is registration authority. Random node credentials are separately required on report/task/heartbeat paths.",
+      "safe_test": "Local handler registers synthetic node; wrong bootstrap rejected only when configured.",
+      "status": "inspected"
+    },
+    {
+      "id": "node-credential",
+      "source": "internal/auth/agent.go",
+      "lines": [
+        43,
+        71
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/auth/agent.go#L43-L71",
+      "finding": "Random bearer value hash plus expiry/revocation; server maps own current credential record. Transport confidentiality is separate.",
+      "safe_test": "Wrong/expired/revoked token and wrong-node status fixtures; never capture token values.",
+      "status": "inspected"
+    },
+    {
+      "id": "health-ssrf",
+      "source": "internal/agent/agent.go",
+      "lines": [
+        561,
+        602
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/agent/agent.go#L561-L602",
+      "finding": "Active agent targets literal127.0.0.1 at assigned published TCP port; generic checker accepts arbitrary targets and uses default HTTP transport with same-origin redirects.",
+      "safe_test": "Local fixtures prove assigned-port gate and cross-origin redirect rejection; inspect proxy/default-DNS semantics separately.",
+      "status": "inspected"
+    },
+    {
+      "id": "notifications",
+      "source": "internal/notifications/notifications.go",
+      "lines": [
+        60,
+        140
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/notifications/notifications.go#L60-L140",
+      "finding": "Optional HMAC signs payload but does not authenticate receiver authorization. HTTP client permits default redirect/network behavior; validation is not an outbound allowlist.",
+      "safe_test": "Injected RoundTripper records synthetic redirect and error; loopback-only endpoint. Do not send to metadata/public targets.",
+      "status": "inspected"
+    },
+    {
+      "id": "git-filesystem",
+      "source": "internal/gitops/gitops.go",
+      "lines": [
+        300,
+        331
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L300-L331",
+      "finding": "Lexical relative path checks do not resolve symlinks. Stat/ReadFile may follow a selected YAML link or configured path.",
+      "safe_test": "Temp local fixture symlink to temp benign outside-file proves or falsifies read boundary; no host-secret target.",
+      "status": "inspected"
+    },
+    {
+      "id": "git-process",
+      "source": "internal/gitops/gitops.go",
+      "lines": [
+        65,
+        114
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/gitops/gitops.go#L65-L114",
+      "finding": "Argument vector plus -- prevents shell interpolation; repository protocols/credential-bearing stderr and symlinks remain different boundaries.",
+      "safe_test": "Fake fetcher and local Git fixture; URL-userinfo/query rejection; no shell execution claim transferred to filesystem sandbox.",
+      "status": "inspected"
+    },
+    {
+      "id": "docker-host",
+      "source": "internal/docker/docker.go",
+      "lines": [
+        191,
+        221
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L191-L221",
+      "finding": "Docker socket authority is host-level runtime privilege; admission limits workload fields, not daemon administrator privilege.",
+      "safe_test": "Fake runtime asserts restricted security spec; real daemon tests only on owned disposable scope.",
+      "status": "inspected"
+    },
+    {
+      "id": "secret-envelope",
+      "source": "internal/secrets/envelope.go",
+      "lines": [
+        31,
+        86
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/secrets/envelope.go#L31-L86",
+      "finding": "AES-GCM protects stored envelope; local configured key must remain available. Agents/Docker receive plaintext environment values.",
+      "safe_test": "Synthetic secret create/read/assignment and redaction fixtures; never export actual environment.",
+      "status": "inspected"
+    },
+    {
+      "id": "debug-metrics",
+      "source": "internal/api/debug.go",
+      "lines": [
+        8,
+        22
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/debug.go#L8-L22",
+      "finding": "Pprof handler itself has no authentication; separate listener disabled by default and configurable. Metrics bypass user JWT.",
+      "safe_test": "Local-only handler path assertions plus config listener validation; do not expose debug to network.",
+      "status": "inspected"
+    },
+    {
+      "id": "dns",
+      "source": "internal/dns/server.go",
+      "lines": [
+        61,
+        90
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/dns/server.go#L61-L90",
+      "finding": "Optional UDP resolver exposes service/task topology according to context and address binding; namespace API checks do not encrypt DNS.",
+      "safe_test": "Local packet fixture, query namespace/name, inspect exact records; no external resolver dependency.",
+      "status": "inspected"
+    },
+    {
+      "id": "database",
+      "source": "internal/store/postgres.go",
+      "lines": [
+        1,
+        90
+      ],
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/store/postgres.go#L1-L90",
+      "finding": "DB credentials grant durable data operations for package callers; migration authority can change schema. Main DB schema check optional.",
+      "safe_test": "Separate lab database credentials and full migration ledger; never use owner database.",
+      "status": "inspected"
+    }
+  ],
+  "credential_capture": "none",
+  "remaining_runtime_tests": "Run through isolated lab/review gates; no security certification inferred."
+}

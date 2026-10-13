@@ -1,0 +1,224 @@
+{
+  "reviewed_paths": [
+    "validation/interfaces/inventory.json",
+    "reference/cli-api-config.json",
+    "validation/excerpts/index.json",
+    "validation/labs/03-check.json"
+  ],
+  "findings": [
+    {
+      "id": "API-OPENAPI-SCOPE",
+      "severity": "info",
+      "target": "api/openapi.yaml baseline versus registered routes",
+      "relevant_claim_ids": [],
+      "source_evidence": [
+        "internal/api/api.go:150\u2013239",
+        "validation/labs/ch07/openapi-routes.json",
+        "reference/cli-api-config.json"
+      ],
+      "recommended_action": "Retain documented missing publicGETdiscovery/Traefik and processmetrics scope; do not claim fullspecconformance.",
+      "resolution_status": "accepted documented baseline limitation; manuscript/ref explicitly distinguish structure from contract behavior"
+    }
+  ],
+  "checks": [
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "books/inside-orch/scripts/audit_book_interfaces.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:09:24.136379+00:00",
+      "finished_at_utc": "2026-10-13T02:09:24.341877+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reviews/082-interface-final-command.stdout.txt",
+      "record": "validation/reviews/082-interface-final-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./book-reference"
+      ],
+      "working_directory": "/tmp/inside-orch-reference-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:44:18.548213+00:00",
+      "finished_at_utc": "2026-10-13T01:44:18.926514+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reference-offline-inventory.stdout.json",
+      "record": "validation/reference-offline-inventory.json",
+      "status": "passed",
+      "scope": "Offline command constructors/config/lifecycle validators only; no server/runtime/DB."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-v",
+        "./.book-labs/ch07"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:11:15.968311+00:00",
+      "finished_at_utc": "2026-10-13T01:11:16.352101+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/ch07/public-contract-final.stdout.txt",
+      "record": "validation/labs/ch07/public-contract-final.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/examples/teaching-extensions/ch07/compare_routes.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:01:29.259849+00:00",
+      "finished_at_utc": "2026-10-13T01:01:29.361884+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/ch07/openapi-routes.stdout.txt",
+      "record": "validation/labs/ch07/openapi-routes.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "test",
+        "-count=1",
+        "-v",
+        "./.book-labs/review-interfaces"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T02:02:19.428728+00:00",
+      "finished_at_utc": "2026-10-13T02:02:19.864479+00:00",
+      "exit_code": 0,
+      "log_path": "validation/examples/published-cron-manifest.stdout.txt",
+      "record": "validation/examples/published-cron-manifest.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/security",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/validation/labs/review076/05-forbidden-channels"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:58:04.970105+00:00",
+      "finished_at_utc": "2026-10-13T01:58:05.447379+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/05-command.stdout.txt",
+      "record": "validation/labs/review076/05-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "run",
+        "./.book-labs/namespaces-quotas",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/labs/06-namespaces-quotas/fixtures"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:58:13.381748+00:00",
+      "finished_at_utc": "2026-10-13T01:58:13.453933+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/06-command.stdout.txt",
+      "record": "validation/labs/review076/06-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "python3",
+        "/home/popac/alekpopovic.github.io/books/inside-orch/scripts/observe_database_recovery.py",
+        "--container",
+        "inside-orch-book-pg-cbfc94ade5b5",
+        "--working-copy",
+        "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+        "--go",
+        "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+        "--output",
+        "validation/labs/review076/08-recovery.json"
+      ],
+      "working_directory": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+      "prerequisites": [
+        "Locked source and exact Go1.25.0 for Go targets; cached dependencies; owned isolated runtime only where named"
+      ],
+      "started_at_utc": "2026-10-13T01:58:47.784188+00:00",
+      "finished_at_utc": "2026-10-13T01:58:49.154617+00:00",
+      "exit_code": 0,
+      "log_path": "validation/labs/review076/08-recovery-command.stdout.txt",
+      "record": "validation/labs/review076/08-recovery-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "command": [
+        "/home/popac/alekpopovic.github.io/.venv/bin/python",
+        "books/inside-orch/scripts/audit_book_interfaces.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "prerequisites": [
+        "Frozen canonical prose; locked source and historical Git objects; offline source comparison only"
+      ],
+      "started_at_utc": "2026-10-13T02:31:40.597086+00:00",
+      "finished_at_utc": "2026-10-13T02:31:40.799302+00:00",
+      "exit_code": 0,
+      "log_path": "validation/reviews/082-interface-post-copyedit-command.stdout.txt",
+      "record": "validation/reviews/082-interface-post-copyedit-command.json",
+      "status": "passed",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "counts": {
+    "command_lines": 92,
+    "interface_occurrences": 78,
+    "command_definitions": 61,
+    "registered_routes": 75,
+    "configuration_fields": 49,
+    "environment_definitions": 47,
+    "structured_payloads": 3
+  },
+  "acceptance": "Zero unknown publishedCobracommands/flags or sourceGo testfilters. CLIactualconstructors/arity/flags+focusedactualAPI/auth/namespace/secret/upgrade/migrationfixtures matched. Everyfencedpayloadsource-exact or labeledillustrative/teaching; operational mutationprocedures remainexpected-only.",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T02:31:40.799302+00:00",
+  "reviewer_scope": "Mechanical all-corpus review plus independent semantic17\u201324/AppendixD slice. source_foundation authored01\u201308/33\u201340; own-source checks are self-review, with independent editorial/lab review recorded separately. Source remains immutable; no push/deploy.",
+  "overall_status": "passed",
+  "claim_record_policy": "Byte/source inspection does not upgrade behavior claims to executed. Existing executed claim joins retained only for matching actual records.",
+  "independent_slice": "validation/reviews/ch17-24-appendix-d-independent.json",
+  "limitations": [
+    "Book/source fidelity acceptance, not certification of applicationproductionreadiness.",
+    "FullOpenAPIsemanticconformance, livePrometheus/Grafanaevaluation and production-shapedcapacity remain outside measuredscope.",
+    "Optional readerCompose track is not an observed authorrun; guardedrealDocker and ownedPostgreSQLtracks have their own exact records."
+  ],
+  "post_copyedit_rebind": {
+    "record": "validation/reviews/082-interface-post-copyedit-command.json",
+    "inventory": "validation/interfaces/inventory.json",
+    "inventory_sha256": "c41fce6e08797a243479387621793c4a0b7d12acbd771e1db7a6fc8645bd212c",
+    "scope": "Fresh offline audit against final frozen prose; prior actual runtime checks retained, not rerun. Source, program targets and behavior-claim statuses unchanged."
+  }
+}

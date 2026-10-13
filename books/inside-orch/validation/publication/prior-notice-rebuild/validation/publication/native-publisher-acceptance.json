@@ -1,0 +1,245 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T03:33:08.685561+00:00",
+  "pdf_sha256": "42b18782ecb996e526f98e000c7dbf59533ee6200737f71f536bbf536c2de51c",
+  "epub_sha256": "e5ba1daf5715b0daa064d53cec68512e243340ef16b3fc2976e245f674f0562b",
+  "publication_status": "Local candidate; no push or deployment",
+  "canonical_prose_changed": false,
+  "prompt": "092",
+  "status": "passed",
+  "reading_sections": 47,
+  "numbered_chapters": 40,
+  "appendices": 6,
+  "formats": [
+    "dist/inside-orch.md",
+    "dist/inside-orch.pdf",
+    "dist/inside-orch.epub"
+  ],
+  "checks": [
+    {
+      "record": "validation/publication/invariant-table-site-build.json",
+      "record_sha256": "ca5426bd66f249867d9de2cc70adb27f263a607a2871abcabc0bb128353d5f74",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T02:57:57.205187+00:00",
+      "finished_at_utc": "2026-10-13T02:58:36.417714+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/invariant-table-site-build.stdout.txt",
+      "stderr": "validation/publication/invariant-table-site-build.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/invariant-table-jekyll-build.json",
+      "record_sha256": "0a76036a9641732f984afbb1e87864676124d46bd9f6f1eb3768452711a33008",
+      "command": [
+        "bundle",
+        "exec",
+        "jekyll",
+        "build"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:04:30.406254+00:00",
+      "finished_at_utc": "2026-10-13T03:04:34.833109+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/invariant-table-jekyll-build.stdout.txt",
+      "stderr": "validation/publication/invariant-table-jekyll-build.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/invariant-table-books-check.json",
+      "record_sha256": "a31c019f3951fb56081edd50714417a3e1b2c8b7374814298d49816348eaccd6",
+      "command": [
+        ".venv/bin/python",
+        "scripts/check-books.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:15:49.222863+00:00",
+      "finished_at_utc": "2026-10-13T03:16:19.048231+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/invariant-table-books-check.stdout.txt",
+      "stderr": "validation/publication/invariant-table-books-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    },
+    {
+      "record": "validation/publication/invariant-table-format-check.json",
+      "record_sha256": "bc8621593bfa5470b8bcf5ec6dd2b0ea0af1651c2389fc9f27bc309212a281a1",
+      "command": [
+        ".venv/bin/python",
+        "books/inside-orch/scripts/verify_formats.py"
+      ],
+      "working_directory": "/home/popac/alekpopovic.github.io",
+      "started_at_utc": "2026-10-13T03:04:30.408598+00:00",
+      "finished_at_utc": "2026-10-13T03:04:44.210355+00:00",
+      "exit_code": 0,
+      "stdout": "validation/publication/invariant-table-format-check.stdout.txt",
+      "stderr": "validation/publication/invariant-table-format-check.stderr.txt",
+      "scope": "Only the command and environment recorded here were executed."
+    }
+  ],
+  "catalog_record": {
+    "id": "inside-orch",
+    "source": "books/inside-orch",
+    "output": "book-pages/inside-orch",
+    "public_files": "assets/books/inside-orch",
+    "reading_url": "/books/inside-orch/",
+    "epub_chapters": {
+      "00-preface": [
+        "EPUB/text/00-preface.xhtml"
+      ],
+      "01-why-build-a-container-orchestrator": [
+        "EPUB/text/01-why-build-a-container-orchestrator.xhtml"
+      ],
+      "02-a-repository-built-for-reasoning": [
+        "EPUB/text/02-a-repository-built-for-reasoning.xhtml"
+      ],
+      "03-boot-the-lab-and-deploy-the-first-service": [
+        "EPUB/text/03-boot-the-lab-and-deploy-the-first-service.xhtml"
+      ],
+      "04-domain-models-and-state-machines": [
+        "EPUB/text/04-domain-models-and-state-machines.xhtml"
+      ],
+      "05-service-specifications-resources-and-ports": [
+        "EPUB/text/05-service-specifications-resources-and-ports.xhtml"
+      ],
+      "06-follow-one-request-through-the-control-plane": [
+        "EPUB/text/06-follow-one-request-through-the-control-plane.xhtml"
+      ],
+      "07-http-contracts-and-compatible-apis": [
+        "EPUB/text/07-http-contracts-and-compatible-apis.xhtml"
+      ],
+      "08-a-cli-that-operators-can-automate": [
+        "EPUB/text/08-a-cli-that-operators-can-automate.xhtml"
+      ],
+      "09-persistence-transactions-and-optimistic-concurrency": [
+        "EPUB/text/09-persistence-transactions-and-optimistic-concurrency.xhtml"
+      ],
+      "10-a-deterministic-scheduler": [
+        "EPUB/text/10-a-deterministic-scheduler.xhtml"
+      ],
+      "11-reconciliation-as-repeated-convergence": [
+        "EPUB/text/11-reconciliation-as-repeated-convergence.xhtml"
+      ],
+      "12-idempotent-docker-operations-and-drift": [
+        "EPUB/text/12-idempotent-docker-operations-and-drift.xhtml"
+      ],
+      "13-agents-heartbeats-and-task-reports": [
+        "EPUB/text/13-agents-heartbeats-and-task-reports.xhtml"
+      ],
+      "14-health-checks-that-respect-trust-boundaries": [
+        "EPUB/text/14-health-checks-that-respect-trust-boundaries.xhtml"
+      ],
+      "15-events-audits-and-notification-boundaries": [
+        "EPUB/text/15-events-audits-and-notification-boundaries.xhtml"
+      ],
+      "16-log-streaming-without-losing-control": [
+        "EPUB/text/16-log-streaming-without-losing-control.xhtml"
+      ],
+      "17-rolling-updates-and-rollback-invariants": [
+        "EPUB/text/17-rolling-updates-and-rollback-invariants.xhtml"
+      ],
+      "18-safe-deletion-and-resource-cleanup": [
+        "EPUB/text/18-safe-deletion-and-resource-cleanup.xhtml"
+      ],
+      "19-offline-nodes-draining-and-rescheduling": [
+        "EPUB/text/19-offline-nodes-draining-and-rescheduling.xhtml"
+      ],
+      "20-endpoint-discovery-and-internal-dns": [
+        "EPUB/text/20-endpoint-discovery-and-internal-dns.xhtml"
+      ],
+      "21-ingress-host-networking-and-the-overlay-roadmap": [
+        "EPUB/text/21-ingress-host-networking-and-the-overlay-roadmap.xhtml"
+      ],
+      "22-autoscaling-decisions-and-missing-integration": [
+        "EPUB/text/22-autoscaling-decisions-and-missing-integration.xhtml"
+      ],
+      "23-authentication-authorization-and-node-trust": [
+        "EPUB/text/23-authentication-authorization-and-node-trust.xhtml"
+      ],
+      "24-encrypted-secrets-and-configuration-redaction": [
+        "EPUB/text/24-encrypted-secrets-and-configuration-redaction.xhtml"
+      ],
+      "25-registry-credentials-and-immutable-image-identity": [
+        "EPUB/text/25-registry-credentials-and-immutable-image-identity.xhtml"
+      ],
+      "26-security-contexts-admission-and-policy": [
+        "EPUB/text/26-security-contexts-admission-and-policy.xhtml"
+      ],
+      "27-namespaces-and-the-limits-of-multi-tenancy": [
+        "EPUB/text/27-namespaces-and-the-limits-of-multi-tenancy.xhtml"
+      ],
+      "28-quotas-and-usage-accounting": [
+        "EPUB/text/28-quotas-and-usage-accounting.xhtml"
+      ],
+      "29-supply-chain-designs-without-false-guarantees": [
+        "EPUB/text/29-supply-chain-designs-without-false-guarantees.xhtml"
+      ],
+      "30-gitops-drift-and-controlled-reconciliation": [
+        "EPUB/text/30-gitops-drift-and-controlled-reconciliation.xhtml"
+      ],
+      "31-finite-jobs-and-time-based-work": [
+        "EPUB/text/31-finite-jobs-and-time-based-work.xhtml"
+      ],
+      "32-local-volumes-claims-and-workload-topology": [
+        "EPUB/text/32-local-volumes-claims-and-workload-topology.xhtml"
+      ],
+      "33-extension-interfaces-and-a-plugin-roadmap": [
+        "EPUB/text/33-extension-interfaces-and-a-plugin-roadmap.xhtml"
+      ],
+      "34-leader-election-and-the-durable-ha-boundary": [
+        "EPUB/text/34-leader-election-and-the-durable-ha-boundary.xhtml"
+      ],
+      "35-upgrades-migrations-maintenance-and-retention": [
+        "EPUB/text/35-upgrades-migrations-maintenance-and-retention.xhtml"
+      ],
+      "36-fakes-property-tests-fuzzing-and-contracts": [
+        "EPUB/text/36-fakes-property-tests-fuzzing-and-contracts.xhtml"
+      ],
+      "37-failure-injection-and-recovery-evidence": [
+        "EPUB/text/37-failure-injection-and-recovery-evidence.xhtml"
+      ],
+      "38-metrics-dashboards-and-actionable-signals": [
+        "EPUB/text/38-metrics-dashboards-and-actionable-signals.xhtml"
+      ],
+      "39-performance-and-scale-tests-that-say-what-they-measure": [
+        "EPUB/text/39-performance-and-scale-tests-that-say-what-they-measure.xhtml"
+      ],
+      "40-release-a-system-you-can-honestly-operate": [
+        "EPUB/text/40-release-a-system-you-can-honestly-operate.xhtml"
+      ],
+      "a-cli-api-config": [
+        "EPUB/text/a-cli-api-config.xhtml"
+      ],
+      "b-lifecycle-invariants": [
+        "EPUB/text/b-lifecycle-invariants.xhtml"
+      ],
+      "c-annotated-history": [
+        "EPUB/text/c-annotated-history.xhtml"
+      ],
+      "d-exercises-solutions": [
+        "EPUB/text/d-exercises-solutions.xhtml"
+      ],
+      "e-ops-measurement": [
+        "EPUB/text/e-ops-measurement.xhtml"
+      ],
+      "f-glossary-bibliography": [
+        "EPUB/text/f-glossary-bibliography.xhtml"
+      ]
+    },
+    "rights": "All rights reserved; existing source/third-party rights preserved"
+  },
+  "publisher_called_by": "scripts/build-books.py main explicitly invokes orch_publication.build() before the copy loop",
+  "generated_paths_ignored": [
+    "book-pages/inside-orch/index.html",
+    "assets/books/inside-orch/downloads/inside-orch.pdf",
+    "_data/books.json"
+  ],
+  "existing_book_scope": "All six catalog books passed the actual final completeness checks, preserving native adapters and exports. No invented byte-identical pre-task baseline.",
+  "source_generated_manifest": "publication/site-adapter/source-generated-manifest.json",
+  "limitations": [
+    "Local integration only; production origin metadata is preserved but public deployment is not executed."
+  ]
+}

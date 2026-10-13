@@ -1,0 +1,3 @@
+func invalidTransition(kind string, from any, to any) error {
+	return fmt.Errorf("%w: %s %q -> %q", ErrInvalidTransition, kind, from, to)
+}

@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "at_utc": "2026-10-13T01:46:49.471794+00:00",
+  "scope": "Persisted observations and source-test oracles; this verifier does not rerun the application.",
+  "inputs": {
+    "examples/teaching-extensions/lab02/main.go": "9542ed81d6d5e363142c3fb88c6039a89dc92d3c37a2a2298306361df4800c2b",
+    "labs/02-scheduler-placement/fixtures/plan.json": "33db5dd986e580964254d089290f7609915354ad6e19b8bf97a2e694bb357740"
+  },
+  "expected_placements": [
+    [
+      "atlas-01",
+      "c",
+      31080
+    ],
+    [
+      "atlas-02",
+      "b",
+      30000
+    ],
+    [
+      "atlas-03",
+      "c",
+      30000
+    ]
+  ],
+  "observed_placements": [
+    [
+      "atlas-01",
+      "c",
+      31080
+    ],
+    [
+      "atlas-02",
+      "b",
+      30000
+    ],
+    [
+      "atlas-03",
+      "c",
+      30000
+    ]
+  ],
+  "distinct_permutations": 24,
+  "accounted_resources": {
+    "b": {
+      "cpu": 500,
+      "memory": 201326592
+    },
+    "c": {
+      "cpu": 800,
+      "memory": 268435456
+    }
+  },
+  "duplicate_claim_oracles": [
+    "TestConcurrentRunOnceAssignsTaskOnceAcrossSchedulers",
+    "TestConcurrentSchedulerAttemptsAssignTaskOnce",
+    "TestRunOnceAccountsForNonTerminalAssignedTasks"
+  ],
+  "postgres_claims": {
+    "conflicts": 1,
+    "winners": 1
+  },
+  "postgres_scope": "Shared actual full-schema package experiment owned by Lab08, not an independently repeated Lab02 execution.",
+  "execution_modes": [
+    "pure planner",
+    "actual MemoryService methods",
+    "shared fake-store scheduler tests",
+    "separate actual PostgreSQL package record"
+  ],
+  "boundaries": [
+    "No global capacity reservation across planners",
+    "Desired-stop accounting can precede physical termination",
+    "Default MemoryService assignment bypasses planner constraints",
+    "Resource enforcement measured separately in Lab01"
+  ]
+}

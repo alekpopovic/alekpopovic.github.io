@@ -1,0 +1,41 @@
+CLI for the orch container orchestrator
+
+Usage:
+  orch [command]
+
+Available Commands:
+  audit       List audit logs
+  cluster     Cluster operations
+  completion  Generate the autocompletion script for the specified shell
+  cronjob     Manage scheduled jobs
+  delete      Delete a service
+  deploy      Deploy a service from YAML
+  endpoints   List service discovery endpoints
+  events      List events
+  gitops      Manage GitOps sources
+  help        Help about any command
+  job         Run and inspect finite jobs
+  logs        Fetch service logs
+  maintenance Manage maintenance windows
+  namespace   Manage namespaces
+  node        Manage nodes
+  quota       Manage namespace resource quotas
+  retention   Inspect and run retention pruning
+  rollback    Roll back a service
+  rollout     Roll out a new service image
+  scale       Scale a service
+  service     Manage services
+  usage       Show namespace usage
+  validate    Validate a service deployment YAML file
+  version     Print the CLI version
+  volume      Manage persistent volumes
+
+Flags:
+      --config string      CLI config file (default "/home/popac/.config/orch/config.yaml")
+  -h, --help               help for orch
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token
+
+Use "orch [command] --help" for more information about a command.

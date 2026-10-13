@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "reviewed_at_utc": "2026-10-13T00:35:06.866797+00:00",
+  "failures": [
+    {
+      "id": "request-validation",
+      "boundary": "API decoder, normalizer and admission",
+      "last_state_point": "No mutation before rejected input; request and caller own retry",
+      "recovery_owner": "API decoder, normalizer and admission",
+      "deterministic_test": "Repeat invalid payload; compare counts and error.code",
+      "integration_experiment": "Loopback HTTP request to owned server",
+      "residual_risk": "No atomicity promised for arbitrary external effects",
+      "validation": "expected_only"
+    },
+    {
+      "id": "mutation-event",
+      "boundary": "MemoryService maps versus transactional store",
+      "last_state_point": "Maps volatile; best-effort audit/event can fail after mutation",
+      "recovery_owner": "MemoryService maps versus transactional store",
+      "deterministic_test": "Fail event append fake; compare task and event state",
+      "integration_experiment": "Disposable PostgreSQL WithTx rollback test",
+      "residual_risk": "A memory mutex is not a durable transaction",
+      "validation": "expected_only"
+    },
+    {
+      "id": "task-claim",
+      "boundary": "scheduler and expected UpdatedAt",
+      "last_state_point": "Task version is volatile or DB row depending injected store",
+      "recovery_owner": "scheduler and expected UpdatedAt",
+      "deterministic_test": "Race two claimers on one pending task",
+      "integration_experiment": "Two DB sessions on disposable schema",
+      "residual_risk": "Claim CAS does not reserve whole planning snapshot capacity",
+      "validation": "expected_only"
+    },
+    {
+      "id": "image-pull",
+      "boundary": "agent and Docker daemon",
+      "last_state_point": "Registry request may have side effect/cache; task identity retained",
+      "recovery_owner": "agent and Docker daemon",
+      "deterministic_test": "Fake PullImage failure and repeated attempts",
+      "integration_experiment": "Owned test image/daemon; inspect labels and failed report",
+      "residual_risk": "Pull stream is discarded; do not promise complete error taxonomy",
+      "validation": "expected_only"
+    },
+    {
+      "id": "container-create",
+      "boundary": "Docker external effect and task identity",
+      "last_state_point": "Container may exist before status report; agent owns adoption",
+      "recovery_owner": "Docker external effect and task identity",
+      "deterministic_test": "Lose report then retry same task ID in fake runtime",
+      "integration_experiment": "Create exact task-labeled container and restart owned agent",
+      "residual_risk": "Changing task identity can create duplicate work",
+      "validation": "expected_only"
+    },
+    {
+      "id": "lost-report",
+      "boundary": "agent HTTP retry and control-plane guards",
+      "last_state_point": "Runtime effect may exist with old server status",
+      "recovery_owner": "agent HTTP retry and control-plane guards",
+      "deterministic_test": "Repeat same report; reject mismatched node",
+      "integration_experiment": "Interrupt only owned loopback proxy then restore",
+      "residual_risk": "No exactly-once network delivery",
+      "validation": "expected_only"
+    },
+    {
+      "id": "probe-failure",
+      "boundary": "agent health counters and task state",
+      "last_state_point": "Container can remain running while unhealthy is reported",
+      "recovery_owner": "agent health counters and task state",
+      "deterministic_test": "Clock-controlled threshold fixture",
+      "integration_experiment": "Owned app returns failure status; capture report",
+      "residual_risk": "Running status and rollout availability are distinct from probe health",
+      "validation": "expected_only"
+    },
+    {
+      "id": "agent-restart",
+      "boundary": "local agent maps versus Docker labels",
+      "last_state_point": "Docker objects survive agent memory; server identity still required",
+      "recovery_owner": "local agent maps versus Docker labels",
+      "deterministic_test": "Adoption and unassigned cleanup fixtures",
+      "integration_experiment": "Restart owned agent, inspect same container identity",
+      "residual_risk": "Expired credential/re-registration is not server durability",
+      "validation": "expected_only"
+    },
+    {
+      "id": "controller-restart",
+      "boundary": "new controller on same MemoryService",
+      "last_state_point": "Preserved object maps, not a new process",
+      "recovery_owner": "new controller on same MemoryService",
+      "deterministic_test": "Chaos rollout subtest with reused cp",
+      "integration_experiment": "Restart only controller fixture, not host process",
+      "residual_risk": "Cannot establish process durability",
+      "validation": "expected_only"
+    },
+    {
+      "id": "server-restart",
+      "boundary": "composition root NewMemoryService",
+      "last_state_point": "All desired records and credential hashes volatile",
+      "recovery_owner": "composition root NewMemoryService",
+      "deterministic_test": "Instantiate second independent MemoryService",
+      "integration_experiment": "Kill/relaunch own server and list namespaces/services",
+      "residual_risk": "Containers may outlive ownership; backup of unused DB cannot restore them",
+      "validation": "expected_only"
+    },
+    {
+      "id": "daemon-outage",
+      "boundary": "agent Docker client and host daemon",
+      "last_state_point": "Server intent can survive only within live memory process",
+      "recovery_owner": "agent Docker client and host daemon",
+      "deterministic_test": "Fake inspect/start errors and retries",
+      "integration_experiment": "Use separate disposable daemon, never stop shared host daemon",
+      "residual_risk": "No remote runtime recovery proof from fake errors",
+      "validation": "expected_only"
+    },
+    {
+      "id": "heartbeat-timeout",
+      "boundary": "node monitor and control plane",
+      "last_state_point": "Replacement task may coexist with isolated old container",
+      "recovery_owner": "node monitor and control plane",
+      "deterministic_test": "Inject clock and offline transition",
+      "integration_experiment": "Isolate only owned agent/server connection; observe old endpoint",
+      "residual_risk": "No worker fencing; single-writer workloads unsafe to assume exclusivity",
+      "validation": "expected_only"
+    },
+    {
+      "id": "network-partition",
+      "boundary": "agent retry and worker workload",
+      "last_state_point": "Old runtime side effect may continue; central monitor only changes records",
+      "recovery_owner": "agent retry and worker workload",
+      "deterministic_test": "Fake heartbeat failures and late reports",
+      "integration_experiment": "Local proxy partition with explicit bounded recovery",
+      "residual_risk": "Late cleanup after reconnection is not instantaneous fencing",
+      "validation": "expected_only"
+    },
+    {
+      "id": "duplicate-controller",
+      "boundary": "scheduler optimistic claim and leadership package",
+      "last_state_point": "Default binary has no leadership wrapper; memory servers independent",
+      "recovery_owner": "scheduler optimistic claim and leadership package",
+      "deterministic_test": "Run competing fixture schedulers; inspect task/events",
+      "integration_experiment": "Actual advisory lock session test, cancellation and handover",
+      "residual_risk": "Leadership cannot merge independent MemoryService maps",
+      "validation": "expected_only"
+    },
+    {
+      "id": "gitops-failure",
+      "boundary": "sequential manifest apply and ownership list",
+      "last_state_point": "Earlier files can be applied before later failure; LastError volatile",
+      "recovery_owner": "sequential manifest apply and ownership list",
+      "deterministic_test": "Valid first YAML plus invalid second",
+      "integration_experiment": "Owned local Git fixture and explicit sync",
+      "residual_risk": "No atomic batch; failed ownership bookkeeping affects later prune",
+      "validation": "expected_only"
+    },
+    {
+      "id": "scheduled-job-misfire",
+      "boundary": "cron controller and job attempts",
+      "last_state_point": "LastScheduleAt/ActiveJobIDs volatile; immediate retry tasks",
+      "recovery_owner": "cron controller and job attempts",
+      "deterministic_test": "Injected clock, timezone and concurrency fixtures",
+      "integration_experiment": "Owned loopback server and finite local job",
+      "residual_risk": "No exactly-once, durable scheduling or system-cron equivalence",
+      "validation": "expected_only"
+    },
+    {
+      "id": "migration-interruption",
+      "boundary": "manager, SQL transaction and migration records",
+      "last_state_point": "DB state durability follows migration mechanism, not server maps",
+      "recovery_owner": "manager, SQL transaction and migration records",
+      "deterministic_test": "Inspect guarded down and failed migration fixtures",
+      "integration_experiment": "Disposable DB only; status before/after controlled interruption",
+      "residual_risk": "All sixteen migrations require their own recorded run",
+      "validation": "expected_only"
+    }
+  ],
+  "executed_by_this_document": false
+}

@@ -17,11 +17,13 @@ def write_page(path: Path, metadata: dict, content: str = '') -> None:
 
 
 def build_book(source, publication, render) -> dict:
-    from book_catalog import agent_publication, tracking_publication, chapter_title, local_references, section
+    from book_catalog import agent_publication, tracking_publication, orch_publication, chapter_title, local_references, section
     paths, metadata = source['paths'], source['metadata']
     output, files = source['output'], source['files']
     book_id = source['id']
     book_url = f'/books/{book_id}/'
+    if book_id == 'inside-orch' and orch_publication.assemble() != (source['editions'] / (source['filename'] + '.md')).read_text():
+        raise ValueError('Inside orch editions are out of date. Rebuild the canonical publication first.')
     if book_id == 'logbranik':
         expected = '\n\n'.join(path.read_text() for path in paths)
         if expected != (source['editions'] / 'nginx-log-security.md').read_text():
@@ -54,6 +56,19 @@ def build_book(source, publication, render) -> dict:
 
     # Publish only referenced companion documents/files, preserving their links.
     # Canonical package directories remain excluded from Jekyll's static copy.
+    if book_id == 'inside-orch':
+        for path in orch_publication.companions():
+            rel = path.relative_to(source['source'])
+            if path.suffix == '.md':
+                target = output / 'companion' / rel.with_suffix('.html')
+                target.parent.mkdir(parents=True, exist_ok=True)
+                write_page(target, dict(layout='book-license', title=f'{orch_publication.title(path)} · {metadata["title"]}',
+                    description=f'Companion material for {metadata["title"]}.', book_id=book_id,
+                    noindex=True, sitemap=False, permalink=f'{book_url}companion/{rel.with_suffix(".html")}'), render(source, path))
+            else:
+                target = files / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
     if book_id in {'agentplane', 'secret-contract-operator', 'universal-tracking'}:
         pending = paths + [source['source'] / 'README.md']
         if book_id == 'secret-contract-operator':
@@ -133,11 +148,12 @@ def main() -> None:
     if local_python.exists() and Path(sys.prefix).resolve() != (ROOT / '.venv').resolve():
         import os
         os.execv(str(local_python), [str(local_python), str(Path(__file__).resolve())])
-    from book_catalog import catalog, publication, render, secret_publication
+    from book_catalog import catalog, publication, render, secret_publication, orch_publication
     print('Building complete book editions and reading pages…', flush=True)
     publication.epub()
     publication.pdf()
     secret_publication.build()
+    orch_publication.build()
     books = [build_book(source, publication, render) for source in catalog()]
     data = ROOT / '_data'
     data.mkdir(exist_ok=True)

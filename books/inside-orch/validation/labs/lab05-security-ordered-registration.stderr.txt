@@ -1,0 +1,12 @@
+panic: httptest: failed to listen on a port: listen tcp6 [::1]:0: socket: operation not permitted
+
+goroutine 1 [running]:
+net/http/httptest.newLocalListener()
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:71 +0xda
+net/http/httptest.NewUnstartedServer(...)
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:119
+net/http/httptest.NewServer({0x9694c0, 0xc000264d00})
+	/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/src/net/http/httptest/server.go:106 +0x25
+main.main()
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:87 +0x2b65
+exit status 2

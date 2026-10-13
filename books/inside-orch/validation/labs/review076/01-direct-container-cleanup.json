@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "container_id": "00df469e74979320019119b19a254d823d72a3e8af2694a98ad61c027574cbc5",
+  "command": [
+    "docker",
+    "inspect",
+    "00df469e74979320019119b19a254d823d72a3e8af2694a98ad61c027574cbc5"
+  ],
+  "started_at_utc": "2026-10-13T01:40:26.641699+00:00",
+  "finished_at_utc": "2026-10-13T01:40:26.667937+00:00",
+  "exit_code": 1,
+  "absent": true,
+  "stderr": "error: no such object: 00df469e74979320019119b19a254d823d72a3e8af2694a98ad61c027574cbc5\n"
+}

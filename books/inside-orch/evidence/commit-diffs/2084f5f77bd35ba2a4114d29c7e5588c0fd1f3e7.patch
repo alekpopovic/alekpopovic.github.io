@@ -1,0 +1,829 @@
+commit 2084f5f77bd35ba2a4114d29c7e5588c0fd1f3e7
+Date: 2026-06-11T20:27:18+02:00
+Subject: Implement safe service deletion
+
+
+---
+ docs/API.md                             |   2 +
+ docs/ARCHITECTURE.md                    |   2 +
+ internal/agent/agent.go                 |  33 ++++++++++
+ internal/agent/agent_test.go            |  34 ++++++++++
+ internal/controlplane/agent_test.go     | 109 ++++++++++++++++++++++++++++++++
+ internal/controlplane/controlplane.go   |  80 +++++++++++++++++++++--
+ internal/events/events.go               |  43 +++++++------
+ internal/reconciler/reconciler.go       |  66 +++++++++++++++++--
+ internal/reconciler/reconciler_test.go  |  69 ++++++++++++++++++--
+ internal/store/postgres.go              |  34 +++++++++-
+ internal/store/store.go                 |   1 +
+ migrations/000001_initial_schema.up.sql |   1 +
+ pkg/types/types.go                      |  19 ++++--
+ 13 files changed, 448 insertions(+), 45 deletions(-)
+
+diff --git a/docs/API.md b/docs/API.md
+index 890d2c2..93a1feb 100644
+--- a/docs/API.md
++++ b/docs/API.md
+@@ -72,6 +72,8 @@ curl http://localhost:8080/v1/services/{service_id}
+ curl -X DELETE http://localhost:8080/v1/services/{service_id}
+ ```
+ 
++Delete is safe by default: it marks the service `deleting`, asks agents to stop and remove task containers, and only moves the service to `deleted` after all tasks report `removed`.
++
+ Scale and rollout operations:
+ 
+ ```sh
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index c765290..74e2ba2 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -40,6 +40,8 @@ See [ROLLOUTS.md](ROLLOUTS.md) for the rolling update state machine.
+ 
+ A service is the durable desired-state object submitted by an operator. Its spec defines the image, replica count, environment, secret references, ports, resource requests and limits, restart policy, health check, placement constraints, and deployment version.
+ 
++Services move through `active`, `deleting`, and `deleted` states. Delete requests are soft by default: the control plane marks the service `deleting`, the reconciler sets task desired status to `stopped`, agents stop and remove containers, and the service becomes `deleted` only after tasks report `removed`.
++
+ When a service is created or updated, the control plane records a deployment version and the scheduler turns the service's replica intent into task assignments. Each task is an immutable unit of work for a specific service version and target node. Tasks carry both desired status and observed status so the control plane can reason about convergence without treating Docker as the source of truth.
+ 
+ On each worker, the agent reconciler reads assigned tasks and asks the runtime adapter to create, update, stop, or remove the corresponding Docker container. The container ID is observed runtime state attached back to the task. Docker operations must be idempotent: repeating reconciliation should converge the same task to the same container state without creating duplicates.
+diff --git a/internal/agent/agent.go b/internal/agent/agent.go
+index fff2e37..c52f104 100644
+--- a/internal/agent/agent.go
++++ b/internal/agent/agent.go
+@@ -135,6 +135,9 @@ func (r *Runner) reconcileAssignedTasks(ctx context.Context, nodeID types.NodeID
+ 
+ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned api.AgentTask) error {
+ 	task := assigned.Task
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return r.removeAssignedTask(ctx, nodeID, task)
++	}
+ 	if task.DesiredStatus != types.TaskRunning {
+ 		return nil
+ 	}
+@@ -194,6 +197,36 @@ func (r *Runner) ensureTask(ctx context.Context, nodeID types.NodeID, assigned a
+ 	return r.checkTaskHealth(ctx, nodeID, assigned, orchdocker.ContainerStatus{ID: containerID, Running: true})
+ }
+ 
++func (r *Runner) removeAssignedTask(ctx context.Context, nodeID types.NodeID, task types.Task) error {
++	containerID := orchdocker.ContainerID(task.ContainerID)
++	if containerID == "" {
++		containers, err := r.runtime.ListManagedContainers(ctx, map[string]string{
++			orchdocker.NodeIDLabel: string(nodeID),
++			orchdocker.TaskIDLabel: string(task.ID),
++		})
++		if err != nil {
++			return err
++		}
++		if len(containers) > 0 {
++			containerID = containers[0].ID
++		}
++	}
++	if containerID != "" {
++		if err := r.runtime.StopContainer(ctx, containerID, 10*time.Second); err != nil {
++			return err
++		}
++		if err := r.runtime.RemoveContainer(ctx, containerID, true); err != nil {
++			return err
++		}
++	}
++	_, err := r.client.ReportTaskStatus(ctx, task.ID, api.AgentTaskStatusRequest{
++		NodeID:      nodeID,
++		Status:      types.TaskRemoved,
++		ContainerID: string(containerID),
++	})
++	return err
++}
++
+ func (r *Runner) checkTaskHealth(ctx context.Context, nodeID types.NodeID, assigned api.AgentTask, container orchdocker.ContainerStatus) error {
+ 	task := assigned.Task
+ 	check := assigned.Healthcheck
+diff --git a/internal/agent/agent_test.go b/internal/agent/agent_test.go
+index 2749d5c..a7ac4d0 100644
+--- a/internal/agent/agent_test.go
++++ b/internal/agent/agent_test.go
+@@ -78,6 +78,40 @@ func TestReconcileRemovesUnassignedManagedContainers(t *testing.T) {
+ 	}
+ }
+ 
++func TestReconcileRemovesAssignedStoppedTask(t *testing.T) {
++	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
++	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
++	client := &fakeAgentClient{
++		tasks: []api.AgentTask{{
++			Task: types.Task{
++				ID:            taskID,
++				ServiceID:     types.ServiceID("00000000-0000-4000-8000-000000000003"),
++				NodeID:        nodeID,
++				ContainerID:   "container-1",
++				DesiredStatus: types.TaskStopped,
++				ActualStatus:  types.TaskRunning,
++				Image:         "nginx:1.27",
++				Version:       1,
++			},
++		}},
++	}
++	runtime := &fakeRuntime{}
++	runner := NewRunner(config.AgentConfig{}, client, slog.New(slog.NewTextHandler(io.Discard, nil))).WithRuntime(runtime)
++
++	if err := runner.reconcileAssignedTasks(context.Background(), nodeID); err != nil {
++		t.Fatalf("reconcile assigned tasks: %v", err)
++	}
++
++	wantRuntimeCalls := []string{"stop:container-1", "remove:container-1", "list"}
++	if !equalStrings(runtime.calls, wantRuntimeCalls) {
++		t.Fatalf("expected runtime calls %#v, got %#v", wantRuntimeCalls, runtime.calls)
++	}
++	wantStatuses := []types.TaskStatus{types.TaskRemoved}
++	if !equalStatuses(client.statuses, wantStatuses) {
++		t.Fatalf("expected statuses %#v, got %#v", wantStatuses, client.statuses)
++	}
++}
++
+ func TestReconcileAssignedTaskReportsHealthAfterThresholds(t *testing.T) {
+ 	nodeID := types.NodeID("00000000-0000-4000-8000-000000000001")
+ 	taskID := types.TaskID("00000000-0000-4000-8000-000000000002")
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index c4aa47b..9f02679 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -177,6 +177,92 @@ func TestTaskAssignmentReconcilesWhenNodeRegistersAfterService(t *testing.T) {
+ 	}
+ }
+ 
++func TestDeleteServiceWithRunningTasksMarksDeleting(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, created := createServiceWithAssignedTask(t, ctx, service)
++
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete service: %v", err)
++	}
++	deleting, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if deleting.Status != types.ServiceDeleting {
++		t.Fatalf("expected deleting service, got %q", deleting.Status)
++	}
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if len(tasks) != 1 || tasks[0].Task.DesiredStatus != types.TaskStopped {
++		t.Fatalf("expected stopped task directive, got %#v", tasks)
++	}
++}
++
++func TestDeleteServiceIsIdempotent(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	_, created := createServiceWithAssignedTask(t, ctx, service)
++
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("first delete service: %v", err)
++	}
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("second delete service: %v", err)
++	}
++	deleting, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get service: %v", err)
++	}
++	if deleting.Status != types.ServiceDeleting {
++		t.Fatalf("expected deleting service, got %q", deleting.Status)
++	}
++}
++
++func TestDeleteServiceWaitsWhenAgentOfflineAndFinalizesAfterReturn(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, created := createServiceWithAssignedTask(t, ctx, service)
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if _, err := service.HeartbeatNode(ctx, NodeHeartbeat{NodeID: registered.Node.ID, Shutdown: true}); err != nil {
++		t.Fatalf("shutdown heartbeat: %v", err)
++	}
++	if err := service.DeleteService(ctx, created.ID); err != nil {
++		t.Fatalf("delete service: %v", err)
++	}
++	deleting, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get deleting service: %v", err)
++	}
++	if deleting.Status != types.ServiceDeleting {
++		t.Fatalf("expected service to wait while agent is offline, got %q", deleting.Status)
++	}
++
++	if _, err := service.UncordonNode(ctx, registered.Node.ID); err != nil {
++		t.Fatalf("uncordon node: %v", err)
++	}
++	if _, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:      tasks[0].Task.ID,
++		NodeID:      registered.Node.ID,
++		Status:      types.TaskRemoved,
++		ContainerID: "container-1",
++	}); err != nil {
++		t.Fatalf("report task removed: %v", err)
++	}
++	deleted, err := service.GetService(ctx, created.ID)
++	if err != nil {
++		t.Fatalf("get deleted service: %v", err)
++	}
++	if deleted.Status != types.ServiceDeleted {
++		t.Fatalf("expected deleted service after task removal, got %q", deleted.Status)
++	}
++}
++
+ func TestRolloutStartsAsyncDeployment(t *testing.T) {
+ 	service := NewMemoryService()
+ 	ctx := context.Background()
+@@ -291,3 +377,26 @@ func TestUnhealthyRestartableTaskIsMarkedFailed(t *testing.T) {
+ 		t.Fatalf("expected failed task to have finished timestamp")
+ 	}
+ }
++
++func createServiceWithAssignedTask(t *testing.T, ctx context.Context, service *MemoryService) (NodeCommand, types.Service) {
++	t.Helper()
++	registered, err := service.RegisterNode(ctx, NodeRegistration{
++		Name:             "node-a",
++		AdvertiseAddress: "10.0.0.10",
++		Capacity:         types.Resources{CPU: 4000, Memory: 1024},
++		Allocatable:      types.Resources{CPU: 3000, Memory: 512},
++	})
++	if err != nil {
++		t.Fatalf("register node: %v", err)
++	}
++	created, err := service.CreateService(ctx, types.ServiceSpec{
++		Name:                 "api",
++		Image:                "ghcr.io/example/api:1.0.0",
++		Replicas:             1,
++		ResourceRequirements: types.ResourceRequirements{},
++	})
++	if err != nil {
++		t.Fatalf("create service: %v", err)
++	}
++	return registered, created
++}
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 8a1e2ef..1c9f0ef 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -227,7 +227,7 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		if task.NodeID != nodeID {
+ 			continue
+ 		}
+-		if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
++		if task.DesiredStatus == types.TaskRemoved || task.ActualStatus == types.TaskRemoved {
+ 			continue
+ 		}
+ 		service := s.services[task.ServiceID]
+@@ -303,6 +303,9 @@ func (s *MemoryService) ReportTaskStatus(ctx context.Context, report TaskStatusR
+ 		task.FinishedAt = task.UpdatedAt
+ 	}
+ 	s.tasks[task.ID] = task
++	if status == types.TaskRemoved {
++		s.maybeFinalizeServiceDeletionLocked(task.ServiceID, task.UpdatedAt)
++	}
+ 	s.appendEventLocked(eventType, severity, "agent", message, "task", string(task.ID), task.UpdatedAt)
+ 	return task, nil
+ }
+@@ -373,6 +376,7 @@ func (s *MemoryService) CreateService(ctx context.Context, spec types.ServiceSpe
+ 	service := types.Service{
+ 		ID:                types.ServiceID(newUUID()),
+ 		Spec:              spec,
++		Status:            types.ServiceActive,
+ 		DeploymentVersion: 1,
+ 		CreatedAt:         now,
+ 		UpdatedAt:         now,
+@@ -428,16 +432,28 @@ func (s *MemoryService) DeleteService(ctx context.Context, id types.ServiceID) e
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+-	if _, ok := s.services[id]; !ok {
++	service, ok := s.services[id]
++	if !ok {
+ 		return store.ErrNotFound
+ 	}
+-	delete(s.services, id)
++	if service.Status == types.ServiceDeleted || service.Status == types.ServiceDeleting {
++		return nil
++	}
++	now := s.now()
++	service.Status = types.ServiceDeleting
++	service.UpdatedAt = now
++	s.services[id] = service
+ 	for taskID, task := range s.tasks {
+ 		if task.ServiceID == id {
+-			delete(s.tasks, taskID)
++			if task.DesiredStatus != types.TaskRemoved && task.ActualStatus != types.TaskRemoved {
++				task.DesiredStatus = types.TaskStopped
++				task.UpdatedAt = now
++				s.tasks[taskID] = task
++			}
+ 		}
+ 	}
+-	s.appendEventLocked(events.TypeServiceDeleted, types.EventInfo, "controlplane", "service deleted", "service", string(id), s.now())
++	s.appendEventLocked(events.TypeServiceDeletionStarted, types.EventInfo, "controlplane", "service deletion requested", "service", string(id), now)
++	s.maybeFinalizeServiceDeletionLocked(id, now)
+ 	return nil
+ }
+ 
+@@ -456,6 +472,9 @@ func (s *MemoryService) ScaleService(ctx context.Context, id types.ServiceID, re
+ 	if !ok {
+ 		return types.Service{}, store.ErrNotFound
+ 	}
++	if service.Status != "" && service.Status != types.ServiceActive {
++		return types.Service{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++	}
+ 	service.Spec.Replicas = replicas
+ 	service.UpdatedAt = s.now()
+ 	s.services[id] = service
+@@ -489,6 +508,9 @@ func (s *MemoryService) RolloutService(ctx context.Context, id types.ServiceID,
+ 	if !ok {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
++	if service.Status != "" && service.Status != types.ServiceActive {
++		return types.Deployment{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++	}
+ 	now := s.now()
+ 	fromVersion := service.DeploymentVersion
+ 	service.Spec.Image = spec.Image
+@@ -565,6 +587,9 @@ func (s *MemoryService) RollbackService(ctx context.Context, id types.ServiceID)
+ 	if !ok {
+ 		return types.Deployment{}, store.ErrNotFound
+ 	}
++	if service.Status != "" && service.Status != types.ServiceActive {
++		return types.Deployment{}, fmt.Errorf("%w: service is %s", store.ErrInvalidState, service.Status)
++	}
+ 	if active := s.activeRollbackLocked(id); active.ID != "" {
+ 		return active, nil
+ 	}
+@@ -694,6 +719,29 @@ func (s *MemoryService) ListTasksByService(ctx context.Context, serviceID types.
+ 	return s.ListTasks(ctx, TaskFilter{ServiceID: serviceID})
+ }
+ 
++func (s *MemoryService) UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error) {
++	if err := ctx.Err(); err != nil {
++		return types.Service{}, err
++	}
++	s.mu.Lock()
++	defer s.mu.Unlock()
++
++	service, ok := s.services[id]
++	if !ok {
++		return types.Service{}, store.ErrNotFound
++	}
++	if !expectedUpdatedAt.IsZero() && !service.UpdatedAt.Equal(expectedUpdatedAt) {
++		return types.Service{}, store.ErrConflict
++	}
++	service.Status = status
++	service.UpdatedAt = s.now()
++	s.services[id] = service
++	if status == types.ServiceDeleted {
++		s.appendEventLocked(events.TypeServiceDeleted, types.EventInfo, "controlplane", "service deleted", "service", string(id), service.UpdatedAt)
++	}
++	return service, nil
++}
++
+ func (s *MemoryService) ListDeploymentsByStatus(ctx context.Context, status types.DeploymentStatus) ([]types.Deployment, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+@@ -882,6 +930,9 @@ func (s *MemoryService) reconcileAllServicesLocked(timestamp time.Time) {
+ }
+ 
+ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, timestamp time.Time) {
++	if service.Status != "" && service.Status != types.ServiceActive {
++		return
++	}
+ 	if s.hasActiveDeploymentLocked(service.ID) {
+ 		return
+ 	}
+@@ -955,6 +1006,25 @@ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) boo
+ 	return false
+ }
+ 
++func (s *MemoryService) maybeFinalizeServiceDeletionLocked(serviceID types.ServiceID, timestamp time.Time) {
++	service, ok := s.services[serviceID]
++	if !ok || service.Status != types.ServiceDeleting {
++		return
++	}
++	for _, task := range s.tasks {
++		if task.ServiceID != serviceID {
++			continue
++		}
++		if task.ActualStatus != types.TaskRemoved {
++			return
++		}
++	}
++	service.Status = types.ServiceDeleted
++	service.UpdatedAt = timestamp
++	s.services[serviceID] = service
++	s.appendEventLocked(events.TypeServiceDeleted, types.EventInfo, "controlplane", "service deleted", "service", string(serviceID), timestamp)
++}
++
+ func (s *MemoryService) activeRollbackLocked(serviceID types.ServiceID) types.Deployment {
+ 	var latest types.Deployment
+ 	for _, deployment := range s.deployments {
+diff --git a/internal/events/events.go b/internal/events/events.go
+index cc95263..37b6eb1 100644
+--- a/internal/events/events.go
++++ b/internal/events/events.go
+@@ -9,27 +9,28 @@ import (
+ )
+ 
+ const (
+-	TypeNodeRegistered        = "node.registered"
+-	TypeNodeHeartbeat         = "node.heartbeat"
+-	TypeNodeShutdown          = "node.shutdown"
+-	TypeNodeStatusChanged     = "node.status.changed"
+-	TypeServiceCreated        = "service.created"
+-	TypeServiceUpdated        = "service.updated"
+-	TypeServiceDeleted        = "service.deleted"
+-	TypeServiceScaled         = "service.scaled"
+-	TypeRolloutStarted        = "service.rollout.started"
+-	TypeRollbackStarted       = "service.rollback.started"
+-	TypeTaskAssigned          = "task.assigned"
+-	TypeTaskStatus            = "task.status"
+-	TypeTaskHealthFailed      = "task.health.failed"
+-	TypeTaskHealthUnhealthy   = "task.health.unhealthy"
+-	TypeReconcilerTaskCreated = "reconciler.task.created"
+-	TypeReconcilerTaskStopped = "reconciler.task.stopped"
+-	TypeRolloutManagerStarted = "rollout.started"
+-	TypeRolloutAdvanced       = "rollout.advanced"
+-	TypeRolloutTaskCreated    = "rollout.task.created"
+-	TypeRolloutTaskStopped    = "rollout.task.stopped"
+-	TypeRolloutStatusChanged  = "rollout.status.changed"
++	TypeNodeRegistered         = "node.registered"
++	TypeNodeHeartbeat          = "node.heartbeat"
++	TypeNodeShutdown           = "node.shutdown"
++	TypeNodeStatusChanged      = "node.status.changed"
++	TypeServiceCreated         = "service.created"
++	TypeServiceUpdated         = "service.updated"
++	TypeServiceDeleted         = "service.deleted"
++	TypeServiceDeletionStarted = "service.deletion.started"
++	TypeServiceScaled          = "service.scaled"
++	TypeRolloutStarted         = "service.rollout.started"
++	TypeRollbackStarted        = "service.rollback.started"
++	TypeTaskAssigned           = "task.assigned"
++	TypeTaskStatus             = "task.status"
++	TypeTaskHealthFailed       = "task.health.failed"
++	TypeTaskHealthUnhealthy    = "task.health.unhealthy"
++	TypeReconcilerTaskCreated  = "reconciler.task.created"
++	TypeReconcilerTaskStopped  = "reconciler.task.stopped"
++	TypeRolloutManagerStarted  = "rollout.started"
++	TypeRolloutAdvanced        = "rollout.advanced"
++	TypeRolloutTaskCreated     = "rollout.task.created"
++	TypeRolloutTaskStopped     = "rollout.task.stopped"
++	TypeRolloutStatusChanged   = "rollout.status.changed"
+ )
+ 
+ type Event = types.Event
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index bfb3461..8a2fd4f 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -19,6 +19,7 @@ type Store interface {
+ 	ListTasksByStatus(ctx context.Context, status types.TaskStatus) ([]types.Task, error)
+ 	CreateTask(ctx context.Context, task types.Task) (types.Task, error)
+ 	StopTask(ctx context.Context, id types.TaskID, expectedUpdatedAt time.Time) (types.Task, error)
++	UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error)
+ 	AppendEvent(ctx context.Context, event types.Event) (types.Event, error)
+ }
+ 
+@@ -166,14 +167,30 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {
+ 		return services[i].ID < services[j].ID
+ 	})
+ 
+-	activeServices := make(map[types.ServiceID]types.Service, len(services))
++	knownServices := make(map[types.ServiceID]types.Service, len(services))
+ 	result := Result{}
+ 	for _, service := range services {
+ 		if err := ctx.Err(); err != nil {
+ 			return result, err
+ 		}
+-		activeServices[service.ID] = service
+-		serviceResult, err := r.reconcileService(ctx, service)
++		if service.Status == "" {
++			service.Status = types.ServiceActive
++		}
++		if service.Status != types.ServiceDeleted {
++			knownServices[service.ID] = service
++		}
++		var serviceResult Result
++		var err error
++		switch service.Status {
++		case types.ServiceActive:
++			serviceResult, err = r.reconcileService(ctx, service)
++		case types.ServiceDeleting:
++			serviceResult, err = r.reconcileDeletingService(ctx, service)
++		case types.ServiceDeleted:
++			continue
++		default:
++			return result, fmt.Errorf("%w: service %s has invalid status %q", store.ErrInvalidState, service.ID, service.Status)
++		}
+ 		result.CreatedTasks += serviceResult.CreatedTasks
+ 		result.StoppedTasks += serviceResult.StoppedTasks
+ 		if err != nil {
+@@ -181,7 +198,7 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {
+ 		}
+ 	}
+ 
+-	deletedResult, err := r.reconcileDeletedServices(ctx, activeServices)
++	deletedResult, err := r.reconcileDeletedServices(ctx, knownServices)
+ 	result.CreatedTasks += deletedResult.CreatedTasks
+ 	result.StoppedTasks += deletedResult.StoppedTasks
+ 	if err != nil {
+@@ -190,6 +207,47 @@ func (r *Reconciler) reconcile(ctx context.Context) (Result, error) {
+ 	return result, nil
+ }
+ 
++func (r *Reconciler) reconcileDeletingService(ctx context.Context, service types.Service) (Result, error) {
++	tasks, err := r.store.ListTasksByService(ctx, service.ID)
++	if err != nil {
++		return Result{}, fmt.Errorf("list tasks for deleting service %s: %w", service.ID, err)
++	}
++	result := Result{}
++	allRemoved := true
++	for _, task := range sortedTasks(tasks) {
++		if err := ctx.Err(); err != nil {
++			return result, err
++		}
++		if task.ActualStatus == types.TaskRemoved {
++			continue
++		}
++		allRemoved = false
++		if err := r.stopTask(ctx, task, "service is deleting"); err != nil {
++			return result, err
++		}
++		result.StoppedTasks++
++	}
++	if allRemoved {
++		updated, err := r.store.UpdateServiceStatus(ctx, service.ID, types.ServiceDeleted, service.UpdatedAt)
++		if err != nil {
++			if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
++				return result, nil
++			}
++			return result, fmt.Errorf("mark service %s deleted: %w", service.ID, err)
++		}
++		_ = events.Emit(ctx, r.store, types.Event{
++			Type:              events.TypeServiceDeleted,
++			Severity:          types.EventInfo,
++			Source:            "reconciler",
++			Message:           "service deletion completed",
++			RelatedObjectType: "service",
++			RelatedObjectID:   string(updated.ID),
++			Timestamp:         r.now(),
++		}, events.WithLogger(r.logger))
++	}
++	return result, nil
++}
++
+ func (r *Reconciler) reconcileService(ctx context.Context, service types.Service) (Result, error) {
+ 	tasks, err := r.store.ListTasksByService(ctx, service.ID)
+ 	if err != nil {
+diff --git a/internal/reconciler/reconciler_test.go b/internal/reconciler/reconciler_test.go
+index 5941005..d997e79 100644
+--- a/internal/reconciler/reconciler_test.go
++++ b/internal/reconciler/reconciler_test.go
+@@ -166,14 +166,49 @@ func TestReconcileOnceIgnoresEventEmissionFailure(t *testing.T) {
+ 	}
+ }
+ 
++func TestReconcileDeletingServiceWithRunningTasks(t *testing.T) {
++	store := newFakeStore(
++		[]types.Service{serviceFixtureWithStatus("svc", 1, 1, types.RestartPolicy{}, types.ServiceDeleting)},
++		[]types.Task{taskFixture("task-a", "svc", 1, types.TaskRunning, types.TaskRunning)},
++	)
++
++	if err := New(store).ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("reconcile once: %v", err)
++	}
++	if !taskIDsEqual(store.stopped, []types.TaskID{"task-a"}) {
++		t.Fatalf("expected stop directive for task-a, got %#v", store.stopped)
++	}
++	if store.services["svc"].Status != types.ServiceDeleting {
++		t.Fatalf("expected service to remain deleting while task is not removed, got %q", store.services["svc"].Status)
++	}
++}
++
++func TestReconcileDeletingServiceFinalCleanupAfterAgentReturns(t *testing.T) {
++	store := newFakeStore(
++		[]types.Service{serviceFixtureWithStatus("svc", 1, 1, types.RestartPolicy{}, types.ServiceDeleting)},
++		[]types.Task{taskFixture("task-a", "svc", 1, types.TaskStopped, types.TaskRemoved)},
++	)
++
++	if err := New(store).ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("reconcile once: %v", err)
++	}
++	if store.services["svc"].Status != types.ServiceDeleted {
++		t.Fatalf("expected service deleted after all tasks removed, got %q", store.services["svc"].Status)
++	}
++	if got := len(store.serviceStatusUpdates); got != 1 {
++		t.Fatalf("expected one service status update, got %d", got)
++	}
++}
++
+ type fakeStore struct {
+-	services   map[types.ServiceID]types.Service
+-	tasks      map[types.TaskID]types.Task
+-	created    []types.Task
+-	stopped    []types.TaskID
+-	events     []types.Event
+-	nextID     int
+-	failEvents bool
++	services             map[types.ServiceID]types.Service
++	tasks                map[types.TaskID]types.Task
++	created              []types.Task
++	stopped              []types.TaskID
++	serviceStatusUpdates []types.ServiceStatus
++	events               []types.Event
++	nextID               int
++	failEvents           bool
+ }
+ 
+ func newFakeStore(services []types.Service, tasks []types.Task) *fakeStore {
+@@ -231,6 +266,9 @@ func (s *fakeStore) CreateTask(_ context.Context, task types.Task) (types.Task,
+ 
+ func (s *fakeStore) StopTask(_ context.Context, id types.TaskID, _ time.Time) (types.Task, error) {
+ 	task := s.tasks[id]
++	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
++		return task, nil
++	}
+ 	task.DesiredStatus = types.TaskStopped
+ 	task.UpdatedAt = time.Now().UTC()
+ 	s.tasks[id] = task
+@@ -238,6 +276,18 @@ func (s *fakeStore) StopTask(_ context.Context, id types.TaskID, _ time.Time) (t
+ 	return task, nil
+ }
+ 
++func (s *fakeStore) UpdateServiceStatus(_ context.Context, id types.ServiceID, status types.ServiceStatus, _ time.Time) (types.Service, error) {
++	service, ok := s.services[id]
++	if !ok {
++		return types.Service{}, fmt.Errorf("service not found")
++	}
++	service.Status = status
++	service.UpdatedAt = time.Now().UTC()
++	s.services[id] = service
++	s.serviceStatusUpdates = append(s.serviceStatusUpdates, status)
++	return service, nil
++}
++
+ func (s *fakeStore) AppendEvent(_ context.Context, event types.Event) (types.Event, error) {
+ 	if s.failEvents {
+ 		return types.Event{}, errFakeEvent
+@@ -278,6 +328,10 @@ func (l fakeLease) Release(context.Context) error {
+ }
+ 
+ func serviceFixture(id types.ServiceID, replicas int, version int64, policy types.RestartPolicy) types.Service {
++	return serviceFixtureWithStatus(id, replicas, version, policy, types.ServiceActive)
++}
++
++func serviceFixtureWithStatus(id types.ServiceID, replicas int, version int64, policy types.RestartPolicy, status types.ServiceStatus) types.Service {
+ 	return types.Service{
+ 		ID: id,
+ 		Spec: types.ServiceSpec{
+@@ -286,6 +340,7 @@ func serviceFixture(id types.ServiceID, replicas int, version int64, policy type
+ 			Replicas:      replicas,
+ 			RestartPolicy: policy,
+ 		},
++		Status:            status,
+ 		DeploymentVersion: version,
+ 	}
+ }
+diff --git a/internal/store/postgres.go b/internal/store/postgres.go
+index f1ed6d9..c387e0b 100644
+--- a/internal/store/postgres.go
++++ b/internal/store/postgres.go
+@@ -250,6 +250,30 @@ func (s *PostgresStore) UpdateService(ctx context.Context, id types.ServiceID, s
+ 	return service, nil
+ }
+ 
++func (s *PostgresStore) UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error) {
++	row := s.pool.QueryRow(ctx, `
++		UPDATE services
++		SET status = $2,
++			updated_at = timezone('utc', now()),
++			version = version + 1
++		WHERE id = $1 AND updated_at = $3
++		RETURNING id, name, image, replicas, env, secret_refs, ports,
++			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			status, deployment_version, created_at, updated_at`,
++		string(id),
++		string(status),
++		expectedUpdatedAt.UTC(),
++	)
++	service, err := scanService(row)
++	if err != nil {
++		if errors.Is(err, pgx.ErrNoRows) {
++			return types.Service{}, ErrConflict
++		}
++		return types.Service{}, mapPostgresError(err)
++	}
++	return service, nil
++}
++
+ func (s *PostgresStore) CreateTask(ctx context.Context, task types.Task) (types.Task, error) {
+ 	row := s.pool.QueryRow(ctx, `
+ 		INSERT INTO tasks (
+@@ -571,7 +595,7 @@ func insertService(ctx context.Context, tx pgx.Tx, spec types.ServiceSpec) (type
+ 		)
+ 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+ 		RETURNING id, name, image, replicas, env, secret_refs, ports,
+-			resource_requirements, healthcheck, restart_policy, placement_constraints,
++			resource_requirements, healthcheck, restart_policy, placement_constraints, status,
+ 			deployment_version, created_at, updated_at`,
+ 		spec.Name,
+ 		spec.Image,
+@@ -614,7 +638,7 @@ func updateService(ctx context.Context, tx pgx.Tx, id types.ServiceID, spec type
+ 		WHERE id = $1 AND updated_at = $12
+ 		RETURNING id, name, image, replicas, env, secret_refs, ports,
+ 			resource_requirements, healthcheck, restart_policy, placement_constraints,
+-			deployment_version, created_at, updated_at`,
++			status, deployment_version, created_at, updated_at`,
+ 		string(id),
+ 		spec.Name,
+ 		spec.Image,
+@@ -656,7 +680,7 @@ func insertServiceVersion(ctx context.Context, tx pgx.Tx, serviceID types.Servic
+ func serviceSelectSQL() string {
+ 	return `SELECT id, name, image, replicas, env, secret_refs, ports,
+ 		resource_requirements, healthcheck, restart_policy, placement_constraints,
+-		deployment_version, created_at, updated_at FROM services`
++		status, deployment_version, created_at, updated_at FROM services`
+ }
+ 
+ func taskSelectSQL() string {
+@@ -721,6 +745,7 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		&healthcheck,
+ 		&restartPolicy,
+ 		&constraints,
++		&service.Status,
+ 		&service.DeploymentVersion,
+ 		&service.CreatedAt,
+ 		&service.UpdatedAt,
+@@ -729,6 +754,9 @@ func scanService(row pgx.Row) (types.Service, error) {
+ 		return types.Service{}, err
+ 	}
+ 	service.ID = types.ServiceID(id)
++	if service.Status == "" {
++		service.Status = types.ServiceActive
++	}
+ 	if err := decodeServiceJSON(&service.Spec, env, secretRefs, ports, requirements, healthcheck, restartPolicy, constraints); err != nil {
+ 		return types.Service{}, err
+ 	}
+diff --git a/internal/store/store.go b/internal/store/store.go
+index 0b33896..f8d6eb6 100644
+--- a/internal/store/store.go
++++ b/internal/store/store.go
+@@ -20,6 +20,7 @@ type ServiceStore interface {
+ 	GetService(ctx context.Context, id types.ServiceID) (types.Service, error)
+ 	ListServices(ctx context.Context) ([]types.Service, error)
+ 	UpdateService(ctx context.Context, id types.ServiceID, spec types.ServiceSpec, expectedUpdatedAt time.Time) (types.Service, error)
++	UpdateServiceStatus(ctx context.Context, id types.ServiceID, status types.ServiceStatus, expectedUpdatedAt time.Time) (types.Service, error)
+ }
+ 
+ type TaskStore interface {
+diff --git a/migrations/000001_initial_schema.up.sql b/migrations/000001_initial_schema.up.sql
+index 59479f3..58d443a 100644
+--- a/migrations/000001_initial_schema.up.sql
++++ b/migrations/000001_initial_schema.up.sql
+@@ -32,6 +32,7 @@ CREATE TABLE services (
+     healthcheck JSONB,
+     restart_policy JSONB NOT NULL DEFAULT '{}'::jsonb,
+     placement_constraints JSONB NOT NULL DEFAULT '[]'::jsonb,
++    status TEXT NOT NULL DEFAULT 'active',
+     deployment_version BIGINT NOT NULL DEFAULT 1,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
+diff --git a/pkg/types/types.go b/pkg/types/types.go
+index 4337a32..d9168f9 100644
+--- a/pkg/types/types.go
++++ b/pkg/types/types.go
+@@ -70,13 +70,22 @@ func (spec NodeSpec) Validate() error {
+ }
+ 
+ type Service struct {
+-	ID                ServiceID   `json:"id"`
+-	Spec              ServiceSpec `json:"spec"`
+-	DeploymentVersion int64       `json:"deployment_version"`
+-	CreatedAt         time.Time   `json:"created_at"`
+-	UpdatedAt         time.Time   `json:"updated_at"`
++	ID                ServiceID     `json:"id"`
++	Spec              ServiceSpec   `json:"spec"`
++	Status            ServiceStatus `json:"status"`
++	DeploymentVersion int64         `json:"deployment_version"`
++	CreatedAt         time.Time     `json:"created_at"`
++	UpdatedAt         time.Time     `json:"updated_at"`
+ }
+ 
++type ServiceStatus string
++
++const (
++	ServiceActive   ServiceStatus = "active"
++	ServiceDeleting ServiceStatus = "deleting"
++	ServiceDeleted  ServiceStatus = "deleted"
++)
++
+ type ServiceSpec struct {
+ 	Name                 string                `json:"name"`
+ 	Image                string                `json:"image"`

@@ -1,0 +1,23 @@
+	if value := strings.TrimSpace(os.Getenv("ORCH_SERVER_URL")); value != "" {
+		cfg.ServerURL = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ORCH_TOKEN")); value != "" {
+		cfg.Token = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ORCH_NAMESPACE")); value != "" {
+		cfg.Namespace = value
+	}
+	if strings.TrimSpace(overrides.ServerURL) != "" {
+		cfg.ServerURL = strings.TrimSpace(overrides.ServerURL)
+	}
+	if strings.TrimSpace(overrides.Token) != "" {
+		cfg.Token = strings.TrimSpace(overrides.Token)
+	}
+	if strings.TrimSpace(overrides.Namespace) != "" {
+		cfg.Namespace = strings.TrimSpace(overrides.Namespace)
+	}
+	if strings.TrimSpace(cfg.Namespace) == "" {
+		cfg.Namespace = "default"
+	}
+	return cfg, nil
+}

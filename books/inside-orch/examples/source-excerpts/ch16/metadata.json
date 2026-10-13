@@ -1,0 +1,35 @@
+{
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "excerpts": [
+    {
+      "id": "proxy",
+      "source_path": "internal/api/logs.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 33,
+      "line_end": 51,
+      "output": "examples/source-excerpts/ch16/proxy.go",
+      "sha256": "d09ac43453761d69a4c790857ffaf656a7047ba6bf49018cc653e6dc9cdcf827",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/api/logs.go#L33-L51"
+    },
+    {
+      "id": "frames",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 326,
+      "line_end": 335,
+      "output": "examples/source-excerpts/ch16/frames.go",
+      "sha256": "645cfd398d73374f8aff3c296680e40b981f63fef080fb0cb305415e54e05470",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L326-L335"
+    },
+    {
+      "id": "cancel",
+      "source_path": "internal/docker/docker.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 612,
+      "line_end": 623,
+      "output": "examples/source-excerpts/ch16/cancel.go",
+      "sha256": "8505b571a81015c8a10dd3413cd90483a9c2c752c5415552d01e9b78ef046d29",
+      "source_url": "https://github.com/alekpopovic/orch/blob/cbfc94ade5b57e449d6b73bf1485b1c5b1647022/internal/docker/docker.go#L612-L623"
+    }
+  ]
+}

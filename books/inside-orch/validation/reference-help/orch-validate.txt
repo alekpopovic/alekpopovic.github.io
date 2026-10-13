@@ -1,0 +1,14 @@
+Validate a service deployment YAML file
+
+Usage:
+  orch validate <file.yaml> [flags]
+
+Flags:
+  -h, --help   help for validate
+
+Global Flags:
+      --config string      CLI config file (default "<home>/.config/orch/config.yaml")
+  -n, --namespace string   workload namespace
+      --output string      output format: table or json (default "table")
+      --server string      control-plane server URL
+      --token string       user API JWT bearer token

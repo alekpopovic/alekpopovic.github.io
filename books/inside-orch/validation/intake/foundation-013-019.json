@@ -1,0 +1,48 @@
+{
+  "checked_at_utc": "2026-10-13T00:41:40.331366+00:00",
+  "prompts": {
+    "013": [
+      "editorial/OBSERVATION_CONTRACT.md",
+      "labs/observations.json"
+    ],
+    "014": [
+      "editorial/FAILURE_MODEL.md",
+      "labs/failure-matrix.json"
+    ],
+    "015": [
+      "editorial/THREAT_MODEL.md",
+      "validation/intake/security-boundaries.json"
+    ],
+    "016": [
+      "publication/RIGHTS.md",
+      "publication/NOTICE.md",
+      "publication/book-metadata.json",
+      "book.json"
+    ],
+    "017": [
+      "publication/DESIGN_SYSTEM.md",
+      "publication/style-tokens.json",
+      "publication/style-specimen.html"
+    ],
+    "018": [
+      "editorial/TOC.md",
+      "editorial/CHAPTER_CONTRACTS.md",
+      "manuscript/Book.txt",
+      "validation/intake/toc-coverage.json"
+    ],
+    "019": [
+      "validation/reviews/foundation-gate.md",
+      "editorial/STYLE_REFERENCE.md",
+      "manuscript/00-preface.md"
+    ]
+  },
+  "all_artifacts_exist": true,
+  "runtime_execution_by_this_agent": false,
+  "gate": "Source-only chapter writing approved; external release gates retained",
+  "evidence": [
+    "validation/intake/foundation-source-audit.json",
+    "validation/intake/toc-coverage.json",
+    "validation/intake/foundation-review.json",
+    "validation/intake/foundation-007-012.json"
+  ]
+}

@@ -1,0 +1,341 @@
+commit 29b20fb897a3b61f0a30908587218eeeb52df858
+Date: 2026-06-11T22:20:44+02:00
+Subject: Fix idempotency edge cases
+
+
+---
+ docs/RELIABILITY.md                    | 32 ++++++++++++++++++++++++++++
+ internal/controlplane/agent_test.go    | 33 ++++++++++++++++++++++++++++
+ internal/controlplane/controlplane.go  | 25 +++++++++++++++++++++-
+ internal/reconciler/reconciler.go      | 39 +++++++++++++++++++++++-----------
+ internal/reconciler/reconciler_test.go | 25 ++++++++++++++++++++++
+ internal/rollout/rollout.go            | 19 +++++++++--------
+ internal/rollout/rollout_test.go       | 17 +++++++++++++++
+ 7 files changed, 168 insertions(+), 22 deletions(-)
+
+diff --git a/docs/RELIABILITY.md b/docs/RELIABILITY.md
+new file mode 100644
+index 0000000..1392ada
+--- /dev/null
++++ b/docs/RELIABILITY.md
+@@ -0,0 +1,32 @@
++# Reliability
++
++## Idempotency Rules
++
++Every controller and agent operation should be safe to retry after a timeout, process restart, or lost response.
++
++- API create/update handlers validate input before mutating state. Mutating handlers should return the existing in-progress object when the requested operation is already underway.
++- Reconciler passes must derive work from current service and task state. A second pass must not create extra tasks, repeat stop events, or inflate metrics for tasks that already have a stop/remove desired state.
++- Scheduler assignment must use optimistic concurrency on the task row. If another scheduler assigned the task first, the retry should reload state rather than assign a different node blindly.
++- Agent task execution must treat Docker operations as idempotent. Existing task containers are reused, stopped containers are safe to stop again, and missing containers are safe to remove again.
++- Docker-created containers must carry `orch.managed=true` plus service, task, node, and version labels. Cleanup only targets managed containers for the current node.
++- Rollout controllers must compute progress from task versions and terminal states. Repeated passes must not create more new-version tasks than `replicas + maxSurge`, stop more old tasks than allowed by `maxUnavailable`, or emit status-change events when the status did not change.
++- Service deletion is soft by default. Repeated delete requests keep the service in `deleting`; final cleanup happens only after all service tasks report `removed`.
++
++## Current Audit Notes
++
++- The memory control plane ignores terminal tasks when reconciling service replicas, so retries after failed or removed tasks create replacements instead of counting dead tasks as active.
++- The reconciler treats already-stopped tasks as no-ops and only records stop metrics/events when it actually changes desired task state.
++- The rollout status helper emits events only on real status transitions.
++- The Docker runtime wrapper already handles create conflicts by looking up the existing managed task container and treats stop/remove of already stopped or missing containers as success.
++
++## Retry Guidance
++
++Prefer polling current state with bounded timeouts over fixed sleeps. Tests and scripts should wait for observable state such as task status, service status, or health endpoints.
++
++When adding a new mutating operation, add a table-driven test that calls the operation twice with the same input and verifies:
++
++- no duplicate database rows;
++- no duplicate containers;
++- no misleading events or metrics;
++- no unrelated task or service is selected for stop/remove;
++- all timestamps remain UTC.
+diff --git a/internal/controlplane/agent_test.go b/internal/controlplane/agent_test.go
+index 9f02679..853df48 100644
+--- a/internal/controlplane/agent_test.go
++++ b/internal/controlplane/agent_test.go
+@@ -263,6 +263,39 @@ func TestDeleteServiceWaitsWhenAgentOfflineAndFinalizesAfterReturn(t *testing.T)
+ 	}
+ }
+ 
++func TestScaleServiceIgnoresTerminalTasksWhenReconcilingReplicas(t *testing.T) {
++	service := NewMemoryService()
++	ctx := context.Background()
++	registered, created := createServiceWithAssignedTask(t, ctx, service)
++	tasks, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks: %v", err)
++	}
++	if _, err := service.ReportTaskStatus(ctx, TaskStatusReport{
++		TaskID:        tasks[0].Task.ID,
++		NodeID:        registered.Node.ID,
++		Status:        types.TaskFailed,
++		ContainerID:   "container-1",
++		FailureReason: "simulated failure",
++	}); err != nil {
++		t.Fatalf("report task failed: %v", err)
++	}
++
++	if _, err := service.ScaleService(ctx, created.ID, 1); err != nil {
++		t.Fatalf("scale service: %v", err)
++	}
++	assigned, err := service.ListAssignedTasks(ctx, registered.Node.ID)
++	if err != nil {
++		t.Fatalf("list assigned tasks after scale: %v", err)
++	}
++	if len(assigned) != 1 {
++		t.Fatalf("expected one replacement assigned task, got %#v", assigned)
++	}
++	if assigned[0].Task.ID == tasks[0].Task.ID {
++		t.Fatalf("expected terminal failed task to be replaced, got original task %s", assigned[0].Task.ID)
++	}
++}
++
+ func TestRolloutStartsAsyncDeployment(t *testing.T) {
+ 	service := NewMemoryService()
+ 	ctx := context.Background()
+diff --git a/internal/controlplane/controlplane.go b/internal/controlplane/controlplane.go
+index 4981750..7a015e2 100644
+--- a/internal/controlplane/controlplane.go
++++ b/internal/controlplane/controlplane.go
+@@ -275,6 +275,9 @@ func (s *MemoryService) ListAssignedTasks(ctx context.Context, nodeID types.Node
+ 		if task.DesiredStatus == types.TaskRemoved || task.ActualStatus == types.TaskRemoved {
+ 			continue
+ 		}
++		if task.DesiredStatus == types.TaskRunning && !countsTowardDesiredReplicas(task) {
++			continue
++		}
+ 		service := s.services[task.ServiceID]
+ 		tasks = append(tasks, AgentTask{
+ 			Task:        task,
+@@ -991,7 +994,7 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 		if task.ServiceID != service.ID {
+ 			continue
+ 		}
+-		if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
++		if !countsTowardDesiredReplicas(task) {
+ 			continue
+ 		}
+ 		if task.Image != service.Spec.Image || task.Version != service.DeploymentVersion {
+@@ -1044,6 +1047,26 @@ func (s *MemoryService) reconcileServiceTasksLocked(service types.Service, times
+ 	}
+ }
+ 
++func countsTowardDesiredReplicas(task types.Task) bool {
++	if task.DesiredStatus == types.TaskRemoved || task.DesiredStatus == types.TaskStopped {
++		return false
++	}
++	switch task.ActualStatus {
++	case types.TaskPending,
++		types.TaskAssigned,
++		types.TaskPulling,
++		types.TaskCreated,
++		types.TaskStarting,
++		types.TaskRunning,
++		types.TaskHealthy,
++		types.TaskUnhealthy,
++		types.TaskStopping:
++		return true
++	default:
++		return false
++	}
++}
++
+ func (s *MemoryService) hasActiveDeploymentLocked(serviceID types.ServiceID) bool {
+ 	for _, deployment := range s.deployments {
+ 		if deployment.ServiceID != serviceID {
+diff --git a/internal/reconciler/reconciler.go b/internal/reconciler/reconciler.go
+index bef3665..cda9454 100644
+--- a/internal/reconciler/reconciler.go
++++ b/internal/reconciler/reconciler.go
+@@ -226,10 +226,13 @@ func (r *Reconciler) reconcileDeletingService(ctx context.Context, service types
+ 			continue
+ 		}
+ 		allRemoved = false
+-		if err := r.stopTask(ctx, task, "service is deleting"); err != nil {
++		stopped, err := r.stopTask(ctx, task, "service is deleting")
++		if err != nil {
+ 			return result, err
+ 		}
+-		result.StoppedTasks++
++		if stopped {
++			result.StoppedTasks++
++		}
+ 	}
+ 	if allRemoved {
+ 		updated, err := r.store.UpdateServiceStatus(ctx, service.ID, types.ServiceDeleted, service.UpdatedAt)
+@@ -283,10 +286,13 @@ func (r *Reconciler) reconcileService(ctx context.Context, service types.Service
+ 		if err := ctx.Err(); err != nil {
+ 			return result, err
+ 		}
+-		if err := r.stopTask(ctx, task, "task version is no longer current"); err != nil {
++		stopped, err := r.stopTask(ctx, task, "task version is no longer current")
++		if err != nil {
+ 			return result, err
+ 		}
+-		result.StoppedTasks++
++		if stopped {
++			result.StoppedTasks++
++		}
+ 	}
+ 
+ 	effectiveCount := len(current) + nonRestartableFailed
+@@ -310,10 +316,13 @@ func (r *Reconciler) reconcileService(ctx context.Context, service types.Service
+ 			if err := ctx.Err(); err != nil {
+ 				return result, err
+ 			}
+-			if err := r.stopTask(ctx, task, "service replicas above desired count"); err != nil {
++			stopped, err := r.stopTask(ctx, task, "service replicas above desired count")
++			if err != nil {
+ 				return result, err
+ 			}
+-			result.StoppedTasks++
++			if stopped {
++				result.StoppedTasks++
++			}
+ 		}
+ 	}
+ 	return result, nil
+@@ -336,13 +345,16 @@ func (r *Reconciler) reconcileDeletedServices(ctx context.Context, activeService
+ 			if _, ok := activeServices[task.ServiceID]; ok {
+ 				continue
+ 			}
+-			if err := r.stopTask(ctx, task, "service no longer exists"); err != nil {
++			stopped, err := r.stopTask(ctx, task, "service no longer exists")
++			if err != nil {
+ 				if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
+ 					continue
+ 				}
+ 				return result, err
+ 			}
+-			result.StoppedTasks++
++			if stopped {
++				result.StoppedTasks++
++			}
+ 		}
+ 	}
+ 	return result, nil
+@@ -372,13 +384,16 @@ func (r *Reconciler) createTask(ctx context.Context, service types.Service, reas
+ 	return nil
+ }
+ 
+-func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason string) error {
++func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason string) (bool, error) {
+ 	if task.DesiredStatus == types.TaskStopped || task.DesiredStatus == types.TaskRemoved {
+-		return nil
++		return false, nil
+ 	}
+ 	stopped, err := r.store.StopTask(ctx, task.ID, task.UpdatedAt)
+ 	if err != nil {
+-		return fmt.Errorf("stop task %s: %w", task.ID, err)
++		if errors.Is(err, store.ErrConflict) || errors.Is(err, store.ErrNotFound) {
++			return false, nil
++		}
++		return false, fmt.Errorf("stop task %s: %w", task.ID, err)
+ 	}
+ 	_ = events.Emit(ctx, r.store, types.Event{
+ 		Type:              events.TypeReconcilerTaskStopped,
+@@ -389,7 +404,7 @@ func (r *Reconciler) stopTask(ctx context.Context, task types.Task, reason strin
+ 		RelatedObjectID:   string(stopped.ID),
+ 		Timestamp:         r.now(),
+ 	}, events.WithLogger(r.logger))
+-	return nil
++	return true, nil
+ }
+ 
+ func isNonTerminal(task types.Task) bool {
+diff --git a/internal/reconciler/reconciler_test.go b/internal/reconciler/reconciler_test.go
+index eccf20e..fbf1ab2 100644
+--- a/internal/reconciler/reconciler_test.go
++++ b/internal/reconciler/reconciler_test.go
+@@ -183,6 +183,31 @@ func TestReconcileDeletingServiceWithRunningTasks(t *testing.T) {
+ 	}
+ }
+ 
++func TestReconcileDeletingServiceIsIdempotentForAlreadyStoppedTasks(t *testing.T) {
++	store := newFakeStore(
++		[]types.Service{serviceFixtureWithStatus("svc", 1, 1, types.RestartPolicy{}, types.ServiceDeleting)},
++		[]types.Task{taskFixture("task-a", "svc", 1, types.TaskStopped, types.TaskRunning)},
++	)
++	metrics := &fakeMetrics{}
++	reconciler := New(store, WithMetrics(metrics))
++
++	if err := reconciler.ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("first reconcile: %v", err)
++	}
++	if err := reconciler.ReconcileOnce(context.Background()); err != nil {
++		t.Fatalf("second reconcile: %v", err)
++	}
++	if len(store.stopped) != 0 {
++		t.Fatalf("expected no repeated stop operations, got %#v", store.stopped)
++	}
++	if metrics.stopped != 0 {
++		t.Fatalf("expected stopped metric to stay zero, got %d", metrics.stopped)
++	}
++	if len(store.events) != 0 {
++		t.Fatalf("expected no repeated stop events, got %#v", store.events)
++	}
++}
++
+ func TestReconcileDeletingServiceFinalCleanupAfterAgentReturns(t *testing.T) {
+ 	store := newFakeStore(
+ 		[]types.Service{serviceFixtureWithStatus("svc", 1, 1, types.RestartPolicy{}, types.ServiceDeleting)},
+diff --git a/internal/rollout/rollout.go b/internal/rollout/rollout.go
+index b2e8d4c..e3b2c69 100644
+--- a/internal/rollout/rollout.go
++++ b/internal/rollout/rollout.go
+@@ -242,15 +242,16 @@ func (c *Controller) stopOldTasks(ctx context.Context, deployment types.Deployme
+ }
+ 
+ func (c *Controller) setStatus(ctx context.Context, deployment types.Deployment, status types.DeploymentStatus, message string, severity types.EventSeverity) (types.Deployment, error) {
+-	if deployment.Status != status {
+-		updated, err := c.store.UpdateDeploymentStatus(ctx, deployment.ID, status, deployment.UpdatedAt)
+-		if err != nil {
+-			return types.Deployment{}, fmt.Errorf("update rollout status: %w", err)
+-		}
+-		deployment = updated
+-		if status == types.DeploymentFailed {
+-			c.metrics.IncRolloutFailures()
+-		}
++	if deployment.Status == status {
++		return deployment, nil
++	}
++	updated, err := c.store.UpdateDeploymentStatus(ctx, deployment.ID, status, deployment.UpdatedAt)
++	if err != nil {
++		return types.Deployment{}, fmt.Errorf("update rollout status: %w", err)
++	}
++	deployment = updated
++	if status == types.DeploymentFailed {
++		c.metrics.IncRolloutFailures()
+ 	}
+ 	_ = events.Emit(ctx, c.store, types.Event{
+ 		Type:              events.TypeRolloutStatusChanged,
+diff --git a/internal/rollout/rollout_test.go b/internal/rollout/rollout_test.go
+index ea8cfb6..813a1a4 100644
+--- a/internal/rollout/rollout_test.go
++++ b/internal/rollout/rollout_test.go
+@@ -47,6 +47,23 @@ func TestControllerFailsWhenNewTaskFails(t *testing.T) {
+ 	}
+ }
+ 
++func TestControllerDoesNotEmitStatusEventWhenStatusUnchanged(t *testing.T) {
++	ctx := context.Background()
++	fake := newFakeStore(1, types.Deployment{
++		Status:         types.DeploymentRunning,
++		MaxUnavailable: 1,
++		MaxSurge:       1,
++	})
++	controller := NewController(fake, slog.Default())
++
++	if _, err := controller.setStatus(ctx, fake.deployment, types.DeploymentRunning, "rollout started", types.EventInfo); err != nil {
++		t.Fatalf("set status: %v", err)
++	}
++	if len(fake.events) != 0 {
++		t.Fatalf("expected no status event for unchanged rollout status, got %#v", fake.events)
++	}
++}
++
+ func TestControllerRespectsMaxUnavailable(t *testing.T) {
+ 	ctx := context.Background()
+ 	fake := newFakeStore(2, types.Deployment{MaxUnavailable: 0, MaxSurge: 1})

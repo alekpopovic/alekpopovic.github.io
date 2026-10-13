@@ -1,0 +1,108 @@
+{
+  "chapter": "04",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch04.identity",
+      "statement": "Tasks separate service identity, deployment version, desired status and actual status.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/types.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 771,
+      "line_end": 800,
+      "associated_commits": [
+        "c756f9d7f3a46e8bfe4d7bca291d67f6a783553d"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual selected lifecycle suite passed: validation/labs/ch04/lifecycle-tests.json; no distributed ordering or Docker inference."
+      ]
+    },
+    {
+      "claim_id": "ch04.service-transition",
+      "statement": "Service deletion progresses active to deleting to deleted.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 115,
+      "line_end": 133,
+      "associated_commits": [
+        "6526b47f66da88117bab80468ce6b6c711d1e118"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual selected lifecycle suite passed: validation/labs/ch04/lifecycle-tests.json; no distributed ordering or Docker inference."
+      ]
+    },
+    {
+      "claim_id": "ch04.task-transition",
+      "statement": "Terminal failed/stopped permit cleanup to removed but not return to running.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 136,
+      "line_end": 187,
+      "associated_commits": [
+        "6526b47f66da88117bab80468ce6b6c711d1e118"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch04/lifecycle-tests.json",
+      "limitations": [
+        "Only selected verbose-listed lifecycle cases executed; generic legality and desired-state authorization remain distinct."
+      ]
+    },
+    {
+      "claim_id": "ch04.agent-gate",
+      "statement": "Agent reports are additionally checked against desired status and terminal actual status.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 302,
+      "line_end": 318,
+      "associated_commits": [
+        "6526b47f66da88117bab80468ce6b6c711d1e118"
+      ],
+      "validation": "executed",
+      "evidence_log": "validation/labs/ch04/lifecycle-tests.json",
+      "limitations": [
+        "Only selected verbose-listed lifecycle cases executed; generic legality and desired-state authorization remain distinct."
+      ]
+    },
+    {
+      "claim_id": "ch04.versions",
+      "statement": "Memory service retains service specifications by version within its process.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 2727,
+      "line_end": 2732,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual selected lifecycle suite passed: validation/labs/ch04/lifecycle-tests.json; no distributed ordering or Docker inference."
+      ]
+    },
+    {
+      "claim_id": "ch04.deployment",
+      "statement": "Terminal deployment statuses cannot transition to another status.",
+      "classification": "runtime-integrated",
+      "source_path": "pkg/types/lifecycle.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 212,
+      "line_end": 241,
+      "associated_commits": [],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Read-only source/caller/test inspection; laboratory outcomes are separately labeled.",
+        "Actual selected lifecycle suite passed: validation/labs/ch04/lifecycle-tests.json; no distributed ordering or Docker inference."
+      ]
+    }
+  ]
+}

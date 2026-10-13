@@ -1,0 +1,8 @@
+panic: one assigned task
+
+goroutine 1 [running]:
+main.require(...)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:29
+main.main()
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/security/main.go:74 +0x4705
+exit status 2

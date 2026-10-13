@@ -1,0 +1,1108 @@
+commit a4844c571a0ddf33879556413a62d49a408609e3
+Date: 2026-07-14T16:13:09+02:00
+Subject: Harden config management
+
+
+---
+ .env.example                   |   4 +
+ cmd/orch-agent/main.go         |  43 +++-
+ cmd/orch-agent/main_test.go    |  30 +++
+ cmd/orch-server/main.go        |  43 +++-
+ cmd/orch-server/main_test.go   |  19 ++
+ docs/CONFIGURATION.md          |  94 +++++++++
+ docs/OPERATIONS.md             |   2 +
+ internal/cli/root.go           |  39 +---
+ internal/config/config.go      | 448 ++++++++++++++++++++++++++++++++++++-----
+ internal/config/config_test.go | 107 +++++++++-
+ prompts/EXECUTION_TRACKER.md   |   8 +-
+ 11 files changed, 749 insertions(+), 88 deletions(-)
+
+diff --git a/.env.example b/.env.example
+index 78a876e..26435b4 100644
+--- a/.env.example
++++ b/.env.example
+@@ -1,8 +1,10 @@
+ DATABASE_URL=postgres://orch:orch@localhost:5432/orch?sslmode=disable
+ ORCH_SERVER_ADDR=:8080
+ ORCH_SERVER_URL=http://localhost:8080
++ORCH_TOKEN=
+ ORCH_AGENT_REGISTRATION_TOKEN=dev-registration-token
+ ORCH_JWT_SECRET=dev-user-jwt-secret
++ORCH_SECRET_KEY=dev-secret-key-change-me
+ ORCH_USERS=admin:admin,operator:operator,viewer:viewer
+ ORCH_NODE_NAME=local-node
+ ORCH_AGENT_ADDR=:8081
+@@ -12,3 +14,5 @@ ORCH_DOCKER_SOCKET=/var/run/docker.sock
+ ORCH_LOG_LEVEL=info
+ ORCH_AGENT_HEARTBEAT_INTERVAL=5s
+ ORCH_SHUTDOWN_TIMEOUT=10s
++ORCH_NODE_MONITOR_INTERVAL=5s
++ORCH_NODE_HEARTBEAT_TIMEOUT=30s
+diff --git a/cmd/orch-agent/main.go b/cmd/orch-agent/main.go
+index da590fa..4f5fd10 100644
+--- a/cmd/orch-agent/main.go
++++ b/cmd/orch-agent/main.go
+@@ -3,6 +3,8 @@ package main
+ import (
+ 	"context"
+ 	"errors"
++	"flag"
++	"fmt"
+ 	"log/slog"
+ 	"net/http"
+ 	"os"
+@@ -15,13 +17,25 @@ import (
+ 	orchdocker "github.com/alekpopovic/orch/internal/docker"
+ 	"github.com/alekpopovic/orch/internal/logging"
+ 	"github.com/alekpopovic/orch/internal/metrics"
++	"gopkg.in/yaml.v3"
+ )
+ 
+ func main() {
+ 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+ 	defer stop()
+ 
+-	cfg := config.LoadAgent()
++	cfg, printConfig, err := loadConfig(os.Args[1:])
++	if err != nil {
++		fmt.Fprintln(os.Stderr, err)
++		os.Exit(2)
++	}
++	if printConfig {
++		if err := yaml.NewEncoder(os.Stdout).Encode(cfg.Redacted()); err != nil {
++			fmt.Fprintln(os.Stderr, err)
++			os.Exit(1)
++		}
++		return
++	}
+ 	logger := logging.NewLogger(cfg.LogLevel)
+ 	if err := run(ctx, logger, cfg); err != nil {
+ 		logger.Error("agent stopped", "error", err)
+@@ -29,6 +43,33 @@ func main() {
+ 	}
+ }
+ 
++func loadConfig(args []string) (config.AgentConfig, bool, error) {
++	printConfig := false
++	if len(args) >= 2 && args[0] == "config" && args[1] == "print" {
++		printConfig = true
++		args = args[2:]
++	}
++	var configPath string
++	var overrides config.AgentOverrides
++	fs := flag.NewFlagSet("orch-agent", flag.ContinueOnError)
++	fs.StringVar(&configPath, "config", "", "YAML config file")
++	fs.StringVar(&overrides.NodeName, "node-name", "", "stable node name")
++	fs.StringVar(&overrides.AdvertiseAddress, "advertise-address", "", "agent advertise address")
++	fs.StringVar(&overrides.AgentAddr, "agent-addr", "", "agent listen address")
++	fs.StringVar(&overrides.Labels, "labels", "", "comma-separated node labels")
++	fs.StringVar(&overrides.ServerURL, "server-url", "", "control-plane URL")
++	fs.StringVar(&overrides.BootstrapToken, "bootstrap-token", "", "agent bootstrap token")
++	fs.StringVar(&overrides.DockerSocketPath, "docker-socket", "", "Docker socket path")
++	fs.StringVar(&overrides.LogLevel, "log-level", "", "log level")
++	fs.StringVar(&overrides.HeartbeatInterval, "heartbeat-interval", "", "heartbeat interval")
++	fs.StringVar(&overrides.GracefulShutdownTTL, "shutdown-timeout", "", "graceful shutdown timeout")
++	if err := fs.Parse(args); err != nil {
++		return config.AgentConfig{}, false, err
++	}
++	cfg, err := config.LoadAgentWithFile(configPath, overrides)
++	return cfg, printConfig, err
++}
++
+ func run(ctx context.Context, logger *slog.Logger, cfg config.AgentConfig) error {
+ 	runtime, err := orchdocker.NewEngineRuntimeFromEnv()
+ 	if err != nil {
+diff --git a/cmd/orch-agent/main_test.go b/cmd/orch-agent/main_test.go
+new file mode 100644
+index 0000000..3a7479f
+--- /dev/null
++++ b/cmd/orch-agent/main_test.go
+@@ -0,0 +1,30 @@
++package main
++
++import (
++	"fmt"
++	"strings"
++	"testing"
++)
++
++func TestAgentConfigPrintModeParsesFlags(t *testing.T) {
++	cfg, printConfig, err := loadConfig([]string{
++		"config",
++		"print",
++		"--node-name", "worker-a",
++		"--server-url", "http://server.example",
++		"--bootstrap-token", "super-secret",
++	})
++	if err != nil {
++		t.Fatalf("load config: %v", err)
++	}
++	if !printConfig {
++		t.Fatal("expected config print mode")
++	}
++	if cfg.NodeName != "worker-a" || cfg.ServerURL != "http://server.example" {
++		t.Fatalf("unexpected config %#v", cfg)
++	}
++	redacted := cfg.Redacted()
++	if got := redacted["bootstrap_token"]; got != "[REDACTED]" || strings.Contains(fmt.Sprint(redacted), "super-secret") {
++		t.Fatalf("expected redacted token, got %#v", redacted)
++	}
++}
+diff --git a/cmd/orch-server/main.go b/cmd/orch-server/main.go
+index fcb7f5f..e932fc7 100644
+--- a/cmd/orch-server/main.go
++++ b/cmd/orch-server/main.go
+@@ -3,6 +3,8 @@ package main
+ import (
+ 	"context"
+ 	"errors"
++	"flag"
++	"fmt"
+ 	"log/slog"
+ 	"net/http"
+ 	"os"
+@@ -19,13 +21,25 @@ import (
+ 	"github.com/alekpopovic/orch/internal/node"
+ 	"github.com/alekpopovic/orch/internal/rollout"
+ 	"github.com/alekpopovic/orch/internal/secrets"
++	"gopkg.in/yaml.v3"
+ )
+ 
+ func main() {
+ 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+ 	defer stop()
+ 
+-	cfg := config.LoadServer()
++	cfg, printConfig, err := loadConfig(os.Args[1:])
++	if err != nil {
++		fmt.Fprintln(os.Stderr, err)
++		os.Exit(2)
++	}
++	if printConfig {
++		if err := yaml.NewEncoder(os.Stdout).Encode(cfg.Redacted()); err != nil {
++			fmt.Fprintln(os.Stderr, err)
++			os.Exit(1)
++		}
++		return
++	}
+ 	logger := logging.NewLogger(cfg.LogLevel)
+ 	if err := run(ctx, logger, cfg); err != nil {
+ 		logger.Error("server stopped", "error", err)
+@@ -33,6 +47,33 @@ func main() {
+ 	}
+ }
+ 
++func loadConfig(args []string) (config.ServerConfig, bool, error) {
++	printConfig := false
++	if len(args) >= 2 && args[0] == "config" && args[1] == "print" {
++		printConfig = true
++		args = args[2:]
++	}
++	var configPath string
++	var overrides config.ServerOverrides
++	fs := flag.NewFlagSet("orch-server", flag.ContinueOnError)
++	fs.StringVar(&configPath, "config", "", "YAML config file")
++	fs.StringVar(&overrides.Addr, "addr", "", "server listen address")
++	fs.StringVar(&overrides.DatabaseURL, "database-url", "", "PostgreSQL database URL")
++	fs.StringVar(&overrides.LogLevel, "log-level", "", "log level")
++	fs.StringVar(&overrides.BootstrapToken, "bootstrap-token", "", "agent bootstrap token")
++	fs.StringVar(&overrides.JWTSecret, "jwt-secret", "", "JWT signing secret")
++	fs.StringVar(&overrides.Users, "users", "", "static user role map")
++	fs.StringVar(&overrides.SecretKey, "secret-key", "", "secret encryption key")
++	fs.StringVar(&overrides.GracefulShutdownTTL, "shutdown-timeout", "", "graceful shutdown timeout")
++	fs.StringVar(&overrides.HeartbeatTimeout, "node-heartbeat-timeout", "", "node heartbeat timeout")
++	fs.StringVar(&overrides.NodeMonitorInterval, "node-monitor-interval", "", "node monitor interval")
++	if err := fs.Parse(args); err != nil {
++		return config.ServerConfig{}, false, err
++	}
++	cfg, err := config.LoadServerWithFile(configPath, overrides)
++	return cfg, printConfig, err
++}
++
+ func run(ctx context.Context, logger *slog.Logger, cfg config.ServerConfig) error {
+ 	if err := cfg.Validate(); err != nil {
+ 		return err
+diff --git a/cmd/orch-server/main_test.go b/cmd/orch-server/main_test.go
+index e89ac0f..3e69b42 100644
+--- a/cmd/orch-server/main_test.go
++++ b/cmd/orch-server/main_test.go
+@@ -2,7 +2,9 @@ package main
+ 
+ import (
+ 	"context"
++	"fmt"
+ 	"log/slog"
++	"strings"
+ 	"testing"
+ 	"time"
+ 
+@@ -36,3 +38,20 @@ func TestServerStartsAndStopsCleanly(t *testing.T) {
+ 		t.Fatalf("server did not stop after cancellation")
+ 	}
+ }
++
++func TestServerConfigPrintModeParsesFlags(t *testing.T) {
++	cfg, printConfig, err := loadConfig([]string{"config", "print", "--addr", "127.0.0.1:9090", "--secret-key", "super-secret"})
++	if err != nil {
++		t.Fatalf("load config: %v", err)
++	}
++	if !printConfig {
++		t.Fatal("expected config print mode")
++	}
++	if cfg.Addr != "127.0.0.1:9090" {
++		t.Fatalf("expected flag addr, got %q", cfg.Addr)
++	}
++	redacted := cfg.Redacted()
++	if got := redacted["secret_key"]; got != "[REDACTED]" || strings.Contains(fmt.Sprint(redacted), "super-secret") {
++		t.Fatalf("expected redacted secret, got %#v", redacted)
++	}
++}
+diff --git a/docs/CONFIGURATION.md b/docs/CONFIGURATION.md
+new file mode 100644
+index 0000000..9c92ee6
+--- /dev/null
++++ b/docs/CONFIGURATION.md
+@@ -0,0 +1,94 @@
++# Configuration
++
++`orch` loads configuration consistently across `orch-server`, `orch-agent`, and the CLI.
++
++Source precedence is:
++
++1. command flags
++2. environment variables
++3. YAML config file
++4. defaults
++
++## Server
++
++Run with defaults and environment variables:
++
++```sh
++orch-server
++```
++
++Run with a YAML config file:
++
++```sh
++orch-server --config /etc/orch/server.yaml
++```
++
++Print the effective server config with secrets redacted:
++
++```sh
++orch-server config print --config /etc/orch/server.yaml
++```
++
++Example `server.yaml`:
++
++```yaml
++addr: :8080
++database_url: postgres://orch:orch@postgres:5432/orch?sslmode=disable
++log_level: info
++bootstrap_token: change-me
++jwt_secret: change-me
++users: admin:admin
++secret_key: change-me
++graceful_shutdown_ttl: 10s
++heartbeat_timeout: 30s
++node_monitor_interval: 5s
++```
++
++Common server flags mirror config keys: `--addr`, `--database-url`, `--log-level`, `--bootstrap-token`, `--jwt-secret`, `--users`, `--secret-key`, `--shutdown-timeout`, `--node-heartbeat-timeout`, and `--node-monitor-interval`.
++
++## Agent
++
++Run with a YAML config file:
++
++```sh
++orch-agent --config /etc/orch/agent.yaml
++```
++
++Print the effective agent config with secrets redacted:
++
++```sh
++orch-agent config print --config /etc/orch/agent.yaml
++```
++
++Example `agent.yaml`:
++
++```yaml
++node_name: worker-a
++advertise_address: http://worker-a:8081
++agent_addr: :8081
++labels:
++  role: worker
++server_url: http://orch-server:8080
++bootstrap_token: change-me
++docker_socket_path: /var/run/docker.sock
++log_level: info
++heartbeat_interval: 5s
++graceful_shutdown_ttl: 10s
++```
++
++Common agent flags mirror config keys: `--node-name`, `--advertise-address`, `--agent-addr`, `--labels`, `--server-url`, `--bootstrap-token`, `--docker-socket`, `--log-level`, `--heartbeat-interval`, and `--shutdown-timeout`.
++
++## CLI
++
++The CLI reads `--server` and `--token` flags, `ORCH_SERVER_URL` and `ORCH_TOKEN`, then its YAML config file. The default config path is the OS user config directory under `orch/config.yaml`.
++
++Example CLI config:
++
++```yaml
++server_url: http://localhost:8080
++token: eyJ...
++```
++
++## Redaction
++
++`config print` redacts bootstrap tokens, JWT secrets, user maps, database URLs, and secret encryption keys. Do not put secret values in logs or support bundles except through redacted output.
+diff --git a/docs/OPERATIONS.md b/docs/OPERATIONS.md
+index 470c404..8294e0b 100644
+--- a/docs/OPERATIONS.md
++++ b/docs/OPERATIONS.md
+@@ -37,6 +37,8 @@ Before production use:
+ 
+ ## Configuration
+ 
++Full precedence, YAML file examples, and redacted config output are documented in [CONFIGURATION.md](CONFIGURATION.md).
++
+ Server:
+ 
+ - `ORCH_SERVER_ADDR`: listen address, default `:8080`.
+diff --git a/internal/cli/root.go b/internal/cli/root.go
+index df4d2d8..f39e2a2 100644
+--- a/internal/cli/root.go
++++ b/internal/cli/root.go
+@@ -2,7 +2,6 @@ package cli
+ 
+ import (
+ 	"context"
+-	"errors"
+ 	"fmt"
+ 	"io"
+ 	"net/url"
+@@ -11,12 +10,12 @@ import (
+ 	"strings"
+ 	"time"
+ 
++	"github.com/alekpopovic/orch/internal/config"
+ 	"github.com/alekpopovic/orch/internal/controlplane"
+ 	"github.com/alekpopovic/orch/internal/discovery"
+ 	"github.com/alekpopovic/orch/internal/events"
+ 	"github.com/alekpopovic/orch/pkg/types"
+ 	"github.com/spf13/cobra"
+-	"gopkg.in/yaml.v3"
+ )
+ 
+ const version = "dev"
+@@ -42,10 +41,7 @@ type Client interface {
+ 	StreamLogs(ctx context.Context, serviceID string, taskID string, follow bool, tail string, out io.Writer) error
+ }
+ 
+-type Config struct {
+-	ServerURL string `yaml:"server_url" json:"server_url"`
+-	Token     string `yaml:"token" json:"token"`
+-}
++type Config = config.CLIConfig
+ 
+ type Options struct {
+ 	Out           io.Writer
+@@ -583,13 +579,7 @@ func (a *app) client() (Client, error) {
+ }
+ 
+ func (a *app) serverURL() (string, error) {
+-	if strings.TrimSpace(a.serverFlag) != "" {
+-		return strings.TrimSpace(a.serverFlag), nil
+-	}
+-	if env := strings.TrimSpace(os.Getenv("ORCH_SERVER_URL")); env != "" {
+-		return env, nil
+-	}
+-	cfg, err := readConfig(a.configPath)
++	cfg, err := config.LoadCLI(a.configPath, config.CLIOverrides{ServerURL: a.serverFlag})
+ 	if err != nil {
+ 		return "", err
+ 	}
+@@ -600,34 +590,13 @@ func (a *app) serverURL() (string, error) {
+ }
+ 
+ func (a *app) token() string {
+-	if strings.TrimSpace(a.tokenFlag) != "" {
+-		return strings.TrimSpace(a.tokenFlag)
+-	}
+-	if env := strings.TrimSpace(os.Getenv("ORCH_TOKEN")); env != "" {
+-		return env
+-	}
+-	cfg, err := readConfig(a.configPath)
++	cfg, err := config.LoadCLI(a.configPath, config.CLIOverrides{Token: a.tokenFlag})
+ 	if err != nil {
+ 		return ""
+ 	}
+ 	return strings.TrimSpace(cfg.Token)
+ }
+ 
+-func readConfig(path string) (Config, error) {
+-	data, err := os.ReadFile(path)
+-	if err != nil {
+-		if errors.Is(err, os.ErrNotExist) {
+-			return Config{}, nil
+-		}
+-		return Config{}, fmt.Errorf("read config file %q: %w", path, err)
+-	}
+-	var cfg Config
+-	if err := yaml.Unmarshal(data, &cfg); err != nil {
+-		return Config{}, fmt.Errorf("parse config file %q: %w", path, err)
+-	}
+-	return cfg, nil
+-}
+-
+ func defaultConfigPath() string {
+ 	dir, err := os.UserConfigDir()
+ 	if err != nil {
+diff --git a/internal/config/config.go b/internal/config/config.go
+index c1b6a7d..f41fd37 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -6,9 +6,42 @@ import (
+ 	"strconv"
+ 	"strings"
+ 	"time"
++
++	"gopkg.in/yaml.v3"
+ )
+ 
+ type ServerConfig struct {
++	Addr                string        `json:"addr" yaml:"addr"`
++	DatabaseURL         string        `json:"database_url" yaml:"database_url"`
++	LogLevel            string        `json:"log_level" yaml:"log_level"`
++	BootstrapToken      string        `json:"bootstrap_token" yaml:"bootstrap_token"`
++	JWTSecret           string        `json:"jwt_secret" yaml:"jwt_secret"`
++	Users               string        `json:"users" yaml:"users"`
++	SecretKey           string        `json:"secret_key" yaml:"secret_key"`
++	GracefulShutdownTTL time.Duration `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    time.Duration `json:"heartbeat_timeout" yaml:"heartbeat_timeout"`
++	NodeMonitorInterval time.Duration `json:"node_monitor_interval" yaml:"node_monitor_interval"`
++}
++
++type AgentConfig struct {
++	NodeName            string            `json:"node_name" yaml:"node_name"`
++	AdvertiseAddress    string            `json:"advertise_address" yaml:"advertise_address"`
++	AgentAddr           string            `json:"agent_addr" yaml:"agent_addr"`
++	Labels              map[string]string `json:"labels" yaml:"labels"`
++	ServerURL           string            `json:"server_url" yaml:"server_url"`
++	BootstrapToken      string            `json:"bootstrap_token" yaml:"bootstrap_token"`
++	DockerSocketPath    string            `json:"docker_socket_path" yaml:"docker_socket_path"`
++	LogLevel            string            `json:"log_level" yaml:"log_level"`
++	HeartbeatInterval   time.Duration     `json:"heartbeat_interval" yaml:"heartbeat_interval"`
++	GracefulShutdownTTL time.Duration     `json:"graceful_shutdown_ttl" yaml:"graceful_shutdown_ttl"`
++}
++
++type CLIConfig struct {
++	ServerURL string `yaml:"server_url" json:"server_url"`
++	Token     string `yaml:"token" json:"token"`
++}
++
++type ServerOverrides struct {
+ 	Addr                string
+ 	DatabaseURL         string
+ 	LogLevel            string
+@@ -16,67 +49,341 @@ type ServerConfig struct {
+ 	JWTSecret           string
+ 	Users               string
+ 	SecretKey           string
+-	GracefulShutdownTTL time.Duration
+-	HeartbeatTimeout    time.Duration
+-	NodeMonitorInterval time.Duration
++	GracefulShutdownTTL string
++	HeartbeatTimeout    string
++	NodeMonitorInterval string
+ }
+ 
+-type AgentConfig struct {
++type AgentOverrides struct {
+ 	NodeName            string
+ 	AdvertiseAddress    string
+ 	AgentAddr           string
+-	Labels              map[string]string
++	Labels              string
+ 	ServerURL           string
+ 	BootstrapToken      string
+ 	DockerSocketPath    string
+ 	LogLevel            string
+-	HeartbeatInterval   time.Duration
+-	GracefulShutdownTTL time.Duration
++	HeartbeatInterval   string
++	GracefulShutdownTTL string
++}
++
++type CLIOverrides struct {
++	ServerURL string
++	Token     string
+ }
+ 
+ func LoadServer() ServerConfig {
++	cfg, _ := LoadServerWithFile("", ServerOverrides{})
++	return cfg
++}
++
++func LoadAgent() AgentConfig {
++	cfg, _ := LoadAgentWithFile("", AgentOverrides{})
++	return cfg
++}
++
++func LoadServerWithFile(path string, overrides ServerOverrides) (ServerConfig, error) {
++	cfg := defaultServer()
++	if err := applyServerFile(&cfg, path); err != nil {
++		return ServerConfig{}, err
++	}
++	if err := applyServerEnv(&cfg); err != nil {
++		return ServerConfig{}, err
++	}
++	if err := applyServerOverrides(&cfg, overrides); err != nil {
++		return ServerConfig{}, err
++	}
++	return cfg, cfg.Validate()
++}
++
++func LoadAgentWithFile(path string, overrides AgentOverrides) (AgentConfig, error) {
++	cfg := defaultAgent()
++	if err := applyAgentFile(&cfg, path); err != nil {
++		return AgentConfig{}, err
++	}
++	if err := applyAgentEnv(&cfg); err != nil {
++		return AgentConfig{}, err
++	}
++	if err := applyAgentOverrides(&cfg, overrides); err != nil {
++		return AgentConfig{}, err
++	}
++	return cfg, cfg.Validate()
++}
++
++func LoadCLI(path string, overrides CLIOverrides) (CLIConfig, error) {
++	cfg := CLIConfig{}
++	if strings.TrimSpace(path) != "" {
++		file, err := readOptionalYAMLFile[CLIConfig](path)
++		if err != nil {
++			return CLIConfig{}, err
++		}
++		cfg = file
++	}
++	if value := strings.TrimSpace(os.Getenv("ORCH_SERVER_URL")); value != "" {
++		cfg.ServerURL = value
++	}
++	if value := strings.TrimSpace(os.Getenv("ORCH_TOKEN")); value != "" {
++		cfg.Token = value
++	}
++	if strings.TrimSpace(overrides.ServerURL) != "" {
++		cfg.ServerURL = strings.TrimSpace(overrides.ServerURL)
++	}
++	if strings.TrimSpace(overrides.Token) != "" {
++		cfg.Token = strings.TrimSpace(overrides.Token)
++	}
++	return cfg, nil
++}
++
++func defaultServer() ServerConfig {
+ 	return ServerConfig{
+-		Addr:                getenv("ORCH_SERVER_ADDR", ":8080"),
+-		DatabaseURL:         getenv("DATABASE_URL", "postgres://orch:orch@localhost:5432/orch?sslmode=disable"),
+-		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+-		BootstrapToken:      getenv("ORCH_AGENT_REGISTRATION_TOKEN", getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token")),
+-		JWTSecret:           getenv("ORCH_JWT_SECRET", ""),
+-		Users:               getenv("ORCH_USERS", ""),
+-		SecretKey:           getenv("ORCH_SECRET_KEY", "dev-secret-key-change-me"),
+-		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
+-		HeartbeatTimeout:    durationFromEnv("ORCH_NODE_HEARTBEAT_TIMEOUT", 30*time.Second),
+-		NodeMonitorInterval: durationFromEnv("ORCH_NODE_MONITOR_INTERVAL", 5*time.Second),
++		Addr:                ":8080",
++		DatabaseURL:         "postgres://orch:orch@localhost:5432/orch?sslmode=disable",
++		LogLevel:            "info",
++		BootstrapToken:      "dev-bootstrap-token",
++		SecretKey:           "dev-secret-key-change-me",
++		GracefulShutdownTTL: 10 * time.Second,
++		HeartbeatTimeout:    30 * time.Second,
++		NodeMonitorInterval: 5 * time.Second,
+ 	}
+ }
+ 
+-func LoadAgent() AgentConfig {
++func defaultAgent() AgentConfig {
+ 	return AgentConfig{
+-		NodeName:            getenv("ORCH_NODE_NAME", getenv("ORCH_NODE_ID", "local-node")),
+-		AdvertiseAddress:    getenv("ORCH_ADVERTISE_ADDRESS", "http://127.0.0.1:8081"),
+-		AgentAddr:           getenv("ORCH_AGENT_ADDR", ":8081"),
+-		Labels:              labelsFromEnv("ORCH_NODE_LABELS"),
+-		ServerURL:           getenv("ORCH_SERVER_URL", "http://localhost:8080"),
+-		BootstrapToken:      getenv("ORCH_AGENT_REGISTRATION_TOKEN", getenv("ORCH_BOOTSTRAP_TOKEN", "dev-bootstrap-token")),
+-		DockerSocketPath:    getenv("ORCH_DOCKER_SOCKET", "/var/run/docker.sock"),
+-		LogLevel:            getenv("ORCH_LOG_LEVEL", "info"),
+-		HeartbeatInterval:   durationFromEnv("ORCH_AGENT_HEARTBEAT_INTERVAL", 5*time.Second),
+-		GracefulShutdownTTL: durationFromEnv("ORCH_SHUTDOWN_TIMEOUT", 10*time.Second),
++		NodeName:            "local-node",
++		AdvertiseAddress:    "http://127.0.0.1:8081",
++		AgentAddr:           ":8081",
++		Labels:              map[string]string{},
++		ServerURL:           "http://localhost:8080",
++		BootstrapToken:      "dev-bootstrap-token",
++		DockerSocketPath:    "/var/run/docker.sock",
++		LogLevel:            "info",
++		HeartbeatInterval:   5 * time.Second,
++		GracefulShutdownTTL: 10 * time.Second,
++	}
++}
++
++type serverFileConfig struct {
++	Addr                string `yaml:"addr"`
++	DatabaseURL         string `yaml:"database_url"`
++	LogLevel            string `yaml:"log_level"`
++	BootstrapToken      string `yaml:"bootstrap_token"`
++	JWTSecret           string `yaml:"jwt_secret"`
++	Users               string `yaml:"users"`
++	SecretKey           string `yaml:"secret_key"`
++	GracefulShutdownTTL string `yaml:"graceful_shutdown_ttl"`
++	HeartbeatTimeout    string `yaml:"heartbeat_timeout"`
++	NodeMonitorInterval string `yaml:"node_monitor_interval"`
++}
++
++type agentFileConfig struct {
++	NodeName            string            `yaml:"node_name"`
++	AdvertiseAddress    string            `yaml:"advertise_address"`
++	AgentAddr           string            `yaml:"agent_addr"`
++	Labels              map[string]string `yaml:"labels"`
++	ServerURL           string            `yaml:"server_url"`
++	BootstrapToken      string            `yaml:"bootstrap_token"`
++	DockerSocketPath    string            `yaml:"docker_socket_path"`
++	LogLevel            string            `yaml:"log_level"`
++	HeartbeatInterval   string            `yaml:"heartbeat_interval"`
++	GracefulShutdownTTL string            `yaml:"graceful_shutdown_ttl"`
++}
++
++func applyServerFile(cfg *ServerConfig, path string) error {
++	if strings.TrimSpace(path) == "" {
++		return nil
++	}
++	file, err := readYAMLFile[serverFileConfig](path)
++	if err != nil {
++		return err
++	}
++	applyString(&cfg.Addr, file.Addr)
++	applyString(&cfg.DatabaseURL, file.DatabaseURL)
++	applyString(&cfg.LogLevel, file.LogLevel)
++	applyString(&cfg.BootstrapToken, file.BootstrapToken)
++	applyString(&cfg.JWTSecret, file.JWTSecret)
++	applyString(&cfg.Users, file.Users)
++	applyString(&cfg.SecretKey, file.SecretKey)
++	if err := applyDuration(&cfg.GracefulShutdownTTL, file.GracefulShutdownTTL); err != nil {
++		return fmt.Errorf("graceful_shutdown_ttl: %w", err)
++	}
++	if err := applyDuration(&cfg.HeartbeatTimeout, file.HeartbeatTimeout); err != nil {
++		return fmt.Errorf("heartbeat_timeout: %w", err)
+ 	}
++	if err := applyDuration(&cfg.NodeMonitorInterval, file.NodeMonitorInterval); err != nil {
++		return fmt.Errorf("node_monitor_interval: %w", err)
++	}
++	return nil
+ }
+ 
+-func getenv(key, fallback string) string {
+-	value := os.Getenv(key)
++func applyAgentFile(cfg *AgentConfig, path string) error {
++	if strings.TrimSpace(path) == "" {
++		return nil
++	}
++	file, err := readYAMLFile[agentFileConfig](path)
++	if err != nil {
++		return err
++	}
++	applyString(&cfg.NodeName, file.NodeName)
++	applyString(&cfg.AdvertiseAddress, file.AdvertiseAddress)
++	applyString(&cfg.AgentAddr, file.AgentAddr)
++	if file.Labels != nil {
++		cfg.Labels = cloneStringMap(file.Labels)
++	}
++	applyString(&cfg.ServerURL, file.ServerURL)
++	applyString(&cfg.BootstrapToken, file.BootstrapToken)
++	applyString(&cfg.DockerSocketPath, file.DockerSocketPath)
++	applyString(&cfg.LogLevel, file.LogLevel)
++	if err := applyDuration(&cfg.HeartbeatInterval, file.HeartbeatInterval); err != nil {
++		return fmt.Errorf("heartbeat_interval: %w", err)
++	}
++	if err := applyDuration(&cfg.GracefulShutdownTTL, file.GracefulShutdownTTL); err != nil {
++		return fmt.Errorf("graceful_shutdown_ttl: %w", err)
++	}
++	return nil
++}
++
++func applyServerEnv(cfg *ServerConfig) error {
++	applyString(&cfg.Addr, os.Getenv("ORCH_SERVER_ADDR"))
++	applyString(&cfg.DatabaseURL, os.Getenv("DATABASE_URL"))
++	applyString(&cfg.LogLevel, os.Getenv("ORCH_LOG_LEVEL"))
++	if value := os.Getenv("ORCH_AGENT_REGISTRATION_TOKEN"); value != "" {
++		cfg.BootstrapToken = value
++	} else {
++		applyString(&cfg.BootstrapToken, os.Getenv("ORCH_BOOTSTRAP_TOKEN"))
++	}
++	applyString(&cfg.JWTSecret, os.Getenv("ORCH_JWT_SECRET"))
++	applyString(&cfg.Users, os.Getenv("ORCH_USERS"))
++	applyString(&cfg.SecretKey, os.Getenv("ORCH_SECRET_KEY"))
++	if err := applyDuration(&cfg.GracefulShutdownTTL, os.Getenv("ORCH_SHUTDOWN_TIMEOUT")); err != nil {
++		return fmt.Errorf("ORCH_SHUTDOWN_TIMEOUT: %w", err)
++	}
++	if err := applyDuration(&cfg.HeartbeatTimeout, os.Getenv("ORCH_NODE_HEARTBEAT_TIMEOUT")); err != nil {
++		return fmt.Errorf("ORCH_NODE_HEARTBEAT_TIMEOUT: %w", err)
++	}
++	if err := applyDuration(&cfg.NodeMonitorInterval, os.Getenv("ORCH_NODE_MONITOR_INTERVAL")); err != nil {
++		return fmt.Errorf("ORCH_NODE_MONITOR_INTERVAL: %w", err)
++	}
++	return nil
++}
++
++func applyAgentEnv(cfg *AgentConfig) error {
++	if value := os.Getenv("ORCH_NODE_NAME"); value != "" {
++		cfg.NodeName = value
++	} else {
++		applyString(&cfg.NodeName, os.Getenv("ORCH_NODE_ID"))
++	}
++	applyString(&cfg.AdvertiseAddress, os.Getenv("ORCH_ADVERTISE_ADDRESS"))
++	applyString(&cfg.AgentAddr, os.Getenv("ORCH_AGENT_ADDR"))
++	if labels := labelsFromString(os.Getenv("ORCH_NODE_LABELS")); labels != nil {
++		cfg.Labels = labels
++	}
++	applyString(&cfg.ServerURL, os.Getenv("ORCH_SERVER_URL"))
++	if value := os.Getenv("ORCH_AGENT_REGISTRATION_TOKEN"); value != "" {
++		cfg.BootstrapToken = value
++	} else {
++		applyString(&cfg.BootstrapToken, os.Getenv("ORCH_BOOTSTRAP_TOKEN"))
++	}
++	applyString(&cfg.DockerSocketPath, os.Getenv("ORCH_DOCKER_SOCKET"))
++	applyString(&cfg.LogLevel, os.Getenv("ORCH_LOG_LEVEL"))
++	if err := applyDuration(&cfg.HeartbeatInterval, os.Getenv("ORCH_AGENT_HEARTBEAT_INTERVAL")); err != nil {
++		return fmt.Errorf("ORCH_AGENT_HEARTBEAT_INTERVAL: %w", err)
++	}
++	if err := applyDuration(&cfg.GracefulShutdownTTL, os.Getenv("ORCH_SHUTDOWN_TIMEOUT")); err != nil {
++		return fmt.Errorf("ORCH_SHUTDOWN_TIMEOUT: %w", err)
++	}
++	return nil
++}
++
++func applyServerOverrides(cfg *ServerConfig, overrides ServerOverrides) error {
++	applyString(&cfg.Addr, overrides.Addr)
++	applyString(&cfg.DatabaseURL, overrides.DatabaseURL)
++	applyString(&cfg.LogLevel, overrides.LogLevel)
++	applyString(&cfg.BootstrapToken, overrides.BootstrapToken)
++	applyString(&cfg.JWTSecret, overrides.JWTSecret)
++	applyString(&cfg.Users, overrides.Users)
++	applyString(&cfg.SecretKey, overrides.SecretKey)
++	if err := applyDuration(&cfg.GracefulShutdownTTL, overrides.GracefulShutdownTTL); err != nil {
++		return fmt.Errorf("shutdown timeout override: %w", err)
++	}
++	if err := applyDuration(&cfg.HeartbeatTimeout, overrides.HeartbeatTimeout); err != nil {
++		return fmt.Errorf("heartbeat timeout override: %w", err)
++	}
++	if err := applyDuration(&cfg.NodeMonitorInterval, overrides.NodeMonitorInterval); err != nil {
++		return fmt.Errorf("node monitor interval override: %w", err)
++	}
++	return nil
++}
++
++func applyAgentOverrides(cfg *AgentConfig, overrides AgentOverrides) error {
++	applyString(&cfg.NodeName, overrides.NodeName)
++	applyString(&cfg.AdvertiseAddress, overrides.AdvertiseAddress)
++	applyString(&cfg.AgentAddr, overrides.AgentAddr)
++	if labels := labelsFromString(overrides.Labels); labels != nil {
++		cfg.Labels = labels
++	}
++	applyString(&cfg.ServerURL, overrides.ServerURL)
++	applyString(&cfg.BootstrapToken, overrides.BootstrapToken)
++	applyString(&cfg.DockerSocketPath, overrides.DockerSocketPath)
++	applyString(&cfg.LogLevel, overrides.LogLevel)
++	if err := applyDuration(&cfg.HeartbeatInterval, overrides.HeartbeatInterval); err != nil {
++		return fmt.Errorf("heartbeat interval override: %w", err)
++	}
++	if err := applyDuration(&cfg.GracefulShutdownTTL, overrides.GracefulShutdownTTL); err != nil {
++		return fmt.Errorf("shutdown timeout override: %w", err)
++	}
++	return nil
++}
++
++func applyString(target *string, value string) {
++	if strings.TrimSpace(value) != "" {
++		*target = strings.TrimSpace(value)
++	}
++}
++
++func applyDuration(target *time.Duration, value string) error {
++	value = strings.TrimSpace(value)
+ 	if value == "" {
+-		return fallback
++		return nil
++	}
++	duration, err := parseDuration(value)
++	if err != nil {
++		return err
++	}
++	*target = duration
++	return nil
++}
++
++func readYAMLFile[T any](path string) (T, error) {
++	var value T
++	data, err := os.ReadFile(path)
++	if err != nil {
++		return value, fmt.Errorf("read config file %q: %w", path, err)
++	}
++	if err := yaml.Unmarshal(data, &value); err != nil {
++		return value, fmt.Errorf("parse config file %q: %w", path, err)
+ 	}
+-	return value
++	return value, nil
+ }
+ 
+-func labelsFromEnv(key string) map[string]string {
+-	raw := os.Getenv(key)
++func readOptionalYAMLFile[T any](path string) (T, error) {
++	var value T
++	data, err := os.ReadFile(path)
++	if err != nil {
++		if os.IsNotExist(err) {
++			return value, nil
++		}
++		return value, fmt.Errorf("read config file %q: %w", path, err)
++	}
++	if err := yaml.Unmarshal(data, &value); err != nil {
++		return value, fmt.Errorf("parse config file %q: %w", path, err)
++	}
++	return value, nil
++}
++
++func labelsFromString(raw string) map[string]string {
+ 	labels := map[string]string{}
+-	if raw == "" {
+-		return labels
++	if strings.TrimSpace(raw) == "" {
++		return nil
+ 	}
+ 	for _, part := range strings.Split(raw, ",") {
+ 		pair := strings.SplitN(part, "=", 2)
+@@ -92,22 +399,71 @@ func labelsFromEnv(key string) map[string]string {
+ 	return labels
+ }
+ 
+-func durationFromEnv(key string, fallback time.Duration) time.Duration {
+-	value := os.Getenv(key)
+-	if value == "" {
+-		return fallback
+-	}
+-
++func parseDuration(value string) (time.Duration, error) {
+ 	duration, err := time.ParseDuration(value)
+ 	if err == nil {
+-		return duration
++		return duration, nil
+ 	}
+-
+ 	seconds, err := strconv.Atoi(value)
+ 	if err != nil {
+-		return fallback
++		return 0, err
++	}
++	return time.Duration(seconds) * time.Second, nil
++}
++
++func cloneStringMap(values map[string]string) map[string]string {
++	if len(values) == 0 {
++		return map[string]string{}
++	}
++	cloned := make(map[string]string, len(values))
++	for key, value := range values {
++		cloned[key] = value
++	}
++	return cloned
++}
++
++func (cfg ServerConfig) Redacted() map[string]any {
++	return map[string]any{
++		"addr":                  cfg.Addr,
++		"database_url":          redact(cfg.DatabaseURL),
++		"log_level":             cfg.LogLevel,
++		"bootstrap_token":       redact(cfg.BootstrapToken),
++		"jwt_secret":            redact(cfg.JWTSecret),
++		"users":                 redact(cfg.Users),
++		"secret_key":            redact(cfg.SecretKey),
++		"graceful_shutdown_ttl": cfg.GracefulShutdownTTL.String(),
++		"heartbeat_timeout":     cfg.HeartbeatTimeout.String(),
++		"node_monitor_interval": cfg.NodeMonitorInterval.String(),
++	}
++}
++
++func (cfg AgentConfig) Redacted() map[string]any {
++	return map[string]any{
++		"node_name":             cfg.NodeName,
++		"advertise_address":     cfg.AdvertiseAddress,
++		"agent_addr":            cfg.AgentAddr,
++		"labels":                cloneStringMap(cfg.Labels),
++		"server_url":            cfg.ServerURL,
++		"bootstrap_token":       redact(cfg.BootstrapToken),
++		"docker_socket_path":    cfg.DockerSocketPath,
++		"log_level":             cfg.LogLevel,
++		"heartbeat_interval":    cfg.HeartbeatInterval.String(),
++		"graceful_shutdown_ttl": cfg.GracefulShutdownTTL.String(),
++	}
++}
++
++func (cfg CLIConfig) Redacted() map[string]any {
++	return map[string]any{
++		"server_url": cfg.ServerURL,
++		"token":      redact(cfg.Token),
++	}
++}
++
++func redact(value string) string {
++	if strings.TrimSpace(value) == "" {
++		return ""
+ 	}
+-	return time.Duration(seconds) * time.Second
++	return "[REDACTED]"
+ }
+ 
+ func (cfg ServerConfig) Validate() error {
+diff --git a/internal/config/config_test.go b/internal/config/config_test.go
+index 9c18700..75fa6a1 100644
+--- a/internal/config/config_test.go
++++ b/internal/config/config_test.go
+@@ -1,6 +1,11 @@
+ package config
+ 
+-import "testing"
++import (
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++)
+ 
+ func TestLoadServerDefaultsAreValid(t *testing.T) {
+ 	t.Setenv("ORCH_SERVER_ADDR", "")
+@@ -42,3 +47,103 @@ func TestLoadAgentPrefersRegistrationToken(t *testing.T) {
+ 		t.Fatalf("expected registration token to take precedence, got %q", cfg.BootstrapToken)
+ 	}
+ }
++
++func TestServerConfigPrecedence(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "server.yaml")
++	writeConfigFile(t, path, `
++addr: :9000
++log_level: warn
++bootstrap_token: file-token
++graceful_shutdown_ttl: 20s
++`)
++	t.Setenv("ORCH_SERVER_ADDR", ":9100")
++	t.Setenv("ORCH_LOG_LEVEL", "debug")
++
++	cfg, err := LoadServerWithFile(path, ServerOverrides{Addr: ":9200"})
++	if err != nil {
++		t.Fatalf("load server config: %v", err)
++	}
++	if cfg.Addr != ":9200" {
++		t.Fatalf("expected flag override addr, got %q", cfg.Addr)
++	}
++	if cfg.LogLevel != "debug" {
++		t.Fatalf("expected env log level, got %q", cfg.LogLevel)
++	}
++	if cfg.BootstrapToken != "file-token" {
++		t.Fatalf("expected config file token, got %q", cfg.BootstrapToken)
++	}
++	if cfg.GracefulShutdownTTL != 20*time.Second {
++		t.Fatalf("expected file duration, got %s", cfg.GracefulShutdownTTL)
++	}
++}
++
++func TestAgentConfigPrecedence(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "agent.yaml")
++	writeConfigFile(t, path, `
++node_name: file-node
++server_url: http://file.example
++bootstrap_token: file-token
++labels:
++  role: file
++heartbeat_interval: 20s
++`)
++	t.Setenv("ORCH_SERVER_URL", "http://env.example")
++	t.Setenv("ORCH_NODE_LABELS", "role=env,zone=a")
++
++	cfg, err := LoadAgentWithFile(path, AgentOverrides{ServerURL: "http://flag.example"})
++	if err != nil {
++		t.Fatalf("load agent config: %v", err)
++	}
++	if cfg.ServerURL != "http://flag.example" {
++		t.Fatalf("expected flag server URL, got %q", cfg.ServerURL)
++	}
++	if cfg.Labels["role"] != "env" || cfg.Labels["zone"] != "a" {
++		t.Fatalf("expected env labels, got %#v", cfg.Labels)
++	}
++	if cfg.NodeName != "file-node" {
++		t.Fatalf("expected file node name, got %q", cfg.NodeName)
++	}
++	if cfg.HeartbeatInterval != 20*time.Second {
++		t.Fatalf("expected file heartbeat interval, got %s", cfg.HeartbeatInterval)
++	}
++}
++
++func TestCLIConfigPrecedence(t *testing.T) {
++	path := filepath.Join(t.TempDir(), "cli.yaml")
++	writeConfigFile(t, path, "server_url: http://file.example\ntoken: file-token\n")
++	t.Setenv("ORCH_SERVER_URL", "http://env.example")
++
++	cfg, err := LoadCLI(path, CLIOverrides{ServerURL: "http://flag.example"})
++	if err != nil {
++		t.Fatalf("load cli config: %v", err)
++	}
++	if cfg.ServerURL != "http://flag.example" {
++		t.Fatalf("expected flag server URL, got %q", cfg.ServerURL)
++	}
++	if cfg.Token != "file-token" {
++		t.Fatalf("expected file token, got %q", cfg.Token)
++	}
++}
++
++func TestRedactedConfigDoesNotExposeSecrets(t *testing.T) {
++	server := ServerConfig{
++		DatabaseURL:    "postgres://user:pass@example/db",
++		BootstrapToken: "bootstrap-secret",
++		JWTSecret:      "jwt-secret",
++		Users:          "admin:admin",
++		SecretKey:      "secret-key",
++	}
++	redacted := server.Redacted()
++	for _, key := range []string{"database_url", "bootstrap_token", "jwt_secret", "users", "secret_key"} {
++		if redacted[key] != "[REDACTED]" {
++			t.Fatalf("expected %s redacted, got %#v", key, redacted[key])
++		}
++	}
++}
++
++func writeConfigFile(t *testing.T, path string, data string) {
++	t.Helper()
++	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
++		t.Fatalf("write config file: %v", err)
++	}
++}
+diff --git a/prompts/EXECUTION_TRACKER.md b/prompts/EXECUTION_TRACKER.md
+index 1ba9beb..a305d77 100644
+--- a/prompts/EXECUTION_TRACKER.md
++++ b/prompts/EXECUTION_TRACKER.md
+@@ -4,10 +4,10 @@ This file tracks the latest prompt that has been executed against this repositor
+ 
+ ## Current State
+ 
+-- Last executed prompt: `43-deployment-yaml-schema-and-validation.md`
+-- Last matching commit: `same commit: Add service spec validation`
+-- Completed prompt range: `00` through `43`
+-- Next prompt to execute: `44-config-management-hardening.md`
++- Last executed prompt: `44-config-management-hardening.md`
++- Last matching commit: `same commit: Harden config management`
++- Completed prompt range: `00` through `44`
++- Next prompt to execute: `45-structured-error-model.md`
+ - Updated: `2026-07-14`
+ 
+ ## Update Rule

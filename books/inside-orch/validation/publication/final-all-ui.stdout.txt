@@ -1,0 +1,199 @@
+
+> test:ui
+> playwright test
+
+
+Running 152 tests using 2 workers
+
+  ✓    1 tests/ai-select.spec.js:4:1 › modern AI dropdowns support pointer, keyboard, typeahead and clearing shared filters (1.7s)
+  ✓    2 tests/ai-select.spec.js:35:1 › dropdown Tab commits, outside clicks close, mobile popups fit, and native fallback works (2.5s)
+  ✓    3 tests/ai.spec.js:7:1 › AI Lab is featured and all tool references link to sourced standalone guides (2.2s)
+  ✓    4 tests/ai.spec.js:29:1 › AI tool, category and full-text command search combine and restore from shared URLs (1.4s)
+  ✓    6 tests/ai.spec.js:70:1 › AI guides and navigation remain readable without JavaScript (629ms)
+  ✓    5 tests/ai.spec.js:52:1 › AI filters handle unknown URL values, browser history and keyboard activation (1.1s)
+  ✓    7 tests/ai.spec.js:85:1 › AI article print output keeps the guide content (424ms)
+  ✓    9 tests/ai.spec.js:94:3 › AI accessibility: /posts/chatgpt-slash-commands/ (1.6s)
+  ✓    8 tests/ai.spec.js:94:3 › AI accessibility: /ai/ (2.2s)
+  ✓   10 tests/ai.spec.js:94:3 › AI accessibility: /posts/codex-slash-commands/ (1.6s)
+  ✓   11 tests/ai.spec.js:94:3 › AI accessibility: /posts/claude-code-slash-commands/ (1.9s)
+  ✓   12 tests/ai.spec.js:94:3 › AI accessibility: /posts/gemini-cli-slash-commands/ (1.8s)
+  ✓   13 tests/ai.spec.js:94:3 › AI accessibility: /posts/cursor-slash-commands/ (1.6s)
+  ✓   14 tests/ai.spec.js:94:3 › AI accessibility: /posts/github-copilot-slash-commands/ (1.5s)
+  ✓   15 tests/ai.spec.js:94:3 › AI accessibility: /posts/a-useful-ai-handoff/ (1.4s)
+  ✓   16 tests/ai.spec.js:94:3 › AI accessibility: /posts/ai-changes-need-a-verification-loop/ (1.6s)
+  ✓   18 tests/analytics.spec.js:34:1 › Plausible stays disabled without owner configuration (336ms)
+  ✓   17 tests/analytics.spec.js:19:1 › the Google tag initializes once across page layouts (1.7s)
+  ✓   19 tests/analytics.spec.js:42:1 › configured analytics records useful events and omits query and contact data (221ms)
+  ✓   20 tests/analytics.spec.js:62:1 › configured analytics respects the browser privacy signal (241ms)
+  ✓   21 tests/analytics.spec.js:67:1 › configured chapter analytics measures the text panel independently of the page (213ms)
+  ✓   23 tests/compatibility.spec.js:22:1 › keyboard users can preview and cancel a backup file (380ms)
+  ✓   22 tests/compatibility.spec.js:3:1 › mobile reading controls and chapter navigation work across browser engines (1.0s)
+  ✓   24 tests/compatibility.spec.js:31:1 › books, workshops, and paths remain readable without JavaScript (678ms)
+  ✓   26 tests/effects.spec.js:26:3 › missing effects script: learning links, content and combined filters remain usable (1.0s)
+  ✓   25 tests/effects.spec.js:3:1 › motion effects respond to preference changes without interrupting keyboard navigation (1.6s)
+  ✓   28 tests/effects.spec.js:45:1 › mobile learning paths work without JavaScript and lead to complete book editions (564ms)
+  ✓   27 tests/effects.spec.js:26:3 › missing observer API: learning links, content and combined filters remain usable (1.1s)
+  ✓   29 tests/ga4-events.spec.js:17:1 › GA4 content events identify chapters, downloads and actions without transmitting private fields (236ms)
+  ✓   30 tests/ga4-events.spec.js:36:3 › GA4 content events stay disabled for privacy signals (208ms)
+  ✓   31 tests/ga4-events.spec.js:36:3 › GA4 content events stay disabled for another hostname (206ms)
+  ✓   33 tests/inside-orch.spec.js:22:1 › Inside orch connects chapter notes, saved reading and combined post filters (1.2s)
+  ✓   32 tests/inside-orch.spec.js:8:1 › Inside orch exposes all 47 sections and exact reviewed download copies (1.4s)
+  ✓   35 tests/inside-orch.spec.js:52:1 › Inside orch answers and full contents remain readable without JavaScript (556ms)
+  ✓   36 tests/inside-orch.spec.js:68:1 › Inside orch notes still export when browser storage is unavailable (577ms)
+  ✓   34 tests/inside-orch.spec.js:38:1 › Inside orch mobile reading retains keyboard controls and accessible diagrams (2.0s)
+  ✓   37 tests/interactive-learning.spec.js:6:3 › browser bugfix workshop runs canonical failing starter and passing solution (1.0s)
+  ✓   38 tests/interactive-learning.spec.js:6:3 › browser review workshop runs canonical failing starter and passing solution (1.0s)
+  ✓   39 tests/interactive-learning.spec.js:6:3 › browser tests workshop runs canonical failing starter and passing solution (1.0s)
+  ✓   40 tests/interactive-learning.spec.js:6:3 › browser automation workshop runs canonical failing starter and passing solution (993ms)
+  ✓   42 tests/interactive-learning.spec.js:51:1 › workshop drafts and quizzes still work when storage is blocked (684ms)
+  ✓   43 tests/interactive-learning.spec.js:64:1 › missing workshop data and search enhancement keep useful reading fallbacks (509ms)
+  ✓   44 tests/interactive-learning.spec.js:76:1 › quizzes explain wrong answers, restore choices, and validate backup answers (1.1s)
+  ✓   45 tests/interactive-learning.spec.js:103:1 › all AI filters combine, share URLs, restore history and clear empty results (1.1s)
+  ✓   46 tests/interactive-learning.spec.js:121:1 › chapter search highlights a safe excerpt and opens matching text in the reader (1.2s)
+  ✓   41 tests/interactive-learning.spec.js:23:1 › runner blocks network and site storage; syntax errors and loops recover without blocking controls (5.4s)
+  ✓   47 tests/interactive-learning.spec.js:141:1 › figure zoom preserves focus mode on Escape and glossary links to real chapters (1.7s)
+  ✓   49 tests/learning-reader.spec.js:5:1 › learning paths save a checklist and preserve meaningful exercises (617ms)
+  ✓   50 tests/learning-reader.spec.js:18:1 › the mobile notes control has a visible icon and opens the workspace by keyboard (421ms)
+  ✓   51 tests/learning-reader.spec.js:28:1 › learning and notes remain usable when browser storage fails (768ms)
+  ✓   52 tests/learning-reader.spec.js:48:1 › reader bookmarks, completion, and notes survive chapter changes without rendering note HTML (1.2s)
+  ✓   48 tests/interactive-learning.spec.js:160:1 › new learning controls fit mobile, pass accessibility checks, and have readable no-JS fallbacks (5.6s)
+  ✓   53 tests/learning-reader.spec.js:74:1 › offline reading is opt-in, keeps the reader working, and preserves online 404s (1.2s)
+  ✓   54 tests/learning-reader.spec.js:95:1 › project architecture walkthroughs are labeled and work by keyboard (458ms)
+  ✓   55 tests/learning-reader.spec.js:105:1 › learning paths, project explanations, feeds and correction links work without JavaScript (843ms)
+  ✓   56 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /learn/ (1.1s)
+  ✓   57 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /learn/ai-workflows/ (1.3s)
+  ✓   58 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /subscribe/ (956ms)
+  ✓   59 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /updates/ (1.0s)
+  ✓   60 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /offline/ (925ms)
+  ✓   61 tests/learning-reader.spec.js:127:3 › new reading routes are accessible and fit a mobile screen: /projects/container-desk/ (1.4s)
+  ✓   63 tests/reading-backup.spec.js:10:1 › reading backup restores notes, bookmarks, progress, preferences and learning on a fresh device (987ms)
+  ✓   62 tests/project-demos.spec.js:4:1 › project recordings decode, play, and provide readable scoped evidence (2.3s)
+  ✓   65 tests/reading-backup.spec.js:60:3 › invalid backup is rejected without saving: foreign URL (369ms)
+  ✓   64 tests/reading-backup.spec.js:35:1 › merge preserves local notes and unchecked checklist choices; replacement is explicit (600ms)
+  ✓   66 tests/reading-backup.spec.js:60:3 › invalid backup is rejected without saving: unknown section (324ms)
+  ✓   67 tests/reading-backup.spec.js:60:3 › invalid backup is rejected without saving: oversized note (378ms)
+  ✓   68 tests/reading-backup.spec.js:60:3 › invalid backup is rejected without saving: unsupported version (363ms)
+  ✓   69 tests/reading-backup.spec.js:60:3 › invalid backup is rejected without saving: unknown path (384ms)
+  ✓   70 tests/reading-backup.spec.js:69:1 › a failed restore rolls back prior writes instead of losing existing notes (477ms)
+  ✓   71 tests/reading-backup.spec.js:87:1 › blocked storage and cancelled imports retain usable navigation (503ms)
+  ✓   73 tests/reading-backup.spec.js:108:1 › new workshops appear in the AI library, filters and search (681ms)
+  ✓   72 tests/reading-backup.spec.js:99:1 › backup and workshop pages fit mobile screens and pass accessibility checks (2.2s)
+  ✓   75 tests/share.spec.js:46:1 › social links work without JavaScript on posts, AI guides, books and chapters (1.0s)
+  ✓   76 tests/share.spec.js:61:1 › keyboard copying shares the public link and announces success (412ms)
+  ✓   74 tests/share.spec.js:10:1 › sharing uses canonical public URLs and encoded titles across content types (3.4s)
+  ✓   77 tests/share.spec.js:80:3 › copying provides a selectable link when clipboard is missing (1.2s)
+  ✓   79 tests/share.spec.js:98:1 › native sharing passes the canonical URL and handles cancellation and errors (521ms)
+  ✓   78 tests/share.spec.js:80:3 › copying provides a selectable link when clipboard permission is denied (1.2s)
+  ✓   80 tests/share.spec.js:120:3 › share controls fit at 320px and stay out of print output (3.7s)
+  ✓   81 tests/share.spec.js:120:3 › share controls fit at 390px and stay out of print output (3.7s)
+  ✓   83 tests/site.spec.js:16:3 › agentplane: full contents, editions, chapter notes, filters and saved place (1.4s)
+  ✓   84 tests/site.spec.js:16:3 › secret-contract-operator: full contents, editions, chapter notes, filters and saved place (1.4s)
+  ✓   82 tests/share.spec.js:120:3 › share controls fit at 1440px and stay out of print output (3.9s)
+  ✓   85 tests/site.spec.js:16:3 › universal-tracking: full contents, editions, chapter notes, filters and saved place (1.4s)
+  ✓   86 tests/site.spec.js:46:1 › tracking notes combine shareable filters and chapters appear in full-text search (984ms)
+  ✓   87 tests/site.spec.js:58:1 › post filters combine body search, book and category and survive reload (1.1s)
+  ✓   89 tests/site.spec.js:92:1 › search falls back to a usable directory if its index cannot load (368ms)
+  ✓   88 tests/site.spec.js:73:1 › global search finds body text, filters types, restores URLs and handles empty results safely (1.5s)
+  ✓   91 tests/site.spec.js:122:1 › reader still works when storage is unavailable or corrupted (488ms)
+  ✓   90 tests/site.spec.js:100:1 › reader saves preferences and restores a real reading position from the book overview (1.4s)
+  ✓   93 tests/site.spec.js:173:1 › document reader controls stay usable on a small screen and print only the section (926ms)
+  ✓   92 tests/site.spec.js:136:1 › document reader supports contents, outline, progress, focus and chapter navigation (1.3s)
+  ✓   94 tests/site.spec.js:212:3 › reader uses the full window and scrolls text independently at 390px (1.1s)
+  ✓   95 tests/site.spec.js:212:3 › reader uses the full window and scrolls text independently at 1920px (1.1s)
+  ✓   97 tests/site.spec.js:290:1 › the mobile document stays in place while reading controls initialize (486ms)
+  ✓   96 tests/site.spec.js:264:1 › switching chapters preserves the hidden site menu before reader JavaScript loads (1.1s)
+  ✓   99 tests/site.spec.js:362:1 › CodePop is discoverable, describes the company and connects to its official services and founder (1.0s)
+  ✓  100 tests/site.spec.js:391:1 › video embeds load only after a choice and switching playlists stops the previous player (911ms)
+  ✓   98 tests/site.spec.js:311:1 › CV preserves concurrent roles and completed employment periods, projects, books and search (3.0s)
+  ✓  101 tests/site.spec.js:411:1 › a retired URL returns the useful 404 page with a topic search (714ms)
+  ✓  102 tests/site.spec.js:422:1 › project cards lead to genuine project pages and source repositories (1.7s)
+  ✓  103 tests/site.spec.js:436:3 › navigation and new layouts work at 320px without overflow (3.7s)
+  ✓  104 tests/site.spec.js:436:3 › navigation and new layouts work at 390px without overflow (3.7s)
+  ✓  105 tests/site.spec.js:436:3 › navigation and new layouts work at 768px without overflow (4.6s)
+  ✓  106 tests/site.spec.js:436:3 › navigation and new layouts work at 981px without overflow (3.8s)
+  ✓  107 tests/site.spec.js:436:3 › navigation and new layouts work at 1024px without overflow (3.9s)
+  ✓  108 tests/site.spec.js:436:3 › navigation and new layouts work at 1440px without overflow (4.0s)
+  ✓  110 tests/site.spec.js:507:3 › accessibility: / (1.7s)
+  ✓  111 tests/site.spec.js:507:3 › accessibility: /about/ (1.1s)
+  ✓  109 tests/site.spec.js:469:1 › books, notes, video links and search directory work without JavaScript (3.7s)
+  ✓  113 tests/site.spec.js:507:3 › accessibility: /codepop/ (1.6s)
+  ✓  112 tests/site.spec.js:507:3 › accessibility: /cv/ (2.2s)
+  ✓  114 tests/site.spec.js:507:3 › accessibility: /contact/ (1.5s)
+  ✓  115 tests/site.spec.js:507:3 › accessibility: /posts/ (2.5s)
+  ✓  116 tests/site.spec.js:507:3 › accessibility: /posts/a-timeout-is-not-a-stopped-deployment/ (1.6s)
+  ✓  118 tests/site.spec.js:507:3 › accessibility: /posts/an-approximate-marker-needs-an-approximate-payload/ (1.5s)
+  ✓  117 tests/site.spec.js:507:3 › accessibility: /posts/a-validation-result-can-reveal-a-secret/ (1.5s)
+  ✓  120 tests/site.spec.js:507:3 › accessibility: /books/logbranik/ (1.5s)
+  ✓  119 tests/site.spec.js:507:3 › accessibility: /search/ (1.8s)
+  ✓  121 tests/site.spec.js:507:3 › accessibility: /books/modern-ci/10-fences.html (1.6s)
+  ✓  122 tests/site.spec.js:507:3 › accessibility: /books/agentplane/ (1.7s)
+  ✓  123 tests/site.spec.js:507:3 › accessibility: /books/agentplane/18-approvals.html (1.8s)
+  ✓  124 tests/site.spec.js:507:3 › accessibility: /books/secret-contract-operator/ (1.7s)
+  ✓  125 tests/site.spec.js:507:3 › accessibility: /books/secret-contract-operator/13-rotacija-i-rollout.html (1.6s)
+  ✓  126 tests/site.spec.js:507:3 › accessibility: /books/universal-tracking/ (1.8s)
+  ✓  127 tests/site.spec.js:507:3 › accessibility: /books/universal-tracking/16-realtime.html (1.6s)
+  ✓  128 tests/site.spec.js:507:3 › accessibility: /books/universal-tracking/94-appendix-runbooks.html (1.8s)
+  ✓  129 tests/site.spec.js:507:3 › accessibility: /videos/ (1.5s)
+  ✓  130 tests/site.spec.js:507:3 › accessibility: /projects/container-desk/ (1.6s)
+  ✓  131 tests/site.spec.js:507:3 › accessibility: /404.html (1.3s)
+  ✓  132 tests/site.spec.js:516:1 › dark reader meets automated accessibility checks (1.5s)
+  ✓  133 tests/study-guidance.spec.js:5:1 › starting routes combine topic, experience and time in shareable URLs (1.7s)
+  ✓  134 tests/study-guidance.spec.js:28:1 › session plan follows explicit unfinished steps and survives reload and backup (1.8s)
+  ✓  135 tests/study-guidance.spec.js:58:1 › review queue links wrong valid answers and correcting them never completes a practical step (985ms)
+  ✓  136 tests/study-guidance.spec.js:71:1 › corrupt and blocked storage keep recommendations and visit-only plans usable (971ms)
+  ✓  137 tests/study-guidance.spec.js:85:3 › gate staged workshop shares eight canonical checks and invalidates stale results (891ms)
+  ✓  139 tests/study-guidance.spec.js:104:1 › video companions offer bounded timestamp links without loading a player automatically (922ms)
+  ✓  138 tests/study-guidance.spec.js:85:3 › replay staged workshop shares eight canonical checks and invalidates stale results (988ms)
+  ✓  140 tests/study-guidance.spec.js:123:1 › native project capture plays and explains the backend verification boundary (648ms)
+  ✓  142 tests/web-vitals.spec.js:17:1 › field metrics send bounded core values without selectors, IDs or private query attribution (173ms)
+  ✓  143 tests/web-vitals.spec.js:27:73 › field metrics do not even load the core under privacy signals (175ms)
+  ✓  144 tests/web-vitals.spec.js:27:73 › field metrics do not even load the core under another hostname (170ms)
+  ✓  145 tests/workspace-editor.spec.js:8:1 › workspace combines known progress and resumes the last chapter without changing practical steps (654ms)
+  ✓  146 tests/workspace-editor.spec.js:30:1 › unreadable and blocked storage retain workspace links without destroying data (616ms)
+  ✓  147 tests/workspace-editor.spec.js:42:1 › editor highlights text safely, imports explicitly, runs by keyboard and compares a reference (1.2s)
+  ✓  141 tests/study-guidance.spec.js:131:1 › new learning and video pages reflow, pass automated checks, and preserve no-JS navigation (6.2s)
+  ✓  148 tests/workspace-editor.spec.js:70:1 › editor rejects unsuitable imports, bounds diff work and drops imports on exercise changes (3.7s)
+  ✓  149 tests/workspace-editor.spec.js:89:1 › expanded quizzes cover every path and review only wrong or missing answers (1.9s)
+  ✓  150 tests/workspace-editor.spec.js:114:1 › workshop backups preserve raw source during merge, replacement and failed writes (802ms)
+  ✘  152 tests/workspace-editor.spec.js:155:1 › workspace and newsletter archive stay useful without JavaScript or email service (5.3s)
+  ✓  151 tests/workspace-editor.spec.js:140:1 › new routes fit narrow and zoomed layouts, retain forced-color editing, and pass accessibility checks (5.9s)
+
+
+  1) tests/workspace-editor.spec.js:155:1 › workspace and newsletter archive stay useful without JavaScript or email service 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('[data-workspace-book]')
+    Expected: 5
+    Received: 6
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('[data-workspace-book]') with timeout 5000ms
+      - waiting for locator('[data-workspace-book]')
+        14 × locator resolved to 6 elements
+           - unexpected value "6"
+
+
+      157 |   try {
+      158 |     await page.goto('http://127.0.0.1:4173/learn/workspace/');
+    > 159 |     await expect(page.locator('[data-workspace-book]')).toHaveCount(5);
+          |                                                         ^
+      160 |     await expect(page.locator('[data-workspace-path]')).toHaveCount(5);
+      161 |     await expect(page.locator('[data-workspace-workshop]')).toHaveCount(6);
+      162 |     await page.goto('http://127.0.0.1:4173/newsletter/');
+        at /home/popac/alekpopovic.github.io/tests/workspace-editor.spec.js:159:57
+
+    Error Context: test-results/chromium/workspace-editor-workspace-4ea2f-JavaScript-or-email-service/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chromium/workspace-editor-workspace-4ea2f-JavaScript-or-email-service/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chromium/workspace-editor-workspace-4ea2f-JavaScript-or-email-service/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/workspace-editor.spec.js:155:1 › workspace and newsletter archive stay useful without JavaScript or email service 
+  151 passed (1.9m)

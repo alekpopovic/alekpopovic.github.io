@@ -1,0 +1,57 @@
+{
+  "id": "07",
+  "title": "gitops-jobs-cron",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "author": "Aleksandar Popovic",
+  "prepared_at_utc": "2026-10-13T01:35:05.973014+00:00",
+  "classification": "teaching extension",
+  "inputs": {
+    "examples/teaching-extensions/lab07/main.go": "0bcdbafe50168e0392cc8c7446716171a70be96a9813585db29de66b957c1f85",
+    "labs/07-gitops-jobs-cron/fixtures/10-api.yaml": "cdb7de10c531f5e0c348688d950a73dc9fa4803826ee02ea04cc4351642a90a8",
+    "labs/07-gitops-jobs-cron/fixtures/20-worker.yaml": "afa09d0d8e9e943927b0776aebf74ea0474e352455b944b181f8a0269bff392a",
+    "labs/07-gitops-jobs-cron/fixtures/cron.yaml": "4aa038157507f7fcd1a1f69478cc50d06261addddd973594fd7dfa225271ad42",
+    "labs/07-gitops-jobs-cron/fixtures/job-failure.yaml": "741003294955746c1c0b0c1f72793d39b5b863633056d4d617b455fe2bc57936",
+    "labs/07-gitops-jobs-cron/fixtures/job-success.yaml": "a8228a0365616b9f288b3a0c06dafc5c2071743672543bcee363000caeb6866d"
+  },
+  "records": [
+    "validation/labs/07-check.json",
+    "validation/labs/lab07-canonical-fixtures.json"
+  ],
+  "machine_assertions": [
+    "git-real-revision",
+    "git-managed-names-lexical",
+    "unchanged-sync-no-new-version",
+    "warn-manual-scale",
+    "auto-revert-on-status",
+    "failed-fetch-preserves-services",
+    "failed-fetch-no-prune",
+    "partial-apply-not-atomic",
+    "prune-preserves-unrelated",
+    "url-credentials-rejected-9",
+    "url-credentials-rejected-10",
+    "job-cli-success-manifest",
+    "job-exit-zero",
+    "job-nonzero-retry",
+    "latest-attempt-log-selection",
+    "job-limit-terminal",
+    "cron-cli-manifest",
+    "cron-allow-missed-bound",
+    "cron-forbid-active",
+    "cron-replace-active",
+    "cron-suspend",
+    "cron-resume-catches-backlog",
+    "dst-spring-missing-local-0230",
+    "dst-fall-repeated-local-0230",
+    "cron-exact-five-fields",
+    "job-cleanup-metadata"
+  ],
+  "verifier": [
+    "python3",
+    "books/inside-orch/scripts/verify_namespace_workload_labs.py",
+    "--lab",
+    "07"
+  ],
+  "release_status": "Actual scoped results prepared; book-wide review pending",
+  "cleanup": "exact owned local repository removed; checkouts self-clean; in-memory jobs removed/state discarded",
+  "scope": "real local Git and actual CLI parsers/control-plane methods; injected task reports/fake log transport and clock/store for cron; no containers or connected host"
+}

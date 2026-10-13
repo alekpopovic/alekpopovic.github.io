@@ -1,0 +1,25 @@
+{
+  "id": "ch39-profile-top-corrected",
+  "command": [
+    "/tmp/inside-orch-gomod/golang.org/toolchain@v0.0.1-go1.25.0.linux-amd64/bin/go",
+    "tool",
+    "pprof",
+    "-top",
+    ".book-labs/ch39/scheduler.test",
+    ".book-labs/ch39/scheduler.cpu"
+  ],
+  "cwd": "/tmp/inside-orch-labs-cbfc94ade5b5/orch",
+  "environment_keys": [
+    "GOROOT",
+    "GOTOOLCHAIN"
+  ],
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "started_at_utc": "2026-10-13T01:38:34.225180+00:00",
+  "scope": "Only the command and environment recorded here were executed.",
+  "exit_code": 2,
+  "status": "failed",
+  "finished_at_utc": "2026-10-13T01:38:34.231055+00:00",
+  "duration_seconds": 0.006,
+  "stdout": "validation/labs/ch39/profile-top-corrected.stdout.txt",
+  "stderr": "validation/labs/ch39/profile-top-corrected.stderr.txt"
+}

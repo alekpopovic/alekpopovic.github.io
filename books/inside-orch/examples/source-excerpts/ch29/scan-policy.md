@@ -1,0 +1,1 @@
+Admission runs after tag-to-digest resolution. Missing/stale data, active scans, scanner outage, and policy violation are separate structured results. Production defaults to fail closed for missing or expired evidence. Development may allow deployment while a scan is pending, but this produces an audit event.

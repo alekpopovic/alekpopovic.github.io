@@ -1,0 +1,10 @@
+panic: server URL is required; pass --server, set ORCH_SERVER_URL, or set server_url in /dev/null
+
+goroutine 1 [running]:
+main.must(...)
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/gitops-jobs-cron/main.go:23
+main.command(0xc0003b4008, {0xc000135aa0, 0x3, 0x3})
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/gitops-jobs-cron/main.go:47 +0x19f
+main.main()
+	/tmp/inside-orch-labs-cbfc94ade5b5/orch/.book-labs/gitops-jobs-cron/main.go:61 +0x2815
+exit status 2

@@ -1,0 +1,117 @@
+{
+  "chapter_id": "23",
+  "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+  "claims": [
+    {
+      "claim_id": "ch23.conditional-user-auth",
+      "statement": "Empty JWT secret bypasses user role middleware while agent-specific checks remain.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1260,
+      "line_end": 1301,
+      "associated_commits": [
+        "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+        "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Effective configuration matters; no external IDP implied.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch23.static-users",
+      "statement": "Static users replace token namespace roles with configured global role.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/api/api.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 1282,
+      "line_end": 1293,
+      "associated_commits": [
+        "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+        "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Role override may broaden token-scoped authority.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch23.node-token",
+      "statement": "Node credentials are random, hashed, expire and rotate on heartbeat; revocation flag checked.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/auth/agent.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 43,
+      "line_end": 71,
+      "associated_commits": [
+        "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+        "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Rotation response loss can leave client with stale bearer value.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch23.agent-ownership",
+      "statement": "Node credential validation is followed by task/node ownership and lifecycle guards.",
+      "classification": "runtime-integrated",
+      "source_path": "internal/controlplane/controlplane.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 898,
+      "line_end": 914,
+      "associated_commits": [
+        "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+        "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "Record authorization does not physically fence runtime.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    },
+    {
+      "claim_id": "ch23.tls-boundary",
+      "statement": "Default native server uses HTTP ListenAndServe, not mutual TLS.",
+      "classification": "partial integration",
+      "source_path": "cmd/orch-server/main.go",
+      "source_sha": "cbfc94ade5b57e449d6b73bf1485b1c5b1647022",
+      "line_start": 232,
+      "line_end": 245,
+      "associated_commits": [
+        "403a9fc9d9005aca95ade9f5edfbbc77acd1a911",
+        "4f25e78c229ba040c07a84801490485b5a0cbb2e",
+        "a5cb0c5fb4cab92130b1cdfd15df88256267bcb7"
+      ],
+      "validation": "inspected",
+      "evidence_log": null,
+      "limitations": [
+        "External TLS is separately configured; Docker socket remains privileged.",
+        "Source inspection is not an executed runtime experiment."
+      ]
+    }
+  ],
+  "inspected_tests": [
+    "TestAgentCredentialIssuanceStoresOnlyHash",
+    "TestAgentCredentialValidation",
+    "TestAgentCredentialExpiration",
+    "TestAgentCredentialRevocation",
+    "TestUserAuthMissingToken",
+    "TestUserAuthInvalidToken",
+    "TestUserAuthInsufficientRole",
+    "TestUserAuthAllowedAccess"
+  ],
+  "lab_execution": "Expected until separate scoped command evidence is attached; no execution claimed by this writer."
+}

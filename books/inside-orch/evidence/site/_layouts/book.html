@@ -1,0 +1,75 @@
+---
+layout: default
+---
+{% assign book = site.data.books | where: 'id', page.book_id | first %}
+{% assign chapter = book.chapters[page.chapter_index] %}
+{% assign previous_index = page.chapter_index | minus: 1 %}
+{% assign next_index = page.chapter_index | plus: 1 %}
+<main id="main-content" class="book-reader" data-reader-book="{{ book.id | escape }}" data-search-index="{{ '/search-index.json' | relative_url }}" data-reader-root="{{ book.url | relative_url }}" data-reader-title="{{ chapter.title | escape }}" data-reader-chapter="{{ chapter.slug | escape }}">
+  <div class="section-shell reader-shell">
+    <nav class="book-breadcrumbs" aria-label="Breadcrumb"><a href="{{ '/books/' | relative_url }}">Books</a><span aria-hidden="true">/</span><a href="{{ book.url | relative_url }}">{{ book.title }}</a><span aria-hidden="true">/</span><span>{{ chapter.label }}</span></nav>
+    <div class="reader-deskbar">
+      <div class="reader-document-name"><span class="reader-document-icon">{% include icon.html name='book' %}</span><a href="{{ book.url | relative_url }}">{{ book.title }}<span>Online edition <span aria-hidden="true">·</span> {{ book.language_label }}</span></a></div>
+      <div class="reader-document-actions"><button class="reader-tool" type="button" data-reader-study-open aria-label="Open bookmarks and notes" title="Bookmarks and notes" hidden>{% include icon.html name='notes' %}</button><button class="reader-tool reader-navigation-toggle" type="button" data-reader-navigation aria-expanded="true" aria-controls="site-header" aria-label="Hide site navigation" title="Hide site navigation" hidden>{% include icon.html name='home' %}</button><a href="{{ book.pdf | relative_url }}" download>{% include icon.html name='download' %} PDF</a><a href="{{ book.epub | relative_url }}" download>EPUB</a></div>
+      <div class="reader-toolbar" data-reader-toolbar hidden>
+        <button class="reader-tool" type="button" data-reader-contents aria-expanded="true" aria-controls="reader-sidebar" aria-label="Toggle table of contents" title="Table of contents">{% include icon.html name='sidebar' %}<span>Contents</span></button>
+        <div class="reader-section-control"><label class="sr-only" for="reader-chapter">Go to section</label><select id="reader-chapter">{% for item in book.chapters %}<option value="{{ item.url | relative_url }}" {% if item.url == page.url %}selected{% endif %}>{{ forloop.index }} / {{ book.chapters.size }} — {{ item.title }}</option>{% endfor %}</select></div>
+        <div class="reader-display-controls"><div><label class="sr-only" for="reader-size">Text size</label><select id="reader-size" title="Text size"><option value="small">Small text</option><option value="regular" selected>Regular text</option><option value="large">Large text</option><option value="extra">Extra large text</option></select></div><div><label class="sr-only" for="reader-theme">Reading theme</label><select id="reader-theme" title="Reading theme"><option value="paper">Paper</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div>
+        <div class="reader-tool-actions"><button class="reader-tool" type="button" data-reader-find-open aria-label="Find in this book" title="Find in this book">{% include icon.html name='search' %}</button><button class="reader-tool" type="button" data-reader-print aria-label="Print this section" title="Print this section">{% include icon.html name='printer' %}</button><button class="reader-tool" type="button" data-reader-focus aria-pressed="false" aria-label="Enter focus mode" title="Focus mode">{% include icon.html name='expand' %}</button><button class="reader-tool" type="button" data-reader-reset aria-label="Reset reading preferences" title="Reset preferences">{% include icon.html name='reset' %}</button></div>
+      </div>
+      <div class="reader-statusbar" data-reader-progress-bar hidden><span>Section {{ next_index }} of {{ book.chapters.size }}</span><div><progress data-reader-progress value="0" max="100" aria-label="Progress through this section"></progress><span data-reader-percent>0%</span></div><a href="#top" data-reader-start aria-label="Back to start of section">{% include icon.html name='arrow-up' %}</a></div>
+    </div>
+    <div class="reader-grid">
+      <aside class="reader-sidebar" id="reader-sidebar">
+        <details class="book-navigation" open>
+          <summary>Table of contents <span aria-hidden="true">⌄</span></summary>
+          <nav aria-label="Book chapters">
+            <a class="reader-book-title" href="{{ book.url | relative_url }}">{{ book.brand }}<span>{{ book.chapters.size }} sections <span aria-hidden="true">·</span> Complete edition</span></a>
+            <div class="reader-chapter-filter" data-reader-filter hidden><label class="sr-only" for="reader-chapter-query">Filter chapters</label><input id="reader-chapter-query" type="search" placeholder="Find a chapter…" autocomplete="off"><p data-reader-chapter-empty role="status" hidden>No matching chapters.</p></div>
+            <ol class="reader-chapters">
+              {% for item in book.chapters %}
+                <li><a href="{{ item.url | relative_url }}" {% if item.url == page.url %}aria-current="page"{% endif %}><span class="reader-section-number" aria-hidden="true">{{ forloop.index | prepend: '0' | slice: -2, 2 }}</span><span>{{ item.title }}</span></a></li>
+              {% endfor %}
+            </ol>
+            <div class="reader-downloads"><a href="{{ book.pdf | relative_url }}" download>PDF ↓</a><a href="{{ book.epub | relative_url }}" download>EPUB ↓</a><a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing</a></div>
+          </nav>
+        </details>
+        {% include reader-assist.html %}
+        <details class="reader-study" data-reader-study hidden><summary>My reading workspace</summary>
+          <p class="study-caption">Saved only in this browser. Your notes are never sent to analytics.</p>
+          <button class="study-button" type="button" data-reader-bookmark aria-pressed="false">Bookmark this place</button>
+          <label class="study-check"><input type="checkbox" data-reader-complete> I have completed this section</label>
+          <label for="reader-note">Notes for this section</label><textarea id="reader-note" rows="5" maxlength="10000" placeholder="Questions, explanations, or things to try…"></textarea>
+          <div class="study-actions"><button class="study-button" type="button" data-reader-note-save>Save note</button><button class="study-button" type="button" data-reader-export>Export notes</button></div>
+          <p data-study-status role="status"></p><p data-study-progress></p>
+          <h2>Bookmarked sections</h2><ul data-reader-bookmarks></ul>
+          <div data-offline-controls hidden><button class="study-button" type="button" data-offline-save>Save this section offline</button><button class="study-button" type="button" data-offline-remove hidden>Remove offline copy</button><p data-offline-status role="status"></p></div>
+          <a href="{{ '/offline/' | relative_url }}">Manage offline reading →</a>
+          <p><a href="{{ '/reading/' | relative_url }}">Back up or restore all reading progress →</a></p>
+        </details>
+        <details class="reader-outline" data-reader-outline hidden open><summary>In this section</summary><nav aria-label="On this page"><ol data-reader-headings></ol></nav></details>
+      </aside>
+      <div class="reader-stage" data-reader-scroll tabindex="0" role="region" aria-label="Chapter text">
+        <div class="reader-session" data-reader-session hidden><p class="reader-storage-note" data-reader-status role="status">Your place is saved on this device.</p><a class="reader-resume-here" href="#" data-resume-here hidden>Return to your saved place ↓</a></div>
+        <div class="reader-content">
+        <div class="reader-page-header"><span>{{ book.brand }} <span aria-hidden="true">/</span> {{ chapter.label }}</span><span>{{ next_index | prepend: '0' | slice: -2, 2 }}</span></div>
+        <div class="reader-meta"><p class="eyebrow">{{ chapter.label }}</p><p>{{ chapter.reading_minutes }} min read <span aria-hidden="true">·</span> Section {{ next_index }} of {{ book.chapters.size }}</p></div>
+        <article class="book-article" lang="{{ book.language | escape }}">{{ content }}</article>
+        {% include share-links.html label='Share this chapter' %}
+        {% include content-feedback.html %}{% include related-videos.html key='reading_url' value=page.url %}
+        <div class="reader-page-footer"><span>{{ book.author }}</span><span>{{ next_index }} / {{ book.chapters.size }}</span></div>
+        </div>
+        <nav class="reader-pager" aria-label="Chapter navigation">
+          {% if page.chapter_index > 0 %}{% assign previous = book.chapters[previous_index] %}<a rel="prev" href="{{ previous.url | relative_url }}"><span>← Previous</span><strong>{{ previous.title }}</strong></a>{% else %}<a href="{{ book.url | relative_url }}"><span>← Back to contents</span><strong>{{ book.title }}</strong></a>{% endif %}
+          {% if next_index < book.chapters.size %}{% assign next = book.chapters[next_index] %}<a rel="next" href="{{ next.url | relative_url }}"><span>Next →</span><strong>{{ next.title }}</strong></a>{% else %}<a href="{{ book.url | relative_url }}"><span>Book complete ✓</span><strong>Back to contents</strong></a>{% endif %}
+        </nav>
+        {% assign chapter_posts = site.posts | where: 'book_id', page.book_id | where: 'chapter_slug', chapter.slug %}
+        {% if chapter_posts.size > 0 %}
+          <section class="book-related-notes" aria-label="Notes on this chapter"><p class="eyebrow">Notes on this chapter</p>{% for chapter_post in chapter_posts %}<a href="{{ chapter_post.url | relative_url }}"><strong>{{ chapter_post.title }}</strong><span>{{ chapter_post.description }}</span><span class="book-note-arrow" aria-hidden="true">↗</span></a>{% endfor %}</section>
+        {% endif %}
+        {% for project in site.data.projects %}{% for related in project.related_chapters %}{% if related.url == page.url %}<p class="book-license-note"><a href="{{ '/projects/' | append: project.id | append: '/' | relative_url }}">Explore this boundary in {{ project.name }} →</a></p>{% endif %}{% endfor %}{% endfor %}
+        <p class="book-license-note">{{ book.author }} · {{ book.license_note }}. <a href="{{ book.url | append: 'license.html' | relative_url }}">Licensing and attribution</a></p>
+      </div>
+    </div>
+  </div>
+</main>
